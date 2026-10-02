@@ -107,7 +107,19 @@
     "shell/sourceState.mjs": "field-studies-journeys/src/sourceState.ts",
     "shell/workspacePreferences.mjs": "field-studies-journeys/src/workspacePreferences.ts",
     "engine/glyphVolume.mjs": "src/engine/glyphVolume.ts",
-    "engine/fieldDefaults.mjs": "src/engine/fieldDefaults.ts"
+    "engine/fieldDefaults.mjs": "src/engine/fieldDefaults.ts",
+    "engine/LocalizedResonanceBank.mjs": "src/engine/LocalizedResonanceBank.ts",
+    "engine/sdfField.mjs": "src/engine/sdfField.ts",
+    "engine/formationGeometryProjection.mjs": "src/engine/formationGeometryProjection.ts",
+    "engine/pairwiseSchedule.mjs": "src/engine/pairwiseSchedule.ts",
+    "engine/shaders/pairwiseShaders.mjs": "src/engine/shaders/pairwiseShaders.ts",
+    "engine/mediumGrid.mjs": "src/engine/mediumGrid.ts",
+    "engine/shaders/mediumShaders.mjs": "src/engine/shaders/mediumShaders.ts",
+    "shell/native-field/entitySound.mjs": "field-studies-journeys/src/native-field/entitySound.ts",
+    "shell/blueprintGeometry.mjs": "field-studies-journeys/src/blueprintGeometry.ts",
+    "shell/researchMaterial.mjs": "field-studies-journeys/src/researchMaterial.ts",
+    "shell/capture.mjs": "field-studies-journeys/src/capture.ts",
+    "shell/paper.mjs": "field-studies-journeys/src/paper.ts"
   },
   "module_refreshes": {
     "engine/sourceSampling.mjs": {
@@ -131,10 +143,321 @@
       "compiler": "esbuild@0.25.12",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
+    "shell/automationLinks.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/automationLinks.ts",
+      "source_sha256": "21b6c29769db22bb26cfbd2233a902ab1ce3b74831f61624bd878d4c5c43a4a7",
+      "output_sha256": "964ae7d21a75ddf32900f131f8f2baf99fb068cc5a661f21d6cb200dffb414d7",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/automation.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/automation.ts",
+      "source_sha256": "b9443a161ac88bd2fd2b055a61922721722e884999e6f0adcb289c028e64a94b",
+      "output_sha256": "823e844d81d6cef51e7e92e1bdf43b087789a3a07c3b47d9199c38a251287d47",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
     "engine/fieldDefaults.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/fieldDefaults.ts",
       "source_sha256": "66a954cae93d816076c16486dc4e7b6657849a53fc5a2e13e374d2859ef86b85",
       "output_sha256": "efc69eb77415877ac4a0ab07e23694db2faea1b1fdd72ce0c9144d40c90b64b4",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/semantics/chakraProfile.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/semantics/chakraProfile.ts",
+      "source_sha256": "644a9b77778d55aa5934b64e923754d30dbe1c0a78e8d43c17830088900d121d",
+      "output_sha256": "681219bea53db221b6cd123133d75fdd8a8d4762afb0d36f738cde07ba519138",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/semantics/chakraSemantics.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/semantics/chakraSemantics.ts",
+      "source_sha256": "0b020420ea57575599a14d1f98dbb178b79ab530651b5e5c8c30ab90c53bc73d",
+      "output_sha256": "b3148f1e5c0039133a3d3bbd04293494b242cd1d605311331e245f5a8c702244",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/fieldModel.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/fieldModel.ts",
+      "source_sha256": "f35dceb6fc2fda08171afd7354415e71b19d6685b7e18eae7bc1c7abfa11900f",
+      "output_sha256": "1e5bf307aef5f96aad084616d341db0287561a6177e18f4d721860c6873073d2",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/chakraSystem.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/chakraSystem.ts",
+      "source_sha256": "cf7e3ea92804cac1fd3cf636c3bebede2dca28ceaf3c18e09fd9637d08881444",
+      "output_sha256": "441e95024d2331a74d9260f3a2a85a8d071540097944a05ed3d9f9fe70609532",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/paramRegistry.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/paramRegistry.ts",
+      "source_sha256": "2098755fd3533980667799a0073e58f3b2d3e90511b1386fe2273961238c3abb",
+      "output_sha256": "8111637a336761e2c5b3ce934830f81d27a7392d972b3d484fbe2b8a728a3e5b",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/PointCloudField.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/PointCloudField.ts",
+      "source_sha256": "81711fe156c4bcf71de0d1e1bb96ef70a41102c0996fff464692e6f68454060a",
+      "output_sha256": "b5c572d30d9277c6a7c87b3981c91918a7946ad3bb2074f4d9ca4be3ed16d10e",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/LocalizedResonanceBank.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/LocalizedResonanceBank.ts",
+      "source_sha256": "d827ee51daf6d3ee82c56d3636cbecb75be941eea75c7e7cb7ae910d91eca035",
+      "output_sha256": "c82d7a0435ada9b2769ac9a9271c90c6b0b690bb3f0b41559ecaf9f9cdf209dd",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/morphSignal.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/morphSignal.ts",
+      "source_sha256": "e1360612bad2fa88d78b112a8a492f400ef5f8fbd595e480293d0439d58c2b9c",
+      "output_sha256": "771835b5c046f8b715ff359d2ce10029f16727b466d7c26c619a222823923c76",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/resonanceDrive.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/resonanceDrive.ts",
+      "source_sha256": "6d5e407e067c8b9746dfba10724a4f77e9c8fda8c0785cb488427b25ca3fb53f",
+      "output_sha256": "23c8e8e12c80b20d1a368e66a9852c63ce97dc2e36422458e64b25cd7a5ab84f",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/cymaticResonator.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/cymaticResonator.ts",
+      "source_sha256": "f41bae2971a24409a09265c15f94b6a3e370bb256765c12d9307f3dacad2d2ba",
+      "output_sha256": "8b71834326ce0a3ff153c483c57540c8054a1f787e4ff52e65f7f4b460df2911",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/semantics/semanticFieldRuntime.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/semantics/semanticFieldRuntime.ts",
+      "source_sha256": "4a331b9a3a4e0715ad0015e8a9be93c90d78433f028945653379073e322d958b",
+      "output_sha256": "f24de90c922ac35af7098c52fca31cb30145644dab79f65559b6c45e09517cee",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/forceRuntime.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/forceRuntime.ts",
+      "source_sha256": "509112ea659b7c6c52e77574306f608ae6290fc27d663f5eaea9a026d6930ada",
+      "output_sha256": "0729072734f0ec45ceb1fd4ff0c75620dd21a88ea47f42e902c2bb9df3f24dcb",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/entityRuntime.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/entityRuntime.ts",
+      "source_sha256": "8aed1dbf1dbdd32c92c5da9dd41b14bf4abe84d35d53a615fdf820a46477f48b",
+      "output_sha256": "9ce97e2eb2780b2abe9956a6a1c3c9d93f2da942d9ce2c601909bc8555fa99c8",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/entityPose.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/entityPose.ts",
+      "source_sha256": "94c80274ee8cb5f80e181c52eb4ad2ee662cc6b77c1cb0ef8381c67d3d03a4c3",
+      "output_sha256": "895a974716d354d265a8294de734cd8b66428f7dca72d026a81f08a79a8a7719",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/sdfField.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/sdfField.ts",
+      "source_sha256": "99b717f68ee6e38796176629a42781910ed4d9895ad260aeca7bf9e13a9abd07",
+      "output_sha256": "1d9bd75c58c45b0b292e0b864bd4556ed2d8bb5ed87ca53f591b6762d315a65e",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/formationGeometryProjection.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/formationGeometryProjection.ts",
+      "source_sha256": "86f65a33e33b75d2b52a76af2a01a360a3cf66e2da8d71ad703c1e6392225600",
+      "output_sha256": "e289e24fb902cdb7a2f5d17c5e05246ed4c12c87b38cbf2ebd4e9a389d5add38",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/pinMarkers.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/pinMarkers.ts",
+      "source_sha256": "595fc2fd9f09856a70fe9d86d48f4c5989104ab8066b34cc14e9b273755bc449",
+      "output_sha256": "0b11ab551c079cf7e1f7ad00eee1b65f81a797b6cec85e92f5c0af3c33d03607",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/colorPalettes.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/colorPalettes.ts",
+      "source_sha256": "a19afc8d27a6502897e61dd5f16b614ed14cf24e1872b6858ce97b6acc989313",
+      "output_sha256": "c693d4dda6df04d9bf868e0e40743e2089e8ee1a4969d029a28ae69a6fdfaf28",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/shaders/particleShaders.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/shaders/particleShaders.ts",
+      "source_sha256": "3f33683c57628915286158fd31ceacae4cf64ec0bbcca3461aae2ffaca526178",
+      "output_sha256": "ff64d9c3d023a19558806ffc71b70893803a41252040d2672576646760cb45b8",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/GlyphSampler.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/GlyphSampler.ts",
+      "source_sha256": "2eeb3e73ac05d99721f9e18ca7bf36409ff8fb981242bb94791df9fc55b1b0d6",
+      "output_sha256": "1a2899ff0a27f9a4d016b9f73211e95e5420ec6dc8fd888068ef63de09e18beb",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/legacy/chakraCymaticProfiles.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/legacy/chakraCymaticProfiles.ts",
+      "source_sha256": "390930fe9da11d502d7a7c8a03433b1041018eb6d72d1d2618a08b7da60d651b",
+      "output_sha256": "06aae48cff0d884c63a5a0f6492c6076e17715c00f8c6110cc8edaa49b40a47a",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/cymatics.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/cymatics.ts",
+      "source_sha256": "f334bad0d0eb8f983a0b86332e411b12cc621ef5738d90f2cd3e49e7d8e5d121",
+      "output_sha256": "77ce1ada38e1bde8c4660e8fc54326b5b21c11a3c8d7522041e8f8a6a5139fff",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/asciiLayout.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/asciiLayout.ts",
+      "source_sha256": "4c227f05860d0537a7e1396db35fa0a6d1bff1ad07be5fb4f8198f3adf7e1d02",
+      "output_sha256": "9e4e08f9e65a779d8ae292319aed3281b8017696de920f60c07d150231dc0110",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/GPGPUSimulator.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/GPGPUSimulator.ts",
+      "source_sha256": "cc7035f17a4a500ff680509648c92d23202f8689a7ce47b5ff6beaa942b5d6f5",
+      "output_sha256": "1e5da4c37c16ca3bc7881f2b6bfb51938dc928f3ea5178665a9871916067167e",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/pairwiseSchedule.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/pairwiseSchedule.ts",
+      "source_sha256": "88429504cdaa9d6f68c4472fafb121721a47ee2e2a32d827f61a300c56df0a63",
+      "output_sha256": "546e997228ec25a7e496cbbace2ac419a75a584b9153cb27699e68ed00f545c7",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/shaders/pairwiseShaders.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/shaders/pairwiseShaders.ts",
+      "source_sha256": "f996a48ecad00fc9406f16ae592a842116cbad02218d5750d93371ddc73cf163",
+      "output_sha256": "7772a71657bda305627c6e4b1376ae8d20d5f9d9d239dc98bd64c762d6c63e18",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/mediumGrid.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/mediumGrid.ts",
+      "source_sha256": "7aea9ed2b52165b1ec8eab4668c1ba852a860c88105a7047c4eb9448e0006fde",
+      "output_sha256": "283a7737c4870d6ade2133880030986b0502212c2d7f5cd5ecf7be4db452e067",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/shaders/mediumShaders.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/shaders/mediumShaders.ts",
+      "source_sha256": "2478c97993b4e53d47a42c13cbc3f73ac12240178d6f9d306e32cac451ecdc7b",
+      "output_sha256": "622b76371c9d906c9f0af4b173009bbce087177549f8707ea9d529848ac6de27",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/shaders/simulationShaders.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/shaders/simulationShaders.ts",
+      "source_sha256": "e2e8e381342cfc62a3601ddf00dcccbc25f3435141b284cc5ffb77cdf7ca37e3",
+      "output_sha256": "9e7476014985ef47ff89474e2da1a6d3f8b0c5bc014fd66bf069efc11467ce8e",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/shaders/curlNoise.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/shaders/curlNoise.ts",
+      "source_sha256": "902421b767715bf00f6aced2dd47268bdb10d0a4913cdadf4d6e7ed8ffe2085c",
+      "output_sha256": "a46be534016910bd929c84af35b98d940d02196f21f1c1f500347791d0cde5a4",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/transportState.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/transportState.ts",
+      "source_sha256": "14da50256aed2e5316978adcfac3f1ee193f45943c6d29a1b113e73a24b188c4",
+      "output_sha256": "3d904f70e62611a7aad1fd08437386c31ca42bbc1e1ea5a7689bbd93091fa961",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/camera.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/camera.ts",
+      "source_sha256": "83484908c15351e35df1fe8f1360dfc62f8fe41f3920defb22c6d754132c88c0",
+      "output_sha256": "51d0465bdaeb96273da5b97c64ae8cc30e8ed05d23272b855bbcd2c831a40c5c",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/workspacePreferences.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/workspacePreferences.ts",
+      "source_sha256": "d9a36594b34967dc51b20822e6b910e92b2f5e8d2235f6e947ce8219fc1d4efa",
+      "output_sha256": "d189719c37ad570ffdf31f726ff33816e250ca4299b3e574879e084e0d8f6834",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/sourceState.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/sourceState.ts",
+      "source_sha256": "2a0abcf456ef2ba0e9c24650027d9311b1d73805278aa9e04c8b4ea2870ca453",
+      "output_sha256": "e37322087408118a521f8441acea20d0c3aa58cce5ca64d273ec820f7ec889ac",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/production.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/production.ts",
+      "source_sha256": "c0c1b4d6b45f1a420b983c197ff4d7b253be08c776cd1477dab2e04645699e3a",
+      "output_sha256": "aff0fd103f92f60466486bc942652dddb30faa35f78ce3e4d03bc55ea498182e",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/native-field/entitySound.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound.ts",
+      "source_sha256": "8dd8b289fef7ef06ba6f800b33b5b03d9ec93433315bd03394db0d4a4cf7014b",
+      "output_sha256": "08d6c12c91fb2989ebe990348b083dc4917f58f3d516c8617aa5daed70639844",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/nativeBridge.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/nativeBridge.ts",
+      "source_sha256": "9645bf835545eb94b12fad6f391f93d93539198571693da6351f48d859d884cc",
+      "output_sha256": "48ed2fce2a7ec3252028b04b49e29179ca7d1d5f50d016901d1811183eb6597e",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/blueprintGeometry.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/blueprintGeometry.ts",
+      "source_sha256": "ffd961a2e8707c32a6fd99cebc0bb0e68053f1de150209dbfb421f6fafb319d4",
+      "output_sha256": "1b336516a0d224c78c45b73c9872a474dae62b2df9aa2fa8f5160bf5dfd35bf0",
+      "compiler": "esbuild@0.25.12",
+      "dependency_sha256": {
+        "desktop/cradle/kernel/src/expression_blueprint_sixfold.json": "4d148c4155b5a16ff6bcafedf024bae3b3f60206a965b70a4fe69b58a1660139"
+      },
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/model.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
+      "source_sha256": "65b6a99df7896d563baaef5cd0edbe5ffe1c505626a2d75d77096c4981ef3205",
+      "output_sha256": "123f118924615ac10eb7a80c712ee8b51a9a2d26981a6a6b2fda3ab6e110ba4f",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/researchMaterial.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/researchMaterial.ts",
+      "source_sha256": "89a97ed88e62808a8d9655d379c05b9a5189f636c1cc5ac63917bba48fde6dff",
+      "output_sha256": "b2e86c53ee1264eaae96dccc80ccd3b23cc24184ba99f37cbd6406f8c442f25b",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/capture.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/capture.ts",
+      "source_sha256": "d48d62a5c3664c1632760c2a9175f02da56005673accf8a5e72722df37011679",
+      "output_sha256": "729eafc9c6ec8e357e2253589d61973edc084ddc307892813311596156076c04",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/paper.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/paper.ts",
+      "source_sha256": "57f12ea4fc74890e289b5593314e6c0c188ae9d6d4472db9dbf06fc465b8c149",
+      "output_sha256": "75dff687cc464bf4cfe83c25314d8c6deb8a576cf67629a1434278655a26bdb4",
       "compiler": "esbuild@0.25.12",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     }

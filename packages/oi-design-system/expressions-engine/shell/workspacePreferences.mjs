@@ -35,8 +35,13 @@ function formationSummary(e) {
 function syncHeldState(e, index) {
   const step = e.sequence.steps[index];
   if (!step || e.sequence.enabled || e.sequence.manual) return;
+  if (step.layers !== void 0) e.layers = structuredClone(step.layers);
   e.source = step.source ? structuredClone(step.source) : void 0;
-  if (step.objectState) Object.assign(e, structuredClone(step.objectState));
+  if (step.objectState) {
+    const { normalized, ...appearance } = structuredClone(step.objectState);
+    Object.assign(e, appearance);
+    if (normalized !== void 0 && e.native) e.native = { ...e.native, extent: { width: e.size.x * 400, height: e.size.y * 400, rotation: e.rotation * Math.PI / 180, ...e.native.extent, normalized } };
+  }
   e.shape = step.shape;
   e.text = step.text;
   e.yantraId = step.yantraId;

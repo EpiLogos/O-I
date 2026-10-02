@@ -1,4 +1,19 @@
 const defaultCamera = () => ({ mode: "2d", yaw: 0, pitch: 0, zoom: 1, panX: 0, panY: 0, plane: "XY", depth: 0, grid: false, snap: false });
+function cameraForSceneView(view, width, height, base = defaultCamera()) {
+  const camera = { ...base, mode: view.mode, yaw: view.yaw, pitch: view.pitch, zoom: view.zoom, panX: view.panX * width, panY: view.panY * height };
+  if (view.nativeCamera) {
+    const c = view.nativeCamera;
+    camera.yaw = -c.yaw;
+    camera.pitch = c.pitch;
+    camera.mode = c.yaw || c.pitch ? "3d" : "2d";
+    camera.zoom = c.zoom * 400 / stageScale(width, height);
+    const { a, b } = basis(camera), o = stageCentre(width, height);
+    camera.panX = width / 2 - o.x - c.zoom * (a[0] * c.panX + a[1] * c.panY);
+    camera.panY = height / 2 - o.y + c.zoom * (b[0] * c.panX + b[1] * c.panY);
+  }
+  if (!["2d", "3d"].includes(camera.mode) || ![camera.yaw, camera.pitch, camera.zoom, camera.panX, camera.panY].every(Number.isFinite) || camera.zoom <= 0) throw new Error("The saved Expression camera is malformed");
+  return camera;
+}
 function basis(c) {
   const y = c.yaw, p = c.pitch;
   return { a: [Math.cos(y), 0, Math.sin(y)], b: [Math.sin(y) * Math.sin(p), Math.cos(p), -Math.cos(y) * Math.sin(p)] };
@@ -45,6 +60,7 @@ function facePlane(c) {
 }
 export {
   basis,
+  cameraForSceneView,
   defaultCamera,
   facePlane,
   project,

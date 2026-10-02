@@ -1,3 +1,6 @@
+import { ExpressionConnectionLayer } from "../oi/expressionBindings.mjs";
+import { withRetainedField } from "../oi/retained-capability.mjs";
+import { MAX_FORMATIONS, MAX_PINS } from "../engine/fieldModel.mjs";
 import { stateSource } from "./sourceState.mjs";
 import { PointCloudField } from "../engine/PointCloudField.mjs";
 import { CymaticResonator } from "../engine/cymaticResonator.mjs";
@@ -7,11 +10,12 @@ import { toNativeConfig, MATERIAL_KEYS } from "./nativeBridge.mjs";
 import { summarizeAnalysis } from "../engine/sourceSampling.mjs";
 import { NATIVE_BINDINGS, WORLD_SCALE } from "./nativeParameters.mjs";
 import { basis, stageCentre, stageScale } from "./camera.mjs";
+import { EntitySoundBank, activeFromFocus } from "./native-field/entitySound.mjs";
 const mix = (a, b, t) => a + (b - a) * t;
 function color(a, b, t) {
   return "#" + new Color(a).lerp(new Color(b), t).getHexString();
 }
-class ProductionAdapter {
+class EmbeddedProductionAdapter {
   constructor(canvas) {
     this.canvas = canvas;
     canvas.addEventListener("webglcontextlost", this.lost);
@@ -23,12 +27,13 @@ class ProductionAdapter {
     physicalResonance: true,
     runtimeCheckpoints: false,
     exactSeek: false,
-    notes: ["GPU particle dynamics and continuous modal resonance. One simulation clock.", "10 formations / 8 pins. Configuration saves are not runtime checkpoints.", "Live video and native-resolution PNG. Offline controlled clip rendering is not available."]
+    notes: ["GPU particle dynamics and continuous modal resonance. One simulation clock.", `${MAX_FORMATIONS} formations / ${MAX_PINS} pins. Configuration saves are not runtime checkpoints.`, "Live video and native-resolution PNG. Offline controlled clip rendering is not available."]
   };
   engine = null;
-  // Recovery disposes GPU objects before the next render replaces them, but the
-  // adapter still owns the canvas context if it is disposed during that gap.
   contextOwner = null;
+  connections = null;
+  connectionRows;
+  selectedConnection;
   width = innerWidth;
   height = innerHeight;
   dpr = devicePixelRatio || 1;
@@ -43,6 +48,29 @@ class ProductionAdapter {
   applied = null;
   sources = /* @__PURE__ */ new Map();
   sourceStatus = {};
+  nativeDomain = false;
+  /** Per-object sound voices for the present entities (authored `sound`). */
+  entitySound = new EntitySoundBank();
+  nativeConfigs = /* @__PURE__ */ new WeakMap();
+  setNativeDomain(active) {
+    this.nativeDomain = active;
+    this.applied = null;
+    this.dirty = true;
+  }
+  nativeConfig(config) {
+    if (!this.nativeDomain) return config;
+    let result = this.nativeConfigs.get(config);
+    if (!result) {
+      result = {
+        ...config,
+        cymatics: config.cymatics ? { ...config.cymatics, enabled: false } : void 0,
+        toroidalMorph: config.toroidalMorph ? { ...config.toroidalMorph, enabled: false, autoOscillate: false } : void 0,
+        automations: config.automations?.filter((l) => !l.path.startsWith("cymatics.") && !l.path.startsWith("toroidalMorph."))
+      };
+      this.nativeConfigs.set(config, result);
+    }
+    return result;
+  }
   contextLost = false;
   seedRecoveredSources = false;
   restoredClock = false;
@@ -107,14 +135,28 @@ class ProductionAdapter {
   render(frame) {
     this.dirty = false;
     if (this.contextLost) throw new Error("GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.");
-    const config = this.configuration(frame);
+    const config = this.nativeConfig(this.configuration(frame));
     if (!this.engine) {
       this.engine = new PointCloudField(this.canvas, config, true);
       this.contextOwner = this.engine;
+      this.connections = new ExpressionConnectionLayer(this.engine);
+      this.connectionRows = void 0;
+      this.selectedConnection = void 0;
       this.seedRecoveredSources = true;
     } else if (config !== this.applied) this.engine.replaceConfig(config);
-    if (config !== this.applied) this.syncSources(frame.scene);
+    this.engine.setForceEmitterProjection(frame.forceEmitterProjection ?? null);
+    this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection ?? null);
+    this.engine.setFormationGeometryProjection(frame.formationGeometryProjection ?? null);
+    if (config !== this.applied) {
+      this.syncSources(frame.scene);
+      this.soundScene = frame.scene.entities.some((e) => e.sound?.enabled) ? frame.scene : null;
+    }
     this.applied = config;
+    if (frame.connections !== this.connectionRows || frame.selectedConnection !== this.selectedConnection) {
+      this.connectionRows = frame.connections;
+      this.selectedConnection = frame.selectedConnection;
+      this.connections?.configure(frame.connections ?? [], frame.selectedConnection ? [frame.selectedConnection] : []);
+    }
     this.engine.setSelection(frame.selectedIds);
     this.engine.setGridMode(frame.scaffold ?? "off");
     const { a, b } = basis(frame.camera), o = stageCentre(this.width, this.height);
@@ -128,6 +170,35 @@ class ProductionAdapter {
       this.engine.advance(0);
     }
     this.evaluated = this.engine.getEvaluation().config;
+    this.followSound(frame);
+  }
+  soundScene = null;
+  soundAt = -1;
+  /** Object sound follows the present Scene and the engine's real focus
+   * (travelling compositions sound the focused entity only). ~10 Hz. */
+  followSound(frame) {
+    const scene = frame.entitySoundProjection ? frame.entitySoundProjection(frame.scene) : this.soundScene;
+    if (!scene) {
+      if (this.soundAt !== -2) {
+        this.entitySound.sync({ entities: [] });
+        this.soundAt = -2;
+      }
+      return;
+    }
+    const now = performance.now();
+    if (this.soundAt >= 0 && now - this.soundAt < 100) return;
+    this.soundAt = now;
+    const focus = scene.composition.focus === "travelling" ? this.engine?.getCompositionTelemetry().focus : null;
+    this.entitySound.sync({ entities: scene.entities, field: frame.scene.field }, activeFromFocus(focus));
+  }
+  hitEntity(x, y) {
+    return this.connections?.pickEntity(x, y) ?? null;
+  }
+  hitConnection(x, y) {
+    return this.connections?.hitTest(x, y) ?? null;
+  }
+  inspectConnections() {
+    return { ...this.connections?.inspect(), paths: this.connections?.paths.map((path) => ({ binding_ref: path.binding.binding_ref, points: path.points.map((p) => this.engine?.projectWorldToScreen(p.x, p.y, p.z)) })) ?? [] };
   }
   transportState() {
     return this.engine?.getTransportState();
@@ -149,10 +220,13 @@ class ProductionAdapter {
     return { ...t, drive, params, config: cfg, sourceStatus: { ...this.sourceStatus }, live: this.engine.getEvaluation().live, background: cfg.backgroundColor ?? "#f4f2eb", palette: cfg.color?.customPaletteColors ?? [cfg.color.primaryColor, cfg.color.accentColor, cfg.color.secondaryColor], transition: this.from ? Math.min(1, (t.simTime - this.transitionStart) / Math.max(1e-3, this.duration)) : 1 };
   }
   syncSources(scene) {
-    const requests = scene.entities.filter((e) => e.kind === "formation").flatMap((e) => e.sequence.enabled || e.sequence.manual ? e.sequence.steps.flatMap((k, i) => {
-      const source = stateSource(e, i);
-      return source ? [{ entityId: e.id, linkId: k.id, source }] : [];
-    }) : e.source ? [{ entityId: e.id, linkId: e.id + "_base", source: e.source }] : []);
+    const requests = scene.entities.filter((e) => e.kind === "formation").flatMap((e) => [
+      ...Array.from(new Map([...e.layers ?? [], ...e.sequence.enabled || e.sequence.manual ? e.sequence.steps.flatMap((k) => k.layers ?? []) : []].map((l) => [l.id, l])).values()).flatMap((l) => l.source ? [{ entityId: e.id, linkId: l.id, source: l.source }] : []),
+      ...e.sequence.enabled || e.sequence.manual ? e.sequence.steps.flatMap((k, i) => {
+        const source = stateSource(e, i);
+        return source ? [{ entityId: e.id, linkId: k.id, source }] : [];
+      }) : e.source ? [{ entityId: e.id, linkId: e.id + "_base", source: e.source }] : []
+    ]);
     const ids = new Set(requests.map((r) => JSON.stringify([r.entityId, r.linkId])));
     for (const key of this.sources.keys()) if (!ids.has(key)) {
       const [entityId, linkId] = JSON.parse(key);
@@ -214,10 +288,14 @@ class ProductionAdapter {
   inspect(readParticles = false) {
     return this.engine?.inspectState(readParticles);
   }
+  inspectResources() {
+    return this.engine?.inspectResources();
+  }
   projectNative(point) {
     return this.engine?.projectWorldToScreen(point.x * WORLD_SCALE, point.y * WORLD_SCALE, point.z * WORLD_SCALE);
   }
   stations() {
+    if (this.nativeDomain) return [];
     const current = this.engine?.getCymaticStations();
     if (current?.length) return current;
     const r = new CymaticResonator();
@@ -225,7 +303,10 @@ class ProductionAdapter {
     return r.getAnchors().map((a) => ({ id: a.id, index: a.index, name: `Mode ${a.m}:${a.n}`, frequencyHz: a.frequencyHz, m: a.m, n: a.n, color: "#888888" }));
   }
   command(command) {
+    if (this.nativeDomain && ["recover-context", "reset-field", "reset-phases"].includes(command.type)) throw new Error("Native follow holds resident continuity; disconnect before a destructive presentation reset.");
     if (command.type === "recover-context") {
+      this.connections?.dispose();
+      this.connections = null;
       this.engine?.destroy();
       this.engine = null;
       this.applied = null;
@@ -253,12 +334,16 @@ class ProductionAdapter {
     this.dirty = true;
   }
   dispose() {
+    this.entitySound.dispose();
     this.canvas.removeEventListener("webglcontextlost", this.lost);
+    this.connections?.dispose();
+    this.connections = null;
     this.contextOwner?.destroy({ releaseContext: true });
     this.engine = null;
     this.contextOwner = null;
   }
 }
+const ProductionAdapter = withRetainedField(EmbeddedProductionAdapter, WORLD_SCALE);
 export {
   ProductionAdapter
 };

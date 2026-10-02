@@ -24,7 +24,7 @@ export function applyChain(e:Entity,id:string){
  const p=CHAIN_PRESETS.find(p=>p.id===id);if(!p)throw new Error('Unknown native sequence preset');
  const hold=p.recommendedHold??e.sequence.hold??3,transition=p.recommendedTransition??e.sequence.transition??1;
  e.sequence={...e.sequence,enabled:true,clock:'seconds',order:'loop',hold,transition,easing:p.recommendedEasing??e.sequence.easing,
-  steps:p.chain.map(text=>({id:uid('step'),shape:'text',text,hold,transition,position:null}))};
+  steps:p.chain.map(text=>({id:uid('step'),layers:[],shape:'text',text,hold,transition,position:null}))};
 }
 export function applyGlyph(e:Entity,stepIndex:number|null,char:string){
  if(e.locked)throw new Error('Unlock this formation before changing its shape.');
@@ -39,7 +39,7 @@ export function sweepUsesLegacy(s:Scene){return !!s.native?.projection&&s.native
 /** The native single-entity rising sequence, distinct from a seven-entity focus composition. */
 export function applyKundaliniSequence(e:Entity){
  if(e.locked)throw new Error('Unlock this formation before changing its sequence.');
- e.sequence={...e.sequence,enabled:true,clock:'seconds',order:'loop',steps:[...CANONICAL_CHAKRAS].reverse().map(c=>({id:uid('step'),shape:'text',text:c.seedSyllable,hold:e.sequence.hold??3,transition:e.sequence.transition??1,position:{x:c.x/WORLD_SCALE,y:-c.y/WORLD_SCALE,z:0}}))};
+ e.sequence={...e.sequence,enabled:true,clock:'seconds',order:'loop',steps:[...CANONICAL_CHAKRAS].reverse().map(c=>({id:uid('step'),layers:[],shape:'text',text:c.seedSyllable,hold:e.sequence.hold??3,transition:e.sequence.transition??1,position:{x:c.x/WORLD_SCALE,y:-c.y/WORLD_SCALE,z:0}}))};
 }
 
 export {NATIVE_LAYOUTS} from '../../src/engine/layouts';

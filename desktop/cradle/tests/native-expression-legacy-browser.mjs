@@ -80,15 +80,31 @@ const root=createRoot(document.getElementById('root'));root.render(React.createE
   report.checks.push('declared imperative operations delegate to the same resident engine');
   const downloaded=page.waitForEvent('download');
   const capture=await page.evaluate(async()=>{
-    const e=window.legacyEngine,before=e.inspectState(true);const pending=window.capture(e);
-    const after=e.inspectState(true);await pending;return {before,after,width:e.canvas.width,height:e.canvas.height};
+    const e=window.legacyEngine,before=e.inspectState(true),resourcesBefore=e.inspectResources();const pending=window.capture(e);
+    const after=e.inspectState(true),resourcesWarm=e.inspectResources();
+    const repetitions=[];
+    for(let i=0;i<6;i++){
+      e.renderImage(e.canvas.width,e.canvas.height);
+      repetitions.push({state:e.inspectState(true),resources:e.inspectResources()});
+    }
+    await pending;
+    return {before,after,resourcesBefore,resourcesWarm,repetitions,width:e.canvas.width,height:e.canvas.height};
   });
   assert.deepEqual(capture.after,capture.before,'image capture must not step, reseed or mutate GPU state');
+  assert.equal(capture.resourcesWarm.geometries,capture.resourcesBefore.geometries,'capture must release temporary geometry');
+  assert.equal(capture.resourcesWarm.textures,capture.resourcesBefore.textures,'capture must release its temporary render target');
+  assert.ok(capture.resourcesWarm.programs<=capture.resourcesBefore.programs+1,'first offscreen capture may retain at most one shader variant');
+  assert.deepEqual(capture.resourcesWarm.candidateCache,capture.resourcesBefore.candidateCache,'capture must not rebake or retain formation candidates');
+  for(const repetition of capture.repetitions){
+    assert.deepEqual(repetition.state,capture.before,'repeated captures must preserve the exact GPU state');
+    assert.deepEqual(repetition.resources,capture.resourcesWarm,'repeated captures must not grow retained resources');
+  }
+  report.captureResources={before:capture.resourcesBefore,warm:capture.resourcesWarm,repetitions:capture.repetitions.length};
   const download=await downloaded;assert.equal(download.suggestedFilename(),'expression.png');
   assert.equal(await download.failure(),null);const bytes=await readFile(await download.path());
   assert.deepEqual([...bytes.subarray(0,8)],[137,80,78,71,13,10,26,10]);
   assert.equal(bytes.readUInt32BE(16),capture.width);assert.equal(bytes.readUInt32BE(20),capture.height);
-  report.checks.push('real PNG export has correct dimensions and leaves the GPU state unchanged');
+  report.checks.push('real PNG export has correct dimensions, preserves exact GPU state and bounds repeated capture retention');
   const failures=await page.evaluate(async()=>{
     const messages=[];
     for(const renderImage of [()=>{throw new Error('capture-budget-refused');},()=>({toBlob:cb=>cb(null)})]){

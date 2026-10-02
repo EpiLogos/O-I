@@ -126,6 +126,9 @@ jobs:
       - name: Install browser engines for search component contracts
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium webkit
+      - name: Prove native formation authoring and bounded particle candidate retention
+        working-directory: desktop/cradle
+        run: node tests/formation-native-regressions.mjs
       - name: Prove search component and literal query transport (D)
         working-directory: desktop/cradle
         run: node tests/search-overlay.mjs

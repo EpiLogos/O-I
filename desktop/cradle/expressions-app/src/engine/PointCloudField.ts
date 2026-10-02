@@ -1423,6 +1423,17 @@ export class PointCloudField {
     return result;
   }
 
+  /** Resource retention is separate from simulation state: a first offscreen
+   * capture may compile a shader variant without advancing the field. */
+  public inspectResources() {
+    return {
+      geometries: this.renderer.info.memory.geometries,
+      textures: this.renderer.info.memory.textures,
+      programs: this.renderer.info.programs?.length ?? 0,
+      candidateCache: this.entities.getCandidateCacheStats(),
+    };
+  }
+
   /** Editing decoration only. Neither GPU state nor the stored configuration is touched. */
   public setNativeConnections(bindings: readonly ConnectionBinding[], selected: readonly string[] = []) {
     this.entities.connections.configure(bindings, selected, this.simulator.particleCount);
@@ -1443,7 +1454,8 @@ export class PointCloudField {
     finally {u.uEditHasSelection.value=selected;for(const [o,v] of visibility)o.visible=v;if(selected||visibility.some(([o,v])=>o!==this.particlePoints&&v))this.renderer.render(this.scene,this.camera);}
   }
 
-  /** Render current state at native output resolution. No stepping or allocation changes. */
+  /** Render current state at native output resolution without stepping. The
+   * temporary render target is disposed; shader variants remain renderer-owned. */
   public renderImage(width: number, height: number): HTMLCanvasElement {
     if (![width, height].every(n => Number.isInteger(n) && n > 0 && n <= 8192) || width * height > 33554432) throw new Error('Image exceeds the 32 megapixel capture budget');
     const target = new THREE.WebGLRenderTarget(width, height, {format:THREE.RGBAFormat, type:THREE.UnsignedByteType, depthBuffer:false, stencilBuffer:false});

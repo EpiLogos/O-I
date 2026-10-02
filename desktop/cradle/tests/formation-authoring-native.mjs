@@ -1,0 +1,105 @@
+import assert from 'node:assert/strict';
+import {mkdirSync, writeFileSync} from 'node:fs';
+import {chromium} from 'playwright';
+
+// Real editor events, stored documents, native targets and GPU readback.
+const browser = await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const page = await browser.newPage({viewport:{width:1440,height:1000}});
+const errors=[];
+page.on('pageerror',error=>errors.push(error.message));
+const artifacts=process.env.OI_TEST_ARTIFACTS??'walk/artifacts/formation-authoring-native';
+mkdirSync(artifacts,{recursive:true});
+const url=process.env.OI_TEST_URL??'http://127.0.0.1:3197/field-studies.html';
+const state=()=>page.evaluate(()=>window.__FIELD_STUDIES__.getState());
+const document=()=>page.evaluate(()=>window.__FIELD_STUDIES__.getDocument());
+const current=async()=>{const d=await document(),s=await state();return d.scenes[s.sceneIndex].entities[0];};
+try {
+ await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000});
+ await page.waitForFunction(()=>!!window.__FIELD_STUDIES__,null,{timeout:120000});
+ await page.locator('[data-action="entry-new"]').click();
+ assert.equal((await document()).scenes[0].entities.length,0);
+ await page.locator('#tool-rail [data-action="tool-formation"]').click();
+ await page.locator('#live-content [data-action="place-formation"]').click();
+ assert.equal((await state()).tool,'formation','empty Expression can enter formation placement');
+ await page.mouse.click(750,420);
+ assert.equal((await document()).scenes[0].entities.length,1,'canvas placement creates a real formation');
+ await page.locator('#tool-rail [data-action="tool-formation"]').click();
+ await page.getByRole('button',{name:'Add glyph',exact:true}).click();
+ let e=await current();
+ assert.equal(e.sequence.steps.length,2);
+ assert.ok(e.sequence.steps[1].objectState?.size,'new glyph state gets an automatic fitted size');
+ await page.locator('#live-content [data-bind="step.text"]').fill('WW');
+ await page.locator('#live-content [data-bind="step.text"]').press('Enter');
+ e=await current();
+ const wide=e.sequence.steps[1].objectState.size;
+ assert.ok(wide.x>wide.y,'wide glyph adopts its ink aspect');
+ assert.ok(Math.abs(wide.x*wide.y-e.size.x*e.size.y)<1e-8,'normalisation retains the formation area');
+ await page.locator('#live-content [data-action="add-ascii-step"]').click();
+ await page.locator('#live-content [data-bind="step.source.ascii.text"]').fill('########\n##    ##\n########');
+ await page.locator('#live-content [data-bind="step.source.ascii.text"]').press('Tab');
+ e=await current();
+ assert.equal(e.sequence.steps.length,3);
+ assert.equal(e.sequence.steps[2].source.ascii.text,'########\n##    ##\n########');
+ // An actual PNG produced by a real Canvas, then supplied through the file input.
+ const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=96;c.height=32;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,96,32);x.fillStyle='#000';x.fillRect(8,8,80,16);return c.toDataURL('image/png').split(',')[1];});
+ const chooser=page.waitForEvent('filechooser');
+ await page.locator('#live-content [data-action="add-image-step"]').click();
+ await (await chooser).setFiles({name:'formation-ink.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await page.waitForFunction(()=>window.__FIELD_STUDIES__.getDocument().scenes[0].entities[0].sequence.steps.length===4);
+ e=await current();
+ assert.equal(e.sequence.steps[3].source.image.name,'formation-ink.png');
+ await page.waitForFunction(()=>Object.values(window.__FIELD_STUDIES__.telemetry()?.sourceStatus??{}).filter(s=>s.includes('source active')).length>=2);
+ const native=await page.evaluate(()=>window.__FIELD_STUDIES__.telemetry().config.entities[0]);
+ assert.equal(native.sequence.links.length,4);
+ assert.equal(native.sequence.links[1].shape.text,'WW');
+ assert.equal(native.sequence.links[2].source.ascii.text,'########\n##    ##\n########');
+ assert.equal(native.sequence.links[3].source.image.name,'formation-ink.png');
+ assert.equal(native.layers,undefined,'ordinary formation editing creates sequence states');
+ await page.locator('#live-content [data-action="sequence-mode"]').selectOption('hold');
+ await page.locator('#live-content [data-action="select-step"][data-index="1"]').click();
+ await page.waitForFunction(()=>window.__FIELD_STUDIES__.telemetry().config.entities[0].shape.text==='WW');
+ const gpu=await page.evaluate(()=>{const a=window.__FIELD_STUDIES__;a.probeSteps(10,1/60);const r=a.inspect(true);return {positions:r.positions?.length,finite:r.positions?.every(Number.isFinite)};});
+ assert.ok(gpu.positions>0&&gpu.finite,'real native particle positions stay finite after authoring');
+ // Undo/redo restore the same sequence state and source data.
+ const beforeUndo=await document();
+ await page.keyboard.press('Meta+z');
+ await page.keyboard.press('Meta+Shift+z');
+ assert.deepEqual((await document()).scenes,beforeUndo.scenes);
+ // Use the production runtime and sampler to inspect actual baked geometry.
+ await page.addScriptTag({url:new URL('/field-studies-journeys/build/native-harness.js',url).href});
+ const geometry=await page.evaluate(async()=>{
+  const h=window.NATIVE_TEST,s=h.blankScene('Geometry regression'),e=h.entity('Original artwork','O');
+  s.entities=[e];e.sequence.enabled=false;e.layers=[{id:'front',text:'O',z:.25},{id:'back',text:'I',z:-.25}];
+  e.native={...h.toNativeConfig(s).entities[0],extent:{width:400,height:400,rotation:0,normalized:false}};
+  const sampler=new h.GlyphSampler(),runtime=new h.EntityRuntime(sampler);runtime.allocate(8192,128,64);
+  const bake=()=>{const cfg=h.toNativeConfig(s);runtime.layout(cfg.entities);runtime.update(cfg.entities,cfg.composition,0,0,0,0,s.engine.fontFamily,s.engine.fontWeight);return Array.from(runtime.textureA.image.data);};
+  const bounds=data=>{let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;for(let i=0;i<data.length;i+=4)if(data[i+3]>.25){x0=Math.min(x0,data[i]);x1=Math.max(x1,data[i]);y0=Math.min(y0,data[i+1]);y1=Math.max(y1,data[i+1]);}return {width:x1-x0,height:y1-y0,ratio:(x1-x0)/(y1-y0)};};
+  const original=bake();h.appendFormationState(e,'WW',undefined,{fontFamily:s.engine.fontFamily,fontWeight:s.engine.fontWeight});h.syncHeldState(e,1);
+  const glyph=bake();h.syncHeldState(e,0);const replay=bake();
+  const restored=original.every((v,i)=>v===replay[i]);
+  const canvas=document.createElement('canvas');canvas.width=96;canvas.height=32;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,96,32);ctx.fillStyle='#000';ctx.fillRect(8,8,80,16);
+  const imageSource={kind:'image',image:{mode:'luminance',threshold:.5,invert:false,scale:1,dataUrl:canvas.toDataURL('image/png'),name:'ratio.png'}};
+  const imageIndex=h.appendFormationState(e,'',imageSource,{});h.syncHeldState(e,imageIndex);
+  const image=sampler.rasterizeCustomImage(canvas,imageSource.image);runtime.setCustomCandidates(e.id,image.candidates,e.id+'_base');const imageTarget=bake();
+  const asciiSource={kind:'ascii',ascii:{text:'################',fontFamily:'monospace',fontSize:32}};
+  const asciiIndex=h.appendFormationState(e,'',asciiSource,{});h.syncHeldState(e,asciiIndex);
+  const ascii=sampler.rasterizeAscii(asciiSource.ascii.text,asciiSource.ascii);runtime.setCustomCandidates(e.id,ascii.candidates,e.id+'_base');const asciiTarget=bake();
+  e.sequence.enabled=true;const roundtrip=h.nativeSnapshotToJourney(h.toNativeConfig(s)).scenes[0].entities[0];
+  runtime.dispose();
+  return {restored,glyphDifferent:glyph.some((v,i)=>v!==original[i]),legacyNormalized:e.sequence.steps[0].objectState.normalized,newNormalized:e.sequence.steps[1].objectState.normalized,image:bounds(imageTarget),ascii:bounds(asciiTarget),roundtripLayers:roundtrip.sequence.steps.map(k=>k.layers?.length)};
+ });
+ assert.ok(geometry.restored,'original layered legacy artwork replays byte-for-byte after new glyph edits');
+ assert.ok(geometry.glyphDifferent,'added glyph actually replaces the layered native target');
+ assert.equal(geometry.legacyNormalized,false);assert.equal(geometry.newNormalized,true);
+ assert.ok(geometry.image.ratio>4.5&&geometry.image.ratio<5.7,'native image geometry retains the actual 5:1 ink aspect');
+ assert.ok(geometry.ascii.ratio>8,'native ASCII geometry retains its wide ink aspect');
+ assert.deepEqual(geometry.roundtripLayers,[2,0,0,0],'native export/reopen preserves explicit ordinary-state overrides and original body');
+ await page.screenshot({path:artifacts+'/formation-sequence.png'});
+ assert.deepEqual(errors,[]);
+ writeFileSync(artifacts+'/result.json',JSON.stringify({passed:true,glyph:'WW',ascii:true,image:true,gpu,geometry,entities:(await document()).scenes[0].entities.length},null,2));
+ console.log('Formation authoring: empty placement, glyph/ASCII/image sequence, automatic dimensions, native targets, GPU, undo/redo passed.');
+} catch(error) {
+ await page.screenshot({path:artifacts+'/failure.png'}).catch(()=>{});
+ writeFileSync(artifacts+'/failure.json',JSON.stringify({error:String(error),state:await state().catch(()=>null),errors},null,2));
+ throw error;
+} finally {await browser.close();}
