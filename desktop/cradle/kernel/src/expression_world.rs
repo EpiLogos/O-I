@@ -5784,12 +5784,23 @@ mod tests {
         let document = fixture.document();
         let mut act: Act = serde_json::from_value(fixture.act()).unwrap(); let previous = act.revision;
         let other_page = act.sequence[2].scene_ref.clone().unwrap();
-        let edition = act.sequence[1].edition.as_mut().unwrap();
-        assert_ne!(edition.selection.scene_ref, other_page);
-        let scene = edition.scenes.iter_mut().find(|scene| scene.scene_ref == other_page).unwrap();
-        assert!(scene.body.is_some()); scene.body = None;
-        edition.validate().unwrap(); crate::expression_act_storage::validate(&act).unwrap();
+        assert_ne!(act.sequence[1].edition.as_ref().unwrap().selection.scene_ref, other_page);
+        // Keep both complete Editions inside the unchanged private 4 MiB
+        // record bound: their identical Scene field remains shared by the
+        // actual codec. A lone altered 3 MiB Scene array is a storage-size
+        // refusal before this independent native body-consumer negative.
+        let mut removed = 0;
+        for passage in &mut act.sequence[1..] {
+            let edition = passage.edition.as_mut().unwrap();
+            let scene = edition.scenes.iter_mut().find(|scene| scene.scene_ref == other_page).unwrap();
+            assert!(scene.body.is_some()); scene.body = None;
+            edition.validate().unwrap(); removed += 1;
+        }
+        assert_eq!(removed, 2);
+        crate::expression_act_storage::validate(&act).unwrap();
         act.revision += 1;
+        assert!(crate::expression_act_store::ActStore::encoded_record(&act).unwrap().len()
+            <= crate::expression_act_store::MAX_RECORD_BYTES as usize);
         let store = crate::expression_act_store::ActStore::at_home(&fixture.home);
         assert_eq!(store.write(&act, Some(previous)).unwrap(), crate::expression_act_store::Written::Written);
         let stored = fixture.stored_bytes();
