@@ -107,17 +107,17 @@ test('C06: three concurrent acquisitions of one location join ONE owner read', a
   } finally { await owner.close(); }
 });
 
-test('a resolved reading serves later acquisitions with no owner round trip', async () => {
+test('a resolved reading is presentation; later acquisitions revalidate with the owner', async () => {
   const owner = await startOwner();
   try {
     const loc = location('oi:test/hit.md', 'hit.md');
     const first = await acquireFileReading(owner.transport, loc);
     const before = resourceStats();
     const second = await acquireFileReading(owner.transport, loc);
-    assert.equal(owner.requests.length, 1, 'no second POST');
-    assert.equal(second, first, 'the cache serves the resident reading itself');
-    assert.equal(resourceStats().cache_hits, before.cache_hits + 1);
-    assert.equal(resourceStats().acquisitions, before.acquisitions);
+    assert.equal(owner.requests.length, 2, 'later admission reaches the owner');
+    assert.notEqual(second.revision, first.revision, 'the new owner reading governs');
+    assert.equal(resourceStats().cache_hits, before.cache_hits);
+    assert.equal(resourceStats().acquisitions, before.acquisitions + 1);
   } finally { await owner.close(); }
 });
 
@@ -141,11 +141,11 @@ test('distinct refs, distinct paths and distinct epochs never join or share', as
     assert.equal(new Set([r1.revision, r2.revision, r3.revision, r4.revision, r5.revision]).size, 5, 'no entry answered for another');
     const before = resourceStats();
     const again = await acquireFileReading(ownerA.transport, refOne);
-    assert.equal(again, r1, 'a later acquire hits its own epoch\'s entry only');
-    assert.equal(ownerA.requests.length, 4);
+    assert.notEqual(again.revision, r1.revision, 'a later acquire revalidates its own endpoint');
+    assert.equal(ownerA.requests.length, 5);
     assert.equal(ownerB.requests.length, 1);
-    assert.equal(resourceStats().acquisitions, before.acquisitions);
-    assert.equal(resourceStats().cache_hits, before.cache_hits + 1);
+    assert.equal(resourceStats().acquisitions, before.acquisitions + 1);
+    assert.equal(resourceStats().cache_hits, before.cache_hits);
   } finally { await ownerA.close(); await ownerB.close(); }
 });
 
@@ -158,8 +158,8 @@ test('text and bytes for the same file are separate entries (two POSTs)', async 
     assert.equal(owner.requests.length, 2);
     assert.equal(owner.requests[0].op, 'file_read');
     assert.equal(owner.requests[1].op, 'file_bytes');
-    assert.equal(peekFileReading(loc)?.revision, reading.revision);
-    assert.equal(peekFileBytes(loc)?.revision, bytes.revision);
+    assert.equal(peekFileReading(owner.transport, loc)?.revision, reading.revision);
+    assert.equal(peekFileBytes(owner.transport, loc)?.revision, bytes.revision);
     assert.notEqual(reading.revision, bytes.revision, 'the two operation classes never share an entry');
   } finally { await owner.close(); }
 });
@@ -175,15 +175,15 @@ test('invalidation while a read is in flight drops its result; the next acquire 
     invalidateFile(loc);
     assert.equal(resourceStats().invalidations, before.invalidations + 1);
     owner.drain();
-    const staleReading = await first;
-    assert.equal(peekFileReading(loc), undefined, 'the late result was not published as ready');
-    assert.equal(peekFileState(loc)?.status, 'loading', 'the entry tombstones for the next read');
+    await assert.rejects(first, /file or its owner changed/);
+    assert.equal(peekFileReading(owner.transport, loc), undefined, 'the late result was not published as ready');
+    assert.equal(peekFileState(owner.transport, loc)?.status, 'loading', 'the entry tombstones for the next read');
     assert.equal(resourceStats().stale_dropped, before.stale_dropped + 1, 'the guard counted the drop');
     owner.resume();
     const second = await acquireFileReading(owner.transport, loc);
     assert.equal(owner.requests.length, 2, 'the next acquire started a real new read');
-    assert.notEqual(second.revision, staleReading.revision);
-    assert.equal(peekFileReading(loc)?.revision, second.revision);
+    assert.ok(second.revision);
+    assert.equal(peekFileReading(owner.transport, loc)?.revision, second.revision);
   } finally { await owner.close(); }
 });
 
@@ -192,22 +192,22 @@ test('applyReceipt: file_changed drops the subject; other events, malformed path
   try {
     const loc = location('oi:test/receipt.md', 'receipt.md');
     await acquireFileReading(owner.transport, loc);
-    assert.equal(peekFileState(loc)?.status, 'ready');
-    applyReceipt({event: 'expression_changed', seq: 4, path: 'receipt.md'});
-    assert.equal(peekFileState(loc)?.status, 'ready', 'an unrelated receipt never drops a reading');
-    applyReceipt({event: 'file_changed', seq: 4, path: 'receipt.md'});
-    assert.equal(peekFileState(loc)?.status, 'loading', 'file_changed tombstoned the entry');
-    assert.ok(peekFileReading(loc), 'the last reading stays visible through the tombstone');
+    assert.equal(peekFileState(owner.transport, loc)?.status, 'ready');
+    applyReceipt(owner.transport, {event: 'expression_changed', seq: 4, path: 'receipt.md'});
+    assert.equal(peekFileState(owner.transport, loc)?.status, 'ready', 'an unrelated receipt never drops a reading');
+    applyReceipt(owner.transport, {event: 'file_changed', seq: 4, path: 'receipt.md'});
+    assert.equal(peekFileState(owner.transport, loc)?.status, 'loading', 'file_changed tombstoned the entry');
+    assert.ok(peekFileReading(owner.transport, loc), 'the last reading stays visible through the tombstone');
     const again = await acquireFileReading(owner.transport, loc);
     assert.equal(owner.requests.length, 2, 'the receipt forced a real re-read');
-    assert.equal(peekFileState(loc)?.status, 'ready');
+    assert.equal(peekFileState(owner.transport, loc)?.status, 'ready');
     const before = resourceStats();
-    applyReceipt({event: 'file_changed', seq: 4, path: 'receipt.md'});
+    applyReceipt(owner.transport, {event: 'file_changed', seq: 4, path: 'receipt.md'});
     assert.equal(resourceStats().invalidations, before.invalidations, 'a replayed seq is deduped');
-    applyReceipt({event: 'file_changed', seq: 5, path: 42});
-    applyReceipt({event: 'file_changed', seq: 6});
+    applyReceipt(owner.transport, {event: 'file_changed', seq: 5, path: 42});
+    applyReceipt(owner.transport, {event: 'file_changed', seq: 6});
     assert.equal(resourceStats().invalidations, before.invalidations, 'a non-string or absent path is ignored, not thrown on');
-    assert.equal(peekFileReading(loc)?.revision, again.revision);
+    assert.equal(peekFileReading(owner.transport, loc)?.revision, again.revision);
   } finally { await owner.close(); }
 });
 
@@ -270,20 +270,20 @@ test('C10: a failed refresh keeps the last listing on the entry beside the error
   } finally { await owner.close(); }
 });
 
-test('C10: a failed re-read keeps the previous reading on the broker entry', async () => {
+test('a refused re-read withdraws reusable cache bytes; native recovery owns history', async () => {
   const owner = await startOwner();
   try {
     const loc = location('oi:test/c10.md', 'c10.md');
     const good = await acquireFileReading(owner.transport, loc);
     owner.plan.push(() => ({ok: false, error: 'owner refused the read'}));
     invalidateFile(loc);
-    assert.equal(peekFileState(loc)?.status, 'loading');
-    assert.equal(peekFileState(loc)?.reading, good, 'the tombstone keeps the reading');
+    assert.equal(peekFileState(owner.transport, loc)?.status, 'loading');
+    assert.equal(peekFileState(owner.transport, loc)?.reading, good, 'the tombstone keeps the reading');
     await assert.rejects(acquireFileReading(owner.transport, loc), /owner refused/);
-    const state = peekFileState(loc);
+    const state = peekFileState(owner.transport, loc);
     assert.equal(state.status, 'error');
-    assert.equal(state.reading, good, 'C10: error status with the last reading present');
-    assert.equal(peekFileReading(loc), good, 'consumers still see the last reading');
+    assert.equal(state.reading, undefined, 'refusal withdraws reusable bytes');
+    assert.equal(peekFileReading(owner.transport, loc), undefined, 'another consumer cannot borrow refused bytes');
   } finally { await owner.close(); }
 });
 

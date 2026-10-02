@@ -239,7 +239,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // basis invalidates its cached reading and re-projects (its own dedupe).
   useEffect(() => {
     for (const receipt of kernel.receipts) {
-      applyReceipt(receipt);
+      applyReceipt(kernel.transport, receipt);
       applyWikiProjectionReceipt(receipt, kernel.transport);
     }
   }, [kernel.receipts, kernel.transport]);

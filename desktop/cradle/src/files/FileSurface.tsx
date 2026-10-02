@@ -96,7 +96,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     // The seed keeps the document readable while the check runs (drafting
     // continues on the seeded basis; the CAS still guards the write), so
     // only the not-yet-established round trip stays pending.
-    const resident=peekFileReading(binding.location);
+    const resident=peekFileReading(transport,binding.location);
     if(resident&&binding.ref){
       setReading(resident);setDraft(readDraft(binding.ref)??{content:resident.content,saved_content:resident.content,base_revision:resident.revision});restoreView();
       setPending(false);
@@ -105,7 +105,6 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     // came from must not answer the revalidation too. When the open path's
     // read is genuinely still in flight this joins it instead of reloading —
     // one owner round trip for admission, renderer and editor.
-    invalidateFile(binding.location);
     void acquireFileReading(transport,binding.location).then(value=>{
       if(!live)return;setReading(value);setDraft(readDraft(binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
       restoreView();

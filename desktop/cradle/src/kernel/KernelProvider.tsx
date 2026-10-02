@@ -6,6 +6,7 @@
  */
 
 import { clearSavedDraft, writeDraft } from "../workspace/drafts";
+import { beginResourceOwner } from "../files/resources";
 import {
   createContext,
   useCallback,
@@ -283,10 +284,12 @@ export function KernelProvider(props: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     let subscription: { unsubscribe: () => void } | null = null;
+    let resync: ReturnType<typeof setTimeout> | null = null;
     void (async () => {
       const initial = await kernelOp(transport, { op: "state" });
       if (!alive) return;
       if (initial.outcome && initial.outcome.result === "state") {
+        beginResourceOwner(transport);
         merge(initial.outcome);
       }
       setStateSettled(true);
@@ -329,7 +332,6 @@ export function KernelProvider(props: { children: ReactNode }) {
       // window's pulled state may be behind. The re-pull is coalesced: a
       // burst of receipts is one trailing `state` read, not one per receipt
       // (every read is a process spawn on the shared kernel seam).
-      let resync: ReturnType<typeof setTimeout> | null = null;
       const requestResync = () => {
         if (resync) clearTimeout(resync);
         resync = setTimeout(() => {
@@ -347,6 +349,7 @@ export function KernelProvider(props: { children: ReactNode }) {
     })();
     return () => {
       alive = false;
+      if (resync) clearTimeout(resync);
       subscription?.unsubscribe();
     };
   }, [admitReceipts, merge, transport]);
