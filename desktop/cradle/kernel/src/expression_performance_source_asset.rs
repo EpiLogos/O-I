@@ -254,7 +254,9 @@ impl NativePerformanceSourceAsset {
     pub fn validate_basis(&self, basis: &PerformanceBasis) -> Result<(), String> {
         self.validate()?;
         basis.validate()?;
-        reject_episode_transfer(&self.native_bundle["original_native_input"], basis)?;
+        // Full producer assets include receiving inputs and native owner sidecars.
+        // An original-input-only guard cannot cover a protected occasion elsewhere.
+        reject_episode_transfer(&self.native_bundle, basis)?;
         let native = &self.native_bundle["native_basis"];
         if self.basis_digest != basis.content_digest
             || self.identity != basis.identity

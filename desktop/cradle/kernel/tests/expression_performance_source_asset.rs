@@ -609,3 +609,78 @@ fn actual_original_source_asset_boxed_native_edit_and_part_keep_exact_wire_and_r
         .verify_native_replay(&p.bases[0], &actual["source_assets"])
         .unwrap();
 }
+
+#[test]
+fn genuine_protected_original_occasion_in_any_native_asset_sidecar_cannot_enter_world_or_another_personal_occasion(
+) {
+    let path = std::env::var("QL_RETAINED_PERFORMANCE_CONTEXT_FIXTURE")
+        .expect("normal gate must generate actual protected native source occasions");
+    let contexts: Value = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
+    assert_eq!(
+        contexts["schema"],
+        "ql.retained-performance-context-fixture/v1"
+    );
+    let basis = |index: usize| {
+        serde_json::from_value::<PerformanceBasis>(contexts["variants"][index]["basis"].clone())
+            .unwrap()
+            .seal()
+            .unwrap()
+    };
+    let original = basis(0);
+    let distinct = basis(1);
+    let shared = basis(2);
+    original.validate().unwrap();
+    distinct.validate().unwrap();
+    shared.validate().unwrap();
+    let occasion = original.m4_episode.as_ref().unwrap();
+    assert_ne!(Some(occasion), distinct.m4_episode.as_ref());
+    assert_ne!(
+        original.context.protected_state,
+        distinct.context.protected_state
+    );
+    assert!(shared.context.private && shared.context.consent.is_some());
+    let (world, _) = prepared();
+    for path in [
+        "retained_sidecar",
+        "receiving_source_inputs",
+        "current_receiving",
+    ] {
+        let mut leak = world.native_sources[0].native_bundle().clone();
+        // All original M1-M3/body/input/context witness bytes are intact. The
+        // payload is a complete VALID protected episode from its native owner.
+        leak[path] = json!({"nested":{"original_occasion":occasion}});
+        assert!(
+            NativePerformanceSourceAsset::from_native(&world.bases[0], leak)
+                .unwrap_err()
+                .contains("protected occasion"),
+            "World sidecar {path}"
+        );
+        let mut private = contexts["source_assets"].clone();
+        private[path] = json!({"nested":{"original_occasion":occasion}});
+        let retained =
+            NativePerformanceSourceAsset::from_native(&original, private.clone()).unwrap();
+        assert!(retained.requires_private_disclosure());
+        assert_eq!(
+            retained.native_bundle()[path]["nested"]["original_occasion"],
+            *occasion
+        );
+        assert!(
+            NativePerformanceSourceAsset::from_native(&distinct, private.clone())
+                .unwrap_err()
+                .contains("protected occasion"),
+            "other original occasion {path}"
+        );
+        // Shared consent never declassifies another original private occasion.
+        let mut shared_leak = contexts["source_assets"].clone();
+        shared_leak[path] = json!({"nested":{"original_occasion":distinct.m4_episode}});
+        assert!(
+            NativePerformanceSourceAsset::from_native(&shared, shared_leak)
+                .unwrap_err()
+                .contains("protected occasion"),
+            "Shared sidecar {path}"
+        );
+    }
+    world.native_sources[0]
+        .require_source_context(&world.bases[0])
+        .unwrap();
+}

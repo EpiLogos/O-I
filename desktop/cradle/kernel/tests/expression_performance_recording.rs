@@ -1358,3 +1358,477 @@ fn actual_native_receipt_codec_preserves_decimal_counters_binary64_and_refuses_c
         serde_json::to_vec(&exact).unwrap()
     );
 }
+
+#[test]
+fn genuine_recorded_passage_professional_edits_use_native_act_restore_file_and_continue() {
+    use oi_cradle_kernel::{
+        expression::Document, expression_act_store::ActStore, expression_file, flow::CentralClient,
+        Kernel, KernelOp, KernelOpResult,
+    };
+    fn invoke(kernel: &mut Kernel, value: Value, world: bool) -> Value {
+        let operation = if world {
+            KernelOp::ExpressionWorld {
+                request: serde_json::from_value(value).unwrap(),
+            }
+        } else {
+            KernelOp::Expression {
+                request: serde_json::from_value(value).unwrap(),
+            }
+        };
+        match kernel.apply(operation).unwrap().result {
+            KernelOpResult::Expression { data } | KernelOpResult::ExpressionWorld { data } => data,
+            _ => panic!("actual native Expression/Act result required"),
+        }
+    }
+    fn document(kernel: &mut Kernel) -> Document {
+        serde_json::from_value(invoke(kernel,
+            json!({"operation":"inspect","expression_ref":"expression:professional-native/current"}),
+            false)["document"].clone()).unwrap()
+    }
+    fn passage(
+        kernel: &mut Kernel,
+        operations: Vec<PerformanceOperation>,
+        first: bool,
+    ) -> Document {
+        let d = document(kernel);
+        let expected_act = if first {
+            None
+        } else {
+            invoke(
+                kernel,
+                json!({"operation":"act_interrupt","act_ref":"act:professional-native",
+                "actor":"agent:professional-native","reason":"Retain the next authored edition"}),
+                true,
+            );
+            Some(
+                invoke(
+                    kernel,
+                    json!({"operation":"act_retained_inspect","act_ref":"act:professional-native"}),
+                    true,
+                )["act"]["revision"]
+                    .as_u64()
+                    .unwrap(),
+            )
+        };
+        let result = invoke(
+            kernel,
+            json!({"operation":"act_retained_perform",
+            "act_ref":"act:professional-native","expression_ref":d.expression_ref,
+            "expected_revision":d.revision,"expected_act_revision":expected_act,
+            "actor":"agent:professional-native","summary":"Retain exact native performance material",
+            "changes":[{"change":"scene_performance_edit","scene_ref":d.scenes[0].scene_ref,
+                "operations":operations}]}),
+            true,
+        );
+        assert_eq!(result["state"], "act_running");
+        document(kernel)
+    }
+    let (original, actual_checkpoint, applications, journal) = actual();
+    let state = NativeRecordState::from_checkpoint(&original.bases[0], &actual_checkpoint).unwrap();
+    let bindings = [ParameterBinding {
+        native_parameter: 4,
+        performance_parameter: 0,
+    }];
+    let recorded = prepare_recording(
+        &original,
+        admission(&state, &bindings),
+        &applications,
+        &journal,
+    )
+    .unwrap();
+    let original_receipts = recorded.prospective().native_recordings.clone();
+    let mut cp_receipt = CheckpointReceipt {
+        checkpoint_ref: "native:professional/actual-cursor384".into(),
+        identity: original.bases[0].identity.clone(),
+        sample: Counter(384),
+        basis_digest: original.bases[0].content_digest.clone(),
+        event_prefix_digest: recorded.prospective().prefix_digest(384).unwrap(),
+        queued_events: vec![],
+        acknowledged_stopped: true,
+    };
+    let checkpoint = CheckpointBinding::from_native_management(
+        cp_receipt.clone(),
+        actual_checkpoint.native_management_wire().unwrap(),
+    )
+    .unwrap();
+    let home = std::path::PathBuf::from(
+        std::env::var("OI_RETAINED_PERFORMANCE_TEST_HOME")
+            .expect("mandatory native fixture gate must provide unique Act custody"),
+    )
+    .join(format!("professional-native-act-{}", std::process::id()));
+    assert!(!home.exists(), "preserve previous native test custody");
+    let mut kernel = Kernel::new(CentralClient::discover());
+    kernel.attach_act_store(&home).unwrap();
+    invoke(
+        &mut kernel,
+        json!({"operation":"create","expression_ref":"expression:professional-native/current",
+        "title":"Professional retained native passage","actor":"agent:professional-native"}),
+        false,
+    );
+    let d = document(&mut kernel);
+    invoke(
+        &mut kernel,
+        json!({"operation":"edit","expression_ref":d.expression_ref,
+        "expected_revision":d.revision,"actor":"agent:professional-native",
+        "changes":[{"change":"scene_performance_set","scene_ref":d.scenes[0].scene_ref,"performance":original}]}),
+        false,
+    );
+    let mut record_ops = recorded.record_operations();
+    record_ops.push(PerformanceOperation::Checkpoint {
+        checkpoint: Box::new(checkpoint),
+    });
+    let performed = passage(&mut kernel, record_ops, true);
+    let performed_performance = performed.scenes[0].performance.as_ref().unwrap();
+    assert_eq!(performed_performance.event_count(), 4);
+    assert_eq!(performed_performance.native_recordings, original_receipts);
+    assert_eq!(performed_performance.checkpoints[0].sample, Counter(384));
+
+    let native_note = recorded.receipts()[0].application.note.as_ref().unwrap();
+    let touch = Counter(native_note.touch.0.checked_add(1).unwrap());
+    let member = Counter(native_note.member.0.checked_add(1).unwrap());
+    let next_sequence = recorded
+        .receipts()
+        .iter()
+        .filter_map(|r| r.recorded_sequence)
+        .max()
+        .unwrap()
+        .0
+        .checked_add(1)
+        .unwrap();
+    let note_on = TimedEvent(
+        Counter(next_sequence),
+        Counter(1000),
+        0,
+        0,
+        EventAction::NoteOn(
+            touch,
+            member,
+            0,
+            scalar(0.6),
+            native_note.phase_sin,
+            native_note.phase_cos,
+        ),
+    );
+    let release = TimedEvent(
+        Counter(next_sequence + 1),
+        Counter(1500),
+        0,
+        0,
+        EventAction::NoteOff(touch),
+    );
+    let layer = Layer {
+        layer_ref: "layer:professional-overdub".into(),
+        title: "Authored overdub".into(),
+        enabled: true,
+        solo: false,
+    };
+    let overdub = passage(
+        &mut kernel,
+        vec![PerformanceOperation::Overdub {
+            layer: layer.clone(),
+            events: vec![note_on, release.clone()],
+        }],
+        false,
+    );
+    assert_eq!(
+        overdub.scenes[0]
+            .performance
+            .as_ref()
+            .unwrap()
+            .event_count(),
+        6
+    );
+    assert_eq!(
+        overdub.scenes[0]
+            .performance
+            .as_ref()
+            .unwrap()
+            .native_recordings,
+        original_receipts
+    );
+    let mut moved_release = release;
+    moved_release.1 = Counter(1600);
+    moved_release.2 = 1;
+    let route = ModulationRoute {
+        route_ref: "route:professional-master".into(),
+        source: original.bases[0].sources[0].clone(),
+        source_unit: "linear".into(),
+        destination: original.parameters[0].clone(),
+        transfer: Transfer::Replace,
+        amount: scalar(1.0),
+        delay_samples: Counter(64),
+        feedback: false,
+        enabled: true,
+    };
+    let edited = passage(
+        &mut kernel,
+        vec![
+            PerformanceOperation::EditEvent {
+                sequence: Counter(next_sequence + 1),
+                replacement: moved_release,
+            },
+            PerformanceOperation::RouteSet {
+                route: route.clone(),
+            },
+            PerformanceOperation::Automate {
+                route_index: 0,
+                events: vec![TimedEvent(
+                    Counter(next_sequence + 2),
+                    Counter(1200),
+                    0,
+                    0,
+                    EventAction::Automation(0, scalar(0.23), None),
+                )],
+            },
+            PerformanceOperation::Loop {
+                range: Some(LoopRange {
+                    from_sample: Counter(900),
+                    to_sample: Counter(1700),
+                }),
+            },
+            PerformanceOperation::Seek {
+                sample: Counter(384),
+            },
+            PerformanceOperation::Tempo {
+                segments: vec![TempoSegment {
+                    at_sample: Counter(0),
+                    at_tick: Counter(0),
+                    micros_per_quarter: 600000,
+                }],
+            },
+        ],
+        false,
+    );
+    let edited_performance = edited.scenes[0].performance.as_ref().unwrap();
+    assert_eq!(edited_performance.event_count(), 7);
+    assert_eq!(edited_performance.native_recordings, original_receipts);
+    assert_eq!(edited_performance.bases, original.bases);
+    assert_eq!(edited_performance.pitches, original.pitches);
+    assert_eq!(
+        edited_performance.checkpoints[0]
+            .native_management_wire()
+            .unwrap(),
+        actual_checkpoint.native_management_wire().unwrap()
+    );
+    assert_eq!(edited_performance.checkpoints[0].sample, Counter(384));
+    assert_eq!(edited_performance.tick_at(48000).unwrap(), 1600);
+    let readings = |p: &Performance| {
+        let b = &p.bases[0];
+        b.sources
+            .iter()
+            .chain(&b.required_assets)
+            .chain([&b.context.context, &b.context.receiver])
+            .chain(p.routes.iter().map(|r| &r.source))
+            .map(|r| (r.r#ref.clone(), r.clone()))
+            .collect()
+    };
+    let cursor = |p: &Performance| ReplayCursor {
+        instance_ref: p.bases[0].identity.instance_ref.clone(),
+        event_ref: p.bases[0].identity.event_ref.clone(),
+        subject_ref: p.bases[0].identity.subject_ref.clone(),
+        sample: Counter(1200),
+        last_sequence: Counter(100),
+        checkpoint_digest: None,
+    };
+    let plan =
+        ReplayPlan::prepare(edited_performance, &readings(edited_performance), false).unwrap();
+    let routed = plan
+        .prepare_window(&cursor(edited_performance), 128)
+        .unwrap();
+    assert_eq!(routed.operations.len(), 1);
+    assert_eq!(routed.operations[0].sample, Counter(1264));
+    assert_eq!(
+        routed.operations[0].recorded_sequence,
+        Counter(next_sequence + 2)
+    );
+    assert!(
+        matches!(&routed.operations[0].native,NativeOperation::Parameter { value,route_ref:Some(r),.. }
+        if *value==scalar(0.23) && r==&route.route_ref)
+    );
+    let mut muted = layer.clone();
+    muted.enabled = false;
+    let muted_document = passage(
+        &mut kernel,
+        vec![
+            PerformanceOperation::LayerSet {
+                index: 1,
+                layer: muted,
+            },
+            PerformanceOperation::RouteClear {
+                route_ref: route.route_ref.clone(),
+            },
+        ],
+        false,
+    );
+    let muted_performance = muted_document.scenes[0].performance.as_ref().unwrap();
+    let mut whole_cursor = cursor(muted_performance);
+    whole_cursor.sample = Counter(900);
+    assert!(
+        ReplayPlan::prepare(muted_performance, &readings(muted_performance), false)
+            .unwrap()
+            .prepare_window(&whole_cursor, 1000)
+            .unwrap()
+            .operations
+            .is_empty()
+    );
+    assert_eq!(muted_performance.native_recordings, original_receipts);
+
+    // Actual native Restore is the existing Application's undo/redo operation;
+    // each change advances its CAS revision, while the exact older material and
+    // original callback receipts are restored rather than relabelled as new play.
+    let undo = invoke(
+        &mut kernel,
+        json!({"operation":"restore","expression_ref":edited.expression_ref,
+        "expected_revision":muted_document.revision,"document":edited,"actor":"agent:professional-native"}),
+        false,
+    );
+    let undo_document: Document = serde_json::from_value(undo["document"].clone()).unwrap();
+    assert_eq!(
+        undo_document.scenes[0].performance,
+        edited.scenes[0].performance
+    );
+    assert!(undo_document.revision > muted_document.revision);
+    let redo = invoke(
+        &mut kernel,
+        json!({"operation":"restore","expression_ref":edited.expression_ref,
+        "expected_revision":undo_document.revision,"document":muted_document,"actor":"agent:professional-native"}),
+        false,
+    );
+    let redo_document: Document = serde_json::from_value(redo["document"].clone()).unwrap();
+    assert_eq!(
+        redo_document.scenes[0].performance,
+        muted_document.scenes[0].performance
+    );
+    let stale = invoke(
+        &mut kernel,
+        json!({"operation":"restore","expression_ref":edited.expression_ref,
+        "expected_revision":undo_document.revision,"document":edited,"actor":"agent:stale"}),
+        false,
+    );
+    assert_eq!(stale["state"], "revision_conflict");
+    assert_eq!(document(&mut kernel), redo_document);
+
+    // Changes before this genuine checkpoint require an actual owner rebuild.
+    // Editing the past cannot silently carry forward old q/v or ringing voices.
+    let before = serde_json::to_vec(&redo_document).unwrap();
+    let parameter_sequence = recorded.receipts()[2].recorded_sequence.unwrap();
+    let refused=kernel.apply(KernelOp::Expression { request:serde_json::from_value(json!({
+        "operation":"edit","expression_ref":redo_document.expression_ref,"expected_revision":redo_document.revision,
+        "actor":"agent:professional-native","changes":[{"change":"scene_performance_edit",
+        "scene_ref":redo_document.scenes[0].scene_ref,"operations":[{"operation":"edit_event",
+        "sequence":parameter_sequence,"replacement":TimedEvent(parameter_sequence,Counter(149),0,0,
+            EventAction::Parameter(0,scalar(0.8),None))}]}]})).unwrap() });
+    assert!(refused.is_err());
+    assert_eq!(serde_json::to_vec(&document(&mut kernel)).unwrap(), before);
+
+    let export = invoke(
+        &mut kernel,
+        json!({"operation":"export","expression_ref":redo_document.expression_ref,
+        "expected_revision":redo_document.revision}),
+        false,
+    );
+    assert_eq!(export["state"], "exported");
+    assert_eq!(export["audience"], "local_private");
+    assert_eq!(export["dynamic_checkpoint"], false);
+    let exported: Document = serde_json::from_value(export["document"].clone()).unwrap();
+    assert_eq!(exported, redo_document);
+    let encoded = expression_file::encode(&exported).unwrap();
+    let file = home.join("professional.expression.json");
+    std::fs::write(&file, encoded.as_bytes()).unwrap();
+    let disk = std::fs::read_to_string(&file).unwrap();
+    assert_eq!(expression_file::decode(&disk).unwrap(), redo_document);
+    let close = invoke(
+        &mut kernel,
+        json!({"operation":"close","expression_ref":redo_document.expression_ref,
+        "actor":"agent:professional-native"}),
+        false,
+    );
+    assert_eq!(close["state"], "dirty");
+    assert_eq!(document(&mut kernel), redo_document);
+    // No false Save acknowledgement: the local native file-codec/Act proof is
+    // separate from the ordinary Central files save/close owner consumer.
+    let store = ActStore::at_home(&home);
+    let act = store
+        .read_retained("act:professional-native")
+        .unwrap()
+        .unwrap();
+    assert_eq!(act.sequence.len(), 4);
+    for (index, expected) in [&performed, &overdub, &edited, &muted_document]
+        .iter()
+        .enumerate()
+    {
+        assert_eq!(
+            act.performance_custody
+                .as_ref()
+                .unwrap()
+                .restore(index)
+                .unwrap(),
+            **expected
+        );
+    }
+    drop(kernel);
+    let mut reopened = Kernel::new(CentralClient::discover());
+    reopened.attach_act_store(&home).unwrap();
+    invoke(
+        &mut reopened,
+        json!({"operation":"open","document":expression_file::decode(&disk).unwrap(),
+        "actor":"agent:professional-native"}),
+        false,
+    );
+    assert_eq!(document(&mut reopened), redo_document);
+    let continued = passage(
+        &mut reopened,
+        vec![
+            PerformanceOperation::LayerSet { index: 1, layer },
+            PerformanceOperation::RouteSet { route },
+            PerformanceOperation::Seek {
+                sample: Counter(384),
+            },
+        ],
+        false,
+    );
+    let continuation = continued.scenes[0].performance.as_ref().unwrap();
+    assert_eq!(continuation.native_recordings, original_receipts);
+    assert_eq!(continuation.event_count(), 7);
+    assert_eq!(continuation.position_sample, Counter(384));
+    assert_eq!(
+        continuation
+            .seek_preparation(Counter(384))
+            .unwrap()
+            .from_sample,
+        Counter(384)
+    );
+    assert_eq!(
+        continuation.checkpoints[0]
+            .native_management_wire()
+            .unwrap(),
+        actual_checkpoint.native_management_wire().unwrap()
+    );
+    let actual_after = store
+        .read_retained("act:professional-native")
+        .unwrap()
+        .unwrap();
+    assert_eq!(actual_after.sequence.len(), 5);
+    assert_eq!(
+        actual_after
+            .performance_custody
+            .as_ref()
+            .unwrap()
+            .restore(4)
+            .unwrap(),
+        continued
+    );
+    // No new authored note/automation is an actual application yet.
+    let batch = serde_json::to_value(continuation.native_recordings[0].batch().unwrap()).unwrap();
+    assert_eq!(batch["receipts"].as_array().unwrap().len(), 4);
+    assert_eq!(
+        batch["receipts"][3]["application"]["applied_application_ordinal"],
+        "4"
+    );
+    cp_receipt.event_prefix_digest = continuation.prefix_digest(384).unwrap();
+    assert_eq!(
+        cp_receipt.event_prefix_digest,
+        continuation.checkpoints[0].event_prefix_digest
+    );
+    std::fs::remove_dir_all(home).unwrap();
+}
