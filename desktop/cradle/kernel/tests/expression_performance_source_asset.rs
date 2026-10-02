@@ -32,6 +32,11 @@ fn prepared() -> (Performance, Value) {
     let asset =
         NativePerformanceSourceAsset::from_native(&original, actual["source_assets"].clone())
             .unwrap();
+    asset.require_source_context(&original).unwrap();
+    assert_eq!(
+        actual["source_assets"]["source_context"]["availability"],
+        "available"
+    );
     let basis = original;
     let pitches = serde_json::from_value(actual["pitches"].clone()).unwrap();
     let rate = basis.prepared_body["request"]["sample_rate"]
@@ -124,10 +129,43 @@ fn edit(kernel: &mut Kernel, performance: &Performance) -> Document {
 fn full_original_native_source_recipe_keys_and_projection_survive_same_file_owner() {
     let (p, actual) = prepared();
     let source = &p.native_sources[0];
-    assert!(source
+    source
         .verify_native_replay(&p.bases[0], &actual["source_assets"])
-        .unwrap_err()
-        .contains("classification unavailable"));
+        .unwrap();
+    let mut current: std::collections::BTreeMap<String, oi_cradle_kernel::expression::ReadingRef> =
+        p.bases[0]
+            .sources
+            .iter()
+            .chain(&p.bases[0].required_assets)
+            .chain([&p.bases[0].context.receiver, &p.bases[0].context.context])
+            .map(|r| (r.r#ref.clone(), r.clone()))
+            .collect();
+    let context_refs: Vec<oi_cradle_kernel::expression::ReadingRef> = serde_json::from_value(
+        actual["source_assets"]["source_context"]["currentness_refs"].clone(),
+    )
+    .unwrap();
+    for reading in &context_refs {
+        current.insert(reading.r#ref.clone(), reading.clone());
+    }
+    assert!(p.readiness(&current, false).unwrap().ready);
+    assert!(p.readiness(&current, true).unwrap().ready);
+    let owner = context_refs.last().unwrap();
+    assert!(current.remove(&owner.r#ref).is_some());
+    let lost = p.readiness(&current, true).unwrap();
+    assert!(!lost.ready);
+    assert!(lost
+        .issues
+        .iter()
+        .any(|i| i.reference == owner.r#ref && i.kind == "missing_native_reading"));
+    let mut unavailable = owner.clone();
+    unavailable.availability = oi_cradle_kernel::expression::Availability::Unavailable;
+    current.insert(owner.r#ref.clone(), unavailable);
+    let lost = p.readiness(&current, true).unwrap();
+    assert!(!lost.ready);
+    assert!(lost
+        .issues
+        .iter()
+        .any(|i| i.reference == owner.r#ref && i.kind == "native_reading_unavailable"));
     let mut kernel = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
     let old = create(&mut kernel);
     let old_bytes = expression_file::encode(&old).unwrap();
@@ -330,12 +368,9 @@ fn actual_fifteen_minute_editions_share_one_complete_source_asset_without_source
     assert_eq!(reopened.restore(0).unwrap(), first.unwrap());
     let last = reopened.restore(179).unwrap();
     assert_eq!(last.scenes[0].performance.as_ref().unwrap(), &full);
-    assert!(
-        last.scenes[0].performance.as_ref().unwrap().native_sources[0]
-            .verify_native_replay(&full.bases[0], &actual["source_assets"])
-            .unwrap_err()
-            .contains("classification unavailable")
-    );
+    last.scenes[0].performance.as_ref().unwrap().native_sources[0]
+        .verify_native_replay(&full.bases[0], &actual["source_assets"])
+        .unwrap();
 }
 
 #[test]
@@ -492,8 +527,46 @@ fn genuine_valid_distinct_protected_native_occasions_cannot_cross_context_or_wor
     assert!(NativePerformanceSourceAsset::from_native(&bases[1], leak)
         .unwrap_err()
         .contains("protected occasion"));
-    assert!(world.native_sources[0]
+    world.native_sources[0]
+        .require_source_context(&world.bases[0])
+        .unwrap();
+    // This OTHER actual native owner output never admitted a SourceContext
+    // witness. Keep its complete original bytes; a World Return label cannot
+    // turn that unknown original into a public/played source.
+    let unknown_bundle = &contexts["source_assets"];
+    assert_ne!(
+        unknown_bundle["source_context"]["availability"],
+        "available"
+    );
+    let unknown =
+        NativePerformanceSourceAsset::from_native(&world.bases[0], unknown_bundle.clone()).unwrap();
+    assert!(unknown.requires_private_disclosure());
+    assert!(unknown
         .require_source_context(&world.bases[0])
         .unwrap_err()
         .contains("classification unavailable"));
+    assert!(unknown
+        .verify_native_replay(&world.bases[0], unknown_bundle)
+        .is_err());
+    let mut unknown_work = world.clone();
+    unknown_work.native_sources = vec![unknown];
+    unknown_work = unknown_work.seal().unwrap();
+    let catalog = PerformancePartCatalog::default()
+        .appended(&unknown_work)
+        .unwrap();
+    assert!(catalog.requires_private_disclosure());
+    let retained = PerformancePartCatalog::read(catalog.snapshot())
+        .unwrap()
+        .restore(0)
+        .unwrap();
+    assert_eq!(retained, unknown_work);
+    assert_eq!(retained.native_sources[0].native_bundle(), unknown_bundle);
+    let readiness = retained
+        .readiness(&std::collections::BTreeMap::new(), true)
+        .unwrap();
+    assert!(!readiness.ready);
+    assert!(readiness
+        .issues
+        .iter()
+        .any(|i| i.kind == "native_source_context_unavailable"));
 }
