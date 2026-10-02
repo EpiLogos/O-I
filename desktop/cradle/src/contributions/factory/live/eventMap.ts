@@ -180,7 +180,7 @@ export const EVENT_INVENTORY: readonly InventoryEntry[] = [
     note: "A provider `completed` and the TurnEnded that follows it are one occurrence (the turn), never two."},
   {id: "encounter.failure", family: "activity", source: "aikit-encounter", event: "provider Signal failed | TurnEnded.stop.Failed",
     identity: ["agent_session", "connection_generation", "Signal.sequence = TurnEnded.last_sequence"], payload: ["Signal.kind.reason", "TurnEnded.stop.Failed.reason"],
-    yields: [{op: "act_text", role: "progressText"}], roles: {progressText: "readable failed-turn status; exact failure retained in native event detail"}, native: true,
+    yields: [{op: "act_text", role: "progressText"}], roles: {progressText: "readable failed-turn status; exact failure remains in the addressed native session journal"}, native: true,
     note: "A failed turn retires its activity inscription. It does not create returned work or complete the undertaking."},
   // ── harness-stream (not native) ───────────────────────────────────────
   {id: "harness.skill", family: "skill-invocation", source: "harness-stream", event: "claude stream-json assistant tool_use name=Skill",
