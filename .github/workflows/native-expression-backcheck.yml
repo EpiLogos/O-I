@@ -28,7 +28,10 @@ concurrency:
 jobs:
   embedded:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # The actual complete native run took 28m05s including required receipts.
+    # Give this source-qualified run time to finish; effect/currentness fences
+    # retain their own existing deadlines and assertions.
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
