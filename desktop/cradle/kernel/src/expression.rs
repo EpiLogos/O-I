@@ -125,6 +125,10 @@ pub struct Scene {
     pub revision: u64,
     pub title: String,
     pub entity_refs: Vec<String>,
+    /// Versioned complete musical/physical act on the existing Scene owner.
+    /// Legacy bytes remain unchanged when no performance is present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub performance: Option<crate::expression_performance::Performance>,
     /// ES1A scene-body native carrier: the scene's primary body may come from
     /// an admitted native carrier instead of only the engine composition.
     /// Absent means the live engine composition (current default).
@@ -557,6 +561,17 @@ pub enum Change {
     SceneRemove {
         scene_ref: String,
     },
+    ScenePerformanceSet {
+        scene_ref: String,
+        performance: crate::expression_performance::Performance,
+    },
+    ScenePerformanceEdit {
+        scene_ref: String,
+        operations: Vec<crate::expression_performance::PerformanceOperation>,
+    },
+    ScenePerformanceClear {
+        scene_ref: String,
+    },
     SceneMaterialSet {
         scene_ref: String,
         presentation: crate::expression_scene::Presentation,
@@ -856,7 +871,7 @@ pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
         "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
-        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
         "reuse":{"schema":REUSE_SCHEMA,"kinds":["character","scene","expression","gesture"],"accepts":["agent","object","text","value"],
             "law":"reusable material is an ordinary Expression document; roles are placeholders in Scene material (entities/text layers carrying role); refs must name this Expression's Scenes, entities and text layers",
@@ -1097,6 +1112,9 @@ impl Document {
             if let Some(presentation) = &s.presentation {
                 crate::expression_scene::validate(presentation, s, self)?;
             }
+            if let Some(performance) = &s.performance {
+                performance.validate()?;
+            }
             if let Some(body) = &s.body {
                 crate::expression_carrier::validate_body(body, &self.expression_ref)?;
             }
@@ -1286,6 +1304,7 @@ impl Document {
                     revision: self.revision,
                     title,
                     entity_refs: vec![],
+                    performance: None,
                     body: None,
                     triggers: vec![],
                 });
@@ -1316,6 +1335,27 @@ impl Document {
                 }
                 // Referencing triggers remain subject to document validation:
                 // remove/reconnect them explicitly in the same atomic edit.
+            }
+            Change::ScenePerformanceSet {
+                scene_ref,
+                performance,
+            } => {
+                performance.validate()?;
+                self.scene(&scene_ref)?.performance = Some(performance);
+            }
+            Change::ScenePerformanceEdit {
+                scene_ref,
+                operations,
+            } => {
+                let scene = self.scene(&scene_ref)?;
+                let old = scene
+                    .performance
+                    .as_ref()
+                    .ok_or("Scene has no retained performance")?;
+                scene.performance = Some(old.edited(operations)?);
+            }
+            Change::ScenePerformanceClear { scene_ref } => {
+                self.scene(&scene_ref)?.performance = None;
             }
             Change::SceneMaterialSet {
                 scene_ref,
@@ -1793,6 +1833,7 @@ impl Application {
                         revision: 1,
                         title: "Main".into(),
                         entity_refs: vec![],
+                        performance: None,
                         body: None,
                         triggers: vec![],
                     }],

@@ -195,6 +195,9 @@ pub(crate) fn intern(value: &mut Value, refs: &BTreeMap<String, String>) {
 /// Save the exact full native Document through its file owner. No serializer
 /// or public Document shape changes: only the file has reference encoding.
 pub fn encode(document: &Document) -> Result<String, String> {
+    if document.scenes.iter().any(|s| s.performance.is_some()) {
+        return crate::expression_performance_storage::encode_document(document);
+    }
     document.validate()?;
     let full = serde_json::to_vec(document).map_err(|e| e.to_string())?;
     let mut value = serde_json::to_value(document).map_err(|e| e.to_string())?;
@@ -315,6 +318,9 @@ pub fn decode(content: &str) -> Result<Document, String> {
     }
     let UniqueValue(value) =
         serde_json::from_str(content).map_err(|e| format!("Invalid Expression file: {e}"))?;
+    if crate::expression_performance_storage::supports_storage(&value["schema"]) {
+        return crate::expression_performance_storage::decode_document(value);
+    }
     safe(&value, 0)?;
     if value["schema"] == crate::expression::SCHEMA {
         let document: Document = serde_json::from_str(content).map_err(|e| e.to_string())?;

@@ -434,6 +434,9 @@ pub struct Passage {
     /// restores this edition through the native document CAS operation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub edition: Option<Box<expression::Document>>,
+    /// Versioned immutable performance edition in this same Act's native custody.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub performance_edition: Option<crate::expression_performance_act::PerformanceEdition>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub file_ref: Option<String>,
     /// Material addressed as an open Expression (instead of a file).
@@ -492,6 +495,7 @@ impl Passage {
             index,
             kind,
             edition: None,
+            performance_edition: None,
             file_ref: None,
             expression_ref: None,
             revision: None,
@@ -579,6 +583,11 @@ pub struct Act {
     pub position: Option<usize>,
     #[serde(default)]
     pub sequence: Vec<Passage>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub performance_custody: Option<crate::expression_performance_storage::ActPerformanceCustody>,
+    /// Explicit native material contract; absent preserves complete legacy Editions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub material_contract: Option<String>,
     #[serde(default)]
     pub continuations: Vec<Continuation>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -631,6 +640,8 @@ impl Act {
             selection: None,
             position: None,
             sequence: vec![],
+            performance_custody: None,
+            material_contract: None,
             continuations: vec![],
             return_ref: None,
             result: None,
@@ -1031,6 +1042,34 @@ pub enum Request {
         #[serde(default)]
         activity_ref: Option<String>,
         changes: Vec<Change>,
+    },
+    /// Explicit material-v2 transaction, never an automatic legacy upgrade.
+    ActRetainedPerform {
+        act_ref: String,
+        expression_ref: String,
+        expected_revision: u64,
+        #[serde(default)]
+        expected_act_revision: Option<u64>,
+        summary: String,
+        actor: String,
+        #[serde(default)]
+        activity_ref: Option<String>,
+        changes: Vec<Change>,
+    },
+    /// One native Act CAS indexes exact prior editions in the same store.
+    ActRetainedEnable {
+        act_ref: String,
+        expected_act_revision: u64,
+    },
+    /// Versioned index readback; every handle names one complete Document.
+    ActRetainedInspect {
+        act_ref: String,
+    },
+    /// Return the exact full selected edition without changing presentation.
+    ActRetainedEdition {
+        act_ref: String,
+        expected_act_revision: u64,
+        position: usize,
     },
     /// Human interruption: hold the act. Nothing reverts and nothing
     /// advances; the presentation stays exactly as the act left it.
@@ -1435,7 +1474,7 @@ pub fn capabilities() -> Value {
             "whole_bind", "whole_inspect", "whole_rebase",
             "material_list", "act_open", "act_select", "act_gesture", "act_text",
             "act_operate", "act_continue", "act_complete", "act_seek", "act_play", "act_archive",
-            "act_inspect", "act_list"
+            "act_inspect", "act_list", "act_retained_enable", "act_retained_perform", "act_retained_inspect", "act_retained_edition"
         ],
         "selection": {
             "origins": ["graph", "wiki", "constellation", "expression", "agent", "page"],
@@ -1490,6 +1529,30 @@ impl Kernel {
     /// only the wiring.
     pub fn expression_world(&mut self, request: Request) -> Result<KernelOpOutcome, String> {
         let mut receipts = Vec::new();
+        let (request, retained_expected) = match request {
+            Request::ActRetainedPerform {
+                act_ref,
+                expression_ref,
+                expected_revision,
+                expected_act_revision,
+                summary,
+                actor,
+                activity_ref,
+                changes,
+            } => (
+                Request::ActPerform {
+                    act_ref,
+                    expression_ref,
+                    expected_revision,
+                    summary,
+                    actor,
+                    activity_ref,
+                    changes,
+                },
+                Some(expected_act_revision),
+            ),
+            other => (other, None),
+        };
         let data = match request {
             Request::Capabilities => capabilities(),
             Request::SelectionSet {
@@ -1687,6 +1750,15 @@ impl Kernel {
                         return Err("Act has ended; open a new act".into());
                     }
                 }
+                match (retained_expected,self.world.acts.get(&act_ref)) {
+                    (Some(Some(expected)),Some(act)) if expected!=act.revision => {
+                        return Ok(KernelOpOutcome {receipts,result:KernelOpResult::ExpressionWorld {data:act_conflict(act,expected)}});
+                    }
+                    (Some(None),Some(_)) | (Some(Some(_)),None) => return Err("retained operation must name the exact existing Act revision, or None for a new Act".into()),
+                    (Some(_),Some(act)) if act.material_contract.as_deref()!=Some(crate::expression_performance_act::MATERIAL_SCHEMA) => return Err("enable retained material-v2 before performing this legacy Act".into()),
+                    (None,Some(act)) if act.material_contract.is_some() => return Err("this Act requires act_retained_perform; legacy act_perform remains material-v1".into()),
+                    _=>{},
+                }
                 let (passages, act_revision, existing) = self
                     .world
                     .acts
@@ -1729,13 +1801,20 @@ impl Kernel {
                         .unwrap()
                         .document
                         .edited(changes.clone())?;
-                    let new_act = Act::new(
+                    let mut new_act = Act::new(
                         act_ref.clone(),
                         expression_ref.clone(),
                         summary.clone(),
                         actor.clone(),
                         ActMode::Expressions,
                     );
+                    if retained_expected.is_some() {
+                        new_act.material_contract =
+                            Some(crate::expression_performance_act::MATERIAL_SCHEMA.into());
+                        new_act.performance_custody = Some(
+                            crate::expression_performance_storage::ActPerformanceCustody::default(),
+                        );
+                    }
                     let previous = self.world.acts.get(&act_ref).unwrap_or(&new_act);
                     let mut passage =
                         Passage::new(previous.sequence.len(), PassageKind::Edition, previous.mode);
@@ -1750,15 +1829,6 @@ impl Kernel {
                     } else {
                         1
                     };
-                    let weight = crate::expression_act_storage::preflight_append(
-                        previous,
-                        &passage,
-                        &summary,
-                        &actor,
-                        activity_ref.as_deref(),
-                        expected_revision,
-                        next_revision,
-                    )?;
                     let mut available = self.world.available_act_bytes(&act_ref)?;
                     if !existing && self.world.acts.len() >= MAX_ACTS {
                         // Predict exactly the same ended concern make-room
@@ -1771,19 +1841,53 @@ impl Kernel {
                             .filter(|n| *n <= crate::expression_act_storage::LIVE_BYTES)
                             .ok_or("Invalid expanded Act admission accounting")?;
                     }
+                    let retained_candidate = if retained_expected.is_some() {
+                        Some(crate::expression_performance_act::prepare_append(
+                            previous,
+                            &passage,
+                            passage.edition.as_ref().unwrap(),
+                            &summary,
+                            &actor,
+                            activity_ref.as_deref(),
+                            expected_revision,
+                            next_revision,
+                            available,
+                        )?)
+                    } else {
+                        None
+                    };
+                    let weight = if let Some(candidate) = &retained_candidate {
+                        crate::expression_performance_act::retained_bytes(candidate)?
+                    } else {
+                        crate::expression_act_storage::preflight_append(
+                            previous,
+                            &passage,
+                            &summary,
+                            &actor,
+                            activity_ref.as_deref(),
+                            expected_revision,
+                            next_revision,
+                        )?
+                    };
                     if weight > available {
                         return Err("Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit".into());
                     }
-                    let mut prospective = previous.clone();
-                    prospective.position = Some(passage.index);
-                    prospective.sequence.push(passage);
-                    prospective.summary = summary.clone();
-                    prospective.actor = actor.clone();
-                    prospective.activity_ref = activity_ref.clone().or(prospective.activity_ref);
-                    prospective.basis_revision = expected_revision;
-                    prospective.phase = ActPhase::Running;
-                    prospective.revision = next_revision;
-                    prospective.updated_at_unix_ms = unix_ms();
+                    let prospective = if let Some(candidate) = retained_candidate {
+                        candidate
+                    } else {
+                        let mut prospective = previous.clone();
+                        prospective.position = Some(passage.index);
+                        prospective.sequence.push(passage);
+                        prospective.summary = summary.clone();
+                        prospective.actor = actor.clone();
+                        prospective.activity_ref =
+                            activity_ref.clone().or(prospective.activity_ref);
+                        prospective.basis_revision = expected_revision;
+                        prospective.phase = ActPhase::Running;
+                        prospective.revision = next_revision;
+                        prospective.updated_at_unix_ms = unix_ms();
+                        prospective
+                    };
                     crate::expression_act_store::ActStore::encoded_record(&prospective)?;
                 }
                 if !existing {
@@ -1834,11 +1938,26 @@ impl Kernel {
                         ActMode::Expressions,
                     )
                 });
+                if retained_expected.is_some() && act.material_contract.is_none() {
+                    act.material_contract =
+                        Some(crate::expression_performance_act::MATERIAL_SCHEMA.into());
+                    act.performance_custody = Some(
+                        crate::expression_performance_storage::ActPerformanceCustody::default(),
+                    );
+                }
                 let mut passage = Passage::new(act.sequence.len(), PassageKind::Edition, act.mode);
                 passage.target_ref = Some(expression_ref.clone());
                 passage.revision = Some(edition.revision.to_string());
                 passage.summary = Some(summary.clone());
-                passage.edition = Some(Box::new(edition.clone()));
+                if retained_expected.is_some() {
+                    crate::expression_performance_act::retain_edition(
+                        &mut act,
+                        &mut passage,
+                        edition.clone(),
+                    )?;
+                } else {
+                    passage.edition = Some(Box::new(edition.clone()));
+                }
                 act.position = Some(passage.index);
                 act.sequence.push(passage);
                 act.summary = summary;
@@ -2142,6 +2261,10 @@ impl Kernel {
             | Request::ActPlay { .. }
             | Request::ActArchive { .. }
             | Request::ActInspect { .. }
+            | Request::ActRetainedEnable { .. }
+            | Request::ActRetainedInspect { .. }
+            | Request::ActRetainedEdition { .. }
+            | Request::ActRetainedPerform { .. }
             | Request::ActList { .. }) => {
                 // Any failure after an act edited its live target restores
                 // the target's pre-edit document: act and Expression agree.
@@ -2190,7 +2313,7 @@ impl Kernel {
                     "state":"expression_not_open",
                     "expression_ref":expression_ref,
                     "detail":"The addressed Expression is not open; the shared selection still moved",
-                }))
+                }));
             }
         };
         let document: expression::Document = serde_json::from_value(inspected["document"].clone())
@@ -3255,7 +3378,7 @@ impl Kernel {
                     _ => {
                         return Err(
                             "Native first text page restore did not confirm its selection".into(),
-                        )
+                        );
                     }
                 }
             }
@@ -3667,12 +3790,12 @@ impl Kernel {
 
     /// Drift of one recorded passage's material (Scene/state/gesture file
     /// and every bound character) against its current revisions.
-    fn passage_drift(&mut self, passage: &Passage) -> Result<Option<Value>, String> {
+    fn passage_drift(&mut self, act: &Act, passage: &Passage) -> Result<Option<Value>, String> {
         if passage.kind == PassageKind::Edition {
             // This is the exact retained edition, independent of subsequent
             // changes to reusable material. Its own target/revision is checked
             // again before the native restore.
-            Self::validate_retained_edition(passage)?;
+            Self::validate_retained_edition(act, passage)?;
             return Ok(None);
         }
         if passage.file_ref.is_some() || passage.expression_ref.is_some() {
@@ -3709,17 +3832,8 @@ impl Kernel {
         Ok(None)
     }
 
-    fn validate_retained_edition(passage: &Passage) -> Result<(), String> {
-        let edition = passage
-            .edition
-            .as_ref()
-            .ok_or("Edition passage has no retained document")?;
-        if passage.target_ref.as_deref() != Some(edition.expression_ref.as_str())
-            || passage.revision.as_deref() != Some(edition.revision.to_string().as_str())
-        {
-            return Err("Retained edition target or revision mismatch".into());
-        }
-        edition.validate()
+    fn validate_retained_edition(act: &Act, passage: &Passage) -> Result<(), String> {
+        crate::expression_performance_act::validate_edition(act, passage)
     }
 
     fn retained_text_pages<'a>(act: &'a Act, source: &Passage) -> Result<Vec<&'a Passage>, String> {
@@ -3743,7 +3857,7 @@ impl Kernel {
         let mut complete = String::new();
         let mut scene_refs = BTreeSet::new();
         for (index, page) in pages.iter().enumerate() {
-            Self::validate_retained_edition(page)?;
+            Self::validate_retained_edition(act, page)?;
             if page.index != source.index + index + 1
                 || page.target_ref.as_deref() != Some(target)
                 || page.expression_ref.as_deref() != Some(target)
@@ -3751,11 +3865,12 @@ impl Kernel {
                 || page.role != source.role
                 || page.field != source.field
                 || page.scene_ref != page.target_scene_ref
-                || page
-                    .edition
-                    .as_ref()
-                    .map(|edition| edition.selection.scene_ref.as_str())
-                    != page.scene_ref.as_deref()
+                || Some(
+                    crate::expression_performance_act::edition(act, page)?
+                        .selection
+                        .scene_ref
+                        .as_str(),
+                ) != page.scene_ref.as_deref()
             {
                 return Err("Retained text page does not match its source passage".into());
             }
@@ -3779,10 +3894,7 @@ impl Kernel {
         // navigation can reveal any of its pages, not just its selected page.
         // Qualify all page layers in all Editions before retry/restore/fill.
         for edition_page in &pages {
-            let edition = edition_page
-                .edition
-                .as_ref()
-                .ok_or("Edition passage has no retained document")?;
+            let edition = crate::expression_performance_act::edition(act, edition_page)?;
             for page in &pages {
                 let scene_ref = page
                     .scene_ref
@@ -3867,10 +3979,7 @@ impl Kernel {
                     .ok_or("Retained text page has no native source passage")?;
                 Self::retained_text_pages(act, source)?;
             }
-            let edition = passage
-                .edition
-                .as_ref()
-                .ok_or("Edition passage has no retained document")?;
+            let edition = crate::expression_performance_act::edition(act, passage)?;
             if edition.expression_ref != target_ref
                 || passage.revision.as_deref() != Some(edition.revision.to_string().as_str())
             {
@@ -3889,7 +3998,7 @@ impl Kernel {
                 expression::Request::Restore {
                     expression_ref: target_ref,
                     expected_revision: current.revision,
-                    document: edition.clone(),
+                    document: Box::new(edition.into_owned()),
                     actor: actor.to_owned(),
                 },
             )?;
@@ -4904,13 +5013,13 @@ impl Kernel {
                     // Edition integrity is never an optional material-drift
                     // override, and is checked before any presentation edit.
                     if passage.kind == PassageKind::Edition {
-                        Self::validate_retained_edition(passage)?;
+                        Self::validate_retained_edition(&act, passage)?;
                     }
                     if accept_drift {
                         for binding in passage.bindings.values_mut() {
                             binding.character_revision = None;
                         }
-                    } else if let Some(mut refusal) = self.passage_drift(passage)? {
+                    } else if let Some(mut refusal) = self.passage_drift(&act, passage)? {
                         refusal["act_ref"] = json!(act.act_ref);
                         return Ok(refusal);
                     }
@@ -4955,7 +5064,28 @@ impl Kernel {
                     Err(conflict) => conflict,
                 })
             }
+            Request::ActRetainedEnable {act_ref,expected_act_revision} => {
+                let act=guard!(act_ref,Some(expected_act_revision));
+                if let Some(refusal)=self.act_precheck_fields_mode(&act_ref,act.sequence.len(),Some(expected_act_revision),0,false,false)? {return Ok(refusal);}
+                let candidate=crate::expression_performance_act::migrate(&act,self.world.available_act_bytes(&act_ref)?)?;
+                Ok(match self.act_commit(candidate,Some(expected_act_revision))? {
+                    Ok(act)=>json!({"state":"act_retained_enabled","material_contract":crate::expression_performance_act::MATERIAL_SCHEMA,"act":act}),
+                    Err(conflict)=>conflict,
+                })
+            }
+            Request::ActRetainedInspect {act_ref} => match self.act_lookup(&act_ref)? {
+                Some(act) if act.material_contract.as_deref()==Some(crate::expression_performance_act::MATERIAL_SCHEMA) => Ok(json!({"state":"act_retained","material_contract":crate::expression_performance_act::MATERIAL_SCHEMA,"act":act})),
+                Some(_)=>Err("Act has not opted into retained-performance material-v2".into()),
+                None=>Ok(json!({"state":"unknown_act","act_ref":act_ref})),
+            },
+            Request::ActRetainedEdition {act_ref,expected_act_revision,position} => {
+                let act=guard!(act_ref,Some(expected_act_revision));
+                let document=crate::expression_performance_act::selected_document(&act,position)?;
+                Ok(json!({"state":"act_retained_edition","material_contract":crate::expression_performance_act::MATERIAL_SCHEMA,"act_ref":act_ref,"act_revision":act.revision,"position":position,"document":document}))
+            }
+            Request::ActRetainedPerform {..} => Err("retained perform must pass the native Expression transaction dispatcher".into()),
             Request::ActInspect { act_ref } => match self.act_lookup(&act_ref)? {
+                Some(act) if act.material_contract.is_some()=>Err("this Act requires act_retained_inspect; legacy inspection retains complete material-v1 Editions".into()),
                 Some(act) => Ok(json!({"state":"act","act":act})),
                 None => Ok(json!({"state":"unknown_act","act_ref":act_ref})),
             },
@@ -5707,8 +5837,11 @@ mod tests {
         )
         .unwrap();
         fixture.kernel = fresh;
-        assert_eq!(fixture.act(), serde_json::to_value(&act).unwrap(),
-            "The real private codec must accept the structurally valid rehashed record before semantic refusal");
+        assert_eq!(
+            fixture.act(),
+            serde_json::to_value(&act).unwrap(),
+            "The real private codec must accept the structurally valid rehashed record before semantic refusal"
+        );
         let before_document = fixture.document();
         let before_act = fixture.act();
         assert_eq!(
@@ -5880,7 +6013,10 @@ mod tests {
                 > crate::expression_act_storage::EXPANDED_BYTES / pages.len()
         );
         let refusal = full_world_text_fill(&mut fixture, "ab", &basis).unwrap_err();
-        assert_eq!(refusal, "Native text pages exceed the available expanded Act budget before page material allocation");
+        assert_eq!(
+            refusal,
+            "Native text pages exceed the available expanded Act budget before page material allocation"
+        );
         assert_full_world_refusal_unchanged(
             &mut fixture,
             &before_document,
@@ -5954,21 +6090,28 @@ mod tests {
             assert_eq!(original_body["carrier"], "engine_composition");
             for (page_index, page) in act.sequence[1..].iter().enumerate() {
                 let edition = serde_json::to_value(page.edition.as_ref().unwrap()).unwrap();
-                assert_eq!(edition["revision"].as_u64().unwrap(),
+                assert_eq!(
+                    edition["revision"].as_u64().unwrap(),
                     before["revision"].as_u64().unwrap() + page_index as u64 + 1,
-                    "Each actual Edition must acknowledge exactly its predicted native edit revision");
-                assert_eq!(edition["selection"], json!({
+                    "Each actual Edition must acknowledge exactly its predicted native edit revision"
+                );
+                assert_eq!(
+                    edition["selection"],
+                    json!({
                     "scene_ref":page.scene_ref.as_deref().unwrap(),"entity_ref":null}),
-                    "The only selected occurrence change is the acknowledged page with no entity/relation");
+                    "The only selected occurrence change is the acknowledged page with no entity/relation"
+                );
                 let originals = before["scenes"].as_array().unwrap();
                 let cohort_refs: BTreeSet<_> = act.sequence[1..]
                     .iter()
                     .map(|member| member.scene_ref.as_deref().unwrap())
                     .collect();
                 assert_eq!(cohort_refs.len(), 2);
-                assert!(cohort_refs.iter().all(|reference| !originals
-                    .iter()
-                    .any(|scene| scene["scene_ref"].as_str() == Some(*reference))));
+                assert!(cohort_refs.iter().all(|reference| {
+                    !originals
+                        .iter()
+                        .any(|scene| scene["scene_ref"].as_str() == Some(*reference))
+                }));
                 assert_eq!(
                     edition["scenes"].as_array().unwrap().len(),
                     originals.len() + 2,
@@ -5986,8 +6129,10 @@ mod tests {
                 );
                 preserved["revision"] = before["revision"].clone();
                 preserved["selection"] = before["selection"].clone();
-                assert_eq!(preserved, before,
-                    "Every original Scene, world presentation, source/person/occasion, profile and body must remain exactly equal in the native Document; only appended pages/revision/selection are lawful");
+                assert_eq!(
+                    preserved, before,
+                    "Every original Scene, world presentation, source/person/occasion, profile and body must remain exactly equal in the native Document; only appended pages/revision/selection are lawful"
+                );
                 for field in [
                     "entities",
                     "relations",
@@ -6092,7 +6237,10 @@ mod tests {
             "summary":"One more complete controlled Edition",
             "changes":[{"change":"focus","scene_ref":format!("{}:scene:personal", fixture.expression_ref),
                 "entity_ref":format!("{}:entity:world-centre-3", fixture.expression_ref)}]})).unwrap_err();
-        assert_eq!(refused, "Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit");
+        assert_eq!(
+            refused,
+            "Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit"
+        );
         assert_full_world_refusal_unchanged(
             &mut fixture,
             &before_document,

@@ -44,7 +44,14 @@ impl ActStore {
         crate::expression_act_storage::encode(act)
     }
     pub(crate) fn expanded_bytes(act: &Act) -> Result<usize, String> {
-        crate::expression_act_storage::measure(act, crate::expression_act_storage::EXPANDED_BYTES)
+        if act.material_contract.is_some() {
+            crate::expression_performance_act::retained_bytes(act)
+        } else {
+            crate::expression_act_storage::measure(
+                act,
+                crate::expression_act_storage::EXPANDED_BYTES,
+            )
+        }
     }
     /// The store under an explicit O:I home (`<home>/desktop/expression-acts`).
     pub fn at_home(home: &Path) -> Self {
@@ -243,7 +250,22 @@ impl ActStore {
 
     /// Read one act by ref from the live register or the archive.
     pub fn read(&self, act_ref: &str) -> Result<Option<Act>, String> {
-        self.read_with_budget(act_ref, crate::expression_act_storage::EXPANDED_BYTES)
+        let act = self.read_with_budget(act_ref, crate::expression_act_storage::EXPANDED_BYTES)?;
+        if act.as_ref().is_some_and(|a| a.material_contract.is_some()) {
+            return Err("retained Act requires explicit read_retained material-v2 consumer".into());
+        }
+        Ok(act)
+    }
+    /// Explicit material-v2 caller; uses the same lock, file and archive owner.
+    pub fn read_retained(&self, act_ref: &str) -> Result<Option<Act>, String> {
+        let act = self.read_with_budget(act_ref, crate::expression_act_storage::LIVE_BYTES)?;
+        if act.as_ref().is_some_and(|a| {
+            a.material_contract.as_deref()
+                != Some(crate::expression_performance_act::MATERIAL_SCHEMA)
+        }) {
+            return Err("Act has not opted into retained-performance material-v2".into());
+        }
+        Ok(act)
     }
     pub(crate) fn read_with_budget(
         &self,
@@ -254,7 +276,7 @@ impl ActStore {
         let path = self.locate(act_ref);
         let archived = path == self.archived_path(act_ref);
         let available = if archived {
-            crate::expression_act_storage::EXPANDED_BYTES
+            crate::expression_act_storage::LIVE_BYTES
         } else {
             available
         };
@@ -288,7 +310,7 @@ impl ActStore {
         let path = self.locate(act_ref);
         let current = Self::read_path(
             &path,
-            crate::expression_act_storage::EXPANDED_BYTES,
+            crate::expression_act_storage::LIVE_BYTES,
             path == self.archived_path(act_ref),
         )?
         .map(|a| a.revision);
@@ -314,7 +336,7 @@ impl ActStore {
             return if self.archived_path(act_ref).exists() {
                 Self::read_path(
                     &self.archived_path(act_ref),
-                    crate::expression_act_storage::EXPANDED_BYTES,
+                    crate::expression_act_storage::LIVE_BYTES,
                     true,
                 )?;
                 Ok(())
@@ -322,7 +344,7 @@ impl ActStore {
                 Err("No stored act with this ref".into())
             };
         }
-        Self::read_path(&live, crate::expression_act_storage::EXPANDED_BYTES, true)?;
+        Self::read_path(&live, crate::expression_act_storage::LIVE_BYTES, true)?;
         let folder = self.root.join(ARCHIVE);
         fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
         fs::rename(&live, self.archived_path(act_ref)).map_err(|e| e.to_string())?;
@@ -338,12 +360,8 @@ impl ActStore {
         let _lock = self.prepare()?;
         let path = self.locate(&act.act_ref);
         let archived = path == self.archived_path(&act.act_ref);
-        let current = Self::read_path(
-            &path,
-            crate::expression_act_storage::EXPANDED_BYTES,
-            archived,
-        )?
-        .map(|a| a.revision);
+        let current = Self::read_path(&path, crate::expression_act_storage::LIVE_BYTES, archived)?
+            .map(|a| a.revision);
         if current != expected {
             return Ok(Written::Conflict { current });
         }

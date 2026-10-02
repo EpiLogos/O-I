@@ -86,6 +86,9 @@ pub(crate) fn preflight_append(
     basis: u64,
     revision: u64,
 ) -> Result<usize, String> {
+    if act.material_contract.is_some() {
+        return Err("retained-performance Act requires explicit versioned preflight".into());
+    }
     struct Sequence<'a>(&'a [Passage], &'a Passage);
     impl Serialize for Sequence<'_> {
         fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
@@ -128,6 +131,8 @@ pub(crate) fn preflight_append(
                 selection,
                 position: _,
                 sequence,
+                performance_custody,
+                material_contract,
                 continuations,
                 return_ref,
                 result,
@@ -165,6 +170,8 @@ pub(crate) fn preflight_append(
             optional!("selection", selection);
             field!("position", self.passage.index);
             field!("sequence", Sequence(sequence, self.passage));
+            optional!("performance_custody", performance_custody);
+            optional!("material_contract", material_contract);
             field!("continuations", continuations);
             optional!("return_ref", return_ref);
             optional!("result", result);
@@ -199,7 +206,7 @@ fn fingerprint<T: Serialize + ?Sized>(value: &T, limit: usize) -> Result<(usize,
     Ok((output.bytes, format!("sha256:{:x}", output.hash.finalize())))
 }
 
-fn safe(value: &Value, depth: usize) -> Result<(), String> {
+pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
     if depth > 56 {
         return Err("Act storage nesting budget exceeded".into());
     }
@@ -274,7 +281,7 @@ fn canonical<T: serde::de::DeserializeOwned + Serialize>(value: &Value) -> Resul
     }
     Ok(())
 }
-fn canonical_field(key: &str, value: &Value) -> Result<(), String> {
+pub(crate) fn canonical_field(key: &str, value: &Value) -> Result<(), String> {
     use crate::expression::*;
     match key {
         "schema" | "expression_ref" | "title" => canonical::<String>(value),
@@ -294,6 +301,14 @@ fn canonical_field(key: &str, value: &Value) -> Result<(), String> {
     }
 }
 pub(crate) fn validate(act: &Act) -> Result<(), String> {
+    if act.material_contract.is_some() {
+        return crate::expression_performance_act::validate(act);
+    }
+    if act.performance_custody.is_some()
+        || act.sequence.iter().any(|p| p.performance_edition.is_some())
+    {
+        return Err("native performance edition has no custody".into());
+    }
     measure(act, EXPANDED_BYTES)?;
     if act.revision == 0
         || act.sequence.len() > 513
@@ -318,7 +333,7 @@ pub(crate) fn validate(act: &Act) -> Result<(), String> {
                 document.validate()?;
             }
             (PassageKind::Edition, None) => {
-                return Err("Edition passage has no retained document".into())
+                return Err("Edition passage has no retained document".into());
             }
             (_, Some(_)) => return Err("Retained document outside an edition passage".into()),
             _ => {}
@@ -328,6 +343,9 @@ pub(crate) fn validate(act: &Act) -> Result<(), String> {
 }
 
 pub(crate) fn encode(act: &Act) -> Result<Vec<u8>, String> {
+    if act.material_contract.is_some() {
+        return crate::expression_performance_act::encode(act);
+    }
     // This borrowed pass counts every complete occurrence before allocating a
     // Value or sharing fields. Unique dictionary size cannot license history.
     let (_, expanded_act_sha256) = fingerprint(act, EXPANDED_BYTES)?;
@@ -432,7 +450,10 @@ fn bounded(bytes: Vec<u8>) -> Result<Vec<u8>, String> {
 
 pub(crate) fn header(bytes: &[u8]) -> Result<(String, bool, u64, bool), String> {
     let UniqueValue(value) = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
-    if value["schema"] != SCHEMA && value["schema"] != crate::expression_act_store::SCHEMA {
+    if value["schema"] != SCHEMA
+        && value["schema"] != crate::expression_act_store::SCHEMA
+        && !crate::expression_performance_act::supports_storage(&value["schema"])
+    {
         return Err("Unsupported Act storage schema".into());
     }
     let reference = value["act"]["act_ref"]
@@ -460,6 +481,17 @@ pub(crate) fn decode(bytes: &[u8], available: usize) -> Result<Act, String> {
     let UniqueValue(value) =
         serde_json::from_slice(bytes).map_err(|e| format!("Invalid Act record: {e}"))?;
     safe(&value, 0)?;
+    if crate::expression_performance_act::supports_storage(&value["schema"]) {
+        return crate::expression_performance_act::decode(value, available);
+    }
+    if !value["act"]["material_contract"].is_null()
+        || !value["act"]["performance_custody"].is_null()
+        || value["act"]["sequence"]
+            .as_array()
+            .is_some_and(|p| p.iter().any(|p| !p["performance_edition"].is_null()))
+    {
+        return Err("indexed performance Act requires its version2 native envelope".into());
+    }
     // The caller supplies the budget. An untrusted archived flag never bypasses
     // startup/live admission; only an explicit archive-by-ref read is transient.
     let limit = available.min(EXPANDED_BYTES);
