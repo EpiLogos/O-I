@@ -87,21 +87,32 @@ async function clickActualBody(entityRef){
   if(!partition||partition.end<=partition.start)throw Error('The required body has no actual resident particle partition.');
   const points=[];
   for(let i=0;i<state.particleCount;i++){const offset=i*4,p=f.nativeProject({x:state.positions[offset]/scale,y:state.positions[offset+1]/scale,z:state.positions[offset+2]/scale});points.push(p);}
-  let best=null;
+  const stage=document.getElementById('stage');if(!stage)throw Error('The ordinary receiving Stage is unavailable.');
+  const describe=e=>e?{tag:e.tagName,id:e.id,classes:(e.getAttribute('class')??'').slice(0,200),role:(e.getAttribute('role')??'').slice(0,100)}:null;
+  const pathAt=p=>{const top=document.elementFromPoint(p.x,p.y),exclusion=top?.closest('button,.nara-kept-answer')??null;
+   return {stage_receives:!!top&&stage.contains(top)&&!exclusion,top:describe(top),production_exclusion:describe(exclusion),stack:document.elementsFromPoint(p.x,p.y).slice(0,8).map(describe)};};
+  let best=null;const candidates=[];
   // Select a visible isolated surface point of the actual receiving body, not
   // its shared origin or a synthetic marker. The normal pointer path decides
   // the subject; this driver never calls selectEntity to force the result.
+  // A rendered particle behind an ordinary control is not a Stage hit. Use
+  // the actual DOM hit path and the production Stage's own early exclusions.
   const stride=Math.max(1,Math.floor((partition.end-partition.start)/64));
   for(let i=partition.start;i<partition.end;i+=stride){const p=points[i];if(!p||p.x<35||p.x>innerWidth-35||p.y<145||p.y>innerHeight-65)continue;
+   const hit=pathAt(p),candidate={x:p.x,y:p.y,particle_index:i,hit};candidates.push(candidate);if(!hit.stage_receives)continue;
    let clearance=Infinity;for(let j=0;j<points.length;j++){if(j>=partition.start&&j<partition.end)continue;const q=points[j];if(q)clearance=Math.min(clearance,Math.hypot(p.x-q.x,p.y-q.y));}
-   if(!best||clearance>best.clearance)best={x:p.x,y:p.y,clearance,particle_index:i,entity_ref:ref,partition};
+   candidate.clearance=clearance;
+   if(!best||clearance>best.clearance)best={x:p.x,y:p.y,clearance,particle_index:i,entity_ref:ref,partition,hit};
   }
-  if(!best||best.clearance<1)throw Error('No discriminating visible surface point for '+ref);return best;
+  return {chosen:best,entity_ref:ref,partition,stride,candidates,standing:'Actual resident particles and current DOM hit path, before the normal pointer operation; not a forced selection'};
  },{ref:entityRef,scale:WORLD_SCALE});
- const bounds=await frame.locator('#stage').boundingBox();assert.ok(bounds);
- await page.mouse.click(bounds.x+choice.x,bounds.y+choice.y);
- await frame.waitForFunction(ref=>window.__FIELD_STUDIES__.getState().selected.includes(ref),entityRef,{timeout:10000});
+ // Keep the genuine candidate/occluder evidence even if click or exact subject
+ // acceptance fails. The prior driver wrote this only after its waiting gate.
  artifact('actual-body-hit-'+entityRef.split(':').at(-1)+'.json',choice);
+ if(!choice.chosen||choice.chosen.clearance<1)throw Error('No discriminating visible surface point for '+entityRef);
+ const bounds=await frame.locator('#stage').boundingBox();assert.ok(bounds);
+ await page.mouse.click(bounds.x+choice.chosen.x,bounds.y+choice.chosen.y);
+ await frame.waitForFunction(ref=>window.__FIELD_STUDIES__.getState().selected.includes(ref),entityRef,{timeout:10000});
  check(true,'Actual pointer interaction selects the rendered body '+entityRef.split(':').at(-1));
 }
 async function snapshot(name,particles=false){

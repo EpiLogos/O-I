@@ -543,6 +543,7 @@ jobs:
           grep -q '2.8.1' "$RUNNER_TEMP/epi-mac-spacetime-version.txt"
       - name: Build actual source archives, all-five QL owners and canonical desktop bundle
         env:
+          APPLE_SIGNING_IDENTITY: '-'
           EXPECTED_OI_HEAD: ${{ github.sha }}
         run: |
           set -euo pipefail
@@ -569,6 +570,7 @@ jobs:
             ${{ runner.temp }}/epi-mac-candidate/commands/**
             ${{ runner.temp }}/epi-mac-candidate/native/**
             ${{ runner.temp }}/epi-mac-candidate/bundle/**
+            ${{ runner.temp }}/epi-mac-candidate/frontend/**
             ${{ runner.temp }}/epi-mac-spacetime-version.txt
             ${{ runner.temp }}/epi-mac-spacetime-install.sh
             ${{ runner.temp }}/epi-mac-spacetime-install.sha256

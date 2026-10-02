@@ -210,6 +210,33 @@ def main():
                         raise RuntimeError('Emitted frontend contains a symlink')
                     receipt['emitted_frontend'].append({'path': str(path.relative_to(oi)), 'bytes': path.stat().st_size,
                                                          'sha256': digest(path)})
+        # Retain actual emitted bytes for the controlled HTTP receiving gate.
+        # Receipt rows alone and a compiled native bundle cannot serve HTML.
+        frontend_rel = 'desktop/cradle/expressions-app/dist/field-studies.html'
+        frontend_rows = [row for row in receipt['emitted_frontend'] if row['path'] == frontend_rel]
+        if len(frontend_rows) != 1:
+            raise RuntimeError('Exactly one emitted ordinary application row is required')
+        frontend_source = oi / frontend_rel
+        frontend_row = frontend_rows[0]
+        if (not frontend_source.is_file() or frontend_source.is_symlink()
+                or frontend_source.stat().st_size != frontend_row['bytes']
+                or digest(frontend_source) != frontend_row['sha256']):
+            raise RuntimeError('Actual emitted frontend changed before retention')
+        frontend_target = out / 'frontend' / 'field-studies.html'
+        frontend_target.parent.mkdir(exist_ok=True)
+        if frontend_target.exists() or frontend_target.is_symlink():
+            raise RuntimeError('Refuse to overwrite previously retained frontend')
+        shutil.copy2(frontend_source, frontend_target)
+        if (frontend_target.stat().st_size != frontend_row['bytes']
+                or digest(frontend_target) != frontend_row['sha256']):
+            raise RuntimeError('Retained frontend differs from actual canonical emission')
+        retained_frontend = {'path': str(frontend_target.relative_to(out)),
+                             'source_path': frontend_rel, 'bytes': frontend_row['bytes'],
+                             'sha256': frontend_row['sha256'],
+                             'source_revision': args.expected_oi_head,
+                             'standing': 'Actual canonical emitted application bytes; no render, installed or model acceptance'}
+        receipt['retained_frontend'] = [retained_frontend]
+        receipt['artifacts'][retained_frontend['path']] = retained_frontend
         bundles = list((out / 'bundle').glob('*.tar.gz'))
         if len(bundles) != 1:
             raise RuntimeError('Canonical packager did not emit exactly one bundle')

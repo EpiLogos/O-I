@@ -105,9 +105,18 @@ jobs:
         working-directory: desktop/cradle
         run: node tests/wiki-constructive-browser.mjs
       - name: Prove the same native constructive journey in WebKit
+        id: wiki_constructive_webkit
         working-directory: desktop/cradle
         env:
           WIKI_BROWSER: webkit
+        run: node tests/wiki-constructive-browser.mjs
+      - name: Diagnose the original WebKit restart with a real post-preflight source race
+        if: ${{ always() && (steps.wiki_constructive_webkit.outcome == 'success' || steps.wiki_constructive_webkit.outcome == 'failure') }}
+        working-directory: desktop/cradle
+        env:
+          WIKI_BROWSER: webkit
+          WIKI_RESTART_DIAGNOSTICS: '1'
+          WIKI_NATIVE_CONFLICT_RACE: '1'
         run: node tests/wiki-constructive-browser.mjs
       - name: Retain exact tested source and performed browser results
         if: always()
