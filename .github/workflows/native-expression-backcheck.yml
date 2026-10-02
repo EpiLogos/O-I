@@ -440,10 +440,17 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+      - name: Resolve the committed QL source required by this frontend
+        id: mac-ql-source
+        run: |
+          set -euo pipefail
+          revision="$(jq -er '.revision | select(type == "string")' desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json)"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/QL-MEF
-          ref: ec33764868b22e98cd6ebff8f6565097f67bdb03
+          ref: ${{ steps.mac-ql-source.outputs.revision }}
           path: .native-owner/QL-MEF
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -455,7 +462,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/Actuation
-          ref: 61323a5306dac031e5deff41aab0dad16608bac7
+          ref: 39c28eb6e74fe87d10f70910be91005960ff4bf1
           path: .native-owner/Actuation
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -492,9 +499,9 @@ jobs:
             --central-source "$GITHUB_WORKSPACE/.native-owner/Central" \
             --act-source "$GITHUB_WORKSPACE/.native-owner/Actuation" \
             --expected-oi-head "$EXPECTED_OI_HEAD" \
-            --expected-ql-head ec33764868b22e98cd6ebff8f6565097f67bdb03 \
+            --expected-ql-head "${{ steps.mac-ql-source.outputs.revision }}" \
             --expected-central-head 6bcfc1661cd0eccec1a4a691503ea401d411023a \
-            --expected-act-head 61323a5306dac031e5deff41aab0dad16608bac7 \
+            --expected-act-head 39c28eb6e74fe87d10f70910be91005960ff4bf1 \
             --output "$RUNNER_TEMP/epi-mac-candidate"
       - name: Retain exact native artifacts and build/source custody without installation
         if: always()
