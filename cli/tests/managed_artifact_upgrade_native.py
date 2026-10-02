@@ -50,6 +50,10 @@ def group_readback(group):
 
 
 def main():
+    # These are executed assertions about actual native effects. Refuse an
+    # interpreter which would erase them before any fixture or process starts.
+    if sys.flags.optimize:
+        raise SystemExit("native updater regression refused: Python assertions are disabled")
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("updater", "previous", "candidate", "repo", "receiver"):
         parser.add_argument("--" + name, required=True, type=Path)
