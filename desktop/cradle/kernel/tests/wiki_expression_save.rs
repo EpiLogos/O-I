@@ -21,12 +21,15 @@ struct NativeWorld {
 }
 impl NativeWorld {
     fn new() -> Self {
-        let owner = PathBuf::from(
-            std::env::var_os("OI_CENTRAL_CTRL_BIN")
-                .expect("The native Expression save gate requires its explicitly built Central owner"),
-        );
+        let owner =
+            PathBuf::from(std::env::var_os("OI_CENTRAL_CTRL_BIN").expect(
+                "The native Expression save gate requires its explicitly built Central owner",
+            ));
         assert!(owner.is_absolute() && owner.is_file());
-        assert_ne!(fs::metadata(&owner).unwrap().permissions().mode() & 0o111, 0);
+        assert_ne!(
+            fs::metadata(&owner).unwrap().permissions().mode() & 0o111,
+            0
+        );
         let directory = std::env::temp_dir().join(format!(
             "oi-expression-save-real-{}-{}",
             std::process::id(),
@@ -154,8 +157,14 @@ fn first_expression_save_uses_the_selected_directory_not_the_default_project() {
     );
     assert_eq!(refused["state"], "save_refused", "{refused}");
     assert_eq!(refused["failure"]["kind"], "refused");
-    assert_eq!(refused["failure"]["native"]["status"], "verification_failure");
-    assert_eq!(refused["failure"]["native"]["error"]["details"]["outcome"], "conflict");
+    assert_eq!(
+        refused["failure"]["native"]["status"],
+        "verification_failure"
+    );
+    assert_eq!(
+        refused["failure"]["native"]["error"]["details"]["outcome"],
+        "conflict"
+    );
     let after_refusal = fixture.file("work.expression.json");
     assert_eq!(after_refusal, first);
     assert_eq!(
@@ -206,11 +215,17 @@ fn first_expression_save_uses_the_selected_directory_not_the_default_project() {
     );
     assert_eq!(stale["state"], "file_revision_conflict", "{stale}");
     assert_eq!(fixture.file("work.expression.json"), final_reading);
-    assert_eq!(files::list(&client, "Work/UnrelatedProject").unwrap(), unrelated);
+    assert_eq!(
+        files::list(&client, "Work/UnrelatedProject").unwrap(),
+        unrelated
+    );
     assert_eq!(
         fs::read(fixture.root.join("Work/UnrelatedProject/original.txt")).unwrap(),
         unrelated_before
     );
     assert!(!fixture.root.join("work.expression.json").exists());
-    assert!(!fixture.root.join("Work/UnrelatedProject/work.expression.json").exists());
+    assert!(!fixture
+        .root
+        .join("Work/UnrelatedProject/work.expression.json")
+        .exists());
 }

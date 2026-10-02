@@ -371,7 +371,6 @@ fn presence_connection(
         Some(&deadline),
         &mut observe,
     );
-    drop(observe);
     if first.is_none() {
         let reading = match result {
             Ok(output) => decode_owner_output(&output, Effect::MayMutate),
