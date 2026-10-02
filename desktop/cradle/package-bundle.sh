@@ -118,14 +118,15 @@ build_shared_field_client() {
 }
 
 if [ "${SKIP_BUILD}" -eq 0 ]; then
+  # The native Direct producer reuses Factory's checked owner seam. Its
+  # locked desktop imports must exist before the installed client is bundled.
+  npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
   build_shared_field_client
   if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
     log "building the cradle web bundle and native shell (macOS .app)"
-    npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
     (cd "${REPO_ROOT}/desktop/cradle" && npx tauri build --bundles app)
   else
     log "building the cradle web bundle and native shell (this needs the Tauri linux system packages)"
-    npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
     (cd "${REPO_ROOT}/desktop/cradle" && npx tauri build)
   fi
 fi

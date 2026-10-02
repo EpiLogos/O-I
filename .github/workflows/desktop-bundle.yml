@@ -64,20 +64,18 @@ jobs:
           sha256sum "${tools}/linuxdeploy-x86_64.AppImage"
           curl --fail --location --retry 5 --retry-all-errors --silent --show-error \
             --output "${tools}/linuxdeploy-plugin-gtk.sh" \
-            https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh
+            https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/dda522bce37387f1b853d9095713bfaa924c8423/linuxdeploy-plugin-gtk.sh
           python3 - <<'PY'
           from pathlib import Path
           p = Path.home() / ".cache/tauri/linuxdeploy-plugin-gtk.sh"
           text = p.read_text()
-          needle = 'copy_tree "$gdk_pixbuf_binarydir" "$APPDIR/"'
+          needle = 'copy_lib_tree "$gdk_pixbuf_binarydir" "$APPDIR/"'
           guard = ('if [ -d "$gdk_pixbuf_binarydir" ]; then '
-                   'copy_tree "$gdk_pixbuf_binarydir" "$APPDIR/"; '
+                   'copy_lib_tree "$gdk_pixbuf_binarydir" "$APPDIR/"; '
                    'else echo "no versioned gdk-pixbuf dir (loaders built-in, '
                    'gdk-pixbuf >= 2.44): skipping copy"; fi')
-          assert needle in text, (
-            "linuxdeploy-plugin-gtk.sh no longer matches the known "
-            "gdk-pixbuf copy line; re-check the guard before bundling"
-          )
+          if text.count(needle) != 1:
+              raise SystemExit("Pinned GTK plugin has changed its gdk-pixbuf copy; re-check before bundling")
           p.write_text(text.replace(needle, guard))
           print("guarded the gdk-pixbuf loader-dir copy in linuxdeploy-plugin-gtk.sh")
           PY
