@@ -34,10 +34,16 @@ export const newRef = (kind: string): string => `${kind}:${crypto.randomUUID()}`
  * generic transport error. The code below is a presentation classification of
  * an exact native construction diagnostic, never a new permission or receipt. */
 export class ConstructionActionError extends Error {
+  readonly action: string;
+  readonly target_ref: string;
+  readonly dispatch: Exclude<ActionDispatch, {state: 'invoked'}>;
   readonly code: 'source_revision_conflict' | 'wiki_revision_conflict' | undefined;
-  constructor(readonly action: string, readonly target_ref: string,
-    readonly dispatch: Exclude<ActionDispatch, {state: 'invoked'}>) {
+  constructor(action: string, target_ref: string,
+    dispatch: Exclude<ActionDispatch, {state: 'invoked'}>) {
     super('message' in dispatch ? dispatch.message : 'detail' in dispatch ? dispatch.detail : `Native action unavailable: ${action}`);
+    this.action = action;
+    this.target_ref = target_ref;
+    this.dispatch = dispatch;
     this.name = 'ConstructionActionError';
     const expectedOwner = action === 'aikit.constellation.apply' ? 'aikit wiki-construct apply'
       : action === 'aikit.wiki.facts.apply' ? 'aikit wiki-construct facts-apply' : undefined;
