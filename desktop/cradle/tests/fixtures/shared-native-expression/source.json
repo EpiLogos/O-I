@@ -1,0 +1,10 @@
+{
+  "standing": "Exact saved native Expression from actual shared producer episode under controlled user identities; renderer replay only; no new agent/tool effects; latest installed/two-human experience remains separate",
+  "document_sha256": "7180b2ae20a67b9ada0509f313f0c08a1e03b5929e3f93544e1a78c8016b057e",
+  "expression_ref": "expression:shared-continuation-20260930",
+  "revision": 16,
+  "source_ref": "central:now:control:root:9c24d9730a0c7855754f550ba7cc6d8769920fd6f61857a3b8f9d00892241d05#world-a/Work/SharedInquiry/shared-continuation.expression.json",
+  "required_body": "Ann",
+  "negative_probe": "Remove only the rendered Ann body while retaining native subject, text and controls; visual acceptance must fail",
+  "replayed_tool_effects": false
+}

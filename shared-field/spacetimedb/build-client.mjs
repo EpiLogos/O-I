@@ -36,7 +36,7 @@ const out = resolve(outFlag > 0 ? process.argv[outFlag + 1] : join(here, '..', '
 // The directory itself stays (it is a declared Tauri resource and carries a
 // tracked README); only this builder's own outputs are replaced.
 mkdirSync(out, { recursive: true });
-const builtFiles=['field-client.mjs','a2a-runner.mjs','field-lib.mjs','expression-producer.mjs','hosting.json','field-client.sh'];
+const builtFiles=['field-client.mjs','a2a-runner.mjs','field-lib.mjs','expression-producer.mjs','direct-expression-producer.mjs','hosting.json','field-client.sh'];
 for (const name of [...builtFiles,'CLIENT.json']) rmSync(join(out, name), { force: true });
 
 // Bundled output keeps `import.meta.url` pointing at the bundle's own
@@ -57,6 +57,7 @@ await build({ ...common, entryPoints: [join(here, 'field.ts')], outfile: join(ou
 await build({ ...common, entryPoints: [join(here, '..', 'a2a-runner.mjs')], outfile: join(out, 'a2a-runner.mjs') });
 await build({ ...common, entryPoints: [join(here, 'field-lib.ts')], outfile: join(out, 'field-lib.mjs') });
 await build({ ...common, entryPoints: [join(here, '..', 'scripts', 'expression-activity-producer.mjs')], outfile: join(out, 'expression-producer.mjs') });
+await build({ ...common, entryPoints: [join(here, '..', 'scripts', 'direct-expression-activity-producer.mts')], outfile: join(out, 'direct-expression-producer.mjs') });
 copyFileSync(join(here, 'hosting.json'), join(out, 'hosting.json'));
 
 const launcher = `#!/bin/sh
@@ -88,7 +89,7 @@ writeFileSync(join(out, 'CLIENT.json'), `${JSON.stringify({
   schema: 'oi.shared-field-client-bundle/v1',
   source_revision: sourceRevision,
   source_working_tree_dirty: sourceWorkingTreeDirty,
-  entries: { field: 'field-client.mjs', a2a: 'a2a-runner.mjs', library:'field-lib.mjs', expression_producer:'expression-producer.mjs' },
+  entries: { field: 'field-client.mjs', a2a: 'a2a-runner.mjs', library:'field-lib.mjs', expression_producer:'expression-producer.mjs', direct_expression_producer:'direct-expression-producer.mjs' },
   launcher: 'field-client.sh',
   files: Object.fromEntries(builtFiles.map((name) => [name, digest(name)])),
 }, null, 2)}\n`);

@@ -171,6 +171,10 @@ export async function performWithRetry(world: WorldCall, request: WorldRequest, 
     return first;
   }
   const fresh = await actInspect(world, actRef).catch(() => undefined);
+  // Another producer may have accepted this occurrence before our stale
+  // revision was refused. Its native passage is the acceptance receipt.
+  const eventBasis = "event_basis" in request ? decodeBasis(request.event_basis) : undefined;
+  if (fresh?.act && eventBasis && cursorFromAct(fresh.act).performed.includes(occurrenceKey(eventBasis.event_ref, eventBasis.occurrence))) return fresh;
   const retry = {...request} as WorldRequest & {expected_act_revision?: number; expected_revision?: number};
   if (fresh?.act) retry.expected_act_revision = fresh.act.revision;
   if (typeof first.current_revision === "number") retry.expected_revision = first.current_revision;
@@ -207,12 +211,13 @@ export function cursorFromAct(act: WorldAct | undefined, base: CursorState = emp
     // A reply run whose text passage is missing was still open: re-read the
     // journal from its first chunk (its select passage dedupes; the text
     // lands once when the run closes).
-    if (basis.entry === "encounter.reply" && journal && /^cursor:\d+$/.test(basis.occurrence)
-      && !decoded.some(other => other.basis?.event_ref === basis.event_ref && other.basis.occurrence === `${basis.occurrence}/text`)) {
+    const replyStart = basis.occurrence.replace(/\/scene$/, "");
+    if (basis.entry === "encounter.reply" && journal && /^cursor:\d+$/.test(replyStart)
+      && !decoded.some(other => other.basis?.event_ref === basis.event_ref && other.basis.occurrence === `${replyStart}/text`)) {
       openRuns.push(journal);
     }
   }
-  for (const run of openRuns) if ((encounterAfter[run.session] ?? -1) <= run.cursor) encounterAfter[run.session] = run.cursor - 1;
+  for (const run of openRuns) encounterAfter[run.session] = Math.min(encounterAfter[run.session] ?? -1, run.cursor - 1);
   return {...base, performed: [...performed], encounterAfter, skipped};
 }
 
@@ -633,4 +638,3 @@ function communiqueSignature(population: unknown, cast: CastMemberOfRun[]): stri
   const positions = new Set(cast.map(member => member.position_ref).filter(Boolean));
   return JSON.stringify(rows.filter(row => row.position_ref && positions.has(row.position_ref)).map(row => [row.position_ref, row.communiques?.undelivered ?? null]).sort());
 }
-

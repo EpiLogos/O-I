@@ -111,6 +111,9 @@ jobs:
           mkdir -p tests/artifacts/collection-source
           set -o pipefail
           node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/collection-source-identity.test.mjs tests/collection-consumers.test.mjs | tee tests/artifacts/collection-source/controlled.log
+      - name: Prove shared native Direct journal mapping and Factory material regressions
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shared-direct-journal.test.mjs tests/factory-live-event-map.test.mjs tests/factory-live-producer.test.mjs
       - name: Prove Explore travel, field search and primary projection readings (SF1)
         working-directory: desktop/cradle
         run: node --test tests/explore-field.test.mjs
@@ -129,6 +132,12 @@ jobs:
       - name: Prove native formation authoring and bounded particle candidate retention
         working-directory: desktop/cradle
         run: node tests/formation-native-regressions.mjs
+      - name: Render saved native shared activity and require its actual participant body
+        working-directory: desktop/cradle
+        env:
+          OI_SHARED_NATIVE_DOCUMENT: ${{ github.workspace }}/desktop/cradle/tests/fixtures/shared-native-expression/native-document.json
+          OI_SHARED_RESOURCE_OUT: tests/artifacts/shared-expression-resources
+        run: node tests/shared-expression-resource-native.mjs
       - name: Prove search component and literal query transport (D)
         working-directory: desktop/cradle
         run: node tests/search-overlay.mjs
@@ -187,6 +196,13 @@ jobs:
         with:
           name: collection-consumer-evidence-${{ github.sha }}
           path: desktop/cradle/tests/artifacts/collection-source/
+          if-no-files-found: warn
+      - name: Retain shared native GPU bodies, negative probe and memory evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-expression-renderer-${{ github.event.pull_request.head.sha || github.sha }}
+          path: desktop/cradle/tests/artifacts/shared-expression-resources/
           if-no-files-found: warn
 
   native-shell:

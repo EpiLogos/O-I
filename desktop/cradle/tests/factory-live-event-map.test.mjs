@@ -94,13 +94,14 @@ test("telemetry watch lines for this run only; the cursor line becomes the resum
   assert.deepEqual(cursor.telemetry, {stateRevision: live.telemetryWatch.at(-1).cursor.stateRevision});
 });
 
-test("run completion: every leg returned performs the completion Scene with the whole cast", () => {
+test("visible returned legs cannot manufacture whole Run completion", () => {
   const done = structuredClone(before);
   for (const leg of Object.values(done.legs)) { leg.status = "returned"; leg.statusHistory = ["active", "returned"]; }
   const ops = M.mapEvents(readingsFor({attempts: done}), {});
-  const completion = ops.find(op => op.basis.entry === "attempt.run-complete");
-  assert.equal(completion.scene, "completion");
-  assert.ok(completion.bindings["participants.0"] && completion.bindings["participants.1"] && completion.bindings.resultText);
+  assert.equal(ops.find(op => op.basis.entry === "attempt.run-complete"), undefined);
+  assert.equal(M.ownerRunComplete(done), false);
+  assert.equal(M.ownerRunComplete({...done, lifecycle: "archived", wholeRunState: "complete"}), false,
+    "archive and counted legs are not an authenticated closure");
 });
 
 test("custody transitions: in-progress arrives, completed completes, the rest continue (real receipt)", () => {

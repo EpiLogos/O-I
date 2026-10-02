@@ -92,6 +92,7 @@ try{
  for(const row of report.samples){
   assert.equal(row.resources.geometries,start.resources.geometries,'Live sequences reuse native geometry');
   assert.equal(row.resources.textures,start.resources.textures,'Live sequences and repeated material reuse native textures');
+  assert.ok(row.resources.programs<=start.resources.programs+1,'Capture may warm one shader; live material cannot retain more programs');
   const cache=row.resources.candidateCache;
   assert.ok(cache.entries<=cache.maxEntries&&cache.estimatedBytes<=cache.maxEstimatedBytes,'Native formation candidates remain within the owner budget');
  }

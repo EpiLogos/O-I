@@ -269,16 +269,17 @@ test("a cancelled act is set aside: reopening performs the Run afresh in a succe
 });
 
 test("a session's later work (after the completed Run) is not performed in later passes", async () => {
-  const session = after.attempts.find(a => a.attemptRef === "attempt:specimen-survey-1").disposition.body.agentSessionRef;
-  const done = structuredClone(after);
-  for (const leg of Object.values(done.legs)) { leg.status = "returned"; leg.statusHistory = ["active", "returned"]; }
+  const done = JSON.parse(readFileSync(new URL("./fixtures/factory-native-owner-projections/native-finished.run.json", import.meta.url), "utf8")).nativeAttempts;
+  assert.equal(E.ownerRunComplete(done), true, "completion comes from the native owner reading");
+  const session = done.attempts[0].disposition.body.agentSessionRef;
+  const finishedConfig = {...config,runRef:done.runRef};
   const journal = [
-    {cursor: 10, event: {kind: "agent-message", sender: live.runRef, delivery_ref: "d/task", request: {submission: {turn: {packet: {text: "the Run's task"}}}}}},
+    {cursor: 10, event: {kind: "agent-message", sender: done.runRef, delivery_ref: "d/task", request: {submission: {turn: {packet: {text: "the Run's task"}}}}}},
     {cursor: 11, event: {kind: "provider", event: {TurnEnded: {stop: {Completed: {}}}}}},
   ];
   const io = fakeIO({journals: {[session]: journal}});
   io.readAttempts = async () => done;
-  const producer = new P.LiveProducer(io, config);
+  const producer = new P.LiveProducer(io, finishedConfig);
   await producer.open();
   await producer.pass();
   journal.push({cursor: 20, event: {kind: "user-message", text: "unrelated later work"}}, {cursor: 21, event: {kind: "provider", event: {TurnEnded: {stop: {Completed: {}}}}}});
