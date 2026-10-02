@@ -87,7 +87,7 @@ try{
  report.compiler={configuration:{bundle:true,platform:'node',format:'esm',esbuild_version:esbuildVersion},entries,metafile:{path:resolve(out,'metafile.json'),sha256:await fileHash(resolve(out,'metafile.json'))},inputs,loaded_inputs:[...loaded.values()],outputs,modules};
  report.support_sources=await Promise.all(['tests/native-expression-fixture.mjs'].map(async path=>({path:resolve(cradle,path),sha256:await fileHash(resolve(cradle,path))})));
  const protocol=await runTests('transport-instrument',['tests/native-expression.test.mjs','tests/native-expression-instrument.test.mjs']);report.checks.push(protocol);
- const receiving=await runTests('retained-native-receiving',['tests/native-expression-retained-receiving.test.mjs'],{
+ const receiving=await runTests('retained-native-receiving',['tests/native-expression-retained-receiving.proof.mjs'],{
   RETAINED_CONTROLLER_MODULE:modules.controller,RETAINED_DOMAIN_MODULE:modules.domain,RETAINED_PROTOCOL_FIXTURE_MODULE:resolve(cradle,'tests/native-expression-fixture.mjs'),
   RETAINED_SCENE_INSPECT:recordPaths.scene,RETAINED_GENERIC_INSPECT:recordPaths.generic});report.checks.push(receiving);
  for(const value of loaded.values())fail(await fileHash(value.path)===value.sha256,'compiler source changed during receiving tests: '+value.path);

@@ -20,18 +20,21 @@ function renderer(){
   setTargetTextures(a,b){this.actualA=a;this.actualB=b;this.sets++;}};
  return{port:value,native:false,released:0,retainedTopology(){return{tex_width:2,tex_height:2,particle_count:4,slot_count:4};},retainedTargetPort(){return value;},setNativeDomain(v){this.native=v;},releaseRetainedField(){this.released++;},onRetainedRecoveryRequired(cb){this.callback=cb;return()=>{this.callback=null;};},checkpointRetainedField(){throw new Error('no GPU in controlled unit test');}};
 }
-function sparseRenderer(){
+function sparseRenderer(nativeSamples=2){
+ // Generic fixtures retain their original eight slots and four torus slots.
+ // Complete Scene bodies need sixteen torus slots to map every declared target.
+ const connectionStart=2+Math.max(4,nativeSamples),slotCount=2**Math.ceil(Math.log2(connectionStart+2));
  const authored=(offset)=>{
-  const data=new Float32Array(8*4);
-  for(let slot=0;slot<8;slot++)data.set([offset+slot,offset+slot+.25,offset+slot+.5,.1+slot/100],slot*4);
-  return new THREE.DataTexture(data,4,2,THREE.RGBAFormat,THREE.FloatType);
+  const data=new Float32Array(slotCount*4);
+  for(let slot=0;slot<slotCount;slot++)data.set([offset+slot,offset+slot+.25,offset+slot+.5,.1+slot/100],slot*4);
+  return new THREE.DataTexture(data,4,slotCount/4,THREE.RGBAFormat,THREE.FloatType);
  };
  const targetA=authored(10),targetB=authored(30);
  const snapshot=()=>({schema:'oi.retained-partition-snapshot/v1',scene_signature:'scene:1',
-  partition_signature:'scene:1|8|6|halo:0-2|torus:2-6',slot_count:8,particle_count:8,connection_start:6,
-  partitions:[{entity_ref:'halo',start:0,end:2},{entity_ref:'torus',start:2,end:6}],
+  partition_signature:`scene:1|${slotCount}|${connectionStart}|halo:0-2|torus:2-${connectionStart}`,slot_count:slotCount,particle_count:slotCount,connection_start:connectionStart,
+  partitions:[{entity_ref:'halo',start:0,end:2},{entity_ref:'torus',start:2,end:connectionStart}],
   authored_target_a:targetA.image.data.slice(),authored_target_b:targetB.image.data.slice()});
- return{texWidth:4,texHeight:2,particleCount:8,targetA,targetB,sets:0,
+ return{texWidth:4,texHeight:slotCount/4,particleCount:slotCount,targetA,targetB,sets:0,
   readPartitionSnapshot:snapshot,
   setTargetTextures(a,b){this.actualA=a;this.actualB=b;this.sets++;}};
 }
@@ -90,27 +93,46 @@ test('sparse native target map replaces one exact entity partition and preserves
  assert.throws(()=>new NativeProjection(sparseRenderer(),frame,{...spec,target_map}),/either complete slots or a sparse target map/);
 });
 test('world compose gives the producer the atomic owner world and exact retained partition before GPU admission',async()=>{
- const owner=new ControlledSceneOwner(),request=owner.request.bind(owner),port=sparseRenderer();let audioCalls=0;
+ const owner=new ControlledSceneOwner(),request=owner.request.bind(owner),port=sparseRenderer(16);let audioCalls=0;
  const sky={schema:'ql.sky-snapshot/v1',snapshot_ref:'sha256:sky',receipt_unix_ms:7,bodies:[]};
  const world={schema:'ql.scene-world/v1',basis:{event_ref:'sha256:sky',subject_ref:'identity:person:one'},sky};
  owner.request=async packet=>{
   if(packet.operation==='prepare_world')return{schema:'oi.native-expression-prepared-world/v1',source:{world,sky},binding:{}};
   const reply=await request(packet);if(packet.operation==='compose')reply.source.world=world;return reply;
  };
- const renderer={native:false,retainedTopology(){return{tex_width:4,tex_height:2,particle_count:8,slot_count:8};},retainedTargetPort(){return port;},setNativeDomain(value){this.native=value;},releaseRetainedField(){},onRetainedRecoveryRequired(){return()=>{};},checkpointRetainedField(){throw new Error('no GPU');}};
+ const renderer={native:false,retainedTopology(){return{tex_width:port.texWidth,tex_height:port.texHeight,particle_count:port.particleCount,slot_count:port.particleCount};},retainedTargetPort(){return port;},setNativeDomain(value){this.native=value;},releaseRetainedField(){},onRetainedRecoveryRequired(){return()=>{};},checkpointRetainedField(){throw new Error('no GPU');}};
  const controller=new NativeFieldController(owner,renderer,()=>{audioCalls++;return new ControlledAudio();});let received;
  try{
   const prepared=await controller.prepareWorld({sky:{epoch:'2026-09-30T11:44:49Z'},world:{instance_ref:'expression:native:one',subject_ref:'identity:person:one'}});
   assert.equal(prepared.source.sky.snapshot_ref,'sha256:sky');assert.equal(audioCalls,0,'preparation must stay quiet');
   await controller.compose({skySnapshot:prepared.source.sky,world:{instance_ref:'expression:native:one',subject_ref:'identity:person:one'},
-   entityTargetBindings:async input=>{received=input;return{schema:'oi.native-target-map/v1',policy:'sparse-replace',partition_signature:input.partition.partition_signature,
-    partitions:[{entity_ref:'torus',target_a:{sample_identities:[0,1]},target_b:{sample_identities:[1,0]}}]};}});
+   entityTargetBindings:async input=>{received=input;
+    const samples=owner.frame.targets.map(target=>target.identity);assert.equal(samples.length,16,'all complete Scene protocol targets remain present');
+    return{schema:'oi.native-target-map/v1',policy:'sparse-replace',partition_signature:input.partition.partition_signature,
+    partitions:[{entity_ref:'torus',target_a:{sample_identities:samples},target_b:{sample_identities:[...samples].reverse()}}]};}});
   assert.equal(owner.calls[0].request.sky_snapshot.snapshot_ref,'sha256:sky');assert.equal(audioCalls,1);
   assert.equal(received.world.schema,'ql.scene-world/v1');assert.equal(received.partition.schema,'oi.retained-partition-snapshot/v1');
   assert.equal(renderer.native,true);assert.equal(controller.reading.source.world.basis.event_ref,'sha256:sky');
   assert.equal(port.actualA.image.data[0],port.targetA.image.data[0],'unmapped authored entity remains untouched');
  }finally{await controller.dispose();}
 });
+test('complete Scene protocol target domain cannot silently lose a sample at world admission',async()=>{
+ const owner=new ControlledSceneOwner(),port=sparseRenderer(16),audio=new ControlledAudio();
+ const world={schema:'ql.scene-world/v1',basis:{event_ref:'controlled:scene',subject_ref:'controlled:subject'},sky:null};
+ const request=owner.request.bind(owner);owner.request=async packet=>{const reply=await request(packet);if(packet.operation==='compose')reply.source.world=world;return reply;};
+ const r={native:false,retainedTopology(){return{tex_width:port.texWidth,tex_height:port.texHeight,particle_count:port.particleCount,slot_count:port.particleCount};},retainedTargetPort(){return port;},setNativeDomain(v){this.native=v;},releaseRetainedField(){},onRetainedRecoveryRequired(){return()=>{};},checkpointRetainedField(){throw new Error('no GPU');}};
+ const controller=new NativeFieldController(owner,r,()=>audio);
+ try{
+  await assert.rejects(controller.compose({sky:'none',world:{instance_ref:'controlled:world-domain',subject_ref:'controlled:subject'},entityTargetBindings:async input=>{
+   const complete=owner.frame.targets.map(target=>target.identity);assert.equal(complete.length,16);
+   return{schema:'oi.native-target-map/v1',policy:'sparse-replace',partition_signature:input.partition.partition_signature,
+    partitions:[{entity_ref:'torus',target_a:{sample_identities:complete.slice(0,-1)},target_b:{sample_identities:[...complete].reverse()}}]};
+  }}),/sparse target samples must cover the complete native target domain/);
+  assert.equal(controller.status,'unavailable');assert.equal(r.native,false);assert.equal(controller.inspectTargets(),null);
+  assert.equal(owner.closed,true);assert.equal(audio.state,'closed');
+ }finally{await controller.dispose();assert.equal(owner.calls.filter(packet=>packet.operation==='close').length,1);}
+});
+
 test('real driver consumes controlled producer effects, then holds GPU/audio on disconnection rather than demo fallback',async()=>{
  const port=new ControlledOwner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(port,r,()=>audio);
  try{
@@ -143,16 +165,17 @@ test('late open after unmount closes its real lease and cannot become a new rend
  assert.equal(port.closed,true);assert.equal(r.native,false);assert.equal(audio.state,'closed');
 });
 test('release during an awaited entity target map closes once and cannot repopulate the released lifetime',async()=>{
- const owner=new ControlledSceneOwner(),port=sparseRenderer(),audio=new ControlledAudio();let resolveMap,mapStarted;
+ const owner=new ControlledSceneOwner(),port=sparseRenderer(16),audio=new ControlledAudio();let resolveMap,mapStarted;
  const started=new Promise(resolve=>mapStarted=resolve),pendingMap=new Promise(resolve=>resolveMap=resolve);
  const world={schema:'ql.scene-world/v1',basis:{event_ref:'controlled:scene',subject_ref:'controlled:subject'},sky:{schema:'ql.sky-snapshot/v1',snapshot_ref:'sha256:sky',receipt_unix_ms:7,bodies:[]}};
  const request=owner.request.bind(owner);owner.request=async packet=>{const reply=await request(packet);if(packet.operation==='compose')reply.source.world=world;return reply;};
- const r={native:false,released:0,retainedTopology(){return{tex_width:4,tex_height:2,particle_count:8,slot_count:8};},retainedTargetPort(){return port;},setNativeDomain(value){this.native=value;},releaseRetainedField(){this.released++;},onRetainedRecoveryRequired(){return()=>{};},checkpointRetainedField(){throw new Error('no GPU');}};
+ const r={native:false,released:0,retainedTopology(){return{tex_width:port.texWidth,tex_height:port.texHeight,particle_count:port.particleCount,slot_count:port.particleCount};},retainedTargetPort(){return port;},setNativeDomain(value){this.native=value;},releaseRetainedField(){this.released++;},onRetainedRecoveryRequired(){return()=>{};},checkpointRetainedField(){throw new Error('no GPU');}};
  const c=new NativeFieldController(owner,r,()=>audio);
  const opening=c.compose({world:{instance_ref:'expression:native:race',subject_ref:'controlled:subject'},entityTargetBindings:async input=>{mapStarted(input);return pendingMap;}});
  const mapped=await started;assert.equal(mapped.world.schema,'ql.scene-world/v1');
  const releasing=c.release();
- resolveMap({schema:'oi.native-target-map/v1',policy:'sparse-replace',partition_signature:mapped.partition.partition_signature,partitions:[{entity_ref:'torus',target_a:{sample_identities:[0,1]},target_b:{sample_identities:[1,0]}}]});
+ const samples=owner.frame.targets.map(target=>target.identity);assert.equal(samples.length,16);
+ resolveMap({schema:'oi.native-target-map/v1',policy:'sparse-replace',partition_signature:mapped.partition.partition_signature,partitions:[{entity_ref:'torus',target_a:{sample_identities:samples},target_b:{sample_identities:[...samples].reverse()}}]});
  await Promise.all([opening,releasing]);
  assert.equal(owner.calls.filter(packet=>packet.operation==='close').length,1,'the released owner receives exactly one close');
  assert.equal(owner.closed,true);assert.equal(audio.state,'closed');assert.equal(r.native,false);assert.equal(r.released,1);
