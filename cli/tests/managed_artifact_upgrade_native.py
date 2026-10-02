@@ -7,6 +7,7 @@ product, provider, source build, installed-world mutation or fabricated receipt
 is used. Run the same driver against the original and repaired updater.
 """
 import argparse
+import ctypes
 import hashlib
 import json
 import os
@@ -14,6 +15,7 @@ from pathlib import Path
 import selectors
 import signal
 import subprocess
+import sys
 import time
 
 
@@ -23,6 +25,28 @@ def digest(path):
         while block := stream.read(262144):
             result.update(block)
     return result.hexdigest()
+
+
+def group_readback(group):
+    if sys.platform == "darwin":
+        # Darwin may return EPERM from killpg(0) after retiring an orphaned
+        # group. Query membership independently, never infer absence from it.
+        native = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+        native.proc_listpgrppids.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_int]
+        members = (ctypes.c_int * 16384)()
+        ctypes.set_errno(0)
+        count = native.proc_listpgrppids(group, members, ctypes.sizeof(members))
+        error = ctypes.get_errno()
+        return {"absent": count == 0 and error == 0, "basis": "native proc_listpgrppids",
+                "count": count, "errno": error,
+                "members": list(members[:count]) if 0 < count < len(members) else []}
+    try:
+        os.killpg(group, 0)
+        return {"absent": False, "basis": "killpg group exists"}
+    except ProcessLookupError:
+        return {"absent": True, "basis": "killpg ESRCH"}
+    except OSError as error:
+        return {"absent": False, "basis": "group observation unavailable", "errno": error.errno}
 
 
 def main():
@@ -65,12 +89,16 @@ def main():
         assert all(hasattr(os, name) for name in ("waitid", "WNOWAIT", "WEXITED", "WNOHANG")), "finite unreaped child observation is unavailable"
         process = subprocess.Popen([str(executable), *words], env=env, stdin=subprocess.DEVNULL,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+        step = {"label": label, "executable": str(executable), "words": words, "owned_pid_group": process.pid}
+        steps.append(step)
+        process_receipt = args.receiver / (label + ".process.json")
         streams = {"stdout": bytearray(), "stderr": bytearray()}
         failure = None
         failure_kind = None
         exit_observed_without_reap = False
         deadline = time.monotonic() + timeout
         try:
+            process_receipt.write_text(json.dumps(step, indent=2))
             with selectors.DefaultSelector() as poller:
                 for name, stream in (("stdout", process.stdout), ("stderr", process.stderr)):
                     os.set_blocking(stream.fileno(), False)
@@ -106,13 +134,20 @@ def main():
             # Normal EOF also retains the leader until actual exit is observed
             # without reaping. Retire descendants before releasing that PID on
             # both success and refusal; never resignal after the final wait.
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            except OSError as error:
-                failure = (failure or "") + "; owned group retirement failed: " + str(error)
-                failure_kind = "cleanup"
+            observed = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+            exit_observed_without_reap = observed is not None and observed.si_pid == process.pid
+            retirement = group_readback(process.pid)
+            only_exited_leader = exit_observed_without_reap and retirement.get("members") == [process.pid]
+            # A reserved, exited leader is not a surviving descendant. Darwin
+            # refuses signals to that zombie-only group; final wait releases it.
+            if not retirement["absent"] and not only_exited_leader:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                except OSError as error:
+                    failure = (failure or "") + "; owned group retirement failed: " + str(error)
+                    failure_kind = "cleanup"
             try:
                 process.wait(timeout=2)
             except subprocess.TimeoutExpired:
@@ -121,26 +156,24 @@ def main():
             process.stdout.close()
             process.stderr.close()
         stdout, stderr = bytes(streams["stdout"]), bytes(streams["stderr"])
-        group_absent = False
-        readback_deadline = time.monotonic() + .25
-        while True:
-            try:
-                os.killpg(process.pid, 0)  # observation only; never resignal a reaped leader
-            except ProcessLookupError:
-                group_absent = True
-                break
-            if time.monotonic() >= readback_deadline:
-                break
-            time.sleep(.01)
         (args.receiver / (label + ".stdout")).write_bytes(stdout)
         (args.receiver / (label + ".stderr")).write_bytes(stderr)
-        steps.append({"label": label, "executable": str(executable), "words": words,
-                      "status": process.returncode, "stdout_bytes": len(stdout), "stderr_bytes": len(stderr),
+        readback_deadline = time.monotonic() + .25
+        while True:
+            group = group_readback(process.pid)
+            if group["absent"] or time.monotonic() >= readback_deadline:
+                break
+            time.sleep(.01)
+        step.update({"status": process.returncode, "stdout_bytes": len(stdout), "stderr_bytes": len(stderr),
                       "failure": failure, "failure_kind": failure_kind,
                       "exit_observed_without_reap": exit_observed_without_reap,
-                      "owned_leader_reaped": process.returncode is not None, "owned_group_absent": group_absent})
+                      "group_before_final_wait": retirement,
+                      "only_exited_leader_before_final_wait": only_exited_leader,
+                      "owned_leader_reaped": process.returncode is not None, "owned_group_absent": group["absent"],
+                      "group_readback": group})
+        process_receipt.write_text(json.dumps(step, indent=2))
         assert failure_kind == expected_failure, label + ": " + str(failure)
-        assert group_absent, label + ": owned process group still present at readback"
+        assert group["absent"], label + ": owned process group still present or unreadable at readback"
         return process.returncode, stdout, stderr
 
     def plan(label, cut, artifact, rebuild=False):
