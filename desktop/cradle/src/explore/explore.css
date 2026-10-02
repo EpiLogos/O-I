@@ -123,10 +123,27 @@
 .world-presentation__masthead h1 { font-size: clamp(1.9rem, 4.2vw, 3.2rem); line-height: 1; letter-spacing: -.03em; font-weight: 450; margin: .15rem 0 0; text-wrap: balance; }
 .world-presentation__masthead p { grid-column: 1 / -1; margin: 0; max-width: 58ch; color: var(--oi-world-muted); font-size: var(--oi-shell-type-prose); line-height: 1.55; }
 .world-presentation__revision { font-size: var(--oi-shell-type-meta); color: var(--oi-world-muted); white-space: nowrap; }
-.world-presentation--expression { max-width: 900px; width: 100%; }
-.world-presentation--expression .world-presentation__masthead { padding: 8px 0; gap: 6px; }
-.world-presentation--expression .world-presentation__masthead h1 { font-size: 1.1rem; line-height: 1.2; letter-spacing: 0; }
-.world-presentation--expression .world-region[data-region-role="body"] { padding: 14px 0; }
+/* A live Expression occupies its Surface. Navigation and summoned depths
+ * belong to that canvas rather than reserving a surrounding page. */
+.presentation-body[data-expression-ref] { position:relative; flex:1 1 100%; min-height:0; }
+.presentation-body[data-expression-ref] > .explore-strip { position:absolute; z-index:6; top:8px; left:12px; right:12px; width:auto; background:color-mix(in srgb,var(--oi-sidebar-ground) 88%,transparent); border-radius:8px; }
+.presentation-body[data-expression-ref] .presentation-planes { position:relative; }
+.presentation-body[data-expression-ref] .presentation-main { padding:0; display:flex; overflow:hidden; }
+.presentation-body[data-expression-ref] > .presentation-planes > .presentation-depth { position:absolute; z-index:7; top:56px; bottom:12px; width:min(380px,90%); max-width:90%; border:1px solid var(--oi-hairline-soft); border-radius:10px; box-shadow:var(--oi-shadow-overlay); }
+.presentation-body[data-expression-ref] > .presentation-planes > .presentation-depth--source { right:12px; }
+.presentation-body[data-expression-ref] > .presentation-planes > .presentation-depth--relations { left:12px; }
+.world-presentation--expression { max-width:none; width:100%; height:100%; min-height:0; margin:0; display:flex; }
+.world-presentation--expression > .world-component--expression { position:relative; flex:1; min-height:0; display:flex; flex-direction:column; }
+.world-presentation--expression > .world-component--expression > .world-expression__live { flex:1; min-height:0; width:100%; border:0; border-radius:0; }
+.world-expression__navigation { position:absolute; z-index:3; bottom:16px; left:20px; display:flex; align-items:flex-end; gap:16px; font-size:13px; color:var(--oi-black); }
+.world-expression__navigation > details, .world-expression__navigation > button { background:color-mix(in srgb,var(--oi-white) 90%,transparent); border:1px solid var(--oi-hairline-soft); border-radius:8px; padding:8px 12px; }
+.world-expression__navigation summary { cursor:pointer; }
+.world-expression__navigation details div { display:flex; flex-direction:column; gap:4px; margin-top:12px; max-height:40vh; overflow:auto; }
+.world-expression__navigation details button { text-align:left; padding:8px; }
+.world-expression__navigation button { color:inherit; }
+.world-expression__producer { position:absolute; z-index:2; right:24px; bottom:20px; max-width:32ch; text-align:right; color:var(--oi-black); font-size:12px; line-height:1.5; pointer-events:none; }
+.world-expression__producer strong, .world-expression__producer span { display:block; font-weight:400; }
+.world-expression__producer span { color:var(--oi-muted-2); }
 .world-region { padding: var(--oi-space-5) 0; border-bottom: var(--oi-shell-edge) solid var(--oi-world-rule); }
 .world-region:last-child { border-bottom: 0; }
 .world-region__label, .world-component__eyebrow { font-size: var(--oi-shell-type-eyebrow); text-transform: uppercase; letter-spacing: var(--oi-shell-tracking); color: var(--oi-world-muted); margin-bottom: var(--oi-space-2); }
@@ -156,11 +173,9 @@
 .world-component--fallback code { display: block; margin-top: var(--oi-space-2); font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
 .world-component--expression { display: grid; gap: var(--oi-space-2); margin: 0; }
 .world-expression__live { position: relative; min-height: 280px; border: var(--oi-shell-edge) solid var(--oi-world-rule); border-radius: var(--oi-radius-lg); background: var(--oi-white); color: var(--oi-black); overflow: hidden; }
-.world-expression__live:has(.world-expression__inscription) { min-height: 520px; }
-.world-expression__inscription { position:absolute; z-index:1; pointer-events:none; line-height:1.35; white-space:pre-wrap; color:inherit; }
-.world-expression__inscription small, .world-expression__inscription strong, .world-expression__inscription em { display:block; }
-.world-expression__inscription small { font-size:.6em; letter-spacing:.1em; }
-.world-expression__inscription p { margin:.35em 0 0; font-size:.72em; }
+
+.world-expression__text { position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
+.world-expression__accessible-text { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
 .world-expression__live > p { position: absolute; left: var(--oi-space-3); bottom: var(--oi-space-2); margin: 0; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
 .world-expression__meta, .world-component--expression figcaption { display: flex; justify-content: space-between; gap: var(--oi-space-3); font-size: var(--oi-shell-type-meta); color: var(--oi-world-muted); flex-wrap: wrap; }
 .world-expression__frozen { width: 100%; aspect-ratio: 16 / 10; border: var(--oi-shell-edge) solid var(--oi-world-rule); border-radius: var(--oi-radius-lg); background: var(--oi-black); }
@@ -250,3 +265,6 @@
    appear at the pointed subject instead of overprinting one another. */
 .explore-node--entry text { opacity: 0; pointer-events:none; }
 .explore-node--entry:hover text, .explore-node--entry:focus-visible text { opacity: 1; }
+
+.world-expression__edition-context { position:absolute; z-index:4; bottom:16px; right:20px; max-height:80%; max-width:min(520px,90%); overflow:auto; background:var(--oi-white); color:var(--oi-black); border-radius:8px; padding:12px; }
+.world-presentation--expression .world-expression__frozen { flex:1; height:100%; aspect-ratio:auto; border:0; border-radius:0; }

@@ -165,6 +165,12 @@ object-local state change — the role's entity takes that character state's
 (passage kind `state`); with a `scene_ref`, or a `state` naming an
 Expression-level state, it is a Scene change. `act_open` on an existing
 `act_ref` is an idempotent resume and may extend `cast` without duplication.
+An explicit `act_open` with `replace_cast:true` replaces the current cast
+against a required `expected_act_revision`. This is the native route for a
+reviewed participant identity correction or withdrawal. It retains the Act,
+Direct instrument, sequence and subject; it does not invoke activity. A stale
+revision refuses the whole replacement. Cross-World participants use their
+World-qualified refs; local refs remain valid in a single owner's native Act.
 
 Existing `act_perform/interrupt/checkpoint/restore` keep working.
 

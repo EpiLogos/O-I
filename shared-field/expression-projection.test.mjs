@@ -63,6 +63,16 @@ const input = (overrides = {}) => ({
   ...overrides,
 });
 
+test('the native producer can retain its World-qualified activity binding without changing document material', () => {
+  const world_ref='world:shared-expression:ann',activity_ref=`${world_ref}/act:continuation`;
+  const plain=projectExpression(input({world_ref}));
+  const bound=projectExpression(input({world_ref,activity_ref}));
+  assert.equal(bound.entry.meta.activity_ref,activity_ref);
+  assert.deepEqual(bound.composition,plain.composition);
+  assert.deepEqual(bound.projection.source,plain.projection.source);
+  assert.throws(()=>projectExpression(input({world_ref,activity_ref:'world:shared-expression:bea/act:continuation'})),/qualified by the source World/);
+});
+
 test('filtering keeps the selected scene, the material vocabulary and admitted sources; everything else is an omission', () => {
   const { composition, subjects, omissions } = filterExpressionComposition(document(), { scene_refs: ['expression:sf1-walk:scene:open'] });
   assert.equal(composition.schema, EXPRESSION_COMPOSITION_SCHEMA);

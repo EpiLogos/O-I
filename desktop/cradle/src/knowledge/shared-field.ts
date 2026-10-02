@@ -1,5 +1,5 @@
 import {kernelOp} from "../kernel/bridge";
-import type {KernelTransportStatus} from "../kernel/types";
+import type {KernelTransportStatus,NativeCallFailure} from "../kernel/types";
 import {createParticipant} from "../../../../shared-field/index.mjs";
 import {createSharedField} from "../../../../shared-field/social.mjs";
 import {createExploreEntry} from "../../../../shared-field/explore.mjs";
@@ -48,13 +48,41 @@ export interface SharedFieldStageReading {schema:"oi.shared-field.stage-reading/
 export interface SharedFieldStageResult {schema:"oi.shared-field.stage-result/v1";stage_ref:string;field_ref:string;revision:number;state:string;presenter_ref:string|null;subject_ref:string;contract?:unknown}
 /** `stage-follow`/`stage-unfollow` result (`oi.shared-field.stage-follow-result/v1`). */
 export interface SharedFieldStageFollowResult {schema:"oi.shared-field.stage-follow-result/v1";stage_ref:string;field_ref:string;follower_participant_ref:string;followed_at_revision:number|null;following:boolean}
-/** `enter`/`leave` result (`oi.shared-field.presence-result/v1`). */
-export interface SharedFieldPresenceResult {schema:"oi.shared-field.presence-result/v1";field_ref:string;participant_ref:string;state:string}
+/** Actual successful SDK completion without an authorized material row.
+ * Target refs correlate the awaited call; they carry no observed state,
+ * revision, timestamp, producer identity or renewed grant. */
+export interface SharedFieldReducerCompletion {
+  schema:"oi.shared-field.reducer-completion/v1";
+  completion:{state:"completed";reducer:"enter_field"|"put_activity_liveness";basis:"sdk-reducer-success"};
+  target:{field_ref:string;participant_ref?:string;activity_ref?:string};
+  observation:{state:"unavailable";basis:"no-matching-authorized-row"|"ambiguous-authorized-rows"|"authorized-read-failed";detail?:string};
+  connection_scoped:true;
+}
+/** `enter`/`leave`: an actual observed row or completion without material. */
+export type SharedFieldPresenceResult={schema:"oi.shared-field.presence-result/v1";field_ref:string;participant_ref:string;state:string}|SharedFieldReducerCompletion;
+
+/** Preserve the suite's failure disclosure and the original operation for
+ * reconciliation; losing a mutation receipt is never a successful reading. */
+export class SharedFieldNativeError extends Error {
+  readonly native:NativeCallFailure;
+  constructor(native:NativeCallFailure) {
+    const failure=native.failure;
+    const detail=failure.detail??failure.message??"The native call did not return a reading";
+    super(`${native.owner_operation}: ${detail}${failure.kind==="outcome_unknown"?". The operation may have taken effect. Inspect the native owner records before invoking it again.":""}`);
+    this.name="SharedFieldNativeError";
+    this.native=native;
+  }
+}
+
+export function nativeSharedReading<T=unknown>(data:unknown):T {
+  if(data&&typeof data==="object"&&(data as {schema?:string}).schema==="oi.native-call-failure/v1")throw new SharedFieldNativeError(data as NativeCallFailure);
+  return data as T;
+}
 
 export async function sharedField<T=unknown>(transport:KernelTransportStatus,request:SharedFieldRequest):Promise<T> {
   const response=await kernelOp(transport,{op:"shared_field",request});
   if(response.error||response.outcome?.result!=="shared_field_reading")throw new Error(response.error??"The Shared Field client returned no reading");
-  return response.outcome.data as T;
+  return nativeSharedReading<T>(response.outcome.data);
 }
 
 export const isUnavailable=(reading:unknown):reading is SharedFieldUnavailable=>!!reading&&typeof reading==="object"&&(reading as {state?:string}).state==="unavailable";

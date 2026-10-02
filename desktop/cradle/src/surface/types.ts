@@ -58,7 +58,7 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * mount reconciliation skips it, and completion fills it in place. */
   pending?: boolean;
   address?: import("../kernel/types").KnowledgeAddress;
-  encounter?: {space:string};
+  encounter?: {space:string;sourceWorldRef?:string};
   browser?: {url:string};
   /** A terminal's working directory, and — for a login handover (Settings
    * auth login, HARNESS-SETTINGS-RESEARCH §2a) — the declared command argv
@@ -79,7 +79,7 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * 'presentation') carries the exact World/Projection/Presentation/
    * Expression refs it was opened with — presentation state naming semantic
    * addresses, never a cloned remote payload. `ref` is the hosted entry ref. */
-  presentation?: {world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number};
+  presentation?: {native_session?:{ref:string;project:string;source_world_ref:string};world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number};
 }
 
 /** A tab group: one tab strip + the surface it presents. */

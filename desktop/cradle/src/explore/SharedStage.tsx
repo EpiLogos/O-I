@@ -10,7 +10,7 @@
  * Agent context, renderer buffers) is ever placed on the stage, because the
  * owner contract has no field that could carry it.
  */
-import {useCallback,useEffect,useState} from "react";
+import {useCallback,useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {isUnavailable,sharedField,slug,type HostedAuthority,type HostedEntry,type SharedFieldStageFollowResult,type SharedFieldStageReading,type SharedFieldStageResult,type SharedFieldUnavailable} from "../knowledge/shared-field";
 // @ts-ignore -- the owner's Shared Stage contract composes and checks every revision.
@@ -22,42 +22,52 @@ export function SharedStagePanel({field_ref,entries,authority,liveReading}:{fiel
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState<string>();
   const [focus,setFocus]=useState("");
-  const mine=authority.find(a=>a.field_ref===field_ref&&!a.revoked&&a.participant_ref);
-  const contributor=authority.some(a=>a.field_ref===field_ref&&!a.revoked&&a.role==="contributor");
+  const scope=useRef({field_ref,transport,active:false});
+  if(scope.current.field_ref!==field_ref||scope.current.transport!==transport)scope.current={field_ref,transport,active:false};
+  useEffect(()=>{const current=scope.current;current.active=true;setBusy(false);return()=>{current.active=false;};},[field_ref,transport]);
+  const admitted=authority.filter(a=>a.field_ref===field_ref&&!a.revoked);
+  const contributors=admitted.filter(a=>a.role==="contributor"&&a.participant_ref);
+  const contributor=contributors[0];
+  const owner=admitted.some(a=>a.role==="owner");
   const current=liveReading??reading;
-  const reading_=current&&!isUnavailable(current)?current:undefined;
-  const stage=reading_?.stage??undefined;
-  const following=reading_?.my_follow?.following===true;
+  const reading_=current&&!isUnavailable(current)&&current.field_ref===field_ref?current:undefined;
+  const stage=reading_?.stage?.state==="open"?reading_.stage:undefined;
+  const followGrants=admitted.filter(a=>a.participant_ref&&["observer","contact","contributor"].includes(a.role));
+  const mine=(stage&&reading_?.my_follow?.stage_ref===stage.stage_ref?followGrants.find(a=>a.participant_ref===reading_.my_follow?.follower_participant_ref):undefined)??followGrants[0];
+  const following=!!mine&&reading_?.my_follow?.stage_ref===stage?.stage_ref&&reading_?.my_follow?.follower_participant_ref===mine.participant_ref&&reading_?.my_follow?.following===true;
+  const presenter=contributors.find(a=>a.participant_ref===stage?.presenter_ref);
   const presence=reading_?.presence??[];
   const focusRef=(stage?.contract as {focus_ref?:string}|null)?.focus_ref;
 
   const readStage=useCallback(()=>{
-    let active=true;setBusy(true);
-    void sharedField<SharedFieldStageReading>(transport,{kind:"stage",field_ref}).then(r=>{if(active)setReading(r);}).catch(e=>{if(active)setReading({state:"unavailable",owner_operation:"shared-field.stage",detail:String(e instanceof Error?e.message:e)});}).finally(()=>{if(active)setBusy(false);});
+    const owner=scope.current;let active=true;setBusy(true);
+    const current=()=>active&&owner.active&&scope.current===owner;
+    void sharedField<SharedFieldStageReading>(transport,{kind:"stage",field_ref}).then(r=>{if(current())setReading(r);}).catch(e=>{if(current())setReading({state:"unavailable",owner_operation:"shared-field.stage",detail:String(e instanceof Error?e.message:e)});}).finally(()=>{if(current())setBusy(false);});
     return()=>{active=false;};
   },[transport,field_ref]);
   useEffect(()=>liveReading?undefined:readStage(),[readStage,!!liveReading]);
 
-  const act=async(run:()=>Promise<unknown>)=>{
+  const act=async(run:()=>Promise<unknown>,onCommitted?:()=>void)=>{
+    const owner=scope.current,current=()=>owner.active&&scope.current===owner;
+    if(!current())return;
     setBusy(true);setError(undefined);
-    try{await run();readStage();}catch(e){setError(String(e instanceof Error?e.message:e));}
-    finally{setBusy(false);}
+    try{const result=await run();if(!current())return;if(isUnavailable(result))throw new Error(result.detail);onCommitted?.();if(!liveReading)readStage();}catch(e){if(current())setError(String(e instanceof Error?e.message:e));}
+    finally{if(current())setBusy(false);}
   };
   const toggleFollow=()=>mine&&stage&&void act(async()=>{const result=await sharedField<SharedFieldStageFollowResult>(transport,{kind:following?"stage-unfollow":"stage-follow",field_ref,stage_ref:stage.stage_ref,follower_participant_ref:mine.participant_ref});return result;});
-  const setSharedFocus=()=>stage&&mine&&void act(async()=>{
-    const next=advanceSharedStage(stage.contract,{focus_ref:focus.trim()},{expected_revision:stage.revision,presenter_ref:mine.participant_ref});
+  const setSharedFocus=()=>stage&&contributor&&void act(async()=>{
+    const next=advanceSharedStage(stage.contract,{focus_ref:focus.trim()},{expected_revision:stage.revision,presenter_ref:contributor.participant_ref});
     const result=await sharedField<SharedFieldStageResult>(transport,{kind:"stage-advance",stage:next,expected_revision:stage.revision});
-    setFocus("");
     return result;
-  });
-  const openStage=()=>stage||!mine||!entries.length?undefined:void act(async()=>{
+  },()=>setFocus(""));
+  const openStage=()=>stage||!contributor||!entries.length?undefined:void act(async()=>{
     const entry=entries[0];
-    const contract=createSharedStage({shared_stage_ref:`stage:${slug(field_ref)}`,field_ref,presenter_ref:mine.participant_ref,subject_ref:entry.ref,provenance:[{kind:"authored",ref:mine.participant_ref,source_system:"o-i",revision:entry.revision??""}]});
+    const contract=createSharedStage({shared_stage_ref:`stage:${slug(field_ref)}:${crypto.randomUUID()}`,field_ref,presenter_ref:contributor.participant_ref,subject_ref:entry.ref,provenance:[{kind:"authored",ref:contributor.participant_ref,source_system:"o-i",revision:entry.revision??""}]});
     return await sharedField<SharedFieldStageResult>(transport,{kind:"stage-open",stage:contract});
   });
-  const closeStage=()=>stage&&void act(async()=>{
+  const closeStage=()=>stage&&(owner||presenter)&&void act(async()=>{
     const next=closeSharedStage(stage.contract,{expected_revision:stage.revision});
-    return await sharedField<SharedFieldStageResult>(transport,{kind:"stage-close",stage:next,expected_revision:stage.revision});
+    return await sharedField<SharedFieldStageResult>(transport,{kind:"stage-close",stage:next,expected_revision:stage.revision,actor_participant_ref:owner?mine?.participant_ref??"":presenter!.participant_ref});
   });
 
   return <section className="world-region" data-region-role="shared-stage" data-stage-state={stage?"open":"none"} data-following={following||undefined}>
@@ -69,9 +79,9 @@ export function SharedStagePanel({field_ref,entries,authority,liveReading}:{fiel
         <div className="world-component__collection">
           {mine&&<button type="button" disabled={busy} aria-pressed={following} onClick={toggleFollow} title={following?"Unfollow and keep your own local view — you stay in the field":"Follow the presenter's shared locus explicitly"}>{following?"Unfollow":"Follow"}</button>}
           {contributor&&<form className="explore-stage-focus" onSubmit={e=>{e.preventDefault();setSharedFocus();}}><input aria-label="Admitted shared focus" placeholder="shared focus — a Being or Thing ref" value={focus} onChange={e=>setFocus(e.target.value)}/><button type="submit" disabled={busy||!focus.trim()}>Set focus</button></form>}
-          <button type="button" disabled={busy} onClick={closeStage} title="Close the stage: it leaves every view, follows end, the field remains">Close stage</button>
+          {(owner||presenter)&&<button type="button" disabled={busy} onClick={closeStage} title="Close the stage: it leaves every view, follows end, the field remains">Close stage</button>}
         </div>
-      </>:<p className="explore-muted">{contributor&&entries.length&&mine?<>No stage is open in this field. <button type="button" disabled={busy} onClick={openStage}>Open a stage over {entries[0].label}</button></>:"No stage is open in this field."}</p>}
+      </>:<p className="explore-muted">{contributor&&entries.length?<>No stage is open in this field. <button type="button" disabled={busy} onClick={openStage}>Open a stage over {entries[0].label}</button></>:"No stage is open in this field."}</p>}
     </div>
   </section>;
 }

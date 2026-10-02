@@ -12,14 +12,14 @@
 //! the failure kinds the client speaks (`unbound` | `unavailable` |
 //! `refused` | `malformed`) are carried as distinct states. An unbound
 //! target is absence, never an error.
+use crate::flow::{Effect, OwnerCallError};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{
     collections::HashMap,
     ffi::OsString,
-    io::{BufRead, BufReader, Write},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::Command,
     sync::{
         atomic::{AtomicBool, Ordering},
         mpsc, Arc, Mutex, OnceLock,
@@ -45,6 +45,9 @@ pub enum CallError {
     Refused { message: String },
     /// The owner answered something the envelope contract cannot parse.
     Malformed { detail: String },
+    /// The suite physical transport keeps its own typed failure. In particular,
+    /// a launched mutation without a receipt is never owner absence or refusal.
+    Native { failure: OwnerCallError },
 }
 
 impl CallError {
@@ -53,6 +56,7 @@ impl CallError {
         match self {
             Self::Unbound { message } | Self::Refused { message } => message.clone(),
             Self::Unavailable { detail } | Self::Malformed { detail } => detail.clone(),
+            Self::Native { failure } => failure.to_string(),
         }
     }
 }
@@ -132,6 +136,14 @@ pub fn call(request: &Value) -> Result<Value, CallError> {
             message: "The native host owns the transport credential and presence connection".into(),
         });
     }
+    // Validate before a local lease is renewed, allocated or released. Other
+    // requests are encoded once by the ordinary physical caller below.
+    if matches!(
+        request["kind"].as_str(),
+        Some("observe" | "observe-stop" | "enter" | "leave")
+    ) {
+        encode_request(request)?;
+    }
     if matches!(request["kind"].as_str(), Some("observe" | "observe-stop")) {
         renew_presence();
         return observer_reading(request);
@@ -148,6 +160,7 @@ pub fn call(request: &Value) -> Result<Value, CallError> {
 struct PresenceLease {
     last_poll: Mutex<Instant>,
     stopped: AtomicBool,
+    finished: AtomicBool,
     reading: Mutex<Option<Result<Value, CallError>>>,
 }
 static PRESENCE: OnceLock<Mutex<HashMap<String, Arc<PresenceLease>>>> = OnceLock::new();
@@ -181,7 +194,7 @@ fn renew_presence() {
 fn release_presence(request: &Value) {
     if let (Ok(key), Some(registry)) = (presence_key(request), PRESENCE.get()) {
         if let Ok(mut leases) = registry.lock() {
-            if let Some(lease) = leases.remove(&key) {
+            if let Some(lease) = leases.get(&key) {
                 lease.stopped.store(true, Ordering::Release);
             }
         }
@@ -196,8 +209,15 @@ fn enter_presence(request: &Value) -> Result<Value, CallError> {
         .map_err(|_| CallError::Unavailable {
             detail: "Presence registry unavailable".into(),
         })?;
-    leases.retain(|_, lease| !lease.stopped.load(Ordering::Acquire));
+    // A retiring connection owns its slot until its group cleanup has finished.
+    leases.retain(|_, lease| !lease.finished.load(Ordering::Acquire));
     if let Some(lease) = leases.get(&key) {
+        if lease.stopped.load(Ordering::Acquire) {
+            return Err(CallError::Unavailable {
+                detail: "The previous presence connection is still releasing its native body"
+                    .into(),
+            });
+        }
         if let Ok(mut last) = lease.last_poll.lock() {
             *last = Instant::now();
         }
@@ -214,6 +234,7 @@ fn enter_presence(request: &Value) -> Result<Value, CallError> {
     let lease = Arc::new(PresenceLease {
         last_poll: Mutex::new(Instant::now()),
         stopped: AtomicBool::new(false),
+        finished: AtomicBool::new(false),
         reading: Mutex::new(None),
     });
     leases.insert(key, Arc::clone(&lease));
@@ -222,83 +243,137 @@ fn enter_presence(request: &Value) -> Result<Value, CallError> {
     let (send, receive) = mpsc::channel();
     let worker_lease = Arc::clone(&lease);
     std::thread::spawn(move || {
-        let outcome = (|| -> Result<(), CallError> {
-            let mut child = Command::new(client_executable())
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::inherit())
-                .spawn()
-                .map_err(|e| CallError::Unavailable {
-                    detail: format!("Presence client launch failed: {e}"),
-                })?;
-            let written = child
-                .stdin
-                .take()
-                .ok_or_else(|| CallError::Unavailable {
-                    detail: "Presence input unavailable".into(),
-                })?
-                .write_all(owner_request.to_string().as_bytes());
-            if let Err(e) = written {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(CallError::Unavailable {
-                    detail: e.to_string(),
-                });
+        struct Finished(Arc<PresenceLease>);
+        impl Drop for Finished {
+            fn drop(&mut self) {
+                self.0.stopped.store(true, Ordering::Release);
+                self.0.finished.store(true, Ordering::Release);
             }
-            let stdout = child.stdout.take().ok_or_else(|| CallError::Unavailable {
-                detail: "Presence output unavailable".into(),
-            })?;
-            let (first_send, first_receive) = mpsc::channel();
-            std::thread::spawn(move || {
-                let mut line = String::new();
-                let result = BufReader::new(stdout).read_line(&mut line).map(|_| line);
-                let _ = first_send.send(result);
-            });
-            let initial = first_receive.recv_timeout(Duration::from_secs(25));
-            let reading = match initial {
-                Ok(Ok(line)) => decode_reply(line.as_bytes(), &[]),
-                _ => Err(CallError::Unavailable {
-                    detail: "Presence admission timed out; held connection released".into(),
-                }),
-            };
-            if let Ok(mut cached) = worker_lease.reading.lock() {
-                *cached = Some(reading.clone());
-            }
-            let failed = reading.is_err();
-            let _ = send.send(reading);
-            while !failed
-                && !worker_lease.stopped.load(Ordering::Acquire)
-                && worker_lease
-                    .last_poll
-                    .lock()
-                    .map(|t| t.elapsed() < Duration::from_secs(120))
-                    .unwrap_or(false)
-            {
-                if child.try_wait().map(|s| s.is_some()).unwrap_or(true) {
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(250));
-            }
-            let _ = child.kill();
-            let _ = child.wait();
-            Ok(())
-        })();
-        if let Err(error) = outcome {
-            if let Ok(mut cached) = worker_lease.reading.lock() {
-                *cached = Some(Err(error.clone()));
-            }
-            let _ = send.send(Err(error));
         }
-        worker_lease.stopped.store(true, Ordering::Release);
+        let _finished = Finished(Arc::clone(&worker_lease));
+        presence_connection(
+            &owner_request,
+            &client_executable().into_os_string(),
+            &worker_lease,
+            &send,
+            Duration::from_secs(25),
+        );
     });
-    receive
-        .recv_timeout(Duration::from_secs(27))
-        .unwrap_or_else(|_| {
-            lease.stopped.store(true, Ordering::Release);
-            Err(CallError::Unavailable {
-                detail: "Native presence did not answer; inspect before entering again".into(),
+    receive.recv_timeout(Duration::from_secs(27)).unwrap_or_else(|_| {
+        lease.stopped.store(true, Ordering::Release);
+        Err(CallError::Native { failure: OwnerCallError::OutcomeUnknown {
+            detail: "Presence completion was not observed; native connection release requested. Inspect the original field before entering again".into(),
+            child_pid: None, cleanup: None, native: None,
+        } })
+    })
+}
+
+/// One worker owns input, the first actual envelope and the held connection.
+/// A received completion does not mint current presence: subscription rows
+/// remain the material owner. Later connection loss never undoes that receipt.
+fn presence_connection(
+    request: &Value,
+    executable: &OsString,
+    lease: &PresenceLease,
+    send: &mpsc::Sender<Result<Value, CallError>>,
+    startup_timeout: Duration,
+) {
+    let input = match encode_request(request) {
+        Ok(input) => input,
+        Err(error) => {
+            let _ = send.send(Err(error));
+            return;
+        }
+    };
+    let admitted = AtomicBool::new(false);
+    let startup_deadline = Instant::now() + startup_timeout;
+    let deadline = || {
+        if admitted.load(Ordering::Acquire) {
+            lease
+                .last_poll
+                .lock()
+                .map(|last| *last + Duration::from_secs(120))
+                .unwrap_or_else(|_| Instant::now())
+        } else {
+            startup_deadline
+        }
+    };
+    let cancelled = || lease.stopped.load(Ordering::Acquire);
+    let mut first: Option<Result<Value, CallError>> = None;
+    let mut frame_end = 0;
+    let mut observe = |stdout: &[u8], stderr: &[u8]| {
+        if first.is_some() {
+            // This doorway emits one JSON frame, then only keeps its socket.
+            // Extra material is a connection fault, never a second admission.
+            return stdout[frame_end..]
+                .iter()
+                .any(|byte| !byte.is_ascii_whitespace());
+        }
+        let Some(end) = stdout.iter().position(|byte| *byte == b'\n') else {
+            return false;
+        };
+        frame_end = end + 1;
+        let reading = if stdout[frame_end..]
+            .iter()
+            .any(|byte| !byte.is_ascii_whitespace())
+        {
+            Err(CallError::Native {
+                failure: OwnerCallError::OutcomeUnknown {
+                    detail: "Presence returned multiple frames instead of one admission receipt"
+                        .into(),
+                    child_pid: None,
+                    cleanup: None,
+                    native: None,
+                },
             })
-        })
+        } else {
+            decode_reply(&stdout[..end], stderr)
+        };
+        let failed = reading.is_err();
+        if !failed {
+            if let Ok(mut last) = lease.last_poll.lock() {
+                *last = Instant::now();
+            }
+            admitted.store(true, Ordering::Release);
+        }
+        if let Ok(mut cached) = lease.reading.lock() {
+            *cached = Some(reading.clone());
+        }
+        let abandoned = send.send(reading.clone()).is_err();
+        first = Some(reading);
+        failed || abandoned
+    };
+    let result = crate::native_process::run_observed(
+        Command::new(executable),
+        Some(&input),
+        crate::native_process::Limits {
+            timeout: startup_timeout,
+            stdout_bytes: 64 * 1024,
+            stderr_bytes: MAX_DIAGNOSTIC_BYTES,
+        },
+        Some(&cancelled),
+        Some(&deadline),
+        &mut observe,
+    );
+    drop(observe);
+    if first.is_none() {
+        let reading = match result {
+            Ok(output) => decode_owner_output(&output, Effect::MayMutate),
+            Err(error) => Err(physical_failure(Effect::MayMutate, error)),
+        };
+        if let Ok(mut cached) = lease.reading.lock() {
+            *cached = Some(reading.clone());
+        }
+        let _ = send.send(reading);
+    } else if first.as_ref().is_some_and(|reading| reading.is_ok()) {
+        if let Err(error) = result {
+            // The first result has already returned. Preserve connection cleanup
+            // separately; a completed reducer is not reclassified as uncompleted.
+            if let Ok(mut cached) = lease.reading.lock() {
+                *cached = Some(Err(physical_failure(Effect::ReadOnly, error)));
+            }
+        }
+    }
 }
 
 struct Observer {
@@ -306,6 +381,7 @@ struct Observer {
     last_poll: Mutex<Instant>,
     reading: Mutex<Option<Result<Value, CallError>>>,
     stopped: AtomicBool,
+    finished: AtomicBool,
 }
 static OBSERVERS: OnceLock<Mutex<HashMap<String, Arc<Observer>>>> = OnceLock::new();
 
@@ -342,16 +418,23 @@ fn observer_reading(request: &Value) -> Result<Value, CallError> {
         if !current {
             observer.stopped.store(true, Ordering::Release);
         }
-        current
+        // Retirement still occupies its slot until the owned client and
+        // worker have actually finished. Navigation cannot evade the budget.
+        !observer.finished.load(Ordering::Acquire)
     });
     if request["kind"] == "observe-stop" {
-        if let Some(observer) = observers.remove(id) {
+        if let Some(observer) = observers.get(id) {
             observer.stopped.store(true, Ordering::Release);
         }
         return Ok(serde_json::json!({"state":"released","observer_ref":id}));
     }
     let owner_request = serde_json::json!({"kind":"observe","ref":request.get("ref").cloned().unwrap_or(Value::Null)});
     if let Some(observer) = observers.get(id) {
+        if observer.stopped.load(Ordering::Acquire) {
+            return Err(CallError::Unavailable {
+                detail: "The observation is releasing its native client".into(),
+            });
+        }
         if observer.ref_request != owner_request {
             return Err(CallError::Refused {
                 message: "An observation lease cannot change its subject".into(),
@@ -382,10 +465,22 @@ fn observer_reading(request: &Value) -> Result<Value, CallError> {
         last_poll: Mutex::new(Instant::now()),
         reading: Mutex::new(None),
         stopped: AtomicBool::new(false),
+        finished: AtomicBool::new(false),
     });
     observers.insert(id.into(), Arc::clone(&observer));
     let executable = client_executable().into_os_string();
     std::thread::spawn(move || {
+        struct Finished(Arc<Observer>);
+        impl Drop for Finished {
+            fn drop(&mut self) {
+                self.0.stopped.store(true, Ordering::Release);
+                if let Ok(mut reading) = self.0.reading.lock() {
+                    *reading = None;
+                }
+                self.0.finished.store(true, Ordering::Release);
+            }
+        }
+        let _finished = Finished(Arc::clone(&observer));
         let mut cursor = Value::Null;
         while !observer.stopped.load(Ordering::Acquire) {
             if observer
@@ -398,7 +493,14 @@ fn observer_reading(request: &Value) -> Result<Value, CallError> {
             }
             let mut next = observer.ref_request.clone();
             next["cursor"] = cursor;
-            let reading = call_with_executable(&next, &executable);
+            let reading = observation_call(&next, &executable, || {
+                observer.stopped.load(Ordering::Acquire)
+                    || observer
+                        .last_poll
+                        .lock()
+                        .map(|t| t.elapsed() >= Duration::from_secs(120))
+                        .unwrap_or(true)
+            });
             let failed = reading.is_err();
             cursor = reading
                 .as_ref()
@@ -412,87 +514,224 @@ fn observer_reading(request: &Value) -> Result<Value, CallError> {
             if let Ok(mut cached) = observer.reading.lock() {
                 *cached = Some(reading);
             }
-            std::thread::sleep(Duration::from_millis(if failed { 2000 } else { 100 }));
+            for _ in 0..if failed { 100 } else { 5 } {
+                if observer.stopped.load(Ordering::Acquire) {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(20));
+            }
         }
         observer.stopped.store(true, Ordering::Release);
     });
     Ok(serde_json::json!({"state":"observing"}))
 }
 
-fn call_with_executable(request: &Value, executable: &OsString) -> Result<Value, CallError> {
-    let mut child = Command::new(executable)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| CallError::Unavailable {
-            detail: format!(
-                "SharedField client could not be launched ({}): {e}",
-                executable.to_string_lossy()
-            ),
-        })?;
-    {
-        let mut stdin = child.stdin.take().ok_or_else(|| CallError::Unavailable {
-            detail: "SharedField client accepted no request on stdin".into(),
-        })?;
-        stdin
-            .write_all(request.to_string().as_bytes())
-            .map_err(|e| CallError::Unavailable {
-                detail: format!("SharedField client refused the request bytes: {e}"),
-            })?;
-    }
-    let output = child
-        .wait_with_output()
-        .map_err(|e| CallError::Unavailable {
-            detail: format!("SharedField client did not complete: {e}"),
-        })?;
-    decode_envelope(&output)
+/// Read-only observations have the same process-group lifetime as native
+/// knowledge reads. Cancellation reaps the whole owned group, including a
+/// development tsx child. The buffers are capped; none is a durable source.
+fn observation_call(
+    request: &Value,
+    executable: &OsString,
+    cancelled: impl Fn() -> bool,
+) -> Result<Value, CallError> {
+    let command = Command::new(executable);
+    let input = encode_request(request)?;
+    let output = observation_output(command, &input, Duration::from_secs(65), cancelled)?;
+    decode_owner_output(&output, Effect::ReadOnly)
 }
 
-/// The envelope law shared with the knowledge transport: an empty stdout
-/// on failure is a launch/runtime fault (Unavailable); an unreadable
-/// stdout is Malformed; `ok:false` carries the client's own error kind.
-pub fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError> {
-    if !output.status.success() && output.stdout.iter().all(u8::is_ascii_whitespace) {
-        let detail = String::from_utf8_lossy(&output.stderr).trim().to_owned();
-        return Err(CallError::Unavailable {
-            detail: if detail.is_empty() {
-                format!("SharedField client failed ({})", output.status)
-            } else {
-                format!("SharedField client failed ({}): {detail}", output.status)
-            },
+const MAX_READING_BYTES: usize = 32 * 1024 * 1024;
+const MAX_DIAGNOSTIC_BYTES: usize = 64 * 1024;
+const MAX_REQUEST_BYTES: usize = 16 * 1024 * 1024;
+
+/// Serialize within the caller's physical input budget before dispatch. A
+/// rejected request has no native effect and is never an uncertain outcome.
+fn encode_request(request: &Value) -> Result<Vec<u8>, CallError> {
+    struct Input(Vec<u8>);
+    impl std::io::Write for Input {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            if bytes.len() > MAX_REQUEST_BYTES.saturating_sub(self.0.len()) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "SharedField input exceeds the 16 MiB native request budget",
+                ));
+            }
+            self.0.extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut input = Input(Vec::new());
+    serde_json::to_writer(&mut input, request).map_err(|error| CallError::Malformed {
+        detail: format!("SharedField request was not dispatched: {error}"),
+    })?;
+    Ok(input.0)
+}
+
+fn physical_failure(effect: Effect, error: crate::native_process::Failure) -> CallError {
+    match effect.physical_failure(error) {
+        OwnerCallError::Unavailable { detail } => CallError::Unavailable { detail },
+        failure => CallError::Native { failure },
+    }
+}
+
+fn observation_output(
+    command: Command,
+    input: &[u8],
+    timeout: Duration,
+    cancelled: impl Fn() -> bool,
+) -> Result<std::process::Output, CallError> {
+    crate::native_process::run_cancellable(
+        command,
+        Some(input),
+        crate::native_process::Limits {
+            timeout,
+            stdout_bytes: MAX_READING_BYTES,
+            stderr_bytes: MAX_DIAGNOSTIC_BYTES,
+        },
+        Some(&cancelled),
+    )
+    .map_err(|error| physical_failure(Effect::ReadOnly, error))
+}
+
+/// Only these owner-contracted operations are reads. Unknown operations remain
+/// mutation-bearing for receipt-loss classification, never for authorisation.
+fn request_effect(request: &Value) -> Effect {
+    if matches!(
+        request["kind"].as_str(),
+        Some(
+            "status"
+                | "identity"
+                | "receipt"
+                | "snapshot"
+                | "observe"
+                | "read"
+                | "stage"
+                | "field-now"
+                | "field-day"
+                | "preview_nara"
+        )
+    ) {
+        Effect::ReadOnly
+    } else {
+        Effect::MayMutate
+    }
+}
+
+fn call_with_executable(request: &Value, executable: &OsString) -> Result<Value, CallError> {
+    let effect = request_effect(request);
+    call_with_deadline(
+        request,
+        executable,
+        Duration::from_secs(if effect == Effect::ReadOnly { 65 } else { 300 }),
+    )
+}
+
+fn call_with_deadline(
+    request: &Value,
+    executable: &OsString,
+    timeout: Duration,
+) -> Result<Value, CallError> {
+    let effect = request_effect(request);
+    let input = encode_request(request)?;
+    let output = crate::native_process::run(
+        Command::new(executable),
+        Some(&input),
+        crate::native_process::Limits {
+            timeout,
+            stdout_bytes: MAX_READING_BYTES,
+            stderr_bytes: MAX_DIAGNOSTIC_BYTES,
+        },
+    )
+    .map_err(|error| physical_failure(effect, error))?;
+    decode_owner_output(&output, effect)
+}
+
+/// Decode the real owner response in its caller-owned effect context. Once a
+/// mutation has launched, a missing/invalid receipt cannot establish refusal.
+fn decode_owner_output(output: &std::process::Output, effect: Effect) -> Result<Value, CallError> {
+    decode_native_reply(&output.stdout, &output.stderr, effect, Some(&output.status))
+}
+
+fn decode_native_reply(
+    stdout: &[u8],
+    stderr: &[u8],
+    effect: Effect,
+    status: Option<&std::process::ExitStatus>,
+) -> Result<Value, CallError> {
+    let lost = |detail: String, native: Option<Value>| CallError::Native {
+        failure: effect.lost_response(detail, None, None, native),
+    };
+    let envelope: Value = serde_json::from_slice(stdout).map_err(|error| {
+        lost(
+            format!(
+                "SharedField returned an unreadable envelope ({error}; {}): {}",
+                status
+                    .map(ToString::to_string)
+                    .unwrap_or_else(|| "held native connection".into()),
+                String::from_utf8_lossy(stderr).trim()
+            ),
+            None,
+        )
+    })?;
+    let Some(ok) = envelope["ok"].as_bool() else {
+        return Err(lost(
+            "SharedField returned no supported native envelope".into(),
+            Some(envelope),
+        ));
+    };
+    if ok {
+        if let Some(status) = status.filter(|status| !status.success()) {
+            return Err(lost(
+                format!("SharedField returned success JSON with process status {status}"),
+                Some(envelope),
+            ));
+        }
+        return envelope.get("data").cloned().ok_or_else(|| {
+            lost(
+                "SharedField envelope is missing its reading".into(),
+                Some(envelope.clone()),
+            )
         });
     }
-    decode_reply(&output.stdout, &output.stderr)
-}
-
-fn decode_reply(stdout: &[u8], stderr: &[u8]) -> Result<Value, CallError> {
-    let envelope: Value = serde_json::from_slice(stdout).map_err(|e| CallError::Malformed {
-        detail: format!(
-            "SharedField client returned an unreadable envelope ({e}): {}",
-            String::from_utf8_lossy(stderr).trim()
-        ),
-    })?;
-    if envelope["ok"] == true {
-        return envelope
-            .get("data")
-            .cloned()
-            .ok_or_else(|| CallError::Malformed {
-                detail: "SharedField envelope is missing its reading".into(),
-            });
-    }
-    let message = envelope["error"]["message"]
-        .as_str()
-        .unwrap_or("SharedField client refused this request")
-        .to_owned();
+    let Some(message) = envelope["error"]["message"].as_str().map(str::to_owned) else {
+        return Err(lost(
+            "SharedField failure has no native error message".into(),
+            Some(envelope),
+        ));
+    };
     Err(match envelope["error"]["kind"].as_str() {
         Some("unbound") => CallError::Unbound { message },
         Some("unavailable") => CallError::Unavailable { detail: message },
         Some("malformed") => CallError::Malformed { detail: message },
-        // `refused`, and any kind the contract does not name, is the
-        // owner's answer carried verbatim.
-        _ => CallError::Refused { message },
+        Some("refused") => CallError::Refused { message },
+        Some("outcome_unknown") => CallError::Native {
+            failure: OwnerCallError::OutcomeUnknown {
+                detail: message,
+                child_pid: None,
+                cleanup: None,
+                native: Some(envelope),
+            },
+        },
+        _ => lost(
+            "SharedField returned an unsupported failure kind".into(),
+            Some(envelope),
+        ),
     })
+}
+
+/// A completed read uses the same contextual decoder as ordinary owner calls;
+/// launched reply loss is distinct from an executable that could not launch.
+pub fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError> {
+    decode_owner_output(output, Effect::ReadOnly)
+}
+
+/// The held producer is deliberately alive when its one native frame arrives.
+/// Its response still carries the same mutation receipt-loss distinction.
+fn decode_reply(stdout: &[u8], stderr: &[u8]) -> Result<Value, CallError> {
+    decode_native_reply(stdout, stderr, Effect::MayMutate, None)
 }
 
 /// The kernel-op reading: the owner data verbatim when it served; an
@@ -520,6 +759,13 @@ pub fn reading(request: &Value) -> Result<Value, String> {
         ),
         Err(CallError::Refused { message }) => Err(message),
         Err(CallError::Malformed { detail }) => Err(detail),
+        Err(CallError::Native { failure }) => Ok(crate::knowledge::failure_reading(
+            &format!(
+                "{OWNER_OPERATION}:{}",
+                request["kind"].as_str().unwrap_or("unknown")
+            ),
+            failure,
+        )),
     }
 }
 
@@ -561,9 +807,16 @@ const NO_A2A_RUNNER: &str = "the A2A owner floor is unavailable: this installed 
 /// never minted by the renderer or invented here. Node runs the floor; the
 /// renderer sees only the returned `oi.a2a-difference/v1` document.
 pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
-    use std::io::Write;
-    use std::process::{Command, Stdio};
-
+    // This entry also serves direct kernel dispatch, which bypasses call().
+    // Admit the original bytes before cloning or formatting caller identities.
+    if let Err(error) = encode_request(request) {
+        return Ok(crate::knowledge::failure_reading(
+            "a2a.exchange",
+            OwnerCallError::Malformed {
+                detail: error.detail(),
+            },
+        ));
+    }
     let runner = a2a_runner_path().ok_or_else(|| NO_A2A_RUNNER.to_string())?;
     if !runner.is_file() {
         return Err(format!(
@@ -600,7 +853,7 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
             std::env::var_os("OI_NODE").is_none() && runner == home.join("a2a-runner.mjs")
         })
         .map(|home| home.join(BUNDLED_LAUNCHER));
-    let mut command = match &bundled_launcher {
+    let command = match &bundled_launcher {
         Some(launcher) => {
             let mut command = Command::new(launcher);
             command.env("OI_SHARED_FIELD_ENTRY", "a2a-runner.mjs");
@@ -612,39 +865,67 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
             command
         }
     };
-    let mut child = command
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| {
+    // Correlation must not echo an unrestricted input identifier on refusal.
+    // A completed native difference retains its own actual exchange identity.
+    let failure = |error: OwnerCallError| crate::knowledge::failure_reading("a2a.exchange", error);
+    let input = match encode_request(&composed) {
+        Ok(input) => input,
+        Err(error) => {
+            return Ok(failure(OwnerCallError::Malformed {
+                detail: error.detail(),
+            }))
+        }
+    };
+    let output = match crate::native_process::run(
+        command,
+        Some(&input),
+        crate::native_process::Limits {
+            timeout: Duration::from_secs(300),
+            stdout_bytes: MAX_READING_BYTES,
+            stderr_bytes: MAX_DIAGNOSTIC_BYTES,
+        },
+    ) {
+        Ok(output) => output,
+        Err(error) => return Ok(failure(Effect::MayMutate.physical_failure(error))),
+    };
+    let parsed: Value = match serde_json::from_slice(&output.stdout) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            return Ok(failure(Effect::MayMutate.lost_response(
+                format!(
+                    "The A2A runner's reply was unreadable ({error}; status {}): {}",
+                    output.status,
+                    String::from_utf8_lossy(&output.stderr).trim()
+                ),
+                None,
+                None,
+                None,
+            )))
+        }
+    };
+    if let Some(message) = parsed.get("a2aError").and_then(|value| value.as_str()) {
+        return Ok(failure(
+            if parsed["kind"] == "refused" && parsed["delivery_attempted"] == false {
+                OwnerCallError::Refused {
+                    message: message.into(),
+                    native: Some(parsed),
+                }
+            } else {
+                // A legacy/corrupt runner cannot establish that no message sent.
+                Effect::MayMutate.lost_response(message.into(), None, None, Some(parsed))
+            },
+        ));
+    }
+    if !output.status.success() || parsed["schema"] != "oi.a2a-difference/v1" {
+        return Ok(failure(Effect::MayMutate.lost_response(
             format!(
-                "the A2A runner could not be launched via node ({}): {e}",
-                node.display()
-            )
-        })?;
-    {
-        let stdin = child
-            .stdin
-            .as_mut()
-            .ok_or_else(|| "the A2A runner accepted no request".to_string())?;
-        stdin
-            .write_all(composed.to_string().as_bytes())
-            .map_err(|e| format!("the A2A runner refused the request bytes: {e}"))?;
-    }
-    let output = child
-        .wait_with_output()
-        .map_err(|e| format!("the A2A runner did not complete: {e}"))?;
-    let parsed: Value = serde_json::from_slice(&output.stdout)
-        .map_err(|e| format!("the A2A runner's reply was not JSON: {e}"))?;
-    if let Some(message) = parsed.get("a2aError").and_then(|v| v.as_str()) {
-        return Err(format!("the A2A floor refused the exchange: {message}"));
-    }
-    if parsed.get("schema").and_then(|v| v.as_str()) != Some("oi.a2a-difference/v1") {
-        return Err(
-            "the A2A runner returned something that is not an oi.a2a-difference/v1 document"
-                .to_string(),
-        );
+                "The A2A runner returned no valid completed difference (status {})",
+                output.status
+            ),
+            None,
+            None,
+            Some(parsed),
+        )));
     }
     Ok(parsed)
 }
@@ -654,6 +935,61 @@ mod a2a_tests {
     use super::*;
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
+
+    #[cfg(unix)]
+    #[test]
+    fn oversized_operation_id_is_bounded_before_actual_native_launch() {
+        const CHILD: &str = "OI_A2A_INPUT_BOUNDARY_CHILD";
+        if std::env::var_os(CHILD).is_some() {
+            let request = serde_json::json!({
+                "message": {"exchange_operation_id": "x".repeat(MAX_REQUEST_BYTES)},
+            });
+            let reading = a2a_exchange(&request).unwrap();
+            assert_eq!(reading["schema"], "oi.native-call-failure/v1");
+            assert_eq!(reading["failure"]["kind"], "malformed");
+            assert!(
+                reading.to_string().len() < 4096,
+                "Refusal must remain bounded"
+            );
+            assert!(reading.to_string().contains("16 MiB native request budget"));
+            return;
+        }
+        let directory = std::env::temp_dir().join(format!(
+            "oi-a2a-input-{}-{}",
+            std::process::id(),
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let executable = directory.join("native-effect.sh");
+        let marker = directory.join("native-effect.sh.effect");
+        let runner = directory.join("a2a-runner.mjs");
+        // The actual executable would create an OS effect if launched. It
+        // supplies no fabricated response; admission must prevent its launch.
+        std::fs::write(
+            &executable,
+            "#!/bin/sh\nprintf native-effect > \"${0}.effect\"\n",
+        )
+        .unwrap();
+        std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o700)).unwrap();
+        std::fs::write(&runner, "").unwrap();
+        // Isolate native configuration from the concurrently running suite.
+        let output = Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "shared_field::a2a_tests::oversized_operation_id_is_bounded_before_actual_native_launch", "--nocapture"])
+            .env(CHILD, "1")
+            .env("OI_NODE", &executable)
+            .env("OI_A2A_RUNNER", &runner)
+            .output().unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+        assert!(
+            !marker.exists(),
+            "Oversized A2A input reached actual native dispatch"
+        );
+        std::fs::remove_dir_all(directory).unwrap();
+    }
 
     #[test]
     fn a2a_exchange_composes_operator_send_authority_and_verifies_the_contract() {
@@ -710,7 +1046,8 @@ mod a2a_tests {
             "the message travels verbatim"
         );
 
-        // A reply that is not a difference document is refused, never carried.
+        // Invalid reply material cannot establish that the launched send did
+        // no work. It remains typed uncertainty, never a successful difference.
         std::fs::write(
             &fake,
             "#!/bin/sh\ncat > /dev/null\necho '{\"unexpected\":true}'\n",
@@ -718,10 +1055,10 @@ mod a2a_tests {
         .unwrap();
         std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
         crate::test_stub::settle_stub(&fake);
-        assert!(
-            a2a_exchange(&request).is_err(),
-            "a non-contract reply is refused"
-        );
+        let invalid = a2a_exchange(&request).unwrap();
+        assert_eq!(invalid["schema"], "oi.native-call-failure/v1");
+        assert_eq!(invalid["failure"]["kind"], "outcome_unknown");
+        assert_eq!(invalid["failure"]["native"]["unexpected"], true);
 
         match prior_node {
             Some(value) => std::env::set_var("OI_NODE", value),
@@ -869,24 +1206,31 @@ mod tests {
             "",
         ))
         .unwrap_err();
-        assert_eq!(
-            unknown_kind,
-            CallError::Refused {
-                message: "carried verbatim".into()
-            }
+        assert!(
+            matches!(unknown_kind, CallError::Native {failure: OwnerCallError::Malformed {detail}} if detail.contains("unsupported failure kind"))
         );
     }
 
     #[test]
-    fn empty_stdout_on_failure_is_unavailable_and_unreadable_stdout_is_malformed() {
+    fn launched_empty_or_unreadable_stdout_is_failed_reading_not_owner_absence() {
         let launch_fault = decode_envelope(&output(127, "", "tsx: not found")).unwrap_err();
         assert!(
-            matches!(launch_fault, CallError::Unavailable { ref detail } if detail.contains("tsx: not found"))
+            matches!(launch_fault, CallError::Native {failure: OwnerCallError::Malformed {detail}} if detail.contains("tsx: not found"))
         );
         let unreadable = decode_envelope(&output(0, "not json", "")).unwrap_err();
-        assert!(matches!(unreadable, CallError::Malformed { .. }));
+        assert!(matches!(
+            unreadable,
+            CallError::Native {
+                failure: OwnerCallError::Malformed { .. }
+            }
+        ));
         let missing_data = decode_envelope(&output(0, r#"{"ok":true}"#, "")).unwrap_err();
-        assert!(matches!(missing_data, CallError::Malformed { .. }));
+        assert!(matches!(
+            missing_data,
+            CallError::Native {
+                failure: OwnerCallError::Malformed { .. }
+            }
+        ));
     }
 
     #[test]
@@ -897,5 +1241,220 @@ mod tests {
         )
         .unwrap_err();
         assert!(matches!(error, CallError::Unavailable { .. }));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn oversized_native_request_does_not_launch_or_perform_an_effect() {
+        use std::os::unix::fs::PermissionsExt;
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory =
+            std::env::temp_dir().join(format!("oi-shared-input-{}-{nonce}", std::process::id()));
+        std::fs::create_dir(&directory).unwrap();
+        let executable = directory.join("native-effect.sh");
+        let marker = directory.join("native-effect.sh.effect");
+        // A real OS write would witness dispatch. No owner reply is fabricated.
+        std::fs::write(
+            &executable,
+            "#!/bin/sh\nprintf native-effect > \"${0}.effect\"\n",
+        )
+        .unwrap();
+        std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let request =
+            serde_json::json!({"kind":"publish","material":"x".repeat(MAX_REQUEST_BYTES)});
+        let error = call_with_deadline(
+            &request,
+            &executable.into_os_string(),
+            Duration::from_secs(1),
+        )
+        .unwrap_err();
+        assert!(
+            matches!(error, CallError::Malformed {detail} if detail.contains("16 MiB native request budget"))
+        );
+        assert!(
+            !marker.exists(),
+            "Input admission must precede actual native dispatch"
+        );
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn observation_transport_carries_actual_pipe_bytes_without_reinterpreting_them() {
+        let bytes = b"native process bytes\n";
+        let output = observation_output(
+            Command::new("/bin/cat"),
+            bytes,
+            Duration::from_secs(2),
+            || false,
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert_eq!(output.stdout, bytes);
+        assert!(output.stderr.is_empty());
+    }
+
+    #[test]
+    fn observation_release_and_deadline_reap_real_waiting_processes() {
+        for release in [true, false] {
+            let stopped = Arc::new(AtomicBool::new(false));
+            let stop = Arc::clone(&stopped);
+            let signal = std::thread::spawn(move || {
+                std::thread::sleep(Duration::from_millis(100));
+                if release {
+                    stop.store(true, Ordering::Release);
+                }
+            });
+            let mut command = Command::new("/bin/sleep");
+            command.arg("30");
+            let started = Instant::now();
+            let result = observation_output(command, b"", Duration::from_millis(250), || {
+                stopped.load(Ordering::Acquire)
+            });
+            signal.join().unwrap();
+            assert!(started.elapsed() < Duration::from_secs(2));
+            assert!(
+                matches!(result, Err(CallError::Native {failure: OwnerCallError::TransportFailed {detail, child_pid: Some(_), cleanup: Some(_)} }) if detail.contains(if release {"cancelled"} else {"deadline"}))
+            );
+        }
+    }
+
+    #[test]
+    fn observation_transport_refuses_and_reaps_actual_unbounded_output() {
+        let result = observation_output(
+            Command::new("/usr/bin/yes"),
+            b"",
+            Duration::from_secs(3),
+            || false,
+        );
+        assert!(
+            matches!(result, Err(CallError::Native {failure: OwnerCallError::TransportFailed {detail, child_pid: Some(_), cleanup: Some(_)} }) if detail.contains("bounded output"))
+        );
+    }
+
+    #[test]
+    fn observation_deadline_bounds_delivery_to_a_real_nonreading_process() {
+        let mut command = Command::new("/bin/sleep");
+        command.arg("30");
+        let input = vec![b'x'; 4 * 1024 * 1024];
+        let started = Instant::now();
+        let result = observation_output(command, &input, Duration::from_millis(150), || false);
+        assert!(started.elapsed() < Duration::from_secs(2));
+        assert!(
+            matches!(result, Err(CallError::Native {failure: OwnerCallError::TransportFailed {detail, child_pid: Some(_), cleanup: Some(_)} }) if detail.contains("deadline"))
+        );
+    }
+
+    #[test]
+    fn observation_deadline_bounds_real_inherited_pipes_after_parent_exit() {
+        let mut command = Command::new("/bin/sh");
+        command.args(["-c", "/bin/sleep 30 & exit 0"]);
+        let started = Instant::now();
+        let result = observation_output(command, b"", Duration::from_millis(150), || false);
+        assert!(started.elapsed() < Duration::from_secs(2));
+        assert!(
+            matches!(result, Err(CallError::Native {failure: OwnerCallError::TransportFailed {detail, child_pid: Some(_), cleanup: Some(_)} }) if detail.contains("deadline"))
+        );
+    }
+
+    #[test]
+    fn ordinary_mutation_receipt_loss_preserves_real_effect_and_uncertainty() {
+        use std::os::unix::fs::PermissionsExt;
+        let directory = std::env::temp_dir().join(format!(
+            "oi-shared-call-effect-{}-{}",
+            std::process::id(),
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let marker = directory.join("effect");
+        let executable = directory.join("owner");
+        // The native OS producer writes before waiting. The marker proves an
+        // effect occurred; the call must not infer refusal from a lost reply.
+        std::fs::write(&executable, "#!/bin/sh\ncat >/dev/null\nprintf applied > \"$(dirname \"$0\")/effect\"\nexec /bin/sleep 30\n").unwrap();
+        std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let result = call_with_deadline(
+            &serde_json::json!({"kind":"stage-open"}),
+            &executable.clone().into_os_string(),
+            Duration::from_millis(250),
+        );
+        assert_eq!(std::fs::read_to_string(&marker).unwrap(), "applied");
+        assert!(matches!(
+            result,
+            Err(CallError::Native {
+                failure: OwnerCallError::OutcomeUnknown {
+                    child_pid: Some(_),
+                    cleanup: Some(_),
+                    ..
+                }
+            })
+        ));
+        let read = call_with_deadline(
+            &serde_json::json!({"kind":"snapshot"}),
+            &executable.into_os_string(),
+            Duration::from_millis(250),
+        );
+        assert!(matches!(
+            read,
+            Err(CallError::Native {
+                failure: OwnerCallError::TransportFailed {
+                    child_pid: Some(_),
+                    cleanup: Some(_),
+                    ..
+                }
+            })
+        ));
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn ordinary_decode_distinguishes_actual_success_refusal_and_lost_mutation_receipt() {
+        assert_eq!(
+            decode_owner_output(
+                &output(0, r#"{"ok":true,"data":{"revision":7}}"#, ""),
+                Effect::MayMutate
+            )
+            .unwrap(),
+            serde_json::json!({"revision":7})
+        );
+        assert!(matches!(
+            decode_owner_output(
+                &output(
+                    1,
+                    r#"{"ok":false,"error":{"kind":"refused","message":"authority refused"}}"#,
+                    ""
+                ),
+                Effect::MayMutate
+            ),
+            Err(CallError::Refused { .. })
+        ));
+        for reply in [
+            output(0, "", ""),
+            output(0, "not JSON", ""),
+            output(1, r#"{"ok":true,"data":{}}"#, ""),
+            output(0, r#"{"ok":true}"#, ""),
+        ] {
+            assert!(matches!(
+                decode_owner_output(&reply, Effect::MayMutate),
+                Err(CallError::Native {
+                    failure: OwnerCallError::OutcomeUnknown { .. }
+                })
+            ));
+            assert!(matches!(
+                decode_owner_output(&reply, Effect::ReadOnly),
+                Err(CallError::Native {
+                    failure: OwnerCallError::Malformed { .. }
+                })
+            ));
+        }
+        let native = output(
+            1,
+            r#"{"ok":false,"error":{"kind":"outcome_unknown","message":"confirmation lost","completion_observation":{"completed_reducers":1}}}"#,
+            "",
+        );
+        assert!(
+            matches!(decode_owner_output(&native, Effect::MayMutate), Err(CallError::Native {failure: OwnerCallError::OutcomeUnknown {native: Some(value), ..}}) if value["error"]["completion_observation"]["completed_reducers"]==1)
+        );
     }
 }

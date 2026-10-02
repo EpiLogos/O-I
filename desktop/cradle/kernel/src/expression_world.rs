@@ -81,6 +81,20 @@ fn text(value: &str) -> Result<(), String> {
 fn optional_text(value: &Option<String>) -> Result<(), String> {
     value.as_deref().map(text).unwrap_or(Ok(()))
 }
+// Material bodies carry authored paragraphs and tabular text. Identity,
+// reference and actor fields continue to use the stricter text validator.
+fn material_text(value: &str) -> Result<(), String> {
+    if value.trim().is_empty()
+        || value.len() > MAX_TEXT
+        || value
+            .chars()
+            .any(|c| c.is_control() && !matches!(c, '\n' | '\r' | '\t'))
+    {
+        Err("Expected bounded nonempty material text".into())
+    } else {
+        Ok(())
+    }
+}
 
 /// Deterministic local suffix for kernel-derived presentation refs
 /// (FNV-1a 64, the same digest family Central uses for content refs).
@@ -296,11 +310,13 @@ impl Binding {
             &self.character_ref,
             &self.subject_ref,
             &self.label,
-            &self.text,
             &self.entity_ref,
             &self.character_revision,
         ] {
             optional_text(value)?;
+        }
+        if let Some(body) = &self.text {
+            material_text(body)?;
         }
         if let Some(state) = &self.state {
             expression::role_name(state)?;
@@ -1094,6 +1110,10 @@ pub enum Request {
         summary: Option<String>,
         #[serde(default)]
         cast: Vec<CastMember>,
+        /// An explicitly reviewed full cast correction, checked against the
+        /// existing Act revision. Ordinary resume continues to extend cast.
+        #[serde(default)]
+        replace_cast: bool,
         #[serde(default)]
         subject_ref: Option<String>,
         #[serde(default)]
@@ -2579,7 +2599,7 @@ impl Kernel {
         }
         for (role, caption) in captions {
             expression::role_name(role)?;
-            text(caption)?;
+            material_text(caption)?;
             fills
                 .entry(role.clone())
                 .or_insert_with(RoleFill::default)
@@ -3218,6 +3238,7 @@ impl Kernel {
                 actor,
                 summary,
                 cast,
+                replace_cast,
                 subject_ref,
                 instrument_ref,
                 selection,
@@ -3241,7 +3262,14 @@ impl Kernel {
                     optional_text(&member.character_ref)?;
                     optional_text(&member.label)?;
                 }
-                if self.act_lookup(&act_ref)?.is_none() {
+                let existing = self.act_lookup(&act_ref)?;
+                if replace_cast && expected_act_revision.is_none() {
+                    return Err("Replacing an existing cast requires expected_act_revision".into());
+                }
+                if replace_cast && existing.is_none() {
+                    return Err("Cannot replace the cast of an absent Act".into());
+                }
+                if existing.is_none() {
                     // An act addresses a live target: the Expression is open.
                     let document = self.world_document(&expression_ref)?;
                     let mut act = Act::new(
@@ -3284,6 +3312,9 @@ impl Kernel {
                 }
                 let previous = act.revision;
                 let mut next = act.clone();
+                if replace_cast {
+                    next.cast.clear();
+                }
                 for member in cast {
                     if !next.cast.iter().any(|c| {
                         c.role == member.role && c.participant_ref == member.participant_ref
@@ -3760,7 +3791,9 @@ impl Kernel {
             } => {
                 text(&actor)?;
                 expression::role_name(&role)?;
-                optional_text(&value_text)?;
+                if let Some(body) = &value_text {
+                    material_text(body)?;
+                }
                 optional_basis(&event_basis)?;
                 let field = field.unwrap_or_else(|| "body".into());
                 crate::expression_material::text_field(&field)?;

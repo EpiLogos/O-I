@@ -75,7 +75,9 @@ export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, acco
   const scopeProject = project ?? accompanying?.project ?? subject.project;
   const session = accompanying?.ref;
   if (mode === "base" || mode === "epi-logos") {
-    return [{id: "context", label: "Context", body: <PreparedContextMount project={scopeProject} session={session}/>}];
+    return [{id: "context", label: "Context", body: opens?.sideTabs?.length
+      ? <ContextPaneMount opens={opens} dataPlane="context" project={scopeProject} session={session}/>
+      : <PreparedContextMount project={scopeProject} session={session}/>}];
   }
   const context = (id: string) => ({id, label: "Context", body: <ContextPaneMount opens={opens} dataPlane={id} project={scopeProject} session={session}/>});
   if (mode === "factory") return [

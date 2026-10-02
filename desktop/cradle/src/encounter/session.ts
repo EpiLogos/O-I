@@ -34,6 +34,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
 import {encounter,mintDeliveryRef,taskRead,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterRequest,type EncounterStatus,type EncounterTaskReading,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
+import {nativeSharedReading} from "../knowledge/shared-field";
 import {createA2aBinding,createA2aPresence} from "../../../../shared-field/a2a.mjs";
 import {ACTIVE_PHASES,type AddressedFields,type DeliveryHistoryEntry,type DispatchState,type GroupState} from "./AddressedComposer";
 
@@ -532,7 +533,7 @@ class EncounterSession implements EncounterSessionActions {
     message:{message_id:`a2a-agency-${Date.now().toString(36)}`,text:seed,purpose:"agency-panel-a2a-exchange"},
    }});
    if(routed.error||routed.outcome?.result!=="a2a_exchange_difference")throw new Error(routed.error??"The A2A exchange could not be routed through the kernel.");
-   const difference=routed.outcome.data as unknown as A2aDifference;
+   const difference=nativeSharedReading<A2aDifference>(routed.outcome.data);
    this.set({a2a:{seed,busy:false,difference}});
   }catch(err){this.set({a2a:{seed,busy:false,error:String(err)}});}
   finally{this.end();}

@@ -77,7 +77,14 @@ function observeCompletedReducer<T>(reducer: 'enter_field' | 'put_activity_liven
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
+  let bytes = 0;
+  for await (const chunk of process.stdin) {
+    bytes += (chunk as Buffer).byteLength;
+    if (bytes > 16 * 1024 * 1024) await emit({ok: false, error: {
+      kind: 'malformed', message: 'SharedField input exceeds the 16 MiB native request budget',
+    }});
+    chunks.push(chunk as Buffer);
+  }
   return Buffer.concat(chunks).toString('utf8');
 }
 

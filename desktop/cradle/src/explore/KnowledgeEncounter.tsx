@@ -22,7 +22,7 @@ function remember(name:string,value:unknown){try{localStorage.setItem(name,JSON.
 function initialPins(world:string){const value=stored<unknown>(key(world,"pins"),[]);return Array.isArray(value)?[...new Set(value.filter((ref):ref is string=>typeof ref==="string"&&ref.length>0))].slice(-MAX_PINS):[];}
 const readingRef = (row:Provenance):ReadingRef => ({ref:row.ref,revision:row.revision??"revision-unavailable",availability:row.revision?"available":"unavailable"});
 
-export function KnowledgeEncounter({opened,page,onOpenRef}:{opened:unknown;page:ReactNode;onOpenRef:(ref:string)=>void}) {
+export function KnowledgeEncounter({opened,page,onOpenRef,hosting="stage"}:{opened:unknown;page:ReactNode;onOpenRef:(ref:string)=>void;hosting?:"stage"|"preview"}) {
   const {transport}=useKernel();
   const stage=useExpressionStage();
   // A new object can represent the same reading after opening source depth.
@@ -56,7 +56,7 @@ export function KnowledgeEncounter({opened,page,onOpenRef}:{opened:unknown;page:
     return()=>{current=false;};
   },[readingKey,retainedRefs,transport,world]);
   const display=useMemo<Encounter>(()=>({...encounter,nodes:[...encounter.nodes,...retained.filter(node=>!encounter.nodes.some(item=>item.ref===node.ref))]}),[encounter,retained]);
-  const selectedMode=encounter.presentations.includes(mode)?mode:"page";
+  const selectedMode=encounter.presentations.includes(mode)&&(hosting==="stage"||mode!=="expression")?mode:"page";
   const visualLocus=heldLocus&&display.nodes.some(node=>node.ref===heldLocus)?heldLocus:encounter.focus;
   const open=(ref:string)=>{const node=display.nodes.find(item=>item.ref===ref);if(node&&node.availability!=="unavailable")onOpenRef(ref);};
   const neighbours=encounter.edges.filter(edge=>edge.from===encounter.focus||edge.to===encounter.focus).map(edge=>({edge,ref:edge.from===encounter.focus?edge.to:edge.from}));
@@ -82,7 +82,7 @@ export function KnowledgeEncounter({opened,page,onOpenRef}:{opened:unknown;page:
   // The stage exists only while this specific Surface shows Expression.
   // Navigating, changing modes, or replacing a reading releases its GPU locus.
   useLayoutEffect(()=>{
-    if(selectedMode!=="expression"||expressionOutcome?.state!=="ready")return;
+    if(hosting!=="stage"||selectedMode!=="expression"||expressionOutcome?.state!=="ready")return;
     setExpressionError("");
     let active:ReturnType<typeof stage.present>=null;
     try {
@@ -97,9 +97,10 @@ export function KnowledgeEncounter({opened,page,onOpenRef}:{opened:unknown;page:
       return;
     }
     return()=>active?.release();
-  },[selectedMode,expressionOutcome,stage,mountId]);
+  },[hosting,selectedMode,expressionOutcome,stage,mountId]);
   const changeMode=(next:Mode)=>{epoch.current++;activeProjection.current?.abort();setExpressionBusy(false);setMode(next);};
   const express=async()=>{
+    if(hosting!=="stage")return;
     activeProjection.current?.abort();
     const controller=new AbortController();activeProjection.current=controller;
     const request=++epoch.current;
@@ -116,7 +117,7 @@ export function KnowledgeEncounter({opened,page,onOpenRef}:{opened:unknown;page:
   return <section className="knowledge-encounter" aria-label="Projected knowledge local whole" data-knowledge-state={encounter.state} data-focus-ref={encounter.focus} data-node-count={encounter.nodes.length} data-relation-count={encounter.edges.length}>
     <header className="knowledge-encounter__header"><div><span>Knowledge</span><h1>{subjectLabel(focus,"Unnamed knowledge page")}</h1></div><div className="knowledge-encounter__travel" role="group" aria-label="Knowledge travel"><button type="button" aria-pressed={pins.includes(encounter.focus)} onClick={togglePin}>{pins.includes(encounter.focus)?"Pinned":"Pin"}</button><button type="button" aria-pressed={follow} onClick={()=>{const next=follow?encounter.focus:null;remember(key(world,"held"),next);setHeldLocus(next);}}>{follow?"Following locus":"Follow locus"}</button></div></header>
     {encounter.state==="degraded"&&<div className="knowledge-encounter__degraded" role="status"><strong>Relations unavailable</strong><p>{encounter.detail}</p><p>The projected page and exact source identity remain available.</p></div>}
-    <nav className="knowledge-encounter__modes" aria-label="Knowledge presentation">{(["graph","tree","list","page"] as Mode[]).map(candidate=><button key={candidate} type="button" aria-pressed={selectedMode===candidate} disabled={!encounter.presentations.includes(candidate)} onClick={()=>changeMode(candidate)}>{candidate}</button>)}<button type="button" aria-pressed={selectedMode==="expression"} disabled={encounter.state!=="available"||expressionBusy} onClick={()=>void express()}>{expressionBusy?"Expressing…":"Expression"}</button></nav>
+    <nav className="knowledge-encounter__modes" aria-label="Knowledge presentation">{(["graph","tree","list","page"] as Mode[]).map(candidate=><button key={candidate} type="button" aria-pressed={selectedMode===candidate} disabled={!encounter.presentations.includes(candidate)} onClick={()=>changeMode(candidate)}>{candidate}</button>)}<button type="button" aria-pressed={selectedMode==="expression"} disabled={hosting!=="stage"||encounter.state!=="available"||expressionBusy} onClick={()=>void express()}>{expressionBusy?"Expressing…":"Expression"}</button></nav>
     {pins.length>0&&<div className="knowledge-encounter__pins" aria-label="Pinned knowledge subjects">{pins.map(ref=><button key={ref} type="button" disabled={!display.nodes.some(node=>node.ref===ref&&node.availability!=="unavailable")} data-subject-ref={ref} title={display.nodes.some(node=>node.ref===ref)?subjectLabel(display.nodes.find(node=>node.ref===ref)):"Pinned subject is unavailable in the current owner reading"} onClick={()=>open(ref)}>{subjectLabel(display.nodes.find(node=>node.ref===ref),`Unavailable pin ${pins.indexOf(ref)+1}`)}</button>)}</div>}
     {selectedMode==="graph"&&<Graph encounter={display} visualLocus={visualLocus} onOpen={open}/>}
     {selectedMode==="tree"&&<div className="knowledge-encounter__tree"><article><span>Focus</span><strong>{subjectLabel(focus)}</strong></article><ol>{neighbours.map(({edge,ref},index)=>{const node=encounter.nodes.find(item=>item.ref===ref)!;return <li key={`${edge.from}:${edge.relation}:${edge.to}:${index}`}><button type="button" disabled={node.availability==="unavailable"} onClick={()=>open(ref)}><small>{relationLabel(edge.relation)}</small><strong>{subjectLabel(node)}</strong></button></li>;})}</ol></div>}

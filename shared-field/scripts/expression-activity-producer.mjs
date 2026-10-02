@@ -9,6 +9,8 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {dirname,join} from 'node:path';
 import {projectExpression,hostedExpressionArgs} from '../expression-projection.mjs';
 import {advanceSharedStage} from '../shared-stage.mjs';
+import {createExploreEntry} from '../explore.mjs';
+import {nativeExpressionRequest} from './native-expression-transport.mjs';
 
 const args={};
 for(let i=2;i<process.argv.length;i+=2){
@@ -25,6 +27,10 @@ const interval=Number(args['interval-ms']??1000);
 if(!Number.isSafeInteger(interval)||interval<200)throw Error('interval-ms must be an integer >=200');
 const initial=JSON.parse(readFileSync(args.publication,'utf8'));
 const expressionRef=initial.composition.expression_ref,fieldRef=initial.field_ref;
+// A continuation reads the actual Central Location used by native Save/OpenFile.
+// No retained publication or worker checkpoint becomes a writable document.
+const sourceLocation=args['source-location']?JSON.parse(readFileSync(args['source-location'],'utf8')):undefined;
+if(sourceLocation&&(sourceLocation.schema!=='central.path-ref/v1'||!sourceLocation.root||!sourceLocation.path||!sourceLocation.ref))throw Error('source-location must be a native Central Location');
 const emit=value=>process.stdout.write(JSON.stringify({at:new Date().toISOString(),...value})+'\n');
 for(const level of ['log','info','warn','debug'])console[level]=(...parts)=>process.stderr.write(parts.join(' ')+'\n');
 const installedLibrary=new URL('./field-lib.mjs',import.meta.url);
@@ -47,6 +53,8 @@ async function readOwner(op,request){
   if(endpoint){
     const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op,request}),signal:AbortSignal.timeout(15000)});
     value=await response.json();
+  }else if(args['native-socket']){
+    value=await nativeExpressionRequest(args['native-socket'],op==='expression_world'?{schema:'oi.expression-world/v1',...request}:request);
   }else{
     // The installed application's existing permission-bounded Expression
     // socket fronts its one native kernel. Never start another application or
@@ -61,17 +69,58 @@ async function readOwner(op,request){
 }
 async function beat(connection){
   try{
-    const document=(await readOwner('expression',{operation:'inspect',expression_ref:expressionRef})).document;
+    let ownerDocument;
+    try{ownerDocument=await readOwner('expression',{operation:'inspect',expression_ref:expressionRef});}
+    catch(error){
+      if(!sourceLocation||!String(error?.message??error).includes('Expression is not open'))throw error;
+      ownerDocument=await readOwner('expression',{operation:'open_file',location:sourceLocation,actor:args.actor??initial.participant.identity.ref});
+      if(ownerDocument.state!=='ready')throw Error('The source document could not be resumed');
+    }
+    const document=ownerDocument.document;
     const act=(await readOwner('expression_world',{operation:'act_inspect',act_ref:args.act})).act;
     if(stopping||connection!==client||connection.lifecycle.status().state!=='available')return;
     if(document?.expression_ref!==expressionRef||act?.act_ref!==args.act||act.expression_ref!==expressionRef)throw Error('Native owner answered for a different subject');
+    if(args['activity-ref']!==`${initial.world_ref}/${act.act_ref}`)throw Error('The activity identity must qualify the actual native Act with its source World');
     if(!Number.isSafeInteger(act.revision)||act.revision<1||!['running','held','completed','cancelled'].includes(act.phase))throw Error('Native Act has no supported revision/phase');
+    // This activity was deliberately admitted by its World publisher. The
+    // producer may refresh that exact owner reading, never invent a nearby
+    // activity or use the document's independent revision as the Act's.
+    const activityRow=lib.rows(connection.conn.db.exploreEntry).find(row=>row.semanticRef===args['activity-ref']&&row.fieldRef===fieldRef&&row.worldRef===initial.world_ref);
+    if(!activityRow)throw Error('The native Act has no admitted activity entry');
+    const activity=JSON.parse(activityRow.entryJson);
+    if(activity.kind!=='activity'||activity.meta?.native_owner!=='o-i'||activity.meta.native_activity_ref!==act.act_ref||activity.meta.expression_ref!==expressionRef)throw Error('The admitted activity names a different native owner or Act');
+    const publishedActRevision=Number(activity.revision);
+    if(!Number.isSafeInteger(publishedActRevision)||publishedActRevision<1)throw Error('The admitted activity has no native owner revision');
+    if(publishedActRevision>act.revision||Number(activity.meta.owner_revision)>act.revision)throw Error('The native Act is behind its hosted reading');
+    if(publishedActRevision===act.revision&&activity.meta.owner_state!==act.phase)throw Error('The same native Act revision carries a conflicting owner state');
+    if(activity.revision!==String(act.revision)||activity.meta.owner_revision!==act.revision||activity.meta.owner_state!==act.phase){
+      const next=createExploreEntry({...activity,revision:String(act.revision),provenance:activity.provenance.map(source=>source.source_system==='o-i'&&source.ref===act.act_ref?{...source,revision:String(act.revision)}:source),meta:{...activity.meta,owner_revision:act.revision,owner_state:act.phase,state:act.phase,source_revision:String(act.revision)}});
+      const entryJson=JSON.stringify(next);
+      await connection.conn.reducers.putExploreEntry({semanticRef:next.ref,worldRef:next.world_ref,fieldRef,kind:next.kind,label:next.label,revision:next.revision,entryJson});
+      await lib.waitUntil(()=>lib.rows(connection.conn.db.exploreEntry).some(row=>row.semanticRef===next.ref&&row.fieldRef===fieldRef&&row.entryJson===entryJson),'the exact native Act reading');
+      emit({event:'activity-published',activity_ref:next.ref,owner_revision:act.revision,owner_state:act.phase,expression_revision:document.revision});
+    }
+    if(sourceLocation){
+      if(JSON.stringify(ownerDocument.file?.location)!==JSON.stringify(sourceLocation)){
+        // Location object key order is immaterial; identity is every native field.
+        if(!['schema','ref','root','path'].every(key=>ownerDocument.file?.location?.[key]===sourceLocation[key]))throw Error('The open document is bound to another source');
+      }
+      if(ownerDocument.dirty){
+        const saved=await readOwner('expression',{operation:'save',expression_ref:expressionRef,expected_revision:document.revision,location:sourceLocation,expected_file_revision:ownerDocument.file.revision,actor:args.actor??initial.participant.identity.ref,actor_kind:args['actor-kind']??'agent'});
+        if(saved.state!=='saved'||!saved.persisted||!saved.readback_verified)throw Error('The changed native document has no verified source save');
+        emit({event:'source-saved',expression_revision:document.revision,file_revision:saved.file.revision});
+      }
+    }
     const prior=lib.rows(connection.conn.db.projection).filter(row=>row.projectionRef===initial.projection.projection_ref).sort((a,b)=>Number(b.projectionRevision)-Number(a.projectionRevision))[0];
     if(!prior)throw Error('Recover the admitted publication before starting its producer');
     if(Number(prior.sourceRevision)>document.revision)throw Error('Native owner is behind the retained hosted source revision');
     let presentationRevision=Number(prior.projectionRevision);
-    if(String(document.revision)!==prior.sourceRevision){
-      const publication=projectExpression({document,world_ref:initial.world_ref,field_ref:fieldRef,projection_ref:initial.projection.projection_ref,projection_revision:Number(prior.projectionRevision)+1,presentation_ref:initial.presentation.presentation_ref,publisher:{participant_ref:initial.participant.participant_ref,identity_ref:initial.participant.identity.ref,chosen_name:initial.participant.presentation?.chosen_name},audience:initial.projection.audience,selection:{include_scene_material:true,include_source_refs:initial.composition.provenance.map(source=>source.ref).concat(Object.values(initial.composition.entities).flatMap(entity=>entity.subject?.sources.map(source=>source.ref)??[])),summary:initial.entry.summary},published_at:new Date().toISOString()});
+    const hostedEntry=lib.rows(connection.conn.db.exploreEntry).find(row=>row.semanticRef===expressionRef&&row.fieldRef===fieldRef);
+    const activityBound=hostedEntry&&JSON.parse(hostedEntry.entryJson).meta?.activity_ref===args['activity-ref'];
+    if(String(document.revision)!==prior.sourceRevision||!activityBound){
+      const field=lib.fieldSnapshot(connection).fields.find(row=>row.field_ref===fieldRef);
+      if(!field)throw Error('The admitted field contract is unavailable');
+      const publication=projectExpression({document,world_ref:initial.world_ref,activity_ref:args['activity-ref'],field_ref:fieldRef,field,projection_ref:initial.projection.projection_ref,projection_revision:Number(prior.projectionRevision)+1,presentation_ref:initial.presentation.presentation_ref,publisher:{participant_ref:initial.participant.participant_ref,identity_ref:initial.participant.identity.ref,chosen_name:initial.participant.presentation?.chosen_name},audience:initial.projection.audience,selection:{include_scene_material:true,include_source_refs:initial.composition.provenance.map(source=>source.ref).concat(Object.values(initial.composition.entities).flatMap(entity=>entity.subject?.sources.map(source=>source.ref)??[])),summary:initial.entry.summary},published_at:new Date().toISOString()});
       await lib.publishArgs(connection,hostedExpressionArgs(publication));
       presentationRevision=publication.projection.projection_revision;
       emit({event:'published',expression_ref:expressionRef,source_revision:document.revision,projection_revision:publication.projection.projection_revision,act_revision:act.revision});

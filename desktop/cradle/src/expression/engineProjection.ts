@@ -52,7 +52,7 @@ export function expressionRenderConfig(document:ExpressionDocument, start=0):Rec
   const visible=new Set(occurrences.filter(e=>e.enabled!==false&&membership.has(e.id)).map(e=>e.id));
   const allRelations=Object.values(document.relations??{});
   const relations=allRelations.filter(r=>visible.has(r.from_entity_ref)&&visible.has(r.to_entity_ref)&&r.relation.availability==="available");
-  return {...config,oiExpressionBindings:{schema:"oi.expression-render-bindings/v1",expression_ref:document.expression_ref,
+  return {...config,authoringView:scene.presentation.scene.view,oiExpressionBindings:{schema:"oi.expression-render-bindings/v1",expression_ref:document.expression_ref,
     scene_ref:scene.scene_ref,relations,
     hidden_entity_refs:scene.entity_refs.filter(ref=>!visible.has(ref)),total_entities:scene.entity_refs.length,
     unrendered_relation_refs:allRelations.filter(r=>!relations.includes(r)).map(r=>r.binding_ref),body:scene.body??null}};

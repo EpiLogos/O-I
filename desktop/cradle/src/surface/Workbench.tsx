@@ -66,6 +66,7 @@ export interface WorkbenchProps {
   openKnowledge: import("../knowledge/NodeDetails").OpenKnowledge;
   /** SF1: pin a projected subject as its own Surface / hand Explore a subject. */
   openPresentation?: ExploreSurfaceProps["onOpenPresentation"];
+  openSubjectSidebar?: ExploreSurfaceProps["onOpenSubjectSidebar"];
   openExplore?: ExploreSurfaceProps["onOpenExplore"];
   /** Factory's centre lists the project's conversations; opening one is the
    * frame's ordinary encounter open (CradleFrame.openEncounter). */
@@ -435,7 +436,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
           const concealed = id !== active;
           if (concealed && CONCEAL_RELEASES.has(binding.kind)) return null;
           return <div key={id} className="surface-retained" data-surface-kind={binding.kind} hidden={concealed}>
-            <SurfaceBody binding={binding} treeMode={state.mode ?? "base"} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />
+            <SurfaceBody binding={binding} treeMode={state.mode ?? "base"} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openSubjectSidebar={props.openSubjectSidebar} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />
           </div>;
         }) : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
@@ -478,7 +479,7 @@ export function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
 }
 function SurfaceBodyImpl({
   binding,onView,
-  openSource, openKnowledge, openPresentation, openExplore,
+  openSource, openKnowledge, openPresentation, openSubjectSidebar, openExplore,
   factoryCentre, factoryTasks, subject, treeMode,
 }: {
   binding: import("./types").SurfaceBinding;
@@ -486,6 +487,7 @@ function SurfaceBodyImpl({
   openKnowledge: WorkbenchProps["openKnowledge"];
   openSource: (source: ListedSource) => void;
   openPresentation?: WorkbenchProps["openPresentation"];
+  openSubjectSidebar?: WorkbenchProps["openSubjectSidebar"];
   openExplore?: WorkbenchProps["openExplore"];
   factoryCentre?: WorkbenchProps["factoryCentre"];
   factoryTasks?: WorkbenchProps["factoryTasks"];
@@ -516,7 +518,7 @@ function SurfaceBodyImpl({
     if (binding.kind === MODE_CURATION[treeMode].centreKind) return null;
     return <ModeCentreBody binding={binding} subject={subject} factoryCentre={factoryCentre} factoryTasks={factoryTasks}/>;
   }
-  if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
+  if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onView={onView} onOpenPresentation={openPresentation} onOpenSubjectSidebar={openSubjectSidebar} onOpenExplore={openExplore}/>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;
   if (binding.kind === "flow") return <FlowSurface binding={binding} />;

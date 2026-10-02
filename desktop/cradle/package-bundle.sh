@@ -20,7 +20,7 @@
 # ~/Applications/O-I.app contract). --dry-run validates everything that does
 # not need a real build.
 #
-# Usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR]
+# Usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR] [--footprint PATH]
 #   --dry-run       print the planned steps and validate contract data, no writes
 #   --skip-build    adopt an existing Tauri build output (already built once)
 set -euo pipefail
@@ -30,6 +30,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 OUT_DIR="${REPO_ROOT}/desktop/cradle/dist"
 DRY_RUN=0
 SKIP_BUILD=0
+FOOTPRINT_OVERRIDE=""
 
 log() { printf 'package-bundle: %s\n' "$*"; }
 die() { printf 'package-bundle: error: %s\n' "$*" >&2; exit 1; }
@@ -39,13 +40,14 @@ while [ "$#" -gt 0 ]; do
     --dry-run) DRY_RUN=1 ;;
     --skip-build) SKIP_BUILD=1 ;;
     --out) [ "$#" -ge 2 ] || die "--out requires a directory"; OUT_DIR="$2"; shift ;;
-    *) die "unknown option '$1' (usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR])" ;;
+    --footprint) [ "$#" -ge 2 ] || die "--footprint requires a file"; FOOTPRINT_OVERRIDE="$2"; shift ;;
+    *) die "unknown option '$1' (usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR] [--footprint PATH])" ;;
   esac
   shift
 done
 
 TAURI_DIR="${REPO_ROOT}/desktop/cradle/src-tauri"
-FOOTPRINT="${REPO_ROOT}/desktop/install-footprint.json"
+FOOTPRINT="${FOOTPRINT_OVERRIDE:-${REPO_ROOT}/desktop/install-footprint.json}"
 
 # ---------------------------------------------------------------------------
 # Contract data and host checks (also exercised by --dry-run)
@@ -162,15 +164,16 @@ fi
 cp "${TAURI_DIR}/icons/icon.png" "${BUNDLE_ROOT}/app/icon.png"
 cp "${FOOTPRINT}" "${BUNDLE_ROOT}/footprint.json"
 SOURCE_REVISION="$(git -C "${REPO_ROOT}" rev-parse HEAD 2>/dev/null || echo unknown)"
-python3 - "$VERSION" "$TARGET" "$SOURCE_REVISION" > "${BUNDLE_ROOT}/BUNDLE.json" <<'JSON'
+python3 - "$VERSION" "$TARGET" "$SOURCE_REVISION" "$FOOTPRINT" > "${BUNDLE_ROOT}/BUNDLE.json" <<'JSON'
 import datetime, json, sys
-version, target, revision = sys.argv[1], sys.argv[2], sys.argv[3]
+version, target, revision, footprint_path = sys.argv[1:]
+app_id = json.load(open(footprint_path))["app_id"]
 print(json.dumps({
     "schema": "oi.desktop-bundle/v1",
     "name": f"oi-cradle-{version}-{target}.tar.gz",
     "version": version,
     "target": target,
-    "app_id": "org.epilogos.oi.cradle",
+    "app_id": app_id,
     "source_revision": revision,
     "created_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "app_entry": "app/O-I.app" if target == "aarch64-apple-darwin" else "app/oi-cradle.AppImage",
