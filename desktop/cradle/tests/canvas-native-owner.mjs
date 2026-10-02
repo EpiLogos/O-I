@@ -41,6 +41,16 @@ export async function startCanvasNativeOwner(output,initialSource,initialFlow){
   child.stderr.on('data',bytes=>{stderr=(stderr+bytes).slice(-65536);});
   const url=await new Promise((resolve,reject)=>{let text='',settled=false;const timer=setTimeout(()=>reject(Error(stderr||'Native editor owner startup timed out')),30000);child.once('error',error=>{clearTimeout(timer);reject(error);});child.once('exit',code=>{clearTimeout(timer);reject(Error(`Native editor owner exited ${code}: ${stderr}`));});child.stdout.on('data',bytes=>{if(settled)return;text=(text+bytes).slice(-65536);const match=/listening on (http:\/\/[^ ]+)/.exec(text);if(match){settled=true;clearTimeout(timer);resolve(match[1]);}});});
   const operation=async op=>{const response=await fetch(url+'/op',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(op),signal:AbortSignal.timeout(10000)});const result=await response.json();assert.equal(result.ok,true,JSON.stringify(result));return result.outcome;};
+  // Enter through the actual World owner before presenting a source. The
+  // production shell performs this navigation; an isolated editor page
+  // otherwise has no active navigator root and correctly stays read-only.
+  const beforeEntry=await operation({op:'state'});
+  const entered=await operation({op:'world_browse',fresh:true});
+  assert.equal(entered.result,'world_read');
+  assert.equal(entered.snapshot.navigator.root.root,root);
+  const active=await operation({op:'state'});
+  assert.equal(active.snapshot.navigator.root.root,root);
+  writeFileSync(join(output,'native-world-entry.json'),JSON.stringify({before:beforeEntry,entered,active},null,2));
   const listed=await operation({op:'files_list',path:'Control/user',fresh:true});
   assert.equal(listed.result,'directory_read');
   const entries=listed.directory.entries;
