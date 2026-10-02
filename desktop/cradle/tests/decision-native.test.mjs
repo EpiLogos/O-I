@@ -7,7 +7,7 @@ import {once} from 'node:events';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {kernelOp,eventsSince} from '../src/kernel/bridge.ts';
+import {kernelOp,readEventHistory} from '../src/kernel/bridge.ts';
 import {prepareDecision,executeDecision,authoriseDecisionEpisode} from '../src/flow/decisionClient.ts';
 
 test('native decision preflight resolves real source counts and refuses forged permission before egress',{skip:process.env.OI_NATIVE_DECISION!=='1',timeout:90000},async()=>{
@@ -18,6 +18,7 @@ test('native decision preflight resolves real source counts and refuses forged p
   child.stderr.on('data',chunk=>stderr+=chunk);
   const url=await new Promise((resolve,reject)=>{let text='';const timer=setTimeout(()=>reject(Error(`Native startup timed out: ${stderr}`)),30000);child.once('error',error=>{clearTimeout(timer);reject(error);});child.once('exit',code=>{clearTimeout(timer);reject(Error(`Native bridge exited ${code}: ${stderr}`));});child.stdout.on('data',chunk=>{text+=chunk;const match=/listening on (http:\/\/[^ ]+)/.exec(text);if(match){clearTimeout(timer);resolve(match[1]);}});});
   const transport={kind:'bridge',url};
+  const eventBasis=await readEventHistory(transport);
   const read=await kernelOp(transport,{op:'decision_read'});
   assert.equal(read.outcome?.result,'decision_reading',read.error);assert.deepEqual(read.outcome.reading.episodes,[]);
   assert.equal(read.outcome.reading.sites.filter(site=>site.plane==='domain').length,2);
@@ -37,6 +38,6 @@ test('native decision preflight resolves real source counts and refuses forged p
   assert.equal(agent.outcome?.result,'action_dispatched',agent.error);assert.equal(agent.outcome.dispatch.state,'invoked');assert.equal(Object.keys(agent.outcome.dispatch.data.questions).length,1);
   const denied=await kernelOp(transport,{op:'invoke_action',invocation:{action:'action:decision.decide',target_ref:agent.outcome.dispatch.data.preflight_ref,input:{authority_ref:'forged-agent-grant'}}});assert.match(denied.error,/No host-issued/);
   const final=await kernelOp(transport,{op:'decision_read'});assert.deepEqual(final.outcome.reading.episodes,[]);assert.deepEqual(final.outcome.reading.receipts,[]);
-  const events=await eventsSince(transport,0);assert.ok(!events.some(event=>event.event==='decision_recorded'||event.event==='decision_episode_changed'),'inert preflight and refusals emit no completed decision or granted episode');
+  const events=(await readEventHistory(transport,eventBasis.generation)).receipts;assert.ok(!events.some(event=>event.event==='decision_recorded'||event.event==='decision_episode_changed'),'inert preflight and refusals emit no completed decision or granted episode');
  }finally{if(child&&child.exitCode===null){const exited=once(child,'exit');child.kill();await exited;}await rm(home,{recursive:true,force:true});}
 });

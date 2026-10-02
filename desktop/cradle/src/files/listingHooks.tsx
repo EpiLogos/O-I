@@ -44,12 +44,17 @@ export function useListingInvalidation() {
   const changes = kernel.receipts.filter((receipt: KernelReceipt) => receipt.event === "file_changed");
   const latest = changes[changes.length - 1]?.seq;
   const applied = useRef(0);
+  const epoch = useRef(kernel.readModelEpoch);
   useEffect(() => {
+    if (epoch.current !== kernel.readModelEpoch) {
+      applied.current = 0;
+      epoch.current = kernel.readModelEpoch;
+    }
     for (const receipt of changes) {
       if (receipt.seq <= applied.current) continue;
       const changed = typeof receipt.path === "string" ? receipt.path : null;
       if (changed !== null) listings.invalidateParentOf(changed);
     }
     if (latest !== undefined) applied.current = Math.max(applied.current, latest);
-  }, [latest]);
+  }, [latest, kernel.readModelEpoch]);
 }

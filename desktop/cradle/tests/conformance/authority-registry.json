@@ -18,15 +18,15 @@
     {
       "owner": "src/kernel/bridge.ts",
       "kind": "network",
-      "expression": "fetch(`${transport.url}/op`, {\n    method: \"POST\",\n    headers: { \"content-type\": \"application/json\" },\n    body: JSON.stringify(op),\n})",
+      "expression": "fetch(`${transport.url}/op`, {\n    method: \"POST\",\n    headers: { \"content-type\": \"application/json\" },\n    body: JSON.stringify(op),\n    signal,\n})",
       "rationale": "Declared development-only transport of the same typed KernelOp/event seam; not arbitrary owner HTTP.",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical conformance plan Lane A \u00a72"
     },
     {
       "owner": "src/kernel/bridge.ts",
       "kind": "network",
-      "expression": "fetch(`${transport.url}/events?since=${sinceSeq}`)",
-      "rationale": "Declared development-only transport of the same typed KernelOp/event seam; not arbitrary owner HTTP.",
+      "expression": "fetch(`${transport.url}/event-replay?${query}`, { signal: requestSignal })",
+      "rationale": "Declared development-only generation/cursor-qualified, bounded native replay of the same event seam; no arbitrary owner HTTP or unbounded history fallback.",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical conformance plan Lane A \u00a72"
     },
     {

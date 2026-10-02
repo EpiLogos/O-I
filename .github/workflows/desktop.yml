@@ -70,6 +70,13 @@ jobs:
             sleep 0.2
           done
           echo "::error::walk bridge never came up"; cat "$RUNNER_TEMP/walk-bridge.log"; exit 1
+      - name: Prove bounded native replay, owner resync and process generation
+        working-directory: desktop/cradle
+        env:
+          OI_NATIVE_EVENT_REPLAY: '1'
+          OI_KERNEL_BIN: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
+          OI_EVENT_REPLAY_RECEIPT: ${{ runner.temp }}/kernel-event-replay.json
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/kernel-event-replay-native.test.mjs
       - name: Guard executable source — no unresolved markers, runner entry points parse
         working-directory: desktop/cradle
         run: |
@@ -161,7 +168,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: collection-consumer-evidence-${{ github.sha }}
-          path: desktop/cradle/tests/artifacts/collection-source/
+          path: |
+            desktop/cradle/tests/artifacts/collection-source/
+            ${{ runner.temp }}/kernel-event-replay.json
           if-no-files-found: warn
 
   native-shell:
@@ -184,5 +193,7 @@ jobs:
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           cargo check --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+      - name: Prove bounded native invalidation for an actual oversized receipt
+        run: cargo test --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked event_hint_tests::kernel_event_invalidation_bounds_actual_oversized_native_receipt -- --exact
       - name: Prove the check did not rewrite locks
         run: git diff --exit-code -- desktop/cradle/src-tauri/Cargo.lock desktop/cradle/package-lock.json

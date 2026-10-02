@@ -6,6 +6,7 @@ import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import {readEventHistory} from '../src/kernel/bridge.ts';
 
 assert.ok(process.argv[2],'Supply {bridge,retained_reading,output} JSON');
 const config=JSON.parse(readFileSync(resolve(process.argv[2]),'utf8'));
@@ -29,7 +30,8 @@ async function op(request,label){
  const body=await response.json();retain(name+'-response',body);receipt.requests.push(name);
  return body;
 }
-async function events(){const body=await (await fetch(config.bridge+'/events?since=0')).json();return body;}
+let eventGeneration;
+async function events(){const history=await readEventHistory({kind:'bridge',url:config.bridge},eventGeneration);eventGeneration=history.generation;return history;}
 function pass(label){receipt.checks.push(label);console.log('PASS',label);retain('receipt',receipt);}
 const expression=request=>({op:'expression',request});
 try{

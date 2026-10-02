@@ -195,7 +195,7 @@ pub fn window_detach(
                 .map(|o| o.receipts)
                 .unwrap_or_default();
             for receipt in receipts {
-                let _ = handle.emit(oi_cradle_kernel::events::KERNEL_EVENT_TOPIC, &receipt);
+                let _ = handle.emit(oi_cradle_kernel::events::KERNEL_EVENT_TOPIC, crate::kernel_event_hint(&receipt));
             }
         }
         if matches!(event, WindowEvent::Moved(_) | WindowEvent::Resized(_)) {

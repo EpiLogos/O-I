@@ -18,7 +18,7 @@ fn lookup(id:&str,host:&str)->Result<Arc<Lease>,String> {
 }
 fn event(app:&AppHandle,id:&str,lease:&Lease,driving:bool)->Result<(),String> {
     let receipt=app.state::<KernelHost>().0.lock().map_err(|_|"Kernel unavailable")?.record_working_surface_driving(lease.session.clone(),lease.binding.clone(),id.to_owned(),driving);
-    app.emit(KERNEL_EVENT_TOPIC,&receipt).map_err(|e|e.to_string())
+    app.emit(KERNEL_EVENT_TOPIC,crate::kernel_event_hint(&receipt)).map_err(|e|e.to_string())
 }
 fn release(app:&AppHandle,id:&str,host:&str)->Result<(),String> {
     let lease={let guard=leases().lock().map_err(|_|"Attachment leases unavailable")?;let Some(lease)=guard.get(id).cloned() else{return Ok(());};if lease.host!=host{return Err("Attachment belongs to another view".into());}lease};

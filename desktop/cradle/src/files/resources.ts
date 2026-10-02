@@ -151,6 +151,24 @@ export function invalidateFile(location: CentralLocation) {
  * useListingInvalidation cursor, so a replayed burst applies once. */
 let appliedReceiptSeq = 0;
 
+/** A lost replay or restarted kernel invalidates every cached acquisition.
+ * Pending consumers keep their last reading, while a new owner read has a
+ * different generation and an older completion cannot publish as current. */
+export function invalidateFileReadings() {
+  appliedReceiptSeq = 0;
+  let dropped = false;
+  for (const entries of [textEntries as Map<string, FileEntry<never>>, byteEntries as Map<string, FileEntry<never>>]) {
+    for (const [key, held] of entries) {
+      entries.set(key, {...held, status: "loading", generation: held.generation + 1, inflight: null});
+      dropped = true;
+    }
+  }
+  if (dropped) {
+    counters.invalidations += 1;
+    emit();
+  }
+}
+
 /** Receipt-driven invalidation, as a store function (the shell's kernel-
  * receipt feed subscribes through applyReceipt's own emit): a `file_changed`
  * receipt drops the changed file's readings; every other event is not this
@@ -185,28 +203,30 @@ async function acquire<Reading extends {revision: string}>(
     return held.reading as Reading;
   }
   const generation = held?.generation ?? 0;
-  const inflight = read(transport, location);
-  entries.set(key, {status: "loading", reading: held?.reading, revision: held?.revision, location, generation, inflight});
-  counters.acquisitions += 1;
-  emit();
-  try {
-    const reading = await inflight;
+  // Every joining caller shares the qualified promise, rather than the raw
+  // owner read. A superseded acquisition must refuse even for its joiners.
+  const inflight = Promise.resolve().then(() => read(transport, location)).then(reading => {
     const current = entries.get(key);
     if (!current || current.generation !== generation) {
       counters.stale_dropped += 1;
+      // A direct caller must not receive a superseded acquisition as
+      // current simply because the cache correctly refused to publish it.
+      throw new Error("File owner reading was superseded; re-read its current basis");
     } else {
       entries.set(key, {status: "ready", reading, revision: reading.revision, location, generation, inflight: null});
     }
     return reading;
-  } catch (error) {
+  }).catch(error => {
     const current = entries.get(key);
     if (current && current.generation === generation) {
       entries.set(key, {status: "error", error: String(error), reading: current.reading, revision: current.revision, location, generation, inflight: null});
     }
     throw error;
-  } finally {
-    emit();
-  }
+  }).finally(emit);
+  entries.set(key, {status: "loading", reading: held?.reading, revision: held?.revision, location, generation, inflight});
+  counters.acquisitions += 1;
+  emit();
+  return inflight;
 }
 
 /** The one UTF-8 owner reading for `location`, shared across every consumer

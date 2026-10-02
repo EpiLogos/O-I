@@ -17,9 +17,11 @@ import {
   type ReactNode,
 } from "react";
 import { emitExpressionCue } from "../stage/cues";
+import { invalidateFileReadings } from "../files/resources";
+import { invalidateWikiProjectionReadings } from "../techne/wikiProjectionStore";
+import { listings } from "../files/listingStore";
 import {
   detectTransport,
-  eventsSince,
   kernelOp,
   subscribeTopic,
 } from "./bridge";
@@ -56,6 +58,9 @@ export interface KernelApi {
   stateSettled: boolean;
   snapshot: KernelSnapshotState;
   receipts: KernelReceipt[];
+  /** Changes only after an actual owner state read following lost replay.
+   * Mounted domain readers use it to re-read; it carries no business state. */
+  readModelEpoch: number;
   listing: SourceListingState | null;
   listingError: string | null;
   opError: string | null;
@@ -81,9 +86,11 @@ export interface KernelApi {
 }
 
 const EMPTY_SNAPSHOT: KernelSnapshotState = { focus: {}, surfaces: {}, buffers: {} };
-// Recent renderer observations only. The kernel owns the complete event log;
-// view changes must not retain another session-long copy in every window.
+// Recent renderer observations only. The kernel owns a bounded disclosure
+// window; durable owner history is read through its own operations.
 const VIEW_RECEIPT_LIMIT = 256;
+const VIEW_RECEIPT_BYTES = 1024 * 1024;
+const VIEW_SINGLE_RECEIPT_BYTES = 256 * 1024;
 
 const KernelContext = createContext<KernelApi | null>(null);
 
@@ -103,8 +110,11 @@ export function KernelProvider(props: { children: ReactNode }) {
   const [stateSettled, setStateSettled] = useState(transport.kind === "unavailable");
   const [snapshot, setSnapshot] = useState<KernelSnapshotState>(EMPTY_SNAPSHOT);
   const [receipts, setReceipts] = useState<KernelReceipt[]>([]);
+  const receiptWindow = useRef<KernelReceipt[]>([]);
+  const [readModelEpoch, setReadModelEpoch] = useState(0);
   const [listing, setListing] = useState<SourceListingState | null>(null);
   const [listingError, setListingError] = useState<string | null>(null);
+  const listingGeneration = useRef(0);
   const [sourceErrors, setSourceErrors] = useState<Record<string, string>>({});
   const errorOperations = useRef<Record<string, string>>({});
   const [opError, setOpError] = useState<string | null>(null);
@@ -118,17 +128,26 @@ export function KernelProvider(props: { children: ReactNode }) {
     setOpError(value);
   }, []);
   const dismissOpError = useCallback(() => reportOpError(null), [reportOpError]);
-  const seenSeq = useRef(0);
   const applySerial = useRef(Promise.resolve());
 
   const admitReceipts = useCallback((incoming: KernelReceipt[]) => {
     if (incoming.length === 0) return;
-    setReceipts((held) => {
-      const known = new Set(held.map((receipt) => receipt.seq));
-      const fresh = incoming.filter((receipt) => receipt.seq > seenSeq.current || !known.has(receipt.seq));
-      for (const receipt of fresh) seenSeq.current = Math.max(seenSeq.current, receipt.seq);
-      return fresh.length ? [...held, ...fresh].sort((a, b) => a.seq - b.seq).slice(-VIEW_RECEIPT_LIMIT) : held;
-    });
+    const known = new Set(receiptWindow.current.map(receipt => receipt.seq));
+    const fresh = incoming.filter(receipt => !known.has(receipt.seq)
+      && new TextEncoder().encode(JSON.stringify(receipt)).byteLength <= VIEW_SINGLE_RECEIPT_BYTES);
+    if (!fresh.length) return;
+    const next = [...receiptWindow.current, ...fresh].sort((a, b) => a.seq - b.seq).slice(-VIEW_RECEIPT_LIMIT);
+    let bytes = 0;
+    let first = next.length;
+    for (let index = next.length - 1; index >= 0; index--) {
+      bytes += new TextEncoder().encode(JSON.stringify(next[index])).byteLength;
+      if (bytes > VIEW_RECEIPT_BYTES) break;
+      first = index;
+    }
+    // Oversized operation receipts are not retained here. Their actual gap
+    // is disclosed by native replay and forces owner re-reads below.
+    receiptWindow.current = next.slice(first);
+    setReceipts(receiptWindow.current);
   }, []);
 
   // Merge one outcome into the pulled read models.
@@ -203,7 +222,9 @@ export function KernelProvider(props: { children: ReactNode }) {
   );
 
   const refreshListing = useCallback(async () => {
-    const call = await kernelOp(transport, { op: "sources_list" });
+    const generation = ++listingGeneration.current;
+    const call = await kernelOp(transport, { op: "sources_list" }, AbortSignal.timeout(10000));
+    if (generation !== listingGeneration.current) return;
     if (call.outcome && call.outcome.result === "sources_listed") {
       merge(call.outcome);
       setListingError(null);
@@ -211,6 +232,35 @@ export function KernelProvider(props: { children: ReactNode }) {
       setListingError(call.error ?? "the listing did not serve");
     }
   }, [merge, transport]);
+
+  const refreshOwnerModels = useCallback(async (lostReplay: boolean, live = () => true, signal?: AbortSignal) => {
+    const run = applySerial.current.then(async () => {
+      if (!live()) return;
+      if (lostReplay) listingGeneration.current++;
+      const readSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(10000)]) : AbortSignal.timeout(10000);
+      const stateCall = await kernelOp(transport, {op: "state"}, readSignal);
+      // A retired provider must not publish an old read or invalidate the
+      // acquisitions belonging to its successor, including Tauri reads.
+      if (!live()) return;
+      if (stateCall.outcome?.result !== "state") {
+        throw new Error(stateCall.error ?? "Current kernel state could not be read after event replay loss");
+      }
+      merge(stateCall.outcome);
+      if (lostReplay) {
+        // Orphan stale acquisitions and reset their receipt cursors. Last
+        // readings stay visible under each existing pending/drift contract.
+        receiptWindow.current = [];
+        setReceipts([]);
+        invalidateFileReadings();
+        listings.invalidateAll();
+        invalidateWikiProjectionReadings(transport);
+        setReadModelEpoch(epoch => epoch + 1);
+        await refreshListing();
+      }
+    });
+    applySerial.current = run.then(() => undefined, () => undefined);
+    await run;
+  }, [merge, refreshListing, transport]);
 
   const openSource = useCallback(
     async (sourceRef: SourceRef, surfaceId: string) => {
@@ -276,13 +326,22 @@ export function KernelProvider(props: { children: ReactNode }) {
     [apply],
   );
 
-  // Bootstrap: pull the state, subscribe to the topic, and re-sync the log
-  // once by cursor (the command the unit requires the host to expose).
+  // The subscription establishes a generation-qualified cursor and handles
+  // the retained backlog. Its native pushes are invalidation hints only.
   useEffect(() => {
     let alive = true;
+    const reads = new AbortController();
     let subscription: { unsubscribe: () => void } | null = null;
+    let resync: ReturnType<typeof setTimeout> | undefined;
+    const requestState = () => {
+      if (resync !== undefined || !alive) return;
+      resync = setTimeout(() => {
+        resync = undefined;
+        if (alive) void refreshOwnerModels(false, () => alive, reads.signal).catch(error => {if (alive) reportOpError(String(error));});
+      }, 200);
+    };
     void (async () => {
-      const initial = await kernelOp(transport, { op: "state" });
+      const initial = await kernelOp(transport, { op: "state" }, reads.signal);
       if (!alive) return;
       if (initial.outcome && initial.outcome.result === "state") {
         merge(initial.outcome);
@@ -321,33 +380,24 @@ export function KernelProvider(props: { children: ReactNode }) {
           }
         }
       }
-      const backlog = await eventsSince(transport, 1);
-      if (alive) admitReceipts(backlog);
-      // Other native windows share this kernel, so pushed receipts mean this
-      // window's pulled state may be behind. The re-pull is coalesced: a
-      // burst of receipts is one trailing `state` read, not one per receipt
-      // (every read is a process spawn on the shared kernel seam).
-      let resync: ReturnType<typeof setTimeout> | null = null;
-      const requestResync = () => {
-        if (resync) clearTimeout(resync);
-        resync = setTimeout(() => {
-          resync = null;
-          if (!alive) return;
-          void kernelOp(transport, { op: "state" }).then(call => { if (alive && call.outcome) merge(call.outcome); });
-        }, 200);
-      };
+      if (!alive) return;
       subscription = await subscribeTopic(transport, (receipt) => {
         if (!alive) return;
         admitReceipts([receipt]);
-        if (transport.kind === "tauri") requestResync();
-      });
+        requestState();
+      }, async () => {
+        if (alive) await refreshOwnerModels(true, () => alive, reads.signal);
+      }, error => {if (alive) reportOpError(error);});
       if (!alive) subscription?.unsubscribe();
     })();
     return () => {
       alive = false;
+      reads.abort();
+      listingGeneration.current++;
+      if (resync !== undefined) clearTimeout(resync);
       subscription?.unsubscribe();
     };
-  }, [admitReceipts, merge, transport]);
+  }, [admitReceipts, merge, transport, refreshOwnerModels, reportOpError]);
 
   const api: KernelApi = useMemo(
     () => ({
@@ -356,6 +406,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       stateSettled,
       snapshot,
       receipts,
+      readModelEpoch,
       listing,
       listingError,
       opError,
@@ -379,6 +430,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       stateSettled,
       snapshot,
       receipts,
+      readModelEpoch,
       listing,
       listingError,
       opError,

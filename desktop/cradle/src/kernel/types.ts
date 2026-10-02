@@ -86,6 +86,19 @@ export interface KernelReceipt {
   [payload: string]: unknown;
 }
 
+/** Ephemeral disclosure only. A gap or changed process generation requires
+ * current owner readings; it cannot be accepted as an empty event history. */
+export interface KernelEventReplay {
+  schema: "oi.kernel-event-replay/v1";
+  generation: string;
+  oldest_seq: number | null;
+  latest_seq: number;
+  next_seq: number;
+  resync_required: boolean;
+  has_more: boolean;
+  receipts: KernelReceipt[];
+}
+
 /** The operation payloads (the Rust `KernelOp`, tagged snake_case). */
 export type {CentralLocation} from "./location";
 import type {CentralLocation} from "./location";

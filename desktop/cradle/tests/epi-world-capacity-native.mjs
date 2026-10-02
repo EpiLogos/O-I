@@ -7,6 +7,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
+import {readEventHistory} from '../src/kernel/bridge.ts';
 const config=JSON.parse(readFileSync(resolve(process.argv[2]),'utf8'));
 assert.match(config.bridge,/^http:\/\/127\.0\.0\.1:\d+$/);
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),out=resolve(config.output);mkdirSync(out,{recursive:true});
@@ -19,7 +20,8 @@ const retain=(name,value)=>writeFileSync(resolve(out,name+'.json'),JSON.stringif
 let seq=0;
 async function op(request,label){const name=String(++seq).padStart(3,'0')+'-'+label;retain(name+'-issued',request);const result=await(await fetch(config.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)})).json();retain(name+'-response',result);receipt.requests.push(name);return result;}
 const expression=request=>({op:'expression',request});
-const events=async()=>await(await fetch(config.bridge+'/events?since=0')).json();
+let eventGeneration;
+const events=async()=>{const history=await readEventHistory({kind:'bridge',url:config.bridge},eventGeneration);eventGeneration=history.generation;return history;};
 function pass(label){receipt.checks.push(label);retain('receipt',receipt);console.log('PASS',label);}
 try{
  const before=await op(expression({operation:'inspect',expression_ref:config.expression_ref}),'actual-owner-basis');assert.equal(before.ok,true);const doc=before.outcome.data.document;assert.ok(doc);const record=readEpiWorldRecord(doc);assert.ok(record);assert.equal(record.authored_revision,'epi-world-20261001-v3');

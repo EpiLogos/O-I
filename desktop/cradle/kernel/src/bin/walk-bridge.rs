@@ -9,7 +9,8 @@
 //! Endpoints (CORS-open, loopback by default):
 //!   POST /op        body = one KernelOp JSON   -> {"ok":true,"outcome":…}
 //!                                                or {"ok":false,"error":…}
-//!   GET  /events?since=N  receipts at/after seq N (the ordered log)
+//!   GET  /event-replay?generation=G&cursor=N&limit=L  bounded replay page
+//!   GET  /events                         legacy endpoint; explicitly retired
 //!   GET  /state            the kernel snapshot
 //!   GET  /material/<url-encoded location JSON>/<relative path>
 //!                          dev-only mirror of the Tauri `oi-material://`
@@ -190,16 +191,21 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 Err(error) => json_error(500, error.to_string()),
             }
         }
-        ("GET", "/events") => {
+        ("GET", "/events") => json_error(
+            410,
+            "unbounded event replay is retired; use /event-replay with generation and cursor",
+        ),
+        ("GET", "/event-replay") => {
+            let (generation, cursor, limit) = match event_replay_parameters(&request.path) {
+                Ok(parameters) => parameters,
+                Err(error) => return json_error(400, error),
+            };
             let kernel = kernel.lock().expect("kernel mutex");
-            let since = request
-                .path
-                .split_once("since=")
-                .map(|(_, value)| value.split('&').next().unwrap_or("0"))
-                .and_then(|value| value.parse::<u64>().ok())
-                .unwrap_or(0);
-            match serde_json::to_value(kernel.event_log().since(since.max(1))) {
-                Ok(receipts) => json_ok(serde_json::json!({"receipts": receipts})),
+            let replay = kernel
+                .event_log()
+                .replay(generation.as_deref(), cursor, limit);
+            match serde_json::to_value(replay) {
+                Ok(replay) => json_ok(serde_json::json!({"replay": replay})),
                 Err(error) => json_error(500, error.to_string()),
             }
         }
@@ -385,6 +391,52 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
 /// grammar (`<url-encoded location JSON>/<relative path>`) and identical
 /// resolution (`oi_cradle_kernel::files::resolve_material`), so a walk
 /// exercises the same traversal law the shipped protocol enforces.
+fn event_replay_parameters(path: &str) -> Result<(Option<String>, u64, usize), String> {
+    let mut parameters = std::collections::HashMap::new();
+    if let Some((_, query)) = path.split_once('?') {
+        for part in query.split('&') {
+            let (key, value) = part
+                .split_once('=')
+                .ok_or("invalid event replay query field")?;
+            if !matches!(key, "generation" | "cursor" | "limit") || value.is_empty() {
+                return Err("unknown or empty event replay query field".to_owned());
+            }
+            if parameters.insert(key, value).is_some() {
+                return Err("duplicate event replay query field".to_owned());
+            }
+        }
+    }
+    let generation = parameters
+        .get("generation")
+        .map(|value| (*value).to_owned());
+    if generation.as_ref().is_some_and(|value| {
+        value.len() > 128
+            || !value
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+    }) {
+        return Err("invalid event replay generation".to_owned());
+    }
+    let cursor = match parameters.get("cursor") {
+        Some(value) if value.bytes().all(|byte| byte.is_ascii_digit()) => value
+            .parse::<u64>()
+            .map_err(|_| "invalid event replay cursor")?,
+        Some(_) => return Err("invalid event replay cursor".to_owned()),
+        None => 1,
+    };
+    let limit = match parameters.get("limit") {
+        Some(value) if value.bytes().all(|byte| byte.is_ascii_digit()) => value
+            .parse::<usize>()
+            .map_err(|_| "invalid event replay limit")?,
+        Some(_) => return Err("invalid event replay limit".to_owned()),
+        None => 128,
+    };
+    if cursor == 0 || limit == 0 {
+        return Err("event replay cursor and limit must be positive".to_owned());
+    }
+    Ok((generation, cursor, limit))
+}
+
 fn material(kernel: &Mutex<Kernel>, rest: &str) -> BridgeResponse {
     let mut segments = rest.split('/').filter(|segment| !segment.is_empty());
     let Some(encoded_location) = segments.next() else {
@@ -512,6 +564,7 @@ fn respond(stream: &mut TcpStream, response: BridgeResponse) {
         400 => "Bad Request",
         403 => "Forbidden",
         404 => "Not Found",
+        410 => "Gone",
         _ => "Internal Server Error",
     };
     let headers = format!(
@@ -524,4 +577,48 @@ fn respond(stream: &mut TcpStream, response: BridgeResponse) {
     let _ = stream.write_all(headers.as_bytes());
     let _ = stream.write_all(&body);
     let _ = stream.flush();
+}
+
+#[cfg(test)]
+mod replay_query_tests {
+    use super::event_replay_parameters;
+
+    #[test]
+    fn bootstrap_and_exact_generation_cursor_are_distinct() {
+        assert_eq!(
+            event_replay_parameters("/event-replay").unwrap(),
+            (None, 1, 128)
+        );
+        assert_eq!(
+            event_replay_parameters("/event-replay?generation=abc123&cursor=19&limit=12").unwrap(),
+            (Some("abc123".to_owned()), 19, 12)
+        );
+    }
+
+    #[test]
+    fn malformed_duplicate_unknown_empty_and_overflow_fields_refuse() {
+        for query in [
+            "cursor",
+            "cursor=0",
+            "cursor=-1",
+            "cursor=+1",
+            "cursor=one",
+            "cursor=18446744073709551616",
+            "limit=0",
+            "limit=one",
+            "limit=184467440737095516160",
+            "cursor=1&cursor=2",
+            "generation=abc&generation=def",
+            "generation=",
+            "generation=abc%20def",
+            "unknown=1",
+            "cursor=1&",
+            "",
+        ] {
+            assert!(
+                event_replay_parameters(&format!("/event-replay?{query}")).is_err(),
+                "{query}"
+            );
+        }
+    }
 }
