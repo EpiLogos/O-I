@@ -9,6 +9,7 @@ on:
       - 'desktop/cradle/tests/native-expression*'
       - 'desktop/cradle/tests/*formation*'
       - 'desktop/cradle/tests/candidate-cache-native.mjs'
+      - 'desktop/cradle/tests/native-capture-compiler.py'
       - 'packages/oi-design-system/expressions-engine/engine/**'
       - 'packages/oi-design-system/expressions-engine/shell/**'
       - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
@@ -85,6 +86,11 @@ jobs:
           cd desktop/cradle
           node --test tests/emitted-formation-modules.test.mjs 2>&1 | tee /tmp/w5-checks/emitted-formation.log
           node tests/formation-native-regressions.mjs 2>&1 | tee /tmp/w5-checks/formation-native.log
+      - name: Compile the actual native text painter and require its exact shipped companion
+        if: always()
+        env:
+          OI_CAPTURE_COMPILE_OUT: /tmp/w5-checks/native-capture-compiler
+        run: python3 desktop/cradle/tests/native-capture-compiler.py
       - name: Actual embedded WebGL browser and relay
         if: always()
         env:
