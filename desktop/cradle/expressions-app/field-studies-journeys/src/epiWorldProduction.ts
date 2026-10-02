@@ -24,6 +24,7 @@ export interface PreparedEpiWorld {
  binding:Record<string,unknown>;
 }
 export interface EpiWorldRecord {
+ kept_answers?:import('../../../src/nara/nativeKeptAnswer').KeptAnswer[];
  schema:'oi.epi-world-material/v1';world:Omit<NativeSceneWorldReading,'schema'|'native_owner_sources'> & {schema:'oi.epi-portable-world/v1';native_owner_sources:{role:'constructor'|'coupled'|'field';reading:ReadingRef}[]};native_source:Omit<PreparedEpiWorld['source'],'world'> & {world_ref:ReadingRef};
  runtime_buffers:{schema:'oi.epi-native-runtime-buffers/v1';policy:'native-owner-recompose';reading:ReadingRef;buffers:{key:'slots_a'|'slots_b';values:number;json_sha256:string}[]};
  identity_source:InstrumentIdentity['source'];identity_input_revision:string;person_ref:string;nara_ref:string;

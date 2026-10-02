@@ -203,7 +203,18 @@ let paperSignature='';
 let hostedAppearance:'dark'|'light'|undefined;
 function paintLivePaper(s:Scene){const signature=JSON.stringify([width,height,s.field.background,s.field.palette,s.engine.backgroundMode,s.field.params.grain,s.field.params.native_backgroundGlowIntensity]);if(signature===paperSignature)return;paperSignature=signature;const canvas=$<HTMLCanvasElement>('paper-canvas');canvas.width=width;canvas.height=height;paintPaper(canvas.getContext('2d')!,s,width,height);}
 function theme(){const appearance=hostedAppearance??workspace.appearance,s=activeScene(),hex=s.field.background;document.documentElement.style.setProperty('--paper',hex);document.documentElement.style.setProperty('--ink',s.field.palette[0]);const vals=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));document.body.classList.toggle('night',appearance==='dark'||appearance==='scene'&&(vals[0]*.2126+vals[1]*.7152+vals[2]*.0722)<100);$('grain').style.opacity='0';paintLivePaper(s);document.body.classList.toggle('hud-contrast',appearance==='dark'&&(vals[0]*.2126+vals[1]*.7152+vals[2]*.0722)>=100||appearance==='light'&&(vals[0]*.2126+vals[1]*.7152+vals[2]*.0722)<100);document.title=`${physisHost()?'Physis · ':''}${s.name} — ${store.document.name} · O:I Expressions`;}
-function renderText(){const s=activeScene();$('text-layers').innerHTML=s.text.map(t=>{const l=textLayout(t,width,height);return `<article class="page-text ${t.id===textId?'selected':''}" data-text-id="${t.id}" ${t.visible?'':'hidden'} style="left:${t.x*100}%;top:${t.y*100}%;width:${l.width}px;text-align:${t.align};"><div class="kicker">${esc(t.kicker)}</div><h1 style="font-size:${l.size}px">${esc(t.title)}${t.italic?`<em>${esc(t.italic)}</em>`:''}</h1><p${t.bodySize===undefined?'':` style="font-size:${l.body}px"`}>${esc(t.body)}</p></article>`;}).join('');}
+import './naraKeptAnswer.css';
+import {worldRequest} from './worldChannel.js';
+import {readKeptAnswers,verifyStoredAnswerEdition,keptAnswerCarrier,sameAnswerValue} from '../../../src/nara/nativeKeptAnswer.js';
+let nativeKeptReadings:import('../../../src/nara/nativeKeptAnswer').KeptAnswerReading[]=[];
+function renderText(){const s=activeScene(),binding=nativeWorkspace?.nativeView()?.bindings[s.id],view=nativeWorkspace?.nativeView();
+ const reading=binding?nativeKeptReadings.find(r=>r.record.parts.some(p=>p.scene_ref===binding.scene_ref)):undefined;
+ if(reading&&view){const parts=reading.record.parts.filter(p=>p.scene_ref===binding!.scene_ref),layers=new Map(s.text.map(t=>[t.id,t]));
+  const group=(kind:'primary'|'source')=>parts.filter(p=>p.kind===kind).flatMap(p=>p.layer_ids).map(id=>layers.get(id)?.body??'').join('');
+  const primary=group('primary'),source=group('source'),title=s.name;
+  $('text-layers').innerHTML=`<article class="page-text nara-kept-answer" tabindex="0" aria-label="Attributed native answer" data-native-answer-ref="${esc(reading.record.answer_ref)}" data-native-scene-ref="${esc(binding!.scene_ref)}" style="left:4%;top:8%;width:${Math.min(width-32,textLayout(s.text[0],width,height).width)}px;max-height:${Math.max(140,height-150)}px;overflow:auto;pointer-events:auto;user-select:text;padding:16px;background:color-mix(in srgb,${s.field.background} 92%,transparent);"><div class="kicker">${reading.record.role==='epii'?'Epii':'Nara'} · historical native quotation</div><h1 style="font-size:24px">${esc(title)}</h1>${primary?`<p data-native-answer-primary style="font-size:18px;max-width:none;white-space:pre-wrap;">${esc(primary)}</p>`:''}${source?`<details ${primary?'':'open'}><summary>Source Inspect · original native answer</summary><p data-native-answer-source style="font-size:18px;max-width:none;white-space:pre-wrap;">${esc(source)}</p></details>`:''}<details><summary>Original question and source</summary><p>${esc(reading.record.question)}</p><pre style="white-space:pre-wrap;">${esc(JSON.stringify(reading.record,null,2))}</pre></details></article>`;return;
+ }
+ $('text-layers').innerHTML=s.text.map(t=>{const l=textLayout(t,width,height);return `<article class="page-text ${t.id===textId?'selected':''}" data-text-id="${t.id}" ${t.visible?'':'hidden'} style="left:${t.x*100}%;top:${t.y*100}%;width:${l.width}px;text-align:${t.align};"><div class="kicker">${esc(t.kicker)}</div><h1 style="font-size:${l.size}px">${esc(t.title)}${t.italic?`<em>${esc(t.italic)}</em>`:''}</h1><p${t.bodySize===undefined?'':` style="font-size:${l.body}px"`}>${esc(t.body)}</p></article>`;}).join('');}
 const previewTokens=new WeakMap<HTMLElement,number>();
 /** Fills every source preview card with the normalized cutout the engine will sample. */
 async function refreshSourcePreviews(host:HTMLElement){
@@ -811,9 +822,11 @@ document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=
  if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='s'){ev.preventDefault();void action('native-save',el);return;}
  if(ev.metaKey||ev.ctrlKey||ev.altKey)return;
  if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}if(propertyTake){finishPropertyTake();return;}if(beltPickerOpen){beltPickerOpen=false;renderAll();return;}if(contextKind){contextKind='';renderAll();return;}if(studioOpen){setStudio(false);return;}if(presenting){presenting=false;renderAll();}else if(placementStep||shapePickerOpen){placementStep=false;shapePickerOpen=false;cursorTool='select';tool='select';renderAll();}else if(timelineOpen){timelineOpen=false;renderAll();}else if(inspectorOpen){inspectorOpen=false;railExpanded=false;renderAll();}else if(editing)edit(false);return;}
+ if((ev.target as Element|null)?.closest('.nara-kept-answer')&&['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(ev.key))return;
  if(ev.key===' '){ev.preventDefault();toggleScenePlay();needsFrame=true;return;}
  const shortcuts:Record<string,string>={e:'edit',p:'tool-pin',v:'tool-select',i:'tool-interact',a:'tool-formation',t:'tool-text',o:'tool-orbit',g:'grid',f:presenting?'exit-present':'present'};
  if(shortcuts[ev.key.toLowerCase()]){ev.preventDefault();void action(shortcuts[ev.key.toLowerCase()],el);return;}
+ if((ev.target as Element|null)?.closest('.nara-kept-answer')&&['ArrowUp','ArrowDown','PageUp','PageDown','Home','End'].includes(ev.key))return;
  if(ev.key.startsWith('Arrow')){ev.preventDefault();if(editing&&selected.length){if(selected.some(id=>blueprintMember(scene(),id))){toast('Use Blueprint to move the whole shape.');return;}const amount=ev.shiftKey?.1:.01;changed(()=>scene().entities.filter(e=>selected.includes(e.id)&&!e.locked).forEach(e=>{if(ev.key==='ArrowLeft')e.position.x-=amount;if(ev.key==='ArrowRight')e.position.x+=amount;if(ev.key==='ArrowUp')e.position.y+=amount;if(ev.key==='ArrowDown')e.position.y-=amount;e.position.x=clamp(e.position.x,-50,50);e.position.y=clamp(e.position.y,-50,50);}));}else if(ev.key==='ArrowLeft')void setScene(sceneIndex-1).catch(error);else if(ev.key==='ArrowRight')void setScene(sceneIndex+1).catch(error);}
  if((ev.key==='Delete'||ev.key==='Backspace')&&editing&&selected.length){ev.preventDefault();deleteEntities();}
 });
@@ -839,7 +852,7 @@ function positionAt(ev:PointerEvent,plane=camera.plane,depth=camera.depth){retur
 function showCoordinates(v:Vec3){const number=(n:number)=>(Math.abs(n)<.0005?0:n).toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3,signDisplay:'always',useGrouping:false});
  $('coordinates').innerHTML=`<span>X <b>${number(v.x)}</b></span><span>Y <b>${number(v.y)}</b></span><span>Z <b>${number(v.z)}</b></span>`;
 }
-$('stage').addEventListener('pointerdown',ev=>{if((ev.target as HTMLElement).closest('button'))return;
+$('stage').addEventListener('pointerdown',ev=>{if((ev.target as HTMLElement).closest('button,.nara-kept-answer'))return;
  if(libraryOpen)return;
  if(ev.button===0&&cursorTool==='interact'&&tool==='interact'){if(inspectorOpen||studioOpen||contextKind||sequenceOpen||beltOpen||timelineOpen||modesOpen||captureOpen||beltPickerOpen||assignmentGroup||assignmentTarget||selected.length||editing||guidesVisible){inspectorOpen=false;studioOpen=false;contextKind='';sequenceOpen=false;beltOpen=false;timelineOpen=false;modesOpen=false;captureOpen=false;beltPickerOpen=false;assignmentGroup='';assignmentTarget='';selected=[];editing=false;guidesVisible=false;renderAll();}}
  if(ev.button!==0&&ev.button!==2)return;
@@ -882,7 +895,7 @@ $('stage').addEventListener('pointermove',ev=>{
 });
 function endDrag(ev:PointerEvent){if(drag){if(drag.kind!=='camera'){store.finish();markSaved();}drag=null;if($('stage').hasPointerCapture(ev.pointerId))$('stage').releasePointerCapture(ev.pointerId);renderAll();}}
 $('stage').addEventListener('pointerup',endDrag);$('stage').addEventListener('pointercancel',endDrag);$('stage').addEventListener('pointerleave',()=>{if(!drag){pointer.active=false;needsFrame=true;}});$('stage').addEventListener('contextmenu',ev=>{if(!presenting)ev.preventDefault();});
-$('stage').addEventListener('wheel',ev=>{if(ev.ctrlKey||ev.metaKey||(!editing&&cursorTool!=='interact'))return;ev.preventDefault();pointer.active=false;camera.zoom=clamp(camera.zoom*Math.exp(-ev.deltaY*.001),.2,4);overlayDirty=true;needsFrame=true;},{passive:false});
+$('stage').addEventListener('wheel',ev=>{if((ev.target as Element).closest('.nara-kept-answer'))return;if(ev.ctrlKey||ev.metaKey||(!editing&&cursorTool!=='interact'))return;ev.preventDefault();pointer.active=false;camera.zoom=clamp(camera.zoom*Math.exp(-ev.deltaY*.001),.2,4);overlayDirty=true;needsFrame=true;},{passive:false});
 function poly(points:{x:number;y:number}[]){return points.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');}
 function drawGuides(){const svg=$('guides');svg.setAttribute('viewBox',`0 0 ${width} ${height}`);if(!editing||presenting||!guidesVisible){svg.innerHTML='';return;}let markup='';
  if(camera.grid){for(let i=-15;i<=15;i++){const v=i/10;const mk=(a:number,b:number):Vec3=>camera.plane==='XY'?{x:a,y:b,z:camera.depth}:camera.plane==='XZ'?{x:a,y:camera.depth,z:b}:{x:camera.depth,y:a,z:b};const a=project(mk(v,-1.5),camera,width,height),b=project(mk(v,1.5),camera,width,height),c=project(mk(-1.5,v),camera,width,height),d=project(mk(1.5,v),camera,width,height);markup+=`<path d="M${a.x},${a.y}L${b.x},${b.y}M${c.x},${c.y}L${d.x},${d.y}" fill="none" stroke="var(--ink)" opacity="${i===0?.25:.075}" stroke-width="${i===0?1:.6}"/>`;}}
@@ -1050,6 +1063,17 @@ window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({s
  // the targets already presented. No native request, clock or target write.
  probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{sessionPresence.dispose();researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
 function applyNativeView(view:KernelConversion,preservePosition=false){
+ nativeKeptReadings=[];
+ const nativeAnswerDocument=view.document as unknown as ExpressionDocument;
+ if(readEpiWorldRecord(nativeAnswerDocument))void readKeptAnswers(nativeAnswerDocument).then(async readings=>{
+  for(const reading of readings){
+   if(nativeWorkspace?.nativeView()?.document!==view.document)return;
+   const retained=await worldRequest({operation:'act_inspect',act_ref:reading.record.act_ref});
+   if(nativeWorkspace?.nativeView()?.document!==view.document)return;
+   await verifyStoredAnswerEdition(nativeAnswerDocument,reading,retained);
+  }
+  if(nativeWorkspace?.nativeView()?.document===view.document){nativeKeptReadings=readings;renderText();}
+ }).catch(failure=>{if(nativeWorkspace?.nativeView()?.document===view.document)toast('Attributed answer material could not be qualified: '+String(failure),7000);});
  awaitingNativeBoot=false;startupRecoveryPending=false;
  epiWorld=readEpiWorldRecord(view.document as unknown as ExpressionDocument);
  // An opened native Expression is what the frame stands on: the entry gate
@@ -1257,6 +1281,27 @@ const naraInstrument=installNaraInstrument({enterWorld:async identity=>{if(world
     throw Error('This personal presentation does not match the admitted saved person and cosmic occasion.');
   }
   engine?.releasePrivateSound?.();privateEvidencePresentation=input;privateEvidenceField=field;needsFrame=true;naraInstrument.refresh();
+ },
+ acceptKeptAnswer:async receipt=>{
+  if(!nativeWorkspace||!await nativeWorkspace.receiveKeptAnswer(receipt))throw Error('The saved native answer remains in its file; current draft reception was not acknowledged.');
+  needsFrame=true;naraInstrument.refresh();
+ },
+ readKeptAnswer:async answer=>{
+  const view=nativeWorkspace?.nativeView();if(!view)throw Error('Open the saved personal Expression before reading its answer.');
+  const fresh=(await readKeptAnswers(view.document as unknown as ExpressionDocument)).find(r=>r.record.answer_ref===answer.record.answer_ref);
+  if(nativeWorkspace?.nativeView()!==view||!fresh||!sameAnswerValue(fresh,answer))throw Error('The selected native quotation changed. Read its current source again.');
+  const retained=await worldRequest({operation:'act_inspect',act_ref:fresh.record.act_ref});
+  if(nativeWorkspace?.nativeView()!==view)throw Error('The personal Expression changed while its immutable answer was read.');
+  await verifyStoredAnswerEdition(view.document as unknown as ExpressionDocument,fresh,retained);
+  if(nativeWorkspace?.nativeView()!==view)throw Error('The personal Expression changed before entering its answer.');
+  const ref=fresh.record.parts[0].scene_ref,entry=Object.entries(view.bindings).find(([,b])=>b.scene_ref===ref),index=entry?store.document.scenes.findIndex(s=>s.id===entry[0]):-1;
+  if(index<0)throw Error('The complete native answer Scene is not loaded.');
+  if(index!==sceneIndex&&!await setScene(index))throw Error('The ordinary reading Scene was not admitted.');
+  const live=nativeWorkspace?.nativeView();
+  if(!live||live.document.expression_ref!==view.document.expression_ref||!sameAnswerValue(readEpiWorldRecord(live.document as unknown as ExpressionDocument)?.kept_answers,readEpiWorldRecord(view.document as unknown as ExpressionDocument)?.kept_answers))throw Error('The personal answer world changed during ordinary Scene admission.');
+  const binding=live.bindings[scene().id],locus=live?String((keptAnswerCarrier(live.document as unknown as ExpressionDocument).world.receiving as {personal:{locus_entity_ref:string}}).personal.locus_entity_ref):'';
+  const occurrence=binding?.occurrences.find(o=>o.entity_ref===locus);selected=occurrence?[occurrence.view_entity_id]:[];
+  await nativeWorkspace?.select(scene().id,selected[0]??null);renderAll();
  },
  acceptNativeDocument:async(document:unknown)=>{
   const native=document as {expression_ref?:unknown;revision?:unknown};

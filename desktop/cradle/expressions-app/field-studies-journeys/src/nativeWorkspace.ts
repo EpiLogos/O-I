@@ -418,6 +418,24 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   /** Re-read a followed Expression. Clean: adopt the kernel's newer revision
    * (never commits). Edited: keep the edits unsaved and disclose the newer
    * revision. Not open: follow it. */
+  /** Receive only an acknowledged same-file answer revision; never open a
+   * foreign document or discard a pending local draft. Keep view position. */
+  receiveKeptAnswer:async(receipt:import('../../../src/nara/instrumentProtocol').NativeExpressionAnswerReceipt):Promise<boolean>=>{
+   if(receipt.schema!=='oi.nara-expression-answer-receipt/v1'||receipt.state!=='saved')throw Error('The native answer is kept but its same-file save is unconfirmed. Reconcile its existing native file before reading.');
+   while(busy)await ownerIdle;
+   const before=work.state?.view;
+   if(!before||before.document.expression_ref!==receipt.expression_ref||before.document.revision!==receipt.previous_revision
+     ||localEdits(before)||work.state?.pending)throw Error('The saved answer was kept natively; resolve this retained local draft before receiving its revision.');
+   const version=host.version(),intent=intentGeneration,generation=followGeneration;
+   return run(async()=>{
+    const current=()=>host.version()===version&&intentGeneration===intent&&followGeneration===generation&&work.state?.view===before;
+    const native=await inspectReference(receipt.expression_ref);if(!current())throw Error('The current view changed; the saved answer remains in its native file.');
+    if(native.document.revision!==receipt.revision||!native.file||native.file.revision!==receipt.file.revision
+      ||JSON.stringify(native.file.location)!==JSON.stringify(receipt.file.location))throw Error('The native answer receipt does not match this exact saved file and revision.');
+    const view=await work.adopt(native.document,native.file,current);if(host.version()!==version||intentGeneration!==intent||followGeneration!==generation)throw Error('The view changed while receiving the saved native answer.');
+    restoreGeneration++;selections.cancel();host.load(view,true);markLoaded();host.followed?.(receipt.expression_ref,readThrough===receipt.expression_ref);update();
+   });
+  },
   refreshReference:async(reference:string):Promise<boolean>=>{while(busy)await ownerIdle;return run(async()=>{
    const current=work.state?.view;
    if(!current||current.document.expression_ref!==reference){await followOpen(reference);return;}

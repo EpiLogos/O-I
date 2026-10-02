@@ -41,9 +41,17 @@ export interface InstrumentVoiceResult {
   audio?: {audio_base64: string; content_type: string; [key: string]: unknown};
   answer?: {text: string; answer_block_ids: number[]}; closed?: boolean;
 }
+export interface NativeExpressionAnswerReceipt {
+ schema:'oi.nara-expression-answer-receipt/v1';answer_ref:string;act_ref:string;expression_ref:string;
+ previous_revision:number;revision:number;scene_refs:string[];body_sha256:string;already:boolean;
+ state:'saved'|'native-kept-file-unconfirmed';file:{location:import('../kernel/location').CentralLocation;revision:string};error?:string;
+}
 export interface InstrumentReturnState {
   schema: 'oi.nara-instrument-return/v1'; review_ref: string;
   answer?: {text: string; question: string; block_ids: number[]; original_basis: Record<string, unknown>};
+  expression?:NativeExpressionAnswerReceipt;
+  expressions?:import('./nativeKeptAnswer').KeptAnswer[];
+  kept?:import('./nativeKeptAnswer').KeptAnswerReading;
   flows?: {ref: string; name: string}[];
   day?: {source_ref: string; document_id: string; revision: string; civil_date: string; fields: {id: string; label?: string}[]} | null;
   unavailable?: {flows?: string; day?: string};
@@ -73,6 +81,9 @@ export type NaraInstrumentRequest =
   | {operation: 'return_inspect'; basis: InstrumentBasis; role: DialogueRole; answer_block_id: number}
   | {operation: 'return_flow_read'; basis: InstrumentBasis; role: DialogueRole; review_ref: string; flow_ref: string}
   | {operation: 'return_flow'; basis: InstrumentBasis; role: DialogueRole; review_ref: string; flow_ref: string; expected_revision: string}
+  | {operation:'return_expression';basis:InstrumentBasis;role:DialogueRole;review_ref:string}
+  | {operation:'return_expression_list';basis:InstrumentBasis;role:DialogueRole}
+  | {operation:'return_expression_read';basis:InstrumentBasis;role:DialogueRole;answer_ref:string}
   | {operation: 'return_day'; basis: InstrumentBasis; role: DialogueRole; review_ref: string; field_id: string}
   | {operation: 'voice'; basis: InstrumentBasis; role: 'nara'; request: InstrumentVoiceRequest};
 
