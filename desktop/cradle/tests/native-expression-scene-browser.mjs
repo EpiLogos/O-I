@@ -33,7 +33,7 @@ const report={schema:'oi.native-expression-scene-trace/v1',mode:disconnect?'nega
  standing:'real Central disclosure, QL compose, K8 C++ owner, O:I kernel relay and WebGL; private initialized World; sky none (QL default event); SwiftShader unless hardware requested; not installed-app, speaker or listening evidence',
  checks:[],failures:[],sources:{},machine:{platform:platform(),logical_cpus:cpus().length},probe:{steps:STEPS,dt:DT},pass:false};
 for(const [name,path] of Object.entries(paths))report.sources[name]={path,sha256:createHash('sha256').update(await readFile(path)).digest('hex')};
-let bridge,browser,server,endpoint,activeLease=null;
+let bridge,browser,browserOwner,server,endpoint,activeLease=null;
 let bridgeLog='',bridgeErr='';
 const proxyAbort=new AbortController();
 try{
@@ -65,7 +65,8 @@ server=createServer(async(req,res)=>{try{
  }catch(error){if(!res.destroyed){res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:false,error:String(error)}));}}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const hardwareGPU=process.env.NATIVE_EXPRESSION_GPU==='hardware';
-browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:hardwareGPU?[]:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+browserOwner=await chromium.launchServer({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:hardwareGPU?[]:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+browser=await chromium.connect(browserOwner.wsEndpoint(),{timeout:15000});
 report.browser=browser.version();
 // Seeded particle initialisation and a record of every PCM block the page schedules.
 const probe=`(()=>{let s=0x2f6e2b1;Math.random=function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
@@ -243,7 +244,7 @@ function check(ok,text,detail){(ok?report.checks:report.failures).push(detail?{c
 finally{
  try{if(activeLease&&endpoint){const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'native_expression',request:{operation:'close',lease:activeLease}}),signal:AbortSignal.timeout(6000)});report.cleanup_close=await response.json();assert.equal(report.cleanup_close.ok,true);}}
  catch(error){report.pass=false;report.cleanup_failure=String(error);}
- report.owner_cleanup=await retireNativeBrowserOwners({bridge,browser,server,proxyAbort});
+ report.owner_cleanup=await retireNativeBrowserOwners({bridge,browser,browserOwner,server,proxyAbort});
  for(const [owner,result] of Object.entries(report.owner_cleanup))if(!result.ok){report.pass=false;report.cleanup_failure=`${owner}: ${result.error}`;}
  report.bridge_cleanup=report.owner_cleanup.bridge.receipt;
  await writeFile(join(out,disconnect?'scene-trace-disconnected.json':'scene-trace.json'),JSON.stringify(report,null,2)+'\n');await writeFile(join(out,'kernel.log'),bridgeLog+'\n'+bridgeErr);

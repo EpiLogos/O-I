@@ -16,7 +16,7 @@ function textLayout(t, w, h) {
   const mobile = w < 761;
   const width = Math.min(t.width, w * (mobile ? 0.65 : w < 1051 ? 0.32 : 0.45));
   const size = mobile ? Math.min(36, t.size) : w < 1051 ? Math.min(38, t.size) : t.size;
-  return { x: t.x * w, y: t.y * h, width, size, kicker: mobile ? 7 : 8, kickerGap: mobile ? 18 : 25, titleGap: mobile ? 18 : 26, body: mobile ? 10 : 11 };
+  return { x: t.x * w, y: t.y * h, width, size, kicker: mobile ? 7 : 8, kickerGap: mobile ? 18 : 25, titleGap: mobile ? 18 : 26, body: typeof t.bodySize === "number" && Number.isFinite(t.bodySize) && t.bodySize >= 8 && t.bodySize <= 72 ? t.bodySize : mobile ? 10 : 11 };
 }
 function wrap(ctx, value, width) {
   const lines = [];

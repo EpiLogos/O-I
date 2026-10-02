@@ -191,6 +191,15 @@ jobs:
             --bridge "$NATIVE_EXPRESSION_BRIDGE" --input "$NATIVE_EXPRESSION_INPUT" \
             --output /tmp/w5-checks/local-join --run-browser-join \
             2>&1 | tee /tmp/w5-checks/native-browser.log
+      - name: Admit the exact real producer receipt and reject native identity drift
+        if: ${{ !cancelled() }}
+        env:
+          REQUIRE_NATIVE_RECEIPT: '1'
+          NATIVE_LOCAL_RECEIPT: /tmp/w5-checks/local-join/local-receipt.json
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          python3 tests/native-expression-receipt.test.py 2>&1 | tee /tmp/w5-checks/actual-native-receipt-admission.log
       - name: Scene causal trace and deliberately disconnected consumer
         if: always()
         env:
@@ -207,6 +216,24 @@ jobs:
             node tests/native-expression-scene-browser.mjs > /tmp/w5-checks/scene-disconnected.log 2>&1; then
             echo "disconnected consumer passed the causal trace" >&2; exit 1
           fi
+          # A crash or failed teardown is not the required visual failure.
+          python3 - <<'PY_ACCEPT'
+          import json
+          from pathlib import Path
+          reading = json.loads(Path('/tmp/w5-checks/scene-disconnected/scene-trace-disconnected.json').read_text())
+          assert reading['schema'] == 'oi.native-expression-scene-trace/v1'
+          assert reading['mode'] == 'negative: GPU target delivery disconnected before the determinant'
+          assert reading['pass'] is False
+          assert 'cleanup_failure' not in reading
+          assert all(value['ok'] is True for value in reading['owner_cleanup'].values())
+          assert reading['requests'] == {'opens': 3, 'closes': 3}
+          failures = {value['check'] if isinstance(value, dict) else value for value in reading['failures']}
+          assert 'delivery: the GPU-bound target textures carry the changed frame' in failures
+          assert 'GPU: particle positions after N fixed steps differ from control beyond the determinism baseline' in failures
+          assert reading['transfer']['after_step_admitted_max_abs_difference_m'] > 0
+          assert reading['delivery']['after_step_gpu_target_max_abs_difference'] == 0
+          assert reading['gpu']['effect_mean_abs_difference'] <= reading['gpu']['tolerance']
+          PY_ACCEPT
       - name: Exact source and toolchain receipt
         if: always()
         run: |

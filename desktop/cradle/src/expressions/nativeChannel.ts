@@ -35,7 +35,8 @@ export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTra
       if(data.request?.operation==='source'){
         const path=data.request.path;
         if(typeof path!=='string'||!path.trim()||path.length>4096)throw new Error('Central binding path required');
-        const slash=path.lastIndexOf('/');const directory=await listFiles(transport,slash>=0?(path.slice(0,slash)||'/'):'.');
+        if(path.startsWith('/'))throw new Error('Binding source requires a relative Central path');
+        const slash=path.lastIndexOf('/');const directory=await listFiles(transport,slash>=0?path.slice(0,slash):'');
         const entry=directory.entries.find(e=>e.name===path.slice(slash+1)&&e.retrieval_allowed);
         if(!entry)throw new Error('Central binding source unavailable or withheld');
         const reading=await readFile(transport,entry.location);

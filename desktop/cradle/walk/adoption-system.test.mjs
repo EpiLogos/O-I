@@ -17,7 +17,7 @@ const out=resolve(process.env.OI_SYSTEM_NATIVE_OUT??join(root,'tests/artifacts/a
 await mkdir(out,{recursive:true});
 const temp=await mkdtemp(join(tmpdir(),'oi-system-native-'));
 const report={schema:'oi.system-native-ingress/v1',standing:'Actual SystemPanel/Settings page and native setup review in an initialized private World; no installation, provider or installed-machine acceptance',checks:[],passed:false};
-let bridge,server,browser,endpoint;
+let bridge,server,browser,browserOwner,endpoint;
 let bridgeLog='';
 const bounded=async(label,promise,ms=6000)=>{let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(label+' exceeded its finite deadline')),ms);})]);}finally{clearTimeout(timer);}};
 async function setup(request){
@@ -34,14 +34,14 @@ try{
  report.setup_before=await setup({action:'status'});
  const entry=`import React from 'react';import {createRoot} from 'react-dom/client';
 import {KernelProvider} from '/src/kernel/KernelProvider.tsx';import {SystemPanel} from '/src/workspace/SystemPanel.tsx';import {SettingsNavigator} from '/src/workspace/settings/SettingsNavigator.tsx';
-import '/src/styles.css';import '/src/styles/theme.css';import '/src/desktop-shell.css';import '/src/surface/shell.css';import '/src/configuration/configuration.css';
+import '@epilogos/oi-design-system/tokens.css';import '@epilogos/oi-design-system/desktop.css';import '@epilogos/oi-design-system/themes/themes.css';import '/src/rest.css';import '/src/cradle.css';
 window.__OI_KERNEL_BRIDGE__=new URLSearchParams(location.search).get('bridge');
 createRoot(document.getElementById('root')).render(React.createElement(KernelProvider,null,React.createElement('div',{style:{display:'grid',gridTemplateColumns:'220px minmax(0,1fr)',height:'100vh'}},React.createElement(SettingsNavigator),React.createElement(SystemPanel))));`;
  server=await createServer({root,appType:'custom',configFile:false,define:{__CRADLE_WALK__:'false'},plugins:[react(),{name:'actual-native-system-entry',resolveId(id){if(id==='/@system-native-entry')return '\0system-native-entry';},load(id){if(id==='\0system-native-entry')return entry;}}],server:{host:'127.0.0.1',port:0,hmr:false,fs:{allow:[resolve(root,'../..')]}}});
  server.middlewares.use(async(req,res,next)=>{try{if(!req.url?.startsWith('/__system.html'))return next();res.setHeader('Content-Type','text/html');res.end(await server.transformIndexHtml(req.url,'<!doctype html><html><body style="margin:0"><div id="root"></div><script type="module" src="/@system-native-entry"></script></body></html>'));}catch(error){next(error);}});
  await server.listen();const url='http://127.0.0.1:'+server.httpServer.address().port+'/__system.html?bridge='+encodeURIComponent(endpoint);
  for(const[name,engine]of Object.entries({chromium,webkit})){
-  browser=await engine.launch({headless:true});const page=await browser.newPage({viewport:{width:1100,height:1000}});page.setDefaultTimeout(60000);
+  browserOwner=await engine.launchServer({headless:true});browser=await engine.connect(browserOwner.wsEndpoint(),{timeout:15000});const page=await browser.newPage({viewport:{width:1100,height:1000}});page.setDefaultTimeout(60000);
   const calls=[],replies=[],pending=new Set(),errors=[];
   page.on('pageerror',error=>errors.push(String(error)));
   page.on('request',request=>{if(request.url()===endpoint+'/op'&&request.method()==='POST'){const op=request.postDataJSON();if(op.op==='setup')calls.push(op);}});
@@ -67,12 +67,12 @@ createRoot(document.getElementById('root')).render(React.createElement(KernelPro
    await page.screenshot({path:join(out,name+'.png'),fullPage:true});
    report.checks.push({browser:name,version:browser.version(),passed:true,meaning:'Actual Settings product reaches actual native setup plan; exact private root, review/cancel/reentry, no apply or preparation',calls,replies});
   }catch(error){await page.screenshot({path:join(out,name+'-failure.png'),fullPage:true}).catch(()=>{});throw error;}
-  finally{const cleanup=await retireNativeBrowserOwners({browser});assert.equal(cleanup.browser.ok,true,cleanup.browser.error);browser=undefined;}
+  finally{const cleanup=await retireNativeBrowserOwners({browser,browserOwner});assert.equal(cleanup.browser.ok,true,cleanup.browser.error);browser=undefined;browserOwner=undefined;}
  }
  report.setup_after=await setup({action:'status'});assert.deepEqual(report.setup_after,report.setup_before,'Review/cancel must preserve the native effect journal');report.passed=true;
 }catch(error){report.error=String(error);report.passed=false;throw error;}
 finally{
- report.owner_cleanup=await retireNativeBrowserOwners({bridge,browser,server:server?.httpServer});
+ report.owner_cleanup=await retireNativeBrowserOwners({bridge,browser,browserOwner,server:server?.httpServer});
  for(const [owner,result]of Object.entries(report.owner_cleanup))if(!result.ok){report.passed=false;report.cleanup_error=owner+': '+result.error;}
  if(server)try{await bounded('Vite owner retirement',server.close());}catch(error){report.passed=false;report.cleanup_error=String(error);}
  await writeFile(join(out,'report.json'),JSON.stringify(report,null,2)+'\n');await writeFile(join(out,'kernel.log'),bridgeLog);

@@ -17,7 +17,7 @@ const out=resolve(process.env.NATIVE_EXPRESSION_OUT??'walk/artifacts/native-expr
 const temp=await mkdtemp(join(tmpdir(),'native-expression-joined-')),input=JSON.parse(await readFile(paths.input,'utf8'));
 const report={schema:'oi.native-expression-joined-browser/v1',standing:'real Central disclosure, C/Rust/C++ owner and WebGL; private initialized World and captured input; not installed Mac, live ephemeris, measured material or speaker/microphone evidence',checks:[],timings_ms:[],sources:{},machine:{platform:platform(),logical_cpus:cpus().length},pass:false};
 for(const [name,path] of Object.entries(paths))report.sources[name]={path,sha256:createHash('sha256').update(await readFile(path)).digest('hex')};
-let bridge,browser,server,page,endpoint,lease=null,latestSources=null;
+let bridge,browser,browserOwner,server,page,endpoint,lease=null,latestSources=null;
 let bridgeLog='',bridgeErr='';
 const proxyAbort=new AbortController();
 const interrupt=()=>{report.failure='Explicit local test interruption';void browser?.close();};
@@ -50,7 +50,8 @@ server=createServer(async(req,res)=>{try{
  }catch(error){if(!res.destroyed){res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:false,error:String(error)}));}}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const hardwareGPU=process.env.NATIVE_EXPRESSION_GPU==='hardware';
-browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:hardwareGPU?[]:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+browserOwner=await chromium.launchServer({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:hardwareGPU?[]:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+browser=await chromium.connect(browserOwner.wsEndpoint(),{timeout:15000});
 page=await browser.newPage({viewport:{width:1100,height:800}});const errors=[];page.on('pageerror',error=>errors.push(String(error)));
 process.once('SIGTERM',interrupt);
 report.browser=browser.version();report.renderer=hardwareGPU?'default browser GPU requested; actual renderer below':'Chromium software WebGL / SwiftShader';report.viewport='1100x800';
@@ -84,7 +85,8 @@ report.browser=browser.version();report.renderer=hardwareGPU?'default browser GP
  await frame.locator('.native-field-panel summary',{hasText:'Inspect depth'}).click();
  await frame.locator('[name="native-path"]').fill('binding.json');
  await frame.locator('[data-native="source"]').click({force:true});
- await frame.waitForFunction(()=>!document.querySelector('[data-native="connect"]')?.disabled,null,{timeout:10000});
+ try{await frame.waitForFunction(()=>!document.querySelector('[data-native="connect"]')?.disabled,null,{timeout:10000});}
+ catch(error){report.source_read_failure=await frame.locator('output[data-native-source]').textContent();throw error;}
  await frame.locator('[data-native="connect"]').click({force:true});
  await frame.waitForFunction(()=>['following','held','unavailable'].includes(window.__FIELD_STUDIES__.native().status),null,{timeout:20000});
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().status),'following',await frame.locator('[data-native-status]').textContent());
@@ -144,7 +146,7 @@ finally{
  try{
   if(lease&&endpoint){const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'native_expression',request:{operation:'close',lease}}),signal:AbortSignal.timeout(6000)});report.cleanup_close=await response.json();assert.equal(report.cleanup_close.ok,true);}
  }catch(error){report.pass=false;report.cleanup_failure=String(error);}
- report.owner_cleanup=await retireNativeBrowserOwners({bridge,browser,server,proxyAbort});
+ report.owner_cleanup=await retireNativeBrowserOwners({bridge,browser,browserOwner,server,proxyAbort});
  for(const [owner,result] of Object.entries(report.owner_cleanup))if(!result.ok){report.pass=false;report.cleanup_failure=`${owner}: ${result.error}`;}
  report.bridge_cleanup=report.owner_cleanup.bridge.receipt;
  await writeFile(join(out,'joined.json'),JSON.stringify(report,null,2)+'\n');await writeFile(join(out,'kernel.log'),bridgeLog+'\n'+bridgeErr);

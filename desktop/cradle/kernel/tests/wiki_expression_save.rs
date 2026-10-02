@@ -155,7 +155,7 @@ fn first_expression_save_uses_the_selected_directory_not_the_default_project() {
     assert_eq!(refused["state"], "save_refused", "{refused}");
     assert_eq!(refused["failure"]["kind"], "refused");
     assert_eq!(refused["failure"]["native"]["status"], "verification_failure");
-    assert_eq!(refused["failure"]["native"]["data"]["outcome"], "conflict");
+    assert_eq!(refused["failure"]["native"]["error"]["details"]["outcome"], "conflict");
     let after_refusal = fixture.file("work.expression.json");
     assert_eq!(after_refusal, first);
     assert_eq!(

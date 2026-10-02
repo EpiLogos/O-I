@@ -91,7 +91,7 @@ fn real_native_owner_admission_effects_refusals_restart_and_release() {
         serde_json::to_vec(&config).unwrap(),
     )
     .unwrap();
-    let disclosed = oi_cradle_kernel::files::list(&client, ".").unwrap();
+    let disclosed = oi_cradle_kernel::files::list(&client, "").unwrap();
     let location = &disclosed
         .entries
         .iter()
@@ -105,6 +105,20 @@ fn real_native_owner_admission_effects_refusals_restart_and_release() {
     );
     assert!(!reading.revision.is_empty());
     let mut manager = Manager::default();
+    // Actual owner disclosure admits the root binding. Absolute, parent and
+    // dot paths remain refused, rather than redirected into that World.
+    for path in ["/binding.json", "../binding.json", "./binding.json"] {
+        assert!(manager
+            .apply(
+                &client,
+                Request::Open {
+                    path: path.into(),
+                    expected_revision: reading.revision.clone(),
+                },
+            )
+            .unwrap_err()
+            .contains("relative Central path"));
+    }
     let open = || Request::Open {
         path: "binding.json".into(),
         expected_revision: reading.revision.clone(),

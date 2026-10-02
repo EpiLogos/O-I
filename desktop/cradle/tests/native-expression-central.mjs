@@ -10,23 +10,47 @@ import {createHash} from 'node:crypto';
 const execute=promisify(execFile);
 // Retire independent owned resources concurrently: an HTTP drain must never
 // prevent the native process from reaching its bounded kill/reap path.
-export async function retireNativeBrowserOwners({bridge,browser,server,proxyAbort}){
+export async function retireNativeBrowserOwners({bridge,browser,browserOwner,server,proxyAbort}){
  proxyAbort?.abort(new Error('Owned native proxy is shutting down'));
- const bounded=async(label,operation)=>{
+ const bounded=async(label,operation,milliseconds=3000)=>{
   let timer;
   try{return await Promise.race([Promise.resolve().then(operation),new Promise((_,reject)=>{
-   timer=setTimeout(()=>reject(new Error(`${label} cleanup did not settle within 3 seconds; ownership remains unknown`)),3000);
+   timer=setTimeout(()=>reject(new Error(`${label} cleanup did not settle within ${milliseconds} ms; ownership remains unknown`)),milliseconds);
   })]);}finally{clearTimeout(timer);}
  };
- const tasks=[['bridge',()=>releaseNativeBridge(bridge)],['browser',()=>browser?.close()],['server',()=>{
+ const tasks=[['bridge',()=>releaseNativeBridge(bridge)],['browser',()=>releaseOwnedBrowser(browser,browserOwner),9000],['server',()=>{
   if(!server?.listening)return;
   const closed=new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
   server.closeAllConnections();
   return closed;
  }]];
- const results=await Promise.allSettled(tasks.map(([label,operation])=>bounded(label,operation)));
+ const results=await Promise.allSettled(tasks.map(([label,operation,milliseconds])=>bounded(label,operation,milliseconds)));
  return Object.fromEntries(results.map((result,index)=>[tasks[index][0],result.status==='fulfilled'
   ?{ok:true,receipt:result.value??null}:{ok:false,error:String(result.reason)}]));
+}
+/** A launchServer supplies actual process custody. A client-close deadline
+ * alone cannot retire a browser whose GPU or page is no longer responding. */
+export async function releaseOwnedBrowser(browser,owner){
+ if(!owner){await browser?.close();return null;}
+ const child=owner.process();
+ assert.ok(child?.pid,'Owned browser has no actual child identity');
+ const exited=()=>child.exitCode!==null||child.signalCode!==null;
+ const receipt={owned_pid:child.pid,forced:false};
+ const bounded=async(operation,milliseconds)=>{
+  let timer;
+  try{return await Promise.race([Promise.resolve().then(operation),new Promise((_,reject)=>{
+   timer=setTimeout(()=>reject(new Error('Owned browser retirement deadline reached')),milliseconds);
+  })]);}finally{clearTimeout(timer);}
+ };
+ if(!exited()){
+  try{await bounded(()=>Promise.all([browser?.close(),owner.close()]),2000);}
+  catch(error){
+   receipt.graceful_failure=String(error);
+   if(!exited()){receipt.forced=true;await bounded(()=>owner.kill(),5000);}
+  }
+ }
+ assert.ok(exited(),'Owned browser process exit was not observed; ownership remains unknown');
+ return {...receipt,exit_code:child.exitCode,signal:child.signalCode};
 }
 export async function releaseNativeBridge(child){
  if(!child?.pid)return {started:false};
