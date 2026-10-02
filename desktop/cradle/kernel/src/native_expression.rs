@@ -569,7 +569,8 @@ impl Manager {
                 }
                 // Native Central's root is the empty relative path. Never
                 // reinterpret an absolute source as a binding in this World.
-                if !std::path::Path::new(&path).components()
+                if !std::path::Path::new(&path)
+                    .components()
                     .all(|part| matches!(part, std::path::Component::Normal(_)))
                 {
                     return Err("binding source requires a relative Central path".into());
@@ -869,15 +870,37 @@ struct ComposeRequest {
 /// The same four-field Scene material contract used by the QL constructor.
 /// This validates a caller policy; QL validates it again before native admission.
 pub(crate) fn validate_scene_material(value: &Value) -> Result<(), String> {
-    let m = value.as_object().ok_or("Scene material must be an object")?;
-    if m.len() != 4 || m.keys().any(|key| !["damping_per_second", "strike_metres", "audio_gain_per_metre", "strike_on_event"].contains(&key.as_str())) {
+    let m = value
+        .as_object()
+        .ok_or("Scene material must be an object")?;
+    if m.len() != 4
+        || m.keys().any(|key| {
+            ![
+                "damping_per_second",
+                "strike_metres",
+                "audio_gain_per_metre",
+                "strike_on_event",
+            ]
+            .contains(&key.as_str())
+        })
+    {
         return Err("Scene material requires exactly its four declared fields".into());
     }
-    let number = |key: &str| m.get(key).and_then(Value::as_f64).filter(|v| v.is_finite()).ok_or_else(|| format!("Scene material {key} must be finite"));
+    let number = |key: &str| {
+        m.get(key)
+            .and_then(Value::as_f64)
+            .filter(|v| v.is_finite())
+            .ok_or_else(|| format!("Scene material {key} must be finite"))
+    };
     let damping = number("damping_per_second")?;
     let strike = number("strike_metres")?;
     let gain = number("audio_gain_per_metre")?;
-    if !(0.0..=1e6).contains(&damping) || strike <= 0.0 || strike > 1.0 || gain.abs() > 1e6 || m["strike_on_event"].as_bool().is_none() {
+    if !(0.0..=1e6).contains(&damping)
+        || strike <= 0.0
+        || strike > 1.0
+        || gain.abs() > 1e6
+        || m["strike_on_event"].as_bool().is_none()
+    {
         return Err("Scene material is outside the native Scene policy contract".into());
     }
     Ok(())
@@ -975,10 +998,9 @@ fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
     let world = match obj.get("world") {
         None => None,
         Some(Value::Object(world)) => {
-            if let Some(key) = world
-                .keys()
-                .find(|key| !["instance_ref", "subject_ref", "start", "material"].contains(&key.as_str()))
-            {
+            if let Some(key) = world.keys().find(|key| {
+                !["instance_ref", "subject_ref", "start", "material"].contains(&key.as_str())
+            }) {
                 return Err(fail(&format!("unknown world key {key}")));
             }
             let reference = |key: &str| {
@@ -2023,19 +2045,32 @@ for line in sys.stdin: time.sleep(60)
 
     #[test]
     fn declared_world_material_has_exact_native_fields_and_bounds() {
-        let material=json!({"damping_per_second":2.0,"strike_metres":0.001,"audio_gain_per_metre":100.0,"strike_on_event":true});
+        let material = json!({"damping_per_second":2.0,"strike_metres":0.001,"audio_gain_per_metre":100.0,"strike_on_event":true});
         assert!(validate_scene_material(&material).is_ok());
-        for (key,value) in [("damping_per_second",json!(-1)),("damping_per_second",json!(1_000_001)),("strike_metres",json!(0)),("audio_gain_per_metre",json!(1_000_001)),("strike_on_event",json!(1))] {
-            let mut bad=material.clone();bad[key]=value;assert!(validate_scene_material(&bad).is_err());
+        for (key, value) in [
+            ("damping_per_second", json!(-1)),
+            ("damping_per_second", json!(1_000_001)),
+            ("strike_metres", json!(0)),
+            ("audio_gain_per_metre", json!(1_000_001)),
+            ("strike_on_event", json!(1)),
+        ] {
+            let mut bad = material.clone();
+            bad[key] = value;
+            assert!(validate_scene_material(&bad).is_err());
         }
-        let mut foreign=material.clone();foreign["source_numerical_law"]=json!(true);
+        let mut foreign = material.clone();
+        foreign["source_numerical_law"] = json!(true);
         assert!(validate_scene_material(&foreign).is_err());
-        let mut absent=material.clone();absent.as_object_mut().unwrap().remove("strike_on_event");
+        let mut absent = material.clone();
+        absent.as_object_mut().unwrap().remove("strike_on_event");
         assert!(validate_scene_material(&absent).is_err());
-        let request=json!({"texture":[1,1],"units_per_metre":120,
+        let request = json!({"texture":[1,1],"units_per_metre":120,
             "sky_snapshot":{"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:controlled"},
             "world":{"instance_ref":"expression:controlled","subject_ref":"identity:controlled","material":material}});
-        assert_eq!(compose_request(&request).unwrap().world.unwrap()["material"],request["world"]["material"]);
+        assert_eq!(
+            compose_request(&request).unwrap().world.unwrap()["material"],
+            request["world"]["material"]
+        );
     }
     #[test]
     fn epochs_are_whole_second_calendar_instants() {

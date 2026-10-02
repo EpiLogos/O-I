@@ -31,11 +31,65 @@ concurrency:
   group: native-expression-backcheck-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  native-kernel-regressions:
+    name: Full native kernel regressions / exact O:I head
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          workspaces: desktop/cradle/kernel -> target
+      - name: Exact native regression source and toolchain receipt
+        env:
+          EXPECTED_OI_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks
+          test "$(git rev-parse HEAD)" = "$EXPECTED_OI_HEAD"
+          git diff --exit-code -- desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes
+          git diff --cached --exit-code -- desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes
+          git rev-parse HEAD > /tmp/w5-checks/source-head.txt
+          git archive --format=tar HEAD desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes > /tmp/w5-checks/kernel-source.tar
+          sha256sum /tmp/w5-checks/kernel-source.tar > /tmp/w5-checks/kernel-source.sha256
+          { uname -a; rustc --version --verbose; cargo --version; } > /tmp/w5-checks/toolchain.txt
+          rustup which rustc > /tmp/w5-checks/rustc-path.txt
+          rustup which cargo > /tmp/w5-checks/cargo-path.txt
+          sha256sum "$(cat /tmp/w5-checks/rustc-path.txt)" "$(cat /tmp/w5-checks/cargo-path.txt)" > /tmp/w5-checks/toolchain.sha256
+      - name: Native kernel regressions
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks
+          cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge 2>&1 | tee /tmp/w5-checks/kernel-build.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml 2>&1 | tee /tmp/w5-checks/kernel.log
+      - name: Qualify the native regression source after all original tests
+        if: always()
+        env:
+          EXPECTED_OI_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_OI_HEAD"
+          git diff --exit-code -- desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes
+          git diff --cached --exit-code -- desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes
+          git rev-parse HEAD > /tmp/w5-checks/source-head-after.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w5-native-kernel-regressions-${{ github.event.pull_request.head.sha || github.sha }}
+          path: /tmp/w5-checks
+          retention-days: 14
+          if-no-files-found: error
+
   embedded:
     runs-on: ubuntu-latest
-    # The actual complete native run took 28m05s including required receipts.
-    # Give this source-qualified run time to finish; effect/currentness fences
-    # retain their own existing deadlines and assertions.
+    # Full native regressions run in the separate mandatory exact-head job.
+    # This job retains its own actual bridge and all receiving/effect gates.
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -156,13 +210,12 @@ jobs:
           node --test tests/native-expression-final.test.mjs 2>&1 | tee /tmp/w5-checks/csp-hash.log
           node tests/theme-prepaint-csp.mjs 2>&1 | tee /tmp/w5-checks/csp-browser.log
           node tests/native-expression-legacy-browser.mjs 2>&1 | tee /tmp/w5-checks/legacy-browser.log
-      - name: Native kernel regressions
+      - name: Build the exact native bridge for this receiving environment
         if: always()
         run: |
           set -o pipefail
           mkdir -p /tmp/w5-checks
-          cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
-          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml 2>&1 | tee /tmp/w5-checks/kernel.log
+          cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge 2>&1 | tee /tmp/w5-checks/kernel-build.log
       - name: Full native text, ordinary DOM and actual capture receiving
         run: |
           set -euo pipefail
@@ -336,7 +389,7 @@ jobs:
 
   epi-whole:
     name: Complete controlled Epi world / source-built hosted Linux
-    needs: embedded
+    needs: [embedded, native-kernel-regressions]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -432,7 +485,7 @@ jobs:
   epi-mac-candidate:
     name: Exact native Mac candidate / canonical managed bundle
     if: github.event_name == 'workflow_dispatch' && inputs.build_mac_candidate
-    needs: embedded
+    needs: [embedded, native-kernel-regressions]
     runs-on: macos-15
     timeout-minutes: 90
     steps:

@@ -1384,8 +1384,13 @@ impl WorldState {
     /// CAS-conflict replacement and live commits. This is not heap RSS.
     fn available_act_bytes(&self, replacing: &str) -> Result<usize, String> {
         let mut available = crate::expression_act_storage::LIVE_BYTES;
-        for act in self.acts.values().filter(|a| !a.archived && a.act_ref != replacing) {
-            available = available.checked_sub(crate::expression_act_store::ActStore::expanded_bytes(act)?)
+        for act in self
+            .acts
+            .values()
+            .filter(|a| !a.archived && a.act_ref != replacing)
+        {
+            available = available
+                .checked_sub(crate::expression_act_store::ActStore::expanded_bytes(act)?)
                 .ok_or("Live Acts exceed their 64 MiB expanded serialized-weight budget")?;
         }
         Ok(available)
@@ -1682,9 +1687,19 @@ impl Kernel {
                         return Err("Act has ended; open a new act".into());
                     }
                 }
-                let (passages, act_revision, existing) = self.world.acts.get(&act_ref)
+                let (passages, act_revision, existing) = self
+                    .world
+                    .acts
+                    .get(&act_ref)
                     .map_or((0, 1, false), |a| (a.sequence.len(), a.revision, true));
-                let precheck = self.act_precheck_fields_mode(&act_ref, passages, act_revision, 1, false, existing, false)?;
+                let precheck = self.act_precheck_fields_mode(
+                    &act_ref,
+                    passages,
+                    existing.then_some(act_revision),
+                    1,
+                    false,
+                    false,
+                )?;
                 if let Some(refusal) = precheck {
                     return Ok(KernelOpOutcome {
                         receipts,
@@ -1695,10 +1710,12 @@ impl Kernel {
                 if before.document.revision != expected_revision {
                     return Ok(KernelOpOutcome {
                         receipts,
-                        result: KernelOpResult::ExpressionWorld { data: json!({
-                            "state":"revision_conflict","expression_ref":expression_ref,
-                            "expected_revision":expected_revision,"current_revision":before.document.revision,
-                        }) },
+                        result: KernelOpResult::ExpressionWorld {
+                            data: json!({
+                                "state":"revision_conflict","expression_ref":expression_ref,
+                                "expected_revision":expected_revision,"current_revision":before.document.revision,
+                            }),
+                        },
                     });
                 }
                 let snapshot = Some(before);
@@ -1707,23 +1724,50 @@ impl Kernel {
                 // existing capacity/store checks repeat after make-room; this
                 // preflight is not a reservation across other store writers.
                 {
-                    let edition = snapshot.as_ref().unwrap().document.edited(changes.clone())?;
-                    let new_act = Act::new(act_ref.clone(), expression_ref.clone(), summary.clone(), actor.clone(), ActMode::Expressions);
+                    let edition = snapshot
+                        .as_ref()
+                        .unwrap()
+                        .document
+                        .edited(changes.clone())?;
+                    let new_act = Act::new(
+                        act_ref.clone(),
+                        expression_ref.clone(),
+                        summary.clone(),
+                        actor.clone(),
+                        ActMode::Expressions,
+                    );
                     let previous = self.world.acts.get(&act_ref).unwrap_or(&new_act);
-                    let mut passage = Passage::new(previous.sequence.len(), PassageKind::Edition, previous.mode);
+                    let mut passage =
+                        Passage::new(previous.sequence.len(), PassageKind::Edition, previous.mode);
                     passage.target_ref = Some(expression_ref.clone());
                     passage.revision = Some(edition.revision.to_string());
                     passage.summary = Some(summary.clone());
                     passage.edition = Some(Box::new(edition));
-                    let next_revision = if existing { act_revision.checked_add(1).ok_or("Act revision exhausted")? } else { 1 };
-                    let weight = crate::expression_act_storage::preflight_append(previous, &passage, &summary, &actor,
-                        activity_ref.as_deref(), expected_revision, next_revision)?;
+                    let next_revision = if existing {
+                        act_revision
+                            .checked_add(1)
+                            .ok_or("Act revision exhausted")?
+                    } else {
+                        1
+                    };
+                    let weight = crate::expression_act_storage::preflight_append(
+                        previous,
+                        &passage,
+                        &summary,
+                        &actor,
+                        activity_ref.as_deref(),
+                        expected_revision,
+                        next_revision,
+                    )?;
                     let mut available = self.world.available_act_bytes(&act_ref)?;
                     if !existing && self.world.acts.len() >= MAX_ACTS {
                         // Predict exactly the same ended concern make-room
                         // will archive, without changing it or its file yet.
                         let oldest = self.act_oldest_ended()?;
-                        available = available.checked_add(crate::expression_act_store::ActStore::expanded_bytes(oldest)?)
+                        available = available
+                            .checked_add(crate::expression_act_store::ActStore::expanded_bytes(
+                                oldest,
+                            )?)
                             .filter(|n| *n <= crate::expression_act_storage::LIVE_BYTES)
                             .ok_or("Invalid expanded Act admission accounting")?;
                     }
@@ -1742,8 +1786,12 @@ impl Kernel {
                     prospective.updated_at_unix_ms = unix_ms();
                     crate::expression_act_store::ActStore::encoded_record(&prospective)?;
                 }
-                if !existing { self.act_make_room()?; }
-                if let Some(refusal) = self.act_precheck_fields(&act_ref, passages, act_revision, 1, false, existing)? {
+                if !existing {
+                    self.act_make_room()?;
+                }
+                if let Some(refusal) =
+                    self.act_precheck_fields(&act_ref, passages, act_revision, 1, false, existing)?
+                {
                     return Ok(KernelOpOutcome {
                         receipts,
                         result: KernelOpResult::ExpressionWorld { data: refusal },
@@ -2423,19 +2471,43 @@ impl Kernel {
         returning: bool,
         stored: bool,
     ) -> Result<Option<Value>, String> {
-        self.act_precheck_fields(&act.act_ref, act.sequence.len(), act.revision, add, returning, stored)
+        self.act_precheck_fields(
+            &act.act_ref,
+            act.sequence.len(),
+            act.revision,
+            add,
+            returning,
+            stored,
+        )
     }
 
     fn act_precheck_fields(
-        &mut self, act_ref: &str, passages: usize, revision: u64,
-        add: usize, returning: bool, stored: bool,
+        &mut self,
+        act_ref: &str,
+        passages: usize,
+        revision: u64,
+        add: usize,
+        returning: bool,
+        stored: bool,
     ) -> Result<Option<Value>, String> {
-        self.act_precheck_fields_mode(act_ref, passages, revision, add, returning, stored, true)
+        self.act_precheck_fields_mode(
+            act_ref,
+            passages,
+            stored.then_some(revision),
+            add,
+            returning,
+            true,
+        )
     }
 
     fn act_precheck_fields_mode(
-        &mut self, act_ref: &str, passages: usize, revision: u64,
-        add: usize, returning: bool, stored: bool, capacity: bool,
+        &mut self,
+        act_ref: &str,
+        passages: usize,
+        expected: Option<u64>,
+        add: usize,
+        returning: bool,
+        capacity: bool,
     ) -> Result<Option<Value>, String> {
         let limit = MAX_PASSAGES + usize::from(returning);
         if passages + add > limit {
@@ -2447,9 +2519,11 @@ impl Kernel {
         }
         if let Some(store) = &self.world.store {
             use crate::expression_act_store::Written;
-            let expected = stored.then_some(revision);
-            let checked = if capacity { store.check(act_ref, expected)? }
-                else { store.check_before_capacity(act_ref, expected)? };
+            let checked = if capacity {
+                store.check(act_ref, expected)?
+            } else {
+                store.check_before_capacity(act_ref, expected)?
+            };
             if let Written::Conflict { current } = checked {
                 // Adopt the stored act so a re-read sees the other writer's work.
                 let reload_error = self.act_reload_conflict(act_ref, current);
@@ -2473,25 +2547,41 @@ impl Kernel {
     }
 
     fn act_reload_conflict(&mut self, act_ref: &str, current: Option<u64>) -> Option<String> {
-        let result = self.world.available_act_bytes(act_ref).and_then(|available| {
-            self.world.store.as_ref().ok_or("No native Act store".to_owned())?
-                .read_with_budget(act_ref, available)
-        });
+        let result = self
+            .world
+            .available_act_bytes(act_ref)
+            .and_then(|available| {
+                self.world
+                    .store
+                    .as_ref()
+                    .ok_or("No native Act store".to_owned())?
+                    .read_with_budget(act_ref, available)
+            });
         let error = match result {
             Ok(Some(act)) => {
-                if act.archived { self.world.acts.remove(act_ref); }
-                else { self.world.acts.insert(act_ref.to_owned(), act); }
+                if act.archived {
+                    self.world.acts.remove(act_ref);
+                } else {
+                    self.world.acts.insert(act_ref.to_owned(), act);
+                }
                 self.world.act_reload_errors.remove(act_ref);
                 return None;
             }
             Ok(None) => "The stored Act disappeared; the resident is not current".to_owned(),
             Err(error) => error.chars().take(4096).collect(),
         };
-        let detail = format!("Act {act_ref} stored revision {current:?} could not be loaded: {error}");
-        if self.world.act_reload_errors.len() < MAX_ACTS || self.world.act_reload_errors.contains_key(act_ref) {
-            self.world.act_reload_errors.insert(act_ref.to_owned(), detail.clone());
+        let detail =
+            format!("Act {act_ref} stored revision {current:?} could not be loaded: {error}");
+        if self.world.act_reload_errors.len() < MAX_ACTS
+            || self.world.act_reload_errors.contains_key(act_ref)
+        {
+            self.world
+                .act_reload_errors
+                .insert(act_ref.to_owned(), detail.clone());
         }
-        if self.world.store_errors.len() < MAX_ACTS { self.world.store_errors.push(detail.clone()); }
+        if self.world.store_errors.len() < MAX_ACTS {
+            self.world.store_errors.push(detail.clone());
+        }
         Some(detail)
     }
 
@@ -2532,12 +2622,16 @@ impl Kernel {
         mut act: Act,
         previous: Option<u64>,
     ) -> Result<Result<Act, Value>, String> {
-        act.revision = previous.map_or(Ok(1), |r| r.checked_add(1).ok_or("Act revision exhausted"))?;
+        act.revision =
+            previous.map_or(Ok(1), |r| r.checked_add(1).ok_or("Act revision exhausted"))?;
         act.updated_at_unix_ms = unix_ms().max(act.updated_at_unix_ms);
         if act.sequence.len() > MAX_PASSAGES + 1 {
             return Err("Act passage budget exceeded".into());
         }
-        if !act.archived && crate::expression_act_store::ActStore::expanded_bytes(&act)? > self.world.available_act_bytes(&act.act_ref)? {
+        if !act.archived
+            && crate::expression_act_store::ActStore::expanded_bytes(&act)?
+                > self.world.available_act_bytes(&act.act_ref)?
+        {
             return Err("Live Acts exceed their 64 MiB expanded serialized-weight budget".into());
         }
         if let Some(store) = &self.world.store {
@@ -2625,16 +2719,27 @@ impl Kernel {
     /// The shared source-defined count victim, borrowed before admission.
     /// Reusing this ordering keeps successful automatic archival unchanged.
     fn act_oldest_ended(&self) -> Result<&Act, String> {
-        self.world.acts.values().filter(|a| a.phase.ended())
-            .min_by(|a, b| a.updated_at_unix_ms.cmp(&b.updated_at_unix_ms)
-                .then(a.act_ref.cmp(&b.act_ref)))
+        self.world
+            .acts
+            .values()
+            .filter(|a| a.phase.ended())
+            .min_by(|a, b| {
+                a.updated_at_unix_ms
+                    .cmp(&b.updated_at_unix_ms)
+                    .then(a.act_ref.cmp(&b.act_ref))
+            })
             .ok_or_else(|| format!("Live act budget exceeded ({MAX_ACTS} running/held acts)"))
     }
 
     /// An act by ref: memory, else lazily from the store (live register or
     /// archive). Archived acts are returned without entering memory.
     fn act_lookup(&mut self, act_ref: &str) -> Result<Option<Act>, String> {
-        if let Some(act) = self.world.acts.get(act_ref).filter(|_| !self.world.act_reload_errors.contains_key(act_ref)) {
+        if let Some(act) = self
+            .world
+            .acts
+            .get(act_ref)
+            .filter(|_| !self.world.act_reload_errors.contains_key(act_ref))
+        {
             return Ok(Some(act.clone()));
         }
         let available = self.world.available_act_bytes(act_ref)?;
@@ -2649,7 +2754,9 @@ impl Kernel {
             return Ok(None);
         };
         if !stored.archived {
-            if !self.world.acts.contains_key(act_ref) { self.act_make_room()?; }
+            if !self.world.acts.contains_key(act_ref) {
+                self.act_make_room()?;
+            }
             self.world
                 .acts
                 .insert(stored.act_ref.clone(), stored.clone());
@@ -2876,9 +2983,10 @@ impl Kernel {
         if let Some(body) = &scene.body {
             crate::expression_carrier::validate_body(body, &target.expression_ref)?;
         }
-        if scene.body.as_ref().is_some_and(|body|
-            body.carrier != crate::expression_carrier::CarrierKind::EngineComposition)
-            || !scene.triggers.is_empty() {
+        if scene.body.as_ref().is_some_and(|body| {
+            body.carrier != crate::expression_carrier::CarrierKind::EngineComposition
+        }) || !scene.triggers.is_empty()
+        {
             return Err(
                 "Paged text requires a Scene without an alternate body or declarative triggers"
                     .into(),
@@ -2933,7 +3041,8 @@ impl Kernel {
         let expanded_limit = crate::expression_act_storage::EXPANDED_BYTES
             .min(self.world.available_act_bytes(&act.act_ref)?);
         let existing_bytes = crate::expression_act_store::ActStore::expanded_bytes(act)?;
-        let remaining = expanded_limit.checked_sub(existing_bytes)
+        let remaining = expanded_limit
+            .checked_sub(existing_bytes)
             .ok_or("Native text pages exceed the available expanded Act budget")?;
         let mut page_budget = JsonBudget {
             bytes: 0,
@@ -3090,7 +3199,9 @@ impl Kernel {
         if crate::expression_act_store::ActStore::expanded_bytes(&prospective)?
             > self.world.available_act_bytes(&act.act_ref)?
         {
-            return Err("Native text pages exceed the live expanded Act budget before edits".into());
+            return Err(
+                "Native text pages exceed the live expanded Act budget before edits".into(),
+            );
         }
         crate::expression_act_store::ActStore::encoded_record(&prospective)?;
         if let Some(refusal) = self.act_precheck(act, pages.len() + 1, false, true)? {
@@ -3611,7 +3722,6 @@ impl Kernel {
         edition.validate()
     }
 
-
     fn retained_text_pages<'a>(act: &'a Act, source: &Passage) -> Result<Vec<&'a Passage>, String> {
         let target = source
             .target_ref
@@ -3649,7 +3759,10 @@ impl Kernel {
             {
                 return Err("Retained text page does not match its source passage".into());
             }
-            let scene_ref = page.scene_ref.as_deref().ok_or("Retained text page Scene is absent")?;
+            let scene_ref = page
+                .scene_ref
+                .as_deref()
+                .ok_or("Retained text page Scene is absent")?;
             if !scene_refs.insert(scene_ref) {
                 return Err("Retained text page cohort repeats a Scene ref".into());
             }
@@ -3666,37 +3779,64 @@ impl Kernel {
         // navigation can reveal any of its pages, not just its selected page.
         // Qualify all page layers in all Editions before retry/restore/fill.
         for edition_page in &pages {
-            let edition = edition_page.edition.as_ref()
+            let edition = edition_page
+                .edition
+                .as_ref()
                 .ok_or("Edition passage has no retained document")?;
             for page in &pages {
-                let scene_ref = page.scene_ref.as_deref().ok_or("Retained text page Scene is absent")?;
-                let scene = edition.scenes.iter().find(|scene| scene.scene_ref == scene_ref)
+                let scene_ref = page
+                    .scene_ref
+                    .as_deref()
                     .ok_or("Retained text page Scene is absent")?;
-                let source_scene = edition.scenes.iter()
+                let scene = edition
+                    .scenes
+                    .iter()
+                    .find(|scene| scene.scene_ref == scene_ref)
+                    .ok_or("Retained text page Scene is absent")?;
+                let source_scene = edition
+                    .scenes
+                    .iter()
                     .find(|scene| Some(scene.scene_ref.as_str()) == source.scene_ref.as_deref())
                     .ok_or("Retained text source Scene is absent")?;
                 if scene.body != source_scene.body || !scene.triggers.is_empty() {
-                    return Err("Retained text page body differs from its native source Scene".into());
+                    return Err(
+                        "Retained text page body differs from its native source Scene".into(),
+                    );
                 }
-                let material = &scene.presentation.as_ref()
-                    .ok_or("Retained text page material is absent")?.scene;
+                let material = &scene
+                    .presentation
+                    .as_ref()
+                    .ok_or("Retained text page material is absent")?
+                    .scene;
                 if material["id"].as_str() != Some(scene_ref) {
                     return Err("Retained text page material names another Scene".into());
                 }
-                let role = page.role.as_deref().ok_or("Retained text page role is absent")?;
-                let field = page.field.as_deref().ok_or("Retained text page field is absent")?;
-                let layers: Vec<_> = material["text"].as_array().into_iter().flatten()
-                    .filter(|layer| layer["role"].as_str() == Some(role)).collect();
-                if field != "body" || layers.len() != 1
+                let role = page
+                    .role
+                    .as_deref()
+                    .ok_or("Retained text page role is absent")?;
+                let field = page
+                    .field
+                    .as_deref()
+                    .ok_or("Retained text page field is absent")?;
+                let layers: Vec<_> = material["text"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .filter(|layer| layer["role"].as_str() == Some(role))
+                    .collect();
+                if field != "body"
+                    || layers.len() != 1
                     || layers[0].get(field).and_then(Value::as_str) != page.text.as_deref()
                 {
-                    return Err("Retained text page layer differs from its native source passage".into());
+                    return Err(
+                        "Retained text page layer differs from its native source passage".into(),
+                    );
                 }
             }
         }
         Ok(pages)
     }
-
 
     /// Re-perform one recorded passage into its recorded target.
     fn replay_passage(
@@ -3713,9 +3853,17 @@ impl Kernel {
             .unwrap_or_else(|| act.expression_ref.clone());
         let target_scene = passage.target_scene_ref.as_deref();
         if passage.kind == PassageKind::Edition {
-            if passage.native_ref.as_deref().is_some_and(|reference| reference.starts_with("act-text:")) {
-                let source = act.sequence.iter().find(|source| source.kind == PassageKind::Text
-                    && source.native_ref == passage.native_ref)
+            if passage
+                .native_ref
+                .as_deref()
+                .is_some_and(|reference| reference.starts_with("act-text:"))
+            {
+                let source = act
+                    .sequence
+                    .iter()
+                    .find(|source| {
+                        source.kind == PassageKind::Text && source.native_ref == passage.native_ref
+                    })
                     .ok_or("Retained text page has no native source passage")?;
                 Self::retained_text_pages(act, source)?;
             }
@@ -4445,7 +4593,9 @@ impl Kernel {
             } => {
                 text(&actor)?;
                 expression::role_name(&role)?;
-                if let Some(body) = &value_text { material_text(body)?; }
+                if let Some(body) = &value_text {
+                    material_text(body)?;
+                }
                 optional_basis(&event_basis)?;
                 let field = field.unwrap_or_else(|| "body".into());
                 crate::expression_material::text_field(&field)?;
@@ -4459,9 +4609,18 @@ impl Kernel {
                 live!(act);
                 if let Some(body) = &value_text {
                     if let Some(result) = self.world_perform_text_passages(
-                        &act, &role, &field, body, value, &event_basis,
-                        expected_revision, &actor, receipts,
-                    )? { return Ok(result); }
+                        &act,
+                        &role,
+                        &field,
+                        body,
+                        value,
+                        &event_basis,
+                        expected_revision,
+                        &actor,
+                        receipts,
+                    )? {
+                        return Ok(result);
+                    }
                 }
                 // A fill of the same text role/field as the immediately
                 // preceding passage updates that passage in place.
@@ -5456,29 +5615,53 @@ mod tests {
         let page = &mut act.sequence[1];
         let selected = page.scene_ref.clone().unwrap();
         let edition = page.edition.as_mut().unwrap();
-        let scene = edition.scenes.iter_mut().find(|scene| scene.scene_ref == selected).unwrap();
-        let layers = scene.presentation.as_mut().unwrap().scene["text"].as_array_mut().unwrap();
-        layers.iter_mut().find(|layer| layer["role"] == TEXT_ROLE).unwrap()["body"]
-            = json!("Changed actual native layer, unchanged source/page metadata");
+        let scene = edition
+            .scenes
+            .iter_mut()
+            .find(|scene| scene.scene_ref == selected)
+            .unwrap();
+        let layers = scene.presentation.as_mut().unwrap().scene["text"]
+            .as_array_mut()
+            .unwrap();
+        layers
+            .iter_mut()
+            .find(|layer| layer["role"] == TEXT_ROLE)
+            .unwrap()["body"] =
+            json!("Changed actual native layer, unchanged source/page metadata");
         edition.validate().unwrap();
         crate::expression_act_storage::validate(&act).unwrap();
         act.revision += 1;
         let store = crate::expression_act_store::ActStore::at_home(&fixture.home);
-        assert!(matches!(store.write(&act, Some(previous)).unwrap(), crate::expression_act_store::Written::Written));
+        assert!(matches!(
+            store.write(&act, Some(previous)).unwrap(),
+            crate::expression_act_store::Written::Written
+        ));
         let stored = fixture.stored_bytes();
         let mut fresh = Kernel::new(crate::flow::CentralClient::discover());
         fresh.attach_act_store(&fixture.home).unwrap();
-        native_text_expression(&mut fresh, json!({"operation":"open","document":current,
-            "actor":"agent:controlled-native-replay"})).unwrap();
+        native_text_expression(
+            &mut fresh,
+            json!({"operation":"open","document":current,
+            "actor":"agent:controlled-native-replay"}),
+        )
+        .unwrap();
         fixture.kernel = fresh;
-        assert_eq!(fixture.fill(&body, &basis).unwrap_err(),
-            "Retained text page layer differs from its native source passage");
+        assert_eq!(
+            fixture.fill(&body, &basis).unwrap_err(),
+            "Retained text page layer differs from its native source passage"
+        );
         let shown = fixture.document();
         let observed = fixture.act();
-        let refusal = native_text_world(&mut fixture.kernel, json!({"operation":"act_seek",
+        let refusal = native_text_world(
+            &mut fixture.kernel,
+            json!({"operation":"act_seek",
             "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","position":1,
-            "expected_revision":shown["revision"],"expected_act_revision":observed["revision"]}));
-        assert_eq!(refusal.unwrap_err(), "Retained text page layer differs from its native source passage");
+            "expected_revision":shown["revision"],"expected_act_revision":observed["revision"]}),
+        );
+        assert_eq!(
+            refusal.unwrap_err(),
+            "Retained text page layer differs from its native source passage"
+        );
         assert_eq!(fixture.document(), shown);
         assert_eq!(fixture.stored_bytes(), stored);
     }
@@ -5494,34 +5677,57 @@ mod tests {
         let unselected = act.sequence[2].scene_ref.clone().unwrap();
         let edition = act.sequence[1].edition.as_mut().unwrap();
         assert_ne!(edition.selection.scene_ref, unselected);
-        let scene = edition.scenes.iter_mut().find(|scene| scene.scene_ref == unselected).unwrap();
-        scene.presentation.as_mut().unwrap().scene["text"].as_array_mut().unwrap()
-            .iter_mut().find(|layer| layer["role"] == TEXT_ROLE).unwrap()["body"]
-            = json!("Changed unselected page in Edition 1 only; source/page metadata unchanged");
+        let scene = edition
+            .scenes
+            .iter_mut()
+            .find(|scene| scene.scene_ref == unselected)
+            .unwrap();
+        scene.presentation.as_mut().unwrap().scene["text"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|layer| layer["role"] == TEXT_ROLE)
+            .unwrap()["body"] =
+            json!("Changed unselected page in Edition 1 only; source/page metadata unchanged");
         edition.validate().unwrap();
         crate::expression_act_storage::validate(&act).unwrap();
         act.revision += 1;
         let store = crate::expression_act_store::ActStore::at_home(&fixture.home);
-        assert!(matches!(store.write(&act, Some(previous)).unwrap(), crate::expression_act_store::Written::Written));
+        assert!(matches!(
+            store.write(&act, Some(previous)).unwrap(),
+            crate::expression_act_store::Written::Written
+        ));
         let stored = fixture.stored_bytes();
         let mut fresh = Kernel::new(crate::flow::CentralClient::discover());
         fresh.attach_act_store(&fixture.home).unwrap();
-        native_text_expression(&mut fresh, json!({"operation":"open","document":current,
-            "actor":"agent:controlled-native-replay"})).unwrap();
+        native_text_expression(
+            &mut fresh,
+            json!({"operation":"open","document":current,
+            "actor":"agent:controlled-native-replay"}),
+        )
+        .unwrap();
         fixture.kernel = fresh;
         assert_eq!(fixture.act(), serde_json::to_value(&act).unwrap(),
             "The real private codec must accept the structurally valid rehashed record before semantic refusal");
         let before_document = fixture.document();
         let before_act = fixture.act();
-        assert_eq!(fixture.fill(&body, &basis).unwrap_err(),
-            "Retained text page layer differs from its native source passage");
+        assert_eq!(
+            fixture.fill(&body, &basis).unwrap_err(),
+            "Retained text page layer differs from its native source passage"
+        );
         assert_eq!(fixture.document(), before_document);
         assert_eq!(fixture.act(), before_act);
         assert_eq!(fixture.stored_bytes(), stored);
-        let refusal = native_text_world(&mut fixture.kernel, json!({"operation":"act_seek",
+        let refusal = native_text_world(
+            &mut fixture.kernel,
+            json!({"operation":"act_seek",
             "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","position":1,
-            "expected_revision":before_document["revision"],"expected_act_revision":before_act["revision"]}));
-        assert_eq!(refusal.unwrap_err(), "Retained text page layer differs from its native source passage");
+            "expected_revision":before_document["revision"],"expected_act_revision":before_act["revision"]}),
+        );
+        assert_eq!(
+            refusal.unwrap_err(),
+            "Retained text page layer differs from its native source passage"
+        );
         assert_eq!(fixture.document(), before_document);
         assert_eq!(fixture.act(), before_act);
         assert_eq!(fixture.stored_bytes(), stored);
@@ -5533,87 +5739,191 @@ mod tests {
     fn full_world_text_fixture(scene_name: &str, capacity: usize) -> NativeTextFixture {
         use sha2::{Digest, Sha256};
         let bytes = include_str!("../tests/fixtures/epi-world-131.expression.json");
-        assert_eq!(format!("{:x}", Sha256::digest(bytes.as_bytes())),
-            "630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec");
+        assert_eq!(
+            format!("{:x}", Sha256::digest(bytes.as_bytes())),
+            "630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
         let document = crate::expression_file::decode(bytes).unwrap();
-        assert_eq!((document.revision, document.entities.len(), document.relations.len(), document.scenes.len()),
-            (131, 38, 86, 3));
+        assert_eq!(
+            (
+                document.revision,
+                document.entities.len(),
+                document.relations.len(),
+                document.scenes.len()
+            ),
+            (131, 38, 86, 3)
+        );
         let expression_ref = document.expression_ref.clone();
-        let home = std::env::temp_dir().join(format!("oi-full-world-text-{}-{}", std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let home = std::env::temp_dir().join(format!(
+            "oi-full-world-text-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let mut kernel = Kernel::new(crate::flow::CentralClient::discover());
         kernel.attach_act_store(&home).unwrap();
-        native_text_expression(&mut kernel, json!({"operation":"open","document":document,
-            "actor":"person:controlled-world-a"})).unwrap();
-        let mut fixture = NativeTextFixture { kernel, home, expression_ref };
+        native_text_expression(
+            &mut kernel,
+            json!({"operation":"open","document":document,
+            "actor":"person:controlled-world-a"}),
+        )
+        .unwrap();
+        let mut fixture = NativeTextFixture {
+            kernel,
+            home,
+            expression_ref,
+        };
         let opened = fixture.document();
-        assert_eq!(opened, serde_json::to_value(crate::expression_file::decode(bytes).unwrap()).unwrap());
+        assert_eq!(
+            opened,
+            serde_json::to_value(crate::expression_file::decode(bytes).unwrap()).unwrap()
+        );
         let scene_ref = format!("{}:scene:{scene_name}", fixture.expression_ref);
-        let mut material = opened["scenes"].as_array().unwrap().iter()
-            .find(|scene| scene["scene_ref"] == scene_ref).unwrap()["presentation"].clone();
-        material["scene"]["text"].as_array_mut().unwrap().iter_mut()
-            .find(|layer| layer["role"] == "caption").unwrap()["passage"] = json!({
+        let mut material = opened["scenes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|scene| scene["scene_ref"] == scene_ref)
+            .unwrap()["presentation"]
+            .clone();
+        material["scene"]["text"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|layer| layer["role"] == "caption")
+            .unwrap()["passage"] = json!({
                 "schema":"oi.expression-text-passages/v1","capacity_chars":capacity,
                 "max_newlines":4096,"maximum_pages":64});
-        let edited = native_text_expression(&mut fixture.kernel, json!({"operation":"edit",
+        let edited = native_text_expression(
+            &mut fixture.kernel,
+            json!({"operation":"edit",
             "expression_ref":fixture.expression_ref,"expected_revision":opened["revision"],
             "actor":"person:controlled-world-a","changes":[
                 {"change":"scene_material_set","scene_ref":scene_ref,"presentation":material},
-                {"change":"focus","scene_ref":scene_ref,"entity_ref":null}]})).unwrap();
+                {"change":"focus","scene_ref":scene_ref,"entity_ref":null}]}),
+        )
+        .unwrap();
         assert_eq!(edited["document"], fixture.document());
         native_text_world(&mut fixture.kernel, json!({"operation":"act_open","act_ref":TEXT_ACT,
             "expression_ref":fixture.expression_ref,"mode":"expressions","actor":"person:controlled-world-a"})).unwrap();
         fixture
     }
-    fn full_world_text_fill(fixture: &mut NativeTextFixture, body: &str, basis: &EventBasis) -> Result<Value, String> {
+    fn full_world_text_fill(
+        fixture: &mut NativeTextFixture,
+        body: &str,
+        basis: &EventBasis,
+    ) -> Result<Value, String> {
         let document = fixture.document();
         let act = fixture.act();
-        native_text_world(&mut fixture.kernel, json!({"operation":"act_text","act_ref":TEXT_ACT,
+        native_text_world(
+            &mut fixture.kernel,
+            json!({"operation":"act_text","act_ref":TEXT_ACT,
             "actor":"person:controlled-world-a","role":"caption","text":body,"event_basis":basis,
-            "expected_revision":document["revision"],"expected_act_revision":act["revision"]}))
+            "expected_revision":document["revision"],"expected_act_revision":act["revision"]}),
+        )
     }
-    fn assert_full_world_refusal_unchanged(fixture: &mut NativeTextFixture,
-        document: &Value, act: &Value, stored: &[(std::ffi::OsString, Vec<u8>)], register: &Value) {
-        assert_eq!(fixture.document(), *document, "No native body, subject, person, occasion or selection may change on refusal");
-        assert_eq!(fixture.act(), *act, "No source passage, Edition, binding, cursor or revision may change on refusal");
-        assert_eq!(fixture.stored_bytes(), stored, "Every durable Act filename and byte must remain exact");
-        assert_eq!(native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap(), *register);
+    fn assert_full_world_refusal_unchanged(
+        fixture: &mut NativeTextFixture,
+        document: &Value,
+        act: &Value,
+        stored: &[(std::ffi::OsString, Vec<u8>)],
+        register: &Value,
+    ) {
+        assert_eq!(
+            fixture.document(),
+            *document,
+            "No native body, subject, person, occasion or selection may change on refusal"
+        );
+        assert_eq!(
+            fixture.act(),
+            *act,
+            "No source passage, Edition, binding, cursor or revision may change on refusal"
+        );
+        assert_eq!(
+            fixture.stored_bytes(),
+            stored,
+            "Every durable Act filename and byte must remain exact"
+        );
+        assert_eq!(
+            native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap(),
+            *register
+        );
     }
 
     #[test]
     fn actual_full_world_pages_refuse_before_page_material_allocation_without_live_edit() {
         let (_, basis) = retained_bo_text();
         let mut fixture = full_world_text_fixture("cosmic", 1);
-        let before_document = fixture.document(); let before_act = fixture.act();
+        let before_document = fixture.document();
+        let before_act = fixture.act();
         let stored = fixture.stored_bytes();
-        let register = native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
-        let pages = crate::expression_material::text_passages(&fixture.selected_material()["scene"],
-            "caption", "body", "ab").unwrap().unwrap();
+        let register =
+            native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
+        let pages = crate::expression_material::text_passages(
+            &fixture.selected_material()["scene"],
+            "caption",
+            "body",
+            "ab",
+        )
+        .unwrap()
+        .unwrap();
         assert_eq!(pages, vec!["a", "b"]);
-        let material_bytes = serde_json::to_vec(&fixture.selected_material()["scene"]).unwrap().len();
+        let material_bytes = serde_json::to_vec(&fixture.selected_material()["scene"])
+            .unwrap()
+            .len();
         // Independent actual-body size witness, far above the conservative
         // per-Edition cohort allowance before any material/Edition clone.
-        assert!(material_bytes * pages.len() > crate::expression_act_storage::EXPANDED_BYTES / pages.len());
+        assert!(
+            material_bytes * pages.len()
+                > crate::expression_act_storage::EXPANDED_BYTES / pages.len()
+        );
         let refusal = full_world_text_fill(&mut fixture, "ab", &basis).unwrap_err();
         assert_eq!(refusal, "Native text pages exceed the available expanded Act budget before page material allocation");
-        assert_full_world_refusal_unchanged(&mut fixture, &before_document, &before_act, &stored, &register);
+        assert_full_world_refusal_unchanged(
+            &mut fixture,
+            &before_document,
+            &before_act,
+            &stored,
+            &register,
+        );
     }
 
     #[test]
     fn actual_full_world_pages_refuse_before_edition_allocation_without_live_edit() {
         let (_, basis) = retained_bo_text();
         let mut fixture = full_world_text_fixture("personal", 2);
-        let before_document = fixture.document(); let before_act = fixture.act();
+        let before_document = fixture.document();
+        let before_act = fixture.act();
         let stored = fixture.stored_bytes();
-        let register = native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
-        let pages = crate::expression_material::text_passages(&fixture.selected_material()["scene"],
-            "caption", "body", "abcdef").unwrap().unwrap();
+        let register =
+            native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
+        let pages = crate::expression_material::text_passages(
+            &fixture.selected_material()["scene"],
+            "caption",
+            "body",
+            "abcdef",
+        )
+        .unwrap()
+        .unwrap();
         assert_eq!(pages, vec!["ab", "cd", "ef"]);
-        assert!(serde_json::to_vec(&before_document).unwrap().len() * pages.len()
-            > crate::expression_act_storage::EXPANDED_BYTES);
+        assert!(
+            serde_json::to_vec(&before_document).unwrap().len() * pages.len()
+                > crate::expression_act_storage::EXPANDED_BYTES
+        );
         let refusal = full_world_text_fill(&mut fixture, "abcdef", &basis).unwrap_err();
-        assert_eq!(refusal, "Native text pages exceed the available expanded Act budget before Edition allocation");
-        assert_full_world_refusal_unchanged(&mut fixture, &before_document, &before_act, &stored, &register);
+        assert_eq!(
+            refusal,
+            "Native text pages exceed the available expanded Act budget before Edition allocation"
+        );
+        assert_full_world_refusal_unchanged(
+            &mut fixture,
+            &before_document,
+            &before_act,
+            &stored,
+            &register,
+        );
     }
 
     #[test]
@@ -5629,10 +5939,18 @@ mod tests {
             let act: Act = serde_json::from_value(control.act()).unwrap();
             assert_eq!(act.sequence.len(), 3); // one source and two complete Editions
             assert_eq!(act.sequence[1].edition.as_ref().unwrap().entities.len(), 38);
-            assert_eq!(act.sequence[2].edition.as_ref().unwrap().relations.len(), 86);
+            assert_eq!(
+                act.sequence[2].edition.as_ref().unwrap().relations.len(),
+                86
+            );
             let source_scene_ref = before["selection"]["scene_ref"].as_str().unwrap();
-            let original_body = before["scenes"].as_array().unwrap().iter()
-                .find(|scene| scene["scene_ref"] == source_scene_ref).unwrap()["body"].clone();
+            let original_body = before["scenes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|scene| scene["scene_ref"] == source_scene_ref)
+                .unwrap()["body"]
+                .clone();
             assert_eq!(original_body["carrier"], "engine_composition");
             for (page_index, page) in act.sequence[1..].iter().enumerate() {
                 let edition = serde_json::to_value(page.edition.as_ref().unwrap()).unwrap();
@@ -5643,31 +5961,70 @@ mod tests {
                     "scene_ref":page.scene_ref.as_deref().unwrap(),"entity_ref":null}),
                     "The only selected occurrence change is the acknowledged page with no entity/relation");
                 let originals = before["scenes"].as_array().unwrap();
-                let cohort_refs: BTreeSet<_> = act.sequence[1..].iter()
-                    .map(|member| member.scene_ref.as_deref().unwrap()).collect();
+                let cohort_refs: BTreeSet<_> = act.sequence[1..]
+                    .iter()
+                    .map(|member| member.scene_ref.as_deref().unwrap())
+                    .collect();
                 assert_eq!(cohort_refs.len(), 2);
-                assert!(cohort_refs.iter().all(|reference| !originals.iter()
+                assert!(cohort_refs.iter().all(|reference| !originals
+                    .iter()
                     .any(|scene| scene["scene_ref"].as_str() == Some(*reference))));
-                assert_eq!(edition["scenes"].as_array().unwrap().len(), originals.len() + 2,
-                    "Native paging appends exactly the complete two-page cohort");
+                assert_eq!(
+                    edition["scenes"].as_array().unwrap().len(),
+                    originals.len() + 2,
+                    "Native paging appends exactly the complete two-page cohort"
+                );
                 let mut preserved = edition.clone();
-                preserved["scenes"] = Value::Array(edition["scenes"].as_array().unwrap().iter()
-                    .filter(|scene| !cohort_refs.contains(scene["scene_ref"].as_str().unwrap()))
-                    .cloned().collect());
+                preserved["scenes"] = Value::Array(
+                    edition["scenes"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .filter(|scene| !cohort_refs.contains(scene["scene_ref"].as_str().unwrap()))
+                        .cloned()
+                        .collect(),
+                );
                 preserved["revision"] = before["revision"].clone();
                 preserved["selection"] = before["selection"].clone();
                 assert_eq!(preserved, before,
                     "Every original Scene, world presentation, source/person/occasion, profile and body must remain exactly equal in the native Document; only appended pages/revision/selection are lawful");
-                for field in ["entities", "relations", "profiles", "provenance", "representations", "collections", "refinements"] {
-                    assert_eq!(edition[field], before[field], "Whole source/person/occasion binding must survive native pages: {field}");
+                for field in [
+                    "entities",
+                    "relations",
+                    "profiles",
+                    "provenance",
+                    "representations",
+                    "collections",
+                    "refinements",
+                ] {
+                    assert_eq!(
+                        edition[field], before[field],
+                        "Whole source/person/occasion binding must survive native pages: {field}"
+                    );
                 }
                 for member in &act.sequence[1..] {
-                    let page_scene = edition["scenes"].as_array().unwrap().iter()
-                        .find(|scene| Some(scene["scene_ref"].as_str().unwrap()) == member.scene_ref.as_deref()).unwrap();
-                    assert_eq!(page_scene["body"], original_body, "Every whole-cohort page keeps the exact native body/Reading/provenance");
+                    let page_scene = edition["scenes"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .find(|scene| {
+                            Some(scene["scene_ref"].as_str().unwrap())
+                                == member.scene_ref.as_deref()
+                        })
+                        .unwrap();
+                    assert_eq!(
+                        page_scene["body"], original_body,
+                        "Every whole-cohort page keeps the exact native body/Reading/provenance"
+                    );
                     assert_eq!(page_scene["triggers"], json!([]));
-                    let shown = page_scene["presentation"]["scene"]["text"].as_array().unwrap().iter()
-                        .find(|layer| layer["role"] == "caption").unwrap()["body"].as_str().unwrap();
+                    let shown = page_scene["presentation"]["scene"]["text"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .find(|layer| layer["role"] == "caption")
+                        .unwrap()["body"]
+                        .as_str()
+                        .unwrap();
                     assert_eq!(Some(shown), member.text.as_deref());
                 }
             }
@@ -5690,21 +6047,42 @@ mod tests {
                     "changes":[{"change":"focus","scene_ref":format!("{}:scene:personal", fixture.expression_ref),
                         "entity_ref":format!("{}:entity:world-centre-{centre}", fixture.expression_ref)}]})).unwrap();
                 assert_eq!(performed["state"], "act_running");
-                assert_eq!(performed["act"]["sequence"].as_array().unwrap().len(), centre);
-                native_text_world(&mut fixture.kernel, json!({"operation":"act_interrupt",
-                    "act_ref":reference,"actor":"person:controlled-world-a"})).unwrap();
+                assert_eq!(
+                    performed["act"]["sequence"].as_array().unwrap().len(),
+                    centre
+                );
+                native_text_world(
+                    &mut fixture.kernel,
+                    json!({"operation":"act_interrupt",
+                    "act_ref":reference,"actor":"person:controlled-world-a"}),
+                )
+                .unwrap();
             }
         }
         let available = fixture.kernel.world.available_act_bytes(TEXT_ACT).unwrap();
-        assert!(available < standalone_weight, "This is a live aggregate refusal, not a per-Act oversize input");
+        assert!(
+            available < standalone_weight,
+            "This is a live aggregate refusal, not a per-Act oversize input"
+        );
         assert!(available < crate::expression_act_storage::EXPANDED_BYTES);
-        let before_document = fixture.document(); let before_act = fixture.act();
+        let before_document = fixture.document();
+        let before_act = fixture.act();
         let stored = fixture.stored_bytes();
-        let register = native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
+        let register =
+            native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
         assert_eq!(register["acts"].as_array().unwrap().len(), 9);
         let refusal = full_world_text_fill(&mut fixture, "abcdef", &basis).unwrap_err();
-        assert_eq!(refusal, "Native text pages exceed the available expanded Act budget before Edition allocation");
-        assert_full_world_refusal_unchanged(&mut fixture, &before_document, &before_act, &stored, &register);
+        assert_eq!(
+            refusal,
+            "Native text pages exceed the available expanded Act budget before Edition allocation"
+        );
+        assert_full_world_refusal_unchanged(
+            &mut fixture,
+            &before_document,
+            &before_act,
+            &stored,
+            &register,
+        );
         // Exercise the existing independent ActPerform borrowed-history gate
         // at the same actual admission floor, with an otherwise valid Edition.
         let new_ref = "act:controlled-full-world-budget-overflow";
@@ -5715,8 +6093,14 @@ mod tests {
             "changes":[{"change":"focus","scene_ref":format!("{}:scene:personal", fixture.expression_ref),
                 "entity_ref":format!("{}:entity:world-centre-3", fixture.expression_ref)}]})).unwrap_err();
         assert_eq!(refused, "Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit");
-        assert_full_world_refusal_unchanged(&mut fixture, &before_document, &before_act, &stored, &register);
-        assert!(fixture.kernel.world.acts.get(new_ref).is_none());
+        assert_full_world_refusal_unchanged(
+            &mut fixture,
+            &before_document,
+            &before_act,
+            &stored,
+            &register,
+        );
+        assert!(!fixture.kernel.world.acts.contains_key(new_ref));
     }
 
     #[test]
@@ -5725,22 +6109,37 @@ mod tests {
         for alternate in [true, false] {
             let mut fixture = full_world_text_fixture("personal", 3);
             let before = fixture.document();
-            let scene_ref = before["selection"]["scene_ref"].as_str().unwrap().to_owned();
+            let scene_ref = before["selection"]["scene_ref"]
+                .as_str()
+                .unwrap()
+                .to_owned();
             let mut alternate_source = None;
             let change = if alternate {
                 // A real second native Expression is opened and read through
                 // the same Kernel. This is an admitted ExpressionRef preview,
                 // not a fabricated file or degraded carrier/ActionRef.
                 use sha2::{Digest, Sha256};
-                let bytes = include_str!("../../tests/fixtures/shared-native-expression/native-document.json");
-                assert_eq!(format!("{:x}", Sha256::digest(bytes.as_bytes())),
-                    "7180b2ae20a67b9ada0509f313f0c08a1e03b5929e3f93544e1a78c8016b057e");
+                let bytes = include_str!(
+                    "../../tests/fixtures/shared-native-expression/native-document.json"
+                );
+                assert_eq!(
+                    format!("{:x}", Sha256::digest(bytes.as_bytes())),
+                    "7180b2ae20a67b9ada0509f313f0c08a1e03b5929e3f93544e1a78c8016b057e"
+                );
                 let source: Value = serde_json::from_str(bytes).unwrap();
-                let opened = native_text_expression(&mut fixture.kernel, json!({
-                    "operation":"open","document":source,"actor":"person:controlled-world-a"})).unwrap();
+                let opened = native_text_expression(
+                    &mut fixture.kernel,
+                    json!({
+                    "operation":"open","document":source,"actor":"person:controlled-world-a"}),
+                )
+                .unwrap();
                 assert_eq!(opened["document"], source);
-                let inspected = native_text_expression(&mut fixture.kernel, json!({
-                    "operation":"inspect","expression_ref":source["expression_ref"]})).unwrap();
+                let inspected = native_text_expression(
+                    &mut fixture.kernel,
+                    json!({
+                    "operation":"inspect","expression_ref":source["expression_ref"]}),
+                )
+                .unwrap();
                 assert_eq!(inspected["document"], source);
                 assert_ne!(source["expression_ref"], before["expression_ref"]);
                 let body = json!({"carrier":"expression_ref",
@@ -5758,16 +6157,27 @@ mod tests {
                     "occasion":"scene_enter","target":{"kind":"expression_operation",
                         "operation":"inspect","expression_ref":fixture.expression_ref}}})
             };
-            let accepted = native_text_expression(&mut fixture.kernel, json!({"operation":"edit",
+            let accepted = native_text_expression(
+                &mut fixture.kernel,
+                json!({"operation":"edit",
                 "expression_ref":fixture.expression_ref,"expected_revision":before["revision"],
-                "actor":"person:controlled-world-a","changes":[change]})).unwrap();
-            assert_eq!(accepted["document"], fixture.document(), "The actual native owner must admit the qualified negative precondition");
+                "actor":"person:controlled-world-a","changes":[change]}),
+            )
+            .unwrap();
+            assert_eq!(
+                accepted["document"],
+                fixture.document(),
+                "The actual native owner must admit the qualified negative precondition"
+            );
             if let Some(source) = alternate_source {
                 // The existing native Portal grammar discloses a real open of
                 // this exact body subject. Admit then remove that trigger so
                 // the paging negative isolates the alternate carrier alone.
                 // This qualifies native disclosure, not a browser Portal run.
-                let trigger_ref = format!("{}:trigger:controlled-alternate-open", fixture.expression_ref);
+                let trigger_ref = format!(
+                    "{}:trigger:controlled-alternate-open",
+                    fixture.expression_ref
+                );
                 let attached = native_text_expression(&mut fixture.kernel, json!({
                     "operation":"edit","expression_ref":fixture.expression_ref,
                     "expected_revision":accepted["document"]["revision"],"actor":"person:controlled-world-a",
@@ -5775,29 +6185,57 @@ mod tests {
                         "trigger_ref":trigger_ref,"occasion":"activate",
                         "target":{"kind":"portal","placement":"beside","subject_ref":source["expression_ref"]}}}]})).unwrap();
                 assert_eq!(attached["document"], fixture.document());
-                let disclosed_scene = attached["document"]["scenes"].as_array().unwrap().iter()
-                    .find(|scene| scene["scene_ref"] == scene_ref).unwrap();
-                assert_eq!(disclosed_scene["body"]["subject_ref"], source["expression_ref"]);
-                assert_eq!(disclosed_scene["body"]["reading"]["revision"],
-                    source["revision"].as_u64().unwrap().to_string());
+                let disclosed_scene = attached["document"]["scenes"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .find(|scene| scene["scene_ref"] == scene_ref)
+                    .unwrap();
+                assert_eq!(
+                    disclosed_scene["body"]["subject_ref"],
+                    source["expression_ref"]
+                );
+                assert_eq!(
+                    disclosed_scene["body"]["reading"]["revision"],
+                    source["revision"].as_u64().unwrap().to_string()
+                );
                 assert_eq!(disclosed_scene["triggers"].as_array().unwrap().len(), 1);
-                assert_eq!(disclosed_scene["triggers"][0]["target"]["subject_ref"], source["expression_ref"]);
+                assert_eq!(
+                    disclosed_scene["triggers"][0]["target"]["subject_ref"],
+                    source["expression_ref"]
+                );
                 let detached = native_text_expression(&mut fixture.kernel, json!({
                     "operation":"edit","expression_ref":fixture.expression_ref,
                     "expected_revision":attached["document"]["revision"],"actor":"person:controlled-world-a",
                     "changes":[{"change":"scene_trigger_detach","trigger_ref":trigger_ref}]})).unwrap();
                 assert_eq!(detached["document"], fixture.document());
-                let negative_scene = detached["document"]["scenes"].as_array().unwrap().iter()
-                    .find(|scene| scene["scene_ref"] == scene_ref).unwrap();
+                let negative_scene = detached["document"]["scenes"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .find(|scene| scene["scene_ref"] == scene_ref)
+                    .unwrap();
                 assert_eq!(negative_scene["triggers"], json!([]));
                 assert_eq!(negative_scene["body"], disclosed_scene["body"]);
-                assert_eq!(native_text_expression(&mut fixture.kernel, json!({
-                    "operation":"inspect","expression_ref":source["expression_ref"]})).unwrap()["document"], source);
+                assert_eq!(
+                    native_text_expression(
+                        &mut fixture.kernel,
+                        json!({
+                    "operation":"inspect","expression_ref":source["expression_ref"]})
+                    )
+                    .unwrap()["document"],
+                    source
+                );
             }
-            let document = fixture.document(); let act = fixture.act(); let stored = fixture.stored_bytes();
-            let register = native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
-            assert_eq!(full_world_text_fill(&mut fixture, "abcdef", &basis).unwrap_err(),
-                "Paged text requires a Scene without an alternate body or declarative triggers");
+            let document = fixture.document();
+            let act = fixture.act();
+            let stored = fixture.stored_bytes();
+            let register =
+                native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
+            assert_eq!(
+                full_world_text_fill(&mut fixture, "abcdef", &basis).unwrap_err(),
+                "Paged text requires a Scene without an alternate body or declarative triggers"
+            );
             assert_full_world_refusal_unchanged(&mut fixture, &document, &act, &stored, &register);
         }
     }
@@ -5808,9 +6246,18 @@ mod tests {
         let mut fixture = full_world_text_fixture("personal", 3);
         full_world_text_fill(&mut fixture, "abcdef", &basis).unwrap();
         let document = fixture.document();
-        let mut act: Act = serde_json::from_value(fixture.act()).unwrap(); let previous = act.revision;
+        let mut act: Act = serde_json::from_value(fixture.act()).unwrap();
+        let previous = act.revision;
         let other_page = act.sequence[2].scene_ref.clone().unwrap();
-        assert_ne!(act.sequence[1].edition.as_ref().unwrap().selection.scene_ref, other_page);
+        assert_ne!(
+            act.sequence[1]
+                .edition
+                .as_ref()
+                .unwrap()
+                .selection
+                .scene_ref,
+            other_page
+        );
         // Keep both complete Editions inside the unchanged private 4 MiB
         // record bound: their identical Scene field remains shared by the
         // actual codec. A lone altered 3 MiB Scene array is a storage-size
@@ -5818,31 +6265,72 @@ mod tests {
         let mut removed = 0;
         for passage in &mut act.sequence[1..] {
             let edition = passage.edition.as_mut().unwrap();
-            let scene = edition.scenes.iter_mut().find(|scene| scene.scene_ref == other_page).unwrap();
-            assert!(scene.body.is_some()); scene.body = None;
-            edition.validate().unwrap(); removed += 1;
+            let scene = edition
+                .scenes
+                .iter_mut()
+                .find(|scene| scene.scene_ref == other_page)
+                .unwrap();
+            assert!(scene.body.is_some());
+            scene.body = None;
+            edition.validate().unwrap();
+            removed += 1;
         }
         assert_eq!(removed, 2);
         crate::expression_act_storage::validate(&act).unwrap();
         act.revision += 1;
-        assert!(crate::expression_act_store::ActStore::encoded_record(&act).unwrap().len()
-            <= crate::expression_act_store::MAX_RECORD_BYTES as usize);
+        assert!(
+            crate::expression_act_store::ActStore::encoded_record(&act)
+                .unwrap()
+                .len()
+                <= crate::expression_act_store::MAX_RECORD_BYTES as usize
+        );
         let store = crate::expression_act_store::ActStore::at_home(&fixture.home);
-        assert_eq!(store.write(&act, Some(previous)).unwrap(), crate::expression_act_store::Written::Written);
+        assert_eq!(
+            store.write(&act, Some(previous)).unwrap(),
+            crate::expression_act_store::Written::Written
+        );
         let stored = fixture.stored_bytes();
-        let mut fresh = Kernel::new(crate::flow::CentralClient::discover()); fresh.attach_act_store(&fixture.home).unwrap();
-        native_text_expression(&mut fresh, json!({"operation":"open","document":document,
-            "actor":"person:controlled-world-a"})).unwrap(); fixture.kernel = fresh;
-        let before_document = fixture.document(); let before_act = fixture.act();
-        let register = native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
+        let mut fresh = Kernel::new(crate::flow::CentralClient::discover());
+        fresh.attach_act_store(&fixture.home).unwrap();
+        native_text_expression(
+            &mut fresh,
+            json!({"operation":"open","document":document,
+            "actor":"person:controlled-world-a"}),
+        )
+        .unwrap();
+        fixture.kernel = fresh;
+        let before_document = fixture.document();
+        let before_act = fixture.act();
+        let register =
+            native_text_world(&mut fixture.kernel, json!({"operation":"act_list"})).unwrap();
         assert_eq!(before_act, serde_json::to_value(&act).unwrap());
-        assert_eq!(full_world_text_fill(&mut fixture, "abcdef", &basis).unwrap_err(),
-            "Retained text page body differs from its native source Scene");
-        assert_full_world_refusal_unchanged(&mut fixture, &before_document, &before_act, &stored, &register);
-        let seek = native_text_world(&mut fixture.kernel, json!({"operation":"act_seek",
+        assert_eq!(
+            full_world_text_fill(&mut fixture, "abcdef", &basis).unwrap_err(),
+            "Retained text page body differs from its native source Scene"
+        );
+        assert_full_world_refusal_unchanged(
+            &mut fixture,
+            &before_document,
+            &before_act,
+            &stored,
+            &register,
+        );
+        let seek = native_text_world(
+            &mut fixture.kernel,
+            json!({"operation":"act_seek",
             "act_ref":TEXT_ACT,"actor":"person:controlled-world-a","position":1,
-            "expected_revision":before_document["revision"],"expected_act_revision":before_act["revision"]}));
-        assert_eq!(seek.unwrap_err(), "Retained text page body differs from its native source Scene");
-        assert_full_world_refusal_unchanged(&mut fixture, &before_document, &before_act, &stored, &register);
+            "expected_revision":before_document["revision"],"expected_act_revision":before_act["revision"]}),
+        );
+        assert_eq!(
+            seek.unwrap_err(),
+            "Retained text page body differs from its native source Scene"
+        );
+        assert_full_world_refusal_unchanged(
+            &mut fixture,
+            &before_document,
+            &before_act,
+            &stored,
+            &register,
+        );
     }
 }

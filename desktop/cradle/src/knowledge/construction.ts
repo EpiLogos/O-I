@@ -1,6 +1,6 @@
 import type {TechneTemporalFacet,TechnePlaceFacet} from '../techne/contract';
 import {kernelOp} from '../kernel/bridge';
-import type {CentralLocation, KernelOp, KernelOutcome, KernelTransportStatus, NativeFileReading} from '../kernel/types';
+import type {ActionDispatch, CentralLocation, KernelOp, KernelOutcome, KernelTransportStatus, NativeFileReading} from '../kernel/types';
 import {listFiles, readFile} from '../files/client';
 import {readGraph} from './graph';
 import {passageProvenance, revalidatePassage, type WikiPassage} from './selection';
@@ -30,12 +30,30 @@ export const validRevision = (value: unknown): value is number => Number.isSafeI
 const ref = validReference, revision = validRevision;
 export const newRef = (kind: string): string => `${kind}:${crypto.randomUUID()}`;
 
+/** Retain the native dispatch rather than flattening an owner refusal into a
+ * generic transport error. The code below is a presentation classification of
+ * an exact native construction diagnostic, never a new permission or receipt. */
+export class ConstructionActionError extends Error {
+  readonly code: 'source_revision_conflict' | 'wiki_revision_conflict' | undefined;
+  constructor(readonly action: string, readonly target_ref: string,
+    readonly dispatch: Exclude<ActionDispatch, {state: 'invoked'}>) {
+    super('message' in dispatch ? dispatch.message : 'detail' in dispatch ? dispatch.detail : `Native action unavailable: ${action}`);
+    this.name = 'ConstructionActionError';
+    const expectedOwner = action === 'aikit.constellation.apply' ? 'aikit wiki-construct apply'
+      : action === 'aikit.wiki.facts.apply' ? 'aikit wiki-construct facts-apply' : undefined;
+    this.code = dispatch.state === 'owner_refused' && expectedOwner !== undefined && dispatch.owner_operation === expectedOwner
+      ? this.message.startsWith('source_revision_conflict: ') ? 'source_revision_conflict'
+        : this.message.startsWith('wiki_revision_conflict: ') ? 'wiki_revision_conflict' : undefined
+      : undefined;
+  }
+}
+
 export async function invoke<T>(transport: KernelTransportStatus, project: string | undefined, action: string, target_ref: string, input?: Record<string, unknown>, apply?: ApplyKernel): Promise<T> {
   const op: KernelOp = {op: 'invoke_action', project, invocation: {action, target_ref, input}};
   const response = apply ? {outcome: await apply(op)} : await kernelOp(transport, op);
   if (response.outcome?.result !== 'action_dispatched') throw new Error(('error' in response ? response.error : undefined) ?? 'The kernel did not return the requested native action.');
   const dispatch = response.outcome.dispatch;
-  if (dispatch.state !== 'invoked') throw new Error('message' in dispatch ? dispatch.message : 'detail' in dispatch ? dispatch.detail : `Native action unavailable: ${action}`);
+  if (dispatch.state !== 'invoked') throw new ConstructionActionError(action, target_ref, dispatch);
   return dispatch.data as T;
 }
 

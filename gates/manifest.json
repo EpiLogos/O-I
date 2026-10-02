@@ -102,7 +102,19 @@
         "job": "kernel",
         "step": "Test and lint cradle kernel"
       },
-      "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets"
+      "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --lib --bins --examples --benches"
+    },
+    {
+      "name": "kernel-integration-tests",
+      "tier": "landing",
+      "area": "cli",
+      "cwd": ".",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "kernel",
+        "step": "Test and lint cradle kernel"
+      },
+      "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --test '*'"
     },
     {
       "name": "kernel-clippy",

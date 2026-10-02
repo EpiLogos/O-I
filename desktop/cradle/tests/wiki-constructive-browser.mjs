@@ -11,7 +11,10 @@ import {createServer} from 'vite';
 import react from '@vitejs/plugin-react';
 import {chromium,webkit} from 'playwright';
 const engineName=process.env.WIKI_BROWSER==='webkit'?'webkit':'chromium';
-const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),out=resolve(root,'tests/artifacts/wiki-constructive',engineName);mkdirSync(out,{recursive:true});
+// Supplemental real race: change only controlled native material after the UI
+// preflight, then forward the original request to the real owner unchanged.
+const nativeConflictRace=process.env.WIKI_NATIVE_CONFLICT_RACE==='1';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),out=resolve(root,'tests/artifacts/wiki-constructive',...(nativeConflictRace?['native-conflict-race']:[]),engineName);mkdirSync(out,{recursive:true});
 const binaries=Object.fromEntries(['OI_BIN','OI_AIKIT_BIN','OI_CENTRAL_CTRL_BIN','WIKI_KERNEL_BIN'].map(key=>{assert.ok(process.env[key],`${key} must name the actual built executable`);return [key,resolve(process.env[key])];}));
 // Canonicalise the ground so a symlinked temp root (macOS /var -> /private/var)
 // matches the native owner's own path canonicalisation; a no-op where temp is not
@@ -49,7 +52,7 @@ try{
  const url=`http://127.0.0.1:${server.httpServer.address().port}/tests/wiki-constructive.html?bridge=${encodeURIComponent(bridgeUrl)}`;
  browser=await (engineName==='webkit'?webkit:chromium).launch({headless:true});receipt.browser={name:engineName,version:browser.version()};page=await browser.newPage({viewport:{width:1360,height:960},reducedMotion:'reduce'});page.setDefaultTimeout(20000);
  page.on('pageerror',error=>errors.push(String(error)));
- page.on('response',response=>{if(response.request().method()==='POST'&&response.url().endsWith('/op'))void response.json().then(result=>{if(result.error||result.ok===false||/(?:refused|failed|conflict|unavailable)$/.test(result.outcome?.data?.state??''))responses.push(result);},()=>{});});
+ page.on('response',response=>{if(response.request().method()==='POST'&&response.url().endsWith('/op'))void response.json().then(result=>{if(result.error||result.ok===false||/(?:refused|failed|conflict|unavailable)$/.test(result.outcome?.data?.state??'')||result.outcome?.dispatch?.state==='owner_refused')responses.push(result);},()=>{});});
  page.on('request',request=>{if(request.method()==='POST'&&request.url().endsWith('/op')){const body=request.postDataJSON();if(body.op==='invoke_action'||body.op==='expression')writes.push(body);}});
  await page.goto(url);await page.locator('.wiki-prose h1').waitFor();
  await choosePassage('.wiki-prose strong');
@@ -118,8 +121,30 @@ try{
  await drawer.getByText('Saved and found through native Wiki/search.',{exact:true}).waitFor();
  check(savedFrame('Frame before material').constellations[0].members.length===0,'Frame-first creation retains genuinely open roles');
  await drawer.getByRole('button',{name:'Close constellation authoring'}).click();await choosePassage('.wiki-prose strong');
- const prior=readFileSync(wikiPath,'utf8');sourceMaterial[0].binding.revision='r2';sourceMaterial[0].body=sourceText+'\nChanged externally.\n';writeFileSync(materialPath,JSON.stringify(sourceMaterial));
+ const prior=readFileSync(wikiPath,'utf8');
+ const changeControlledSource=()=>{sourceMaterial[0].binding.revision='r2';sourceMaterial[0].body=sourceText+'\nChanged externally.\n';writeFileSync(materialPath,JSON.stringify(sourceMaterial));};
+ let heldRequest;
+ const matchesConflictRequest=request=>{if(request.method()!=='POST'||!request.url().endsWith('/op'))return false;const body=request.postDataJSON();return body?.op==='invoke_action'&&body.invocation?.action==='aikit.constellation.apply'&&body.invocation?.input?.sources?.some(source=>source.source_ref==='source:a'&&source.revision==='r1');};
+ let conflictReply;
+ if(nativeConflictRace){
+   await page.route(`${bridgeUrl}/op`,async route=>{if(!heldRequest&&matchesConflictRequest(route.request())){heldRequest=route.request().postDataJSON();changeControlledSource();}await route.continue();});
+   conflictReply=page.waitForResponse(response=>matchesConflictRequest(response.request())).then(response=>response.json());
+   // Keep early cleanup/failure from leaving an unobserved rejection; awaiting
+   // the original promise below still preserves its actual timeout/error.
+   void conflictReply.catch(()=>{});
+ }else changeControlledSource();
  await drawer.getByRole('button',{name:'Save constellation',exact:true}).click();await drawer.getByRole('alert').filter({hasText:'Source changed'}).waitFor();
+ if(nativeConflictRace){
+   const raw=await conflictReply,dispatch=raw.outcome?.dispatch;
+   check(raw.ok===true&&raw.outcome?.result==='action_dispatched'&&dispatch?.state==='owner_refused'&&dispatch.owner_operation==='aikit wiki-construct apply'&&dispatch.message==='source_revision_conflict: source:a changed or was redirected; inspect and reconcile','The unchanged actual native request is refused on its exact source basis');
+   const alert=drawer.getByRole('alert').filter({hasText:'Source changed'});
+   check(await alert.getAttribute('data-dispatch-state')==='owner_refused'&&await alert.getAttribute('data-native-error-code')==='source_revision_conflict'&&(await alert.innerText()).includes(dispatch.message),'Clear conflict feedback preserves native state, classification and exact owner diagnostic');
+   const retained=await page.evaluate(()=>JSON.parse(localStorage.getItem('oi-cradle.knowledge-travel.v1:native-wiki-page')).construction);
+   check(JSON.stringify(retained.pending)===JSON.stringify(heldRequest.invocation.input.request)&&retained.draft.members.length===1&&retained.saved===false,'The refused request and operation identity remain exact in durable recovery');
+   check(await drawer.getByRole('button',{name:'Save constellation',exact:true}).isDisabled()&&await drawer.getByRole('button',{name:'Inspect saved state',exact:true}).isEnabled(),'Refusal requires inspection before editing or replaying');
+   receipt.nativeConflict={request:heldRequest,response:raw,pending:retained.pending,scope:'Real native refusal; controlled material changed after UI preflight; no owner response replaced.'};
+   await page.unroute(`${bridgeUrl}/op`);
+ }
  check(readFileSync(wikiPath,'utf8')===prior,'A stale source selection is refused without changing the saved constellation');
  await page.reload();await page.getByRole('button',{name:'Constellations',exact:true}).click();
  check(await drawer.locator('.wiki-construction-members li').count()===1,'The refused proposal survives reload for reconciliation');

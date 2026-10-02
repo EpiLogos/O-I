@@ -453,7 +453,8 @@ try {
   const concealed=await frameOf('concealed');await ready(concealed);assert.notEqual(concealed,frame);
   {
     const start=await concealed.evaluate(()=>window.__FIELD_STUDIES__.sessionPresence());assert.equal(start.visible,false);
-    await concealed.waitForFunction(n=>window.__FIELD_STUDIES__.sessionPresence().intervalSuppressed>=n+2,start.intervalSuppressed);
+    // A display:none iframe can pause animation frames. Poll this real interval counter with a timer.
+    await concealed.waitForFunction(n=>window.__FIELD_STUDIES__.sessionPresence().intervalSuppressed>=n+2,start.intervalSuppressed,{polling:100,timeout:60000});
     const after=await frame.evaluate(()=>({last:localStorage.getItem('oi.field-studies.last'),session:JSON.parse(localStorage.getItem('oi.expression-session.v1')??'null')}));
     assert.equal(after.last,presented.document.id);assert.equal(after.session.journeyId,presented.document.id);
     probe.presentedContinuation={presented,sessionBefore,after,concealedPresence:await concealed.evaluate(()=>window.__FIELD_STUDIES__.sessionPresence()),scope:'Actual two suppressed hidden-host autosave cycles; no timer or synthetic visibility substitutes the native host observer'};

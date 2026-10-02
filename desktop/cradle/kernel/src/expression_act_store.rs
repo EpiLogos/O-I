@@ -142,15 +142,24 @@ impl ActStore {
             ));
         }
         let mut bytes = Vec::new();
-        fs::File::open(path).map_err(|e| e.to_string())?.take(MAX_RECORD_BYTES + 1)
-            .read_to_end(&mut bytes).map_err(|e| e.to_string())?;
+        fs::File::open(path)
+            .map_err(|e| e.to_string())?
+            .take(MAX_RECORD_BYTES + 1)
+            .read_to_end(&mut bytes)
+            .map_err(|e| e.to_string())?;
         if bytes.len() as u64 > MAX_RECORD_BYTES {
             return Err("Act record grew beyond its bounded read".into());
         }
         Ok(Some(bytes))
     }
-    fn read_path(path: &Path, available: usize, require_archived: bool) -> Result<Option<Act>, String> {
-        let Some(bytes) = Self::read_bytes(path)? else { return Ok(None); };
+    fn read_path(
+        path: &Path,
+        available: usize,
+        require_archived: bool,
+    ) -> Result<Option<Act>, String> {
+        let Some(bytes) = Self::read_bytes(path)? else {
+            return Ok(None);
+        };
         if require_archived {
             let (_, ended, _, archived) = crate::expression_act_storage::header(&bytes)?;
             if !ended || !archived {
@@ -195,9 +204,18 @@ impl ActStore {
         }
         paths.sort();
         for path in paths {
-            match Self::read_bytes(&path).and_then(|bytes| bytes.map(|b| crate::expression_act_storage::header(&b)).transpose()) {
-                Ok(Some((reference, ended, updated, _))) if self.path(&reference) == path => candidates.push((ended, updated, reference, path)),
-                Ok(Some(_)) => errors.push(format!("Act record {} is filed under another ref", path.display())),
+            match Self::read_bytes(&path).and_then(|bytes| {
+                bytes
+                    .map(|b| crate::expression_act_storage::header(&b))
+                    .transpose()
+            }) {
+                Ok(Some((reference, ended, updated, _))) if self.path(&reference) == path => {
+                    candidates.push((ended, updated, reference, path))
+                }
+                Ok(Some(_)) => errors.push(format!(
+                    "Act record {} is filed under another ref",
+                    path.display()
+                )),
                 Ok(None) => {}
                 Err(error) => errors.push(error),
             }
@@ -210,7 +228,9 @@ impl ActStore {
             match Self::read_path(&path, available, false) {
                 Ok(Some(act)) => {
                     let weight = Self::expanded_bytes(&act)?;
-                    available = available.checked_sub(weight).ok_or("Act live byte budget exceeded")?;
+                    available = available
+                        .checked_sub(weight)
+                        .ok_or("Act live byte budget exceeded")?;
                     acts.push(act);
                 }
                 Ok(None) => {}
@@ -225,11 +245,19 @@ impl ActStore {
     pub fn read(&self, act_ref: &str) -> Result<Option<Act>, String> {
         self.read_with_budget(act_ref, crate::expression_act_storage::EXPANDED_BYTES)
     }
-    pub(crate) fn read_with_budget(&self, act_ref: &str, available: usize) -> Result<Option<Act>, String> {
+    pub(crate) fn read_with_budget(
+        &self,
+        act_ref: &str,
+        available: usize,
+    ) -> Result<Option<Act>, String> {
         let _lock = self.prepare()?;
         let path = self.locate(act_ref);
         let archived = path == self.archived_path(act_ref);
-        let available = if archived { crate::expression_act_storage::EXPANDED_BYTES } else { available };
+        let available = if archived {
+            crate::expression_act_storage::EXPANDED_BYTES
+        } else {
+            available
+        };
         Self::read_path(&path, available, archived)
     }
 
@@ -242,14 +270,28 @@ impl ActStore {
     /// Qualify revision and writability before request validation can make
     /// room in a full register. This does not reserve a slot: the ordinary
     /// capacity check and CAS write must still run after qualified archival.
-    pub(crate) fn check_before_capacity(&self, act_ref: &str, expected: Option<u64>) -> Result<Written, String> {
+    pub(crate) fn check_before_capacity(
+        &self,
+        act_ref: &str,
+        expected: Option<u64>,
+    ) -> Result<Written, String> {
         self.check_fields(act_ref, expected, false)
     }
 
-    fn check_fields(&self, act_ref: &str, expected: Option<u64>, capacity: bool) -> Result<Written, String> {
+    fn check_fields(
+        &self,
+        act_ref: &str,
+        expected: Option<u64>,
+        capacity: bool,
+    ) -> Result<Written, String> {
         let _lock = self.prepare()?;
         let path = self.locate(act_ref);
-        let current = Self::read_path(&path, crate::expression_act_storage::EXPANDED_BYTES, path == self.archived_path(act_ref))?.map(|a| a.revision);
+        let current = Self::read_path(
+            &path,
+            crate::expression_act_storage::EXPANDED_BYTES,
+            path == self.archived_path(act_ref),
+        )?
+        .map(|a| a.revision);
         if current != expected {
             return Ok(Written::Conflict { current });
         }
@@ -270,7 +312,11 @@ impl ActStore {
         let live = self.path(act_ref);
         if !live.exists() {
             return if self.archived_path(act_ref).exists() {
-                Self::read_path(&self.archived_path(act_ref), crate::expression_act_storage::EXPANDED_BYTES, true)?;
+                Self::read_path(
+                    &self.archived_path(act_ref),
+                    crate::expression_act_storage::EXPANDED_BYTES,
+                    true,
+                )?;
                 Ok(())
             } else {
                 Err("No stored act with this ref".into())
@@ -292,7 +338,12 @@ impl ActStore {
         let _lock = self.prepare()?;
         let path = self.locate(&act.act_ref);
         let archived = path == self.archived_path(&act.act_ref);
-        let current = Self::read_path(&path, crate::expression_act_storage::EXPANDED_BYTES, archived)?.map(|a| a.revision);
+        let current = Self::read_path(
+            &path,
+            crate::expression_act_storage::EXPANDED_BYTES,
+            archived,
+        )?
+        .map(|a| a.revision);
         if current != expected {
             return Ok(Written::Conflict { current });
         }
