@@ -186,7 +186,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: readable-presentation-${{ github.sha }}
-          path: desktop/cradle/tests/artifacts/readable-presentation/
+          path: |
+            desktop/cradle/tests/artifacts/readable-presentation/
+            ${{ runner.temp }}/walk-bridge.log
           if-no-files-found: warn
       - name: Retain collection source-identity consumer evidence
         if: always()

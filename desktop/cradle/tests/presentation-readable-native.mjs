@@ -17,10 +17,20 @@ const projectExpression=process.env.OI_EXPRESSION_PROJECTION_SOURCE?(await impor
 
 const bridge=process.env.OI_KERNEL_BRIDGE;
 assert.ok(bridge,'OI_KERNEL_BRIDGE must name a disposable, real native kernel owner');
+// Diagnostic records share a strict count/byte budget; native responses are
+// never copied wholesale and Playwright response.body() is never called.
+const nativeExchanges=[];
+const diagnosticBudget={max_records:512,max_bytes:256*1024,retained_records:0,retained_bytes:0,dropped_records:0,dropped_bytes:0};
+const boundedText=value=>typeof value==='string'?value.slice(0,1024):null;
+const boundedRevision=value=>typeof value==='number'&&Number.isSafeInteger(value)?value:null;
+const traceHeaders=headers=>Object.fromEntries(['content-type','content-length','access-control-allow-origin','connection','cache-control'].map(key=>[key,boundedText(headers[key])]));
+const retainTrace=(bucket,value)=>{try{const encoded=JSON.stringify(value),bytes=Buffer.byteLength(encoded);if(diagnosticBudget.retained_records>=diagnosticBudget.max_records||diagnosticBudget.retained_bytes+bytes>diagnosticBudget.max_bytes){diagnosticBudget.dropped_records++;diagnosticBudget.dropped_bytes+=bytes;return;}bucket.push(value);diagnosticBudget.retained_records++;diagnosticBudget.retained_bytes+=bytes;}catch{diagnosticBudget.dropped_records++;}};
 const native=async request=>{
+ const started_at=new Date().toISOString();
  const response=await fetch(`${bridge}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'expression',request}),signal:AbortSignal.timeout(30000)});
  assert.equal(response.status,200);
  const reply=await response.json();assert.equal(reply.ok,true,reply.error);
+ try{retainTrace(nativeExchanges,{operation:boundedText(request.operation),expression_ref:boundedText(request.expression_ref),expected_revision:boundedRevision(request.expected_revision),status:response.status,headers:traceHeaders(Object.fromEntries(response.headers)),started_at,completed_at:new Date().toISOString(),readback_ref:boundedText(reply.outcome?.data?.document?.expression_ref),readback_revision:boundedRevision(reply.outcome?.data?.document?.revision)});}catch{diagnosticBudget.dropped_records++;}
  assert.equal(reply.outcome.result,'expression');assert.equal(reply.outcome.data.state,'ready');
  return reply.outcome.data.document;
 };
@@ -70,9 +80,63 @@ try{
   const browser=await engine.launch({headless:true,...(name==='webkit'&&process.env.OI_WEBKIT_EXECUTABLE?{executablePath:process.env.OI_WEBKIT_EXECUTABLE}:{})});browsers.push(browser);
   const context=await browser.newContext({viewport:{width:1200,height:900}});
   await context.addInitScript(endpoint=>{if(window.top!==window)return;window.__OI_KERNEL_BRIDGE__=endpoint;localStorage.setItem('oi-cradle.visuals.v1',JSON.stringify({enabled:false,welcomeEnabled:false}));},bridge);
-  const page=await context.newPage(),errors=[],failedRequests=[],errorDetails=[];let phase='initial reading';page.on('pageerror',error=>{errors.push(error.message);errorDetails.push({phase,message:error.message,stack:error.stack});});page.on('requestfailed',request=>failedRequests.push({phase,url:request.url(),error:request.failure()}));
+  // Observation only: actual platform methods execute with their original
+  // receiver/arguments; their result/exception is returned unchanged. Post-call
+  // observations cannot throw, coerce object reasons or re-read input iterables.
+  await context.addInitScript(()=>{
+   if(window.top!==window)return;
+   const apply=Reflect.apply,getDescriptor=Object.getOwnPropertyDescriptor;
+   const signals=new WeakMap();let nextSignal=0,records=0,bytes=0,capped=false;
+   const small=value=>typeof value==='string'?value.slice(0,2048):null;
+   const signalId=signal=>{if(!signals.has(signal))signals.set(signal,++nextSignal);return signals.get(signal);};
+   const controllerSignal=getDescriptor(AbortController.prototype,'signal')?.get;
+   const signalAborted=getDescriptor(AbortSignal.prototype,'aborted')?.get,signalReason=getDescriptor(AbortSignal.prototype,'reason')?.get;
+   const exceptionName=getDescriptor(DOMException.prototype,'name')?.get,exceptionMessage=getDescriptor(DOMException.prototype,'message')?.get;
+   const reasonValue=reason=>{
+    const kind=typeof reason;if(reason===null||kind==='string'||kind==='boolean')return {kind,value:kind==='string'?small(reason):reason};
+    if(kind==='number')return {kind,value:Number.isFinite(reason)?reason:null};
+    if(kind==='object'){try{return {kind:'native-dom-exception',name:small(apply(exceptionName,reason,[])),message:small(apply(exceptionMessage,reason,[]))};}catch{}}
+    return {kind}; // Other values remain opaque; no toString or object getters.
+   };
+   const stackValue=()=>{try{return small(getDescriptor(new Error(),'stack')?.value);}catch{return null;}};
+   const emit=(event,details={})=>{try{
+    if(capped)return;
+    const text=JSON.stringify({event,realm:performance.timeOrigin,elapsed_ms:performance.now(),url:small(location.href),ready_state:document.readyState,visibility:document.visibilityState,...details});
+    const size=new TextEncoder().encode(text).byteLength;
+    if(records>=256||bytes+size>128*1024){capped=true;console.debug('__OI_NATIVE_PAGE_DIAGNOSTIC__'+JSON.stringify({event:'diagnostic-emission-capped',realm:performance.timeOrigin,retained_records:records,retained_bytes:bytes,max_records:256,max_bytes:128*1024}));return;}
+    records++;bytes+=size;console.debug('__OI_NATIVE_PAGE_DIAGNOSTIC__'+text);
+   }catch{}};
+   for(const event of ['beforeunload','pagehide','pageshow','visibilitychange'])addEventListener(event,value=>{try{emit(event,{persisted:typeof value.persisted==='boolean'?value.persisted:null});}catch{}},true);
+   emit('init');
+   try{
+    const descriptor=getDescriptor(AbortController.prototype,'abort'),actual=descriptor?.value;
+    if(typeof actual==='function'&&descriptor.configurable)Object.defineProperty(AbortController.prototype,'abort',{...descriptor,value:function(...args){const result=apply(actual,this,args);try{const signal=apply(controllerSignal,this,[]);emit('abort',{signal:signalId(signal),aborted:apply(signalAborted,signal,[]),reason:reasonValue(apply(signalReason,signal,[])),stack:stackValue()});}catch{}return result;}});
+   }catch{emit('abort-observer-unavailable');}
+   try{
+    const descriptor=getDescriptor(AbortSignal,'any'),actual=descriptor?.value;
+    if(typeof actual==='function'&&descriptor.configurable)Object.defineProperty(AbortSignal,'any',{...descriptor,value:function(...args){const result=apply(actual,this,args);try{emit('signal-any',{signal:signalId(result),aborted:apply(signalAborted,result,[]),reason:reasonValue(apply(signalReason,result,[])),stack:stackValue()});}catch{}return result;}});
+   }catch{emit('signal-any-observer-unavailable');}
+  });
+  const page=await context.newPage(),errors=[],failedRequests=[],errorDetails=[],lifetimes=[],nativeNetwork=[];let phase='initial reading',requestSequence=0,pageErrorsSeen=0;
+  const requestIds=new WeakMap(),stamp=()=>({phase,observed_at:new Date().toISOString()});
+  const nativeRequest=request=>request.url().startsWith(bridge+'/');
+  const requestId=request=>{if(!requestIds.has(request))requestIds.set(request,++requestSequence);return requestIds.get(request);};
+  const observe=fn=>{try{fn();}catch{retainTrace(nativeNetwork,{...stamp(),event:'diagnostic-observer-error'});}};
+  page.on('console',message=>observe(()=>{const text=message.text(),prefix='__OI_NATIVE_PAGE_DIAGNOSTIC__';if(text.startsWith(prefix)){if(text.length>8192){diagnosticBudget.dropped_records++;diagnosticBudget.dropped_bytes+=Buffer.byteLength(text);return;}retainTrace(lifetimes,{...stamp(),...JSON.parse(text.slice(prefix.length))});}}));
+  page.on('pageerror',error=>{pageErrorsSeen++;if(!errors.length)errors.push(boundedText(error.message)??'Browser page error with a non-string message');observe(()=>retainTrace(errorDetails,{...stamp(),message:boundedText(error.message),stack:boundedText(error.stack)}));});
+  page.on('request',request=>observe(()=>{if(nativeRequest(request))retainTrace(nativeNetwork,{...stamp(),event:'request',id:requestId(request),url:boundedText(request.url()),method:boundedText(request.method()),headers:traceHeaders(request.headers()),post_data_prefix:boundedText(request.postData()),frame_url:boundedText(request.frame().url())});}));
+  page.on('requestfinished',request=>observe(()=>{if(nativeRequest(request))retainTrace(nativeNetwork,{...stamp(),event:'requestfinished',id:requestId(request),url:boundedText(request.url()),timing:request.timing()});}));
+  page.on('requestfailed',request=>observe(()=>{retainTrace(failedRequests,{...stamp(),url:boundedText(request.url()),error_text:boundedText(request.failure()?.errorText)});if(nativeRequest(request))retainTrace(nativeNetwork,{...stamp(),event:'requestfailed',id:requestId(request),url:boundedText(request.url()),error_text:boundedText(request.failure()?.errorText),timing:request.timing()});}));
+  // Status/CORS/timing are observed synchronously. No extra response-body
+  // allocation or pending asynchronous response-reader exists in this version.
+  page.on('response',response=>observe(()=>{const request=response.request();if(nativeRequest(request))retainTrace(nativeNetwork,{...stamp(),event:'response',id:requestId(request),url:boundedText(response.url()),status:response.status(),headers:traceHeaders(response.headers()),timing:request.timing()});}));
+  const retainDiagnostics=async point=>{
+   if(!process.env.OI_PRESENTATION_EVIDENCE)return;
+   await writeFile(`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}-diagnostics.json`,JSON.stringify({schema:'oi.native-presentation-reopening-diagnostic/v2',point,browser:name,bridge,page_url:page.url(),phase,errors,page_errors_seen:pageErrorsSeen,errorDetails,failedRequests,lifetimes,nativeNetwork,nativeExchanges,diagnostic_budget:diagnosticBudget,pending_response_reads:0,native_readback:{file:'native-saved-source.json',expression_ref:ref,revision:readback.revision,post_reopening_equality_gate:point==='before unchanged no-page-error gate'},scope:'Timing-instrumented diagnosis of the original real-owner driver. No response-body reader, fabricated response, installed or whole-world acceptance.'},null,2));
+  };
   try{await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});await page.getByRole('heading',{name:guide.title,exact:true}).first().waitFor();}
   catch(error){
+   await retainDiagnostics('opening failed');
    if(process.env.OI_PRESENTATION_EVIDENCE){await writeFile(`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}-failure.json`,JSON.stringify({error:String(error),errors,failedRequests,html:await page.content()},null,2));await page.screenshot({path:`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}-failure.png`,fullPage:true});}
    throw error;
   }
@@ -104,6 +168,7 @@ try{
   text=await visibleText();check(!text.includes(guide.ref)&&text.includes(guide.title),`${name}: reopened reading starts with human names and closed source details`);
   announced=await page.locator('body').ariaSnapshot();check(!announced.includes(guide.ref)&&announced.includes(guide.title),`${name}: reopened accessibility tree retains names and closed source details`);
   const retained=await native({operation:'inspect',expression_ref:ref});check(JSON.stringify(retained)===JSON.stringify(readback),`${name}: reading/opening/reopening did not change native source`);
+  await retainDiagnostics('before unchanged no-page-error gate');
   if(errors.length&&process.env.OI_PRESENTATION_EVIDENCE){await writeFile(`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}-failure.json`,JSON.stringify({errors,errorDetails,failedRequests,html:await page.content()},null,2));await page.screenshot({path:`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}-failure.png`,fullPage:true});}
   check(errors.length===0,`${name}: production providers/renderer mounted without browser errors: ${errors.join('; ')}`);
   if(process.env.OI_PRESENTATION_EVIDENCE){await mkdir(process.env.OI_PRESENTATION_EVIDENCE,{recursive:true});await page.screenshot({path:`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}.png`,fullPage:true});await writeFile(`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}.aria.txt`,await page.locator('body').ariaSnapshot());}
