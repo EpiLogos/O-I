@@ -64,6 +64,11 @@ const EMPTY_COUNTERS: ResourceCounters = {acquisitions: 0, joined: 0, cache_hits
 
 const textEntries = new Map<string, FileEntry<NativeFileReading>>();
 const byteEntries = new Map<string, FileEntry<NativeFileBytes>>();
+// A completed opening read may cross the mount boundary without becoming
+// a second acquisition. Only correlation is retained here, never the native
+// payload. Admission has already succeeded before an offer; the renderer
+// receives it once. Restored/copied/closed bindings re-enter the owner.
+const openingReads = new WeakMap<object, {key: string; request: number}>();
 let counters: ResourceCounters = {...EMPTY_COUNTERS};
 const listeners = new Set<() => void>();
 // The native retained-file owner uses 64 files / 32 MiB. This renderer
@@ -158,6 +163,39 @@ export function resourceStats(): ResourceCounters & {resident_entries: number; r
 
 function entryMap<Reading>(binary: boolean): Map<string, FileEntry<Reading>> {
   return (binary ? byteEntries : textEntries) as Map<string, FileEntry<Reading>>;
+}
+
+function offerOpening<Reading>(binding: object, transport: KernelTransportStatus, location: CentralLocation, reading: Reading, binary: boolean) {
+  const key = `${transportEpoch(transport)}|${binary ? "bytes" : "text"}|${locationKey(location)}`;
+  const entry = entryMap<Reading>(binary).get(key);
+  if (!location.root || !entry || entry.superseded || entry.status !== "ready" || entry.reading !== reading) return;
+  openingReads.set(binding, {key, request: entry.requestOrder});
+}
+function takeOpening<Reading>(binding: object, transport: KernelTransportStatus, location: CentralLocation, binary: boolean): Reading | undefined {
+  const ticket = openingReads.get(binding);
+  const key = `${transportEpoch(transport)}|${binary ? "bytes" : "text"}|${locationKey(location)}`;
+  if (!location.root || !ticket || ticket.key !== key) return undefined;
+  const entry = entryMap<Reading>(binary).get(key);
+  // Request order identifies the exact completed native operation; it is
+  // not a freshness clock or authority revision. Any later acquisition,
+  // refusal, receipt, eviction or owner bootstrap retires this handoff.
+  if (!entry || entry.superseded || entry.status !== "ready" || entry.requestOrder !== ticket.request || !entry.reading) {
+    openingReads.delete(binding); return undefined;
+  }
+  openingReads.delete(binding);
+  return entry.reading;
+}
+export function offerOpeningFileReading(binding: object, transport: KernelTransportStatus, location: CentralLocation, reading: NativeFileReading) {
+  offerOpening(binding, transport, location, reading, false);
+}
+export function offerOpeningFileBytes(binding: object, transport: KernelTransportStatus, location: CentralLocation, reading: NativeFileBytes) {
+  offerOpening(binding, transport, location, reading, true);
+}
+export function takeOpeningFileReading(binding: object, transport: KernelTransportStatus, location: CentralLocation): NativeFileReading | undefined {
+  return takeOpening(binding, transport, location, false);
+}
+export function takeOpeningFileBytes(binding: object, transport: KernelTransportStatus, location: CentralLocation): NativeFileBytes | undefined {
+  return takeOpening(binding, transport, location, true);
 }
 
 /** Drop one file's resident readings (both operation classes — a write can

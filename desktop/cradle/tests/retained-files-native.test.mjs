@@ -9,10 +9,12 @@ import {join} from 'node:path';
 import {createServer} from 'node:http';
 import {kernelOp} from '../src/kernel/bridge.ts';
 import {listFiles,readFile,lastFileReading} from '../src/files/client.ts';
-import {acquireFileReading,acquireFileBytes,peekFileReading,peekFileBytes,resourceStats,invalidateFile,beginResourceOwner} from '../src/files/resources.ts';
+import {acquireFileReading,acquireFileBytes,peekFileReading,peekFileBytes,resourceStats,invalidateFile,beginResourceOwner,offerOpeningFileReading,offerOpeningFileBytes,takeOpeningFileReading,takeOpeningFileBytes} from '../src/files/resources.ts';
 import {qualifyDraftOwner} from '../src/workspace/drafts.ts';
 import {saveDocumentPayload} from '../src/document/hostSave.ts';
 import {readDocumentIdentity} from '../src/document/identity.ts';
+import {openBinding,closeSurface,reopenClosed} from '../src/surface/engine.ts';
+import {freshLayout} from '../src/surface/types.ts';
 
 test('native retained readings survive restart and missing branches but never bypass fresh retrieval exclusion',{skip:process.env.OI_NATIVE_RETAINED_FILES!=='1',timeout:120000},async()=>{
  for(const name of ['OI_KERNEL_BIN','OI_CENTRAL_CTRL_BIN','OI_BIN'])assert.ok(process.env[name],`${name} is required`);
@@ -59,7 +61,7 @@ test('native retained readings survive restart and missing branches but never by
   // This transparent relay delays a REAL native response without fabricating
   // an owner result. Its stable URL also survives a genuine kernel restart.
   const bounded=async(promise,label,milliseconds=10000)=>{let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(`${label} timed out`)),milliseconds);})]);}finally{clearTimeout(timer);}};
-  let holdNext,nativeRequests=0;const holds=new Set(),controllers=new Set();
+  let holdNext,nativeRequests=0,nativeFileRequests=0;const holds=new Set(),controllers=new Set();
   const holdResponse=()=>{let arrived,failed,release;const arrival=new Promise((resolve,reject)=>{arrived=resolve;failed=reject;});arrival.catch(()=>{});const gate=new Promise(resolve=>release=resolve);const held={arrival,arrived,failed,gate,release};holds.add(held);holdNext=held;return held;};
   const relay=createServer(async(req,res)=>{
    const controller=new AbortController();controllers.add(controller);let delayed;
@@ -73,7 +75,7 @@ test('native retained readings survive restart and missing branches but never by
     const actual=await fetch(transport.url+req.url,{method:req.method,body,headers:{'content-type':'application/json'},signal:controller.signal});
     let responseBytes=0;const responseChunks=[];
     for await(const chunk of actual.body){responseBytes+=chunk.length;assert.ok(responseBytes<=16*1024*1024,'relay response byte bound');responseChunks.push(chunk);}
-    const nativeBody=Buffer.concat(responseChunks);nativeRequests++;
+    const nativeBody=Buffer.concat(responseChunks);nativeRequests++;if(JSON.parse(body.toString('utf8')).op==='file_read')nativeFileRequests++;
     if(delayed){delayed.arrived(JSON.parse(nativeBody.toString('utf8')));await bounded(delayed.gate,'held actual native response');}
     assert.equal(controller.signal.aborted,false,'relay response remains in its request lifetime');
     res.writeHead(actual.status,{'content-type':'application/json'});res.end(nativeBody);
@@ -84,6 +86,40 @@ test('native retained readings survive restart and missing branches but never by
   try{
    await bounded(new Promise((resolve,reject)=>{relay.once('error',reject);relay.listen({port:0,host:'127.0.0.1',signal:relayLifetime.signal},resolve);}), 'native relay listen');
    const stable={kind:'bridge',url:`http://127.0.0.1:${relay.address().port}`};
+   const openingBinding={id:'native-opening-proof',kind:'file',ref:location.ref,title:'Native opening',location};
+   const openingCount=nativeFileRequests;
+   const opening=await acquireFileReading(stable,location);
+   const opened=await kernelOp(stable,{op:'surface_open',surface_id:openingBinding.id,kind:'file',source_ref:location.ref,title:openingBinding.title});assert.equal(opened.outcome.result,'surface_opened');
+   offerOpeningFileReading(openingBinding,stable,location,opening);
+   assert.strictEqual(takeOpeningFileReading(openingBinding,stable,location),opening);
+   assert.equal(nativeFileRequests-openingCount,1,'the real completed opening supplies admission and renderer without another native file read');
+   assert.equal(takeOpeningFileReading(openingBinding,stable,location),undefined,'the opening is not a renewable cache grant');
+   assert.equal(JSON.stringify(openingBinding).includes(opening.content),false,'native bodies are not inserted into the layout binding');
+   const refreshed=await acquireFileReading(stable,location);assert.equal(nativeFileRequests-openingCount,2,'a later acquisition returns to the real owner');
+   offerOpeningFileReading(openingBinding,stable,location,refreshed);
+   assert.equal(takeOpeningFileReading({...openingBinding},stable,location),undefined,'fresh/restored bindings do not inherit an opening operation');
+   invalidateFile(location);assert.equal(takeOpeningFileReading(openingBinding,stable,location),undefined,'an invalidated native basis cannot cross the mount boundary');
+   const openingBytes=await acquireFileBytes(stable,location);offerOpeningFileBytes(openingBinding,stable,location,openingBytes);
+   assert.strictEqual(takeOpeningFileBytes(openingBinding,stable,location),openingBytes);
+   // Close before first material presentation: the actual layout engine
+   // must retire the still-unconsumed delivery, without changing the native
+   // subject or draft id. A real exclusion then refuses reopening.
+   const unseen=await acquireFileReading(stable,location);offerOpeningFileReading(openingBinding,stable,location,unseen);
+   const closedLayout=closeSurface(openBinding(freshLayout(),openingBinding),openingBinding.id);
+   const closedNative=await kernelOp(stable,{op:'surface_close',surface_id:openingBinding.id});assert.equal(closedNative.outcome.result,'surface_closed');
+   await writeFile(join(root,parent,'.no-agent-retrieval'),'');
+   const reopenedBinding=reopenClosed(closedLayout).surfaces[openingBinding.id];
+   assert.equal(reopenedBinding.id,openingBinding.id);assert.deepEqual(reopenedBinding.location,openingBinding.location);assert.notStrictEqual(reopenedBinding,openingBinding);
+   assert.equal(takeOpeningFileReading(reopenedBinding,stable,location),undefined,'closing retires an unpresented native opening');
+   const deniedOpeningCount=nativeFileRequests;
+   await assert.rejects(acquireFileReading(stable,reopenedBinding.location),'the reopened admission reaches the actual excluded native owner');
+   assert.equal(nativeFileRequests-deniedOpeningCount,1);
+   assert.equal(takeOpeningFileReading(reopenedBinding,stable,location),undefined,'the reopened renderer cannot reuse withdrawn bytes');
+   assert.equal(peekFileReading(stable,location),undefined);
+   await rm(join(root,parent,'.no-agent-retrieval'));
+   const beforeBootstrap=await acquireFileReading(stable,location);offerOpeningFileReading(openingBinding,stable,location,beforeBootstrap);
+   const openingState=await kernelOp(stable,{op:'state'});assert.equal(openingState.outcome.result,'state');beginResourceOwner(stable);
+   assert.equal(takeOpeningFileReading(openingBinding,stable,location),undefined,'a real owner bootstrap withdraws completed opening handoffs too');
    // An actual native document save succeeds, then an actual delayed read
    // crosses a withdrawn foreground qualification. The second save must
    // preserve the native source, rather than relying on a disabled button.
@@ -149,5 +185,9 @@ test('native retained readings survive restart and missing branches but never by
   assert.ok(peekFileReading(transport,visits.at(-1).location),'the most recent actual visit remains readable');
   assert.ok(resourceStats().resident_entries<=64);assert.ok(resourceStats().retained_payload_bytes<=32*1024*1024);
   assert.equal((await readFile(transport,visits[0].location)).content.startsWith('Native visit '),true,'presentation eviction did not delete the native file');
+  for(let index=0;index<72;index++)await writeFile(join(root,parent,`small-${index}.md`),`Actual small native visit ${index}\n`);
+  const small=(await listFiles(transport,parent,true)).entries.filter(row=>row.name.startsWith('small-'));
+  for(const visit of small)await acquireFileReading(transport,visit.location);
+  assert.equal(resourceStats().resident_entries,64,'more than64 actual small native reads exercise the entry-count bound independently of the byte bound');
  }finally{await stop();await rm(scratch,{recursive:true,force:true});}
 });

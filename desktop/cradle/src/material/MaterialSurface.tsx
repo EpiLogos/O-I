@@ -5,7 +5,7 @@ import {Loading} from "../shared/Loading";
 import {useKernel} from "../kernel/KernelProvider";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
-import {acquireFileReading,acquireFileBytes} from "../files/resources";
+import {acquireFileReading,acquireFileBytes,takeOpeningFileReading,takeOpeningFileBytes} from "../files/resources";
 import {FileSurface} from "../files/FileSurface";
 import {materialCapabilities,type MaterialFormat} from "./detect";
 import {renderMarkdown} from "./markdown";
@@ -230,24 +230,24 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     }
     const run = async () => {
       if (format === "html" || format === "markdown") {
-        // Shared acquisition (WF2): the frame's open path acquires the same
-        // subject through the same broker, so this joins the in-flight read —
-        // one owner round trip total. On a committed refresh this acquires
-        // again; an unchanged cached reading IS the same revision, so the
-        // broker's cache hit is correctness, not staleness.
-        const reading = await acquireFileReading(transport, location);
+        // The opening's actual completed reading crosses this mount once.
+        // A restored binding or explicit reload re-enters the native owner.
+        const reading = (generation===0?takeOpeningFileReading(binding,transport,location):undefined)
+          ?? await acquireFileReading(transport, location);
         if (live) {
           setTextContent(reading.content);
           setTextRevision(reading.revision);
           setReadingMeta({sourceRef: reading.source?.ref ?? null, writeAvailable: reading.operations?.write?.available !== false, writeReason: reading.operations?.write?.reason ?? null});
         }
       } else if (format === "unsupported") {
-        const reading = await acquireFileBytes(transport, location);
+        const reading = (generation===0?takeOpeningFileBytes(binding,transport,location):undefined)
+          ?? await acquireFileBytes(transport, location);
         if (live) setDisposition({ byte_len: reading.byte_len, mime_hint: reading.mime_hint });
       } else if (format === "image" && transport.kind === "bridge") {
         // The dev-only bridge is plain HTTP: a `data:` URL avoids a second
         // origin/CORS surface for what is otherwise a walk-only transport.
-        const reading = await acquireFileBytes(transport, location);
+        const reading = (generation===0?takeOpeningFileBytes(binding,transport,location):undefined)
+          ?? await acquireFileBytes(transport, location);
         if (live) setImageDataUrl(`data:${imageMimeFor(location.path, reading.mime_hint)};base64,${reading.content_base64}`);
       }
       // image/tauri and pdf/either transport need no separate read: their

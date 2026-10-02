@@ -4,11 +4,13 @@ import {chromium} from 'playwright';
 import {fileURLToPath} from 'node:url';
 import {readFileSync,mkdirSync,mkdtempSync,rmSync,writeFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {startCanvasNativeOwner} from './canvas-native-owner.mjs';
+import {releaseOwnedBrowser} from './native-expression-central.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const icon=readFileSync(new URL('../../../packages/oi-design-system/assets/oi-mark.svg',import.meta.url));
 const out=fileURLToPath(new URL('./artifacts/canvas-editor/',import.meta.url));mkdirSync(out,{recursive:true});
 const original='---\ncustom: retain exactly\n---\n\n# Source document\n\nFirst same 🙂 passage.\n\nSecond same 🙂 passage.\n\n| A | B |\n| --- | --- |\n| x | y |\n';
-let source=original,revision='r1',draft={revision:0,text:''},sent=[],contexts=new Map(),calls=[],failSend=false,dropContextHandler=false,delayedRead;
+let draft={revision:0,text:''},sent=[],contexts=new Map(),calls=[],failSend=false,dropContextHandler=false,delayedRead;
 const template=readFileSync(root+'documents/ql-flow.html','utf8');
 const docPattern=/<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/;
 const flowDoc=JSON.parse(template.match(docPattern)[1]);flowDoc.meta.documentId='controlled-flow';flowDoc.entries=[1,2].map(i=>({id:'entry-'+i,author:'F',at:'2026-09-20',html:'<p>Repeated authored passage.</p>',replyTo:null,touched:false}));
@@ -17,18 +19,12 @@ flowDoc.entries[1].replyTo={entryId:'entry-1',anchor:'echo'};
 flowDoc.notes=[{id:'note-1',entryId:'entry-1',author:'F',anchor:'echo',text:'<em>Preserved note.</em>',replies:[{id:'note-reply',author:'H',text:'<strong>Preserved reply.</strong>'}]}];
 flowDoc.journal=[{id:'journal-1',at:'2026-09-20',html:'<p><em>Journal stays separate.</em></p>'}];
 flowDoc.media=[{id:'media-1',entry:'entry-1',name:'Retained file',mime:'application/octet-stream',data:'unchanged payload',caption:'<p>Authored caption.</p>'}];
-let flowSource=template.replace(docPattern,()=>'<script type="application/json" id="ql-doc">'+JSON.stringify(flowDoc).replace(/<\/script/gi,'<\\/script')+'</script>');
-let flowRevision='f1';
-const flowReading=()=>({...reading(),content:flowSource,revision:flowRevision});
-const reading=()=>({schema:'central.file-reading/v1',location:{root:'central',path:'Work/demo/sample.md',ref:'central:source:sample.md'},content:source,revision,byte_len:Buffer.byteLength(source),content_encoding:'utf-8',project:{name:'demo',path:'Work/demo',project_ref:'project:demo'},source:null,operations:{write:{available:true,reason:null},history:{available:false,reason:null},restore:{available:false,reason:null}},automatic_agent_or_model_invocation:false});
+const initialFlow=template.replace(docPattern,()=>'<script type="application/json" id="ql-doc">'+JSON.stringify(flowDoc).replace(/<\/script/gi,'<\\/script')+'</script>');
+const nativeOwner=await startCanvasNativeOwner(out,original,initialFlow);
 const digest=items=>'blake3:controlled-'+createHash('sha256').update(JSON.stringify(items)).digest('hex');
 const scope=(project,session)=>({project:'project:'+project,agent_session:session??null});
 function getContext(project,session){const key=JSON.stringify(scope(project,session));if(!contexts.has(key))contexts.set(key,{schema:'aikit.prepared-context/v1',scope:scope(project,session),revision:0,digest:digest([]),items:[]});return contexts.get(key);}
 function execute(op){calls.push(op);
- if(op.op==='state')return {result:'state',snapshot:{focus:{},surfaces:{},buffers:{}}};
- if(op.op==='ground')return {result:'ground_reading',reading:{}};
- if(op.op==='file_read')return {result:'file_read',reading:op.location.path.endsWith('flow.html')?flowReading():reading()};
- if(op.op==='file_operation'){if(op.request.action==='write'&&op.location.path.endsWith('flow.html')){assert.equal(op.request.expected_revision,flowRevision);flowSource=op.request.content;flowRevision='f2';return {result:'file_operation',data:{outcome:'written',revision:flowRevision}};}if(op.request.action==='write'){if(op.request.expected_revision!==revision)return {result:'file_operation',data:{outcome:'conflict',current:reading()}};source=op.request.content;revision='r'+(Number(revision.slice(1))+1);return {result:'file_operation',data:{outcome:'written',revision}};}throw Error('Unsupported controlled file operation');}
  if(op.op==='knowledge'){if(op.request.action==='resolve')return {result:'knowledge',data:{hits:[{resource:'central:source:sample.md',label:'sample.md',provider:'controlled-source',authority:'source',kind:'source',address:{kind:'source',value:'central:source:sample.md'}}],rows:[],absences:[]}};if(op.request.action==='explain')return {result:'knowledge',data:{resource:'central:source:sample.md',provider:'controlled-source',authority:'source',evidence:[],why_selected:'Exact source address in the selected Project'}};}
  if(op.op==='encounter_task_read')return {result:'encounter_task_reading',data:null};
  if(op.op!=='encounter')return {result:'unavailable',data:{}};
@@ -50,20 +46,22 @@ function execute(op){calls.push(op);
  else throw Error('Unknown controlled request '+req.action);
  return {result:'encounter_reading',data};
 }
-const cacheDir=mkdtempSync(out+'vite-cache-');
-const server=await createServer({root,cacheDir,optimizeDeps:{noDiscovery:true,include:['react','react-dom/client','@xterm/xterm']},appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
-server.middlewares.use('/op',(request,response)=>{let body='';request.on('data',chunk=>body+=chunk);request.on('end',()=>{response.setHeader('content-type','application/json');try{const op=JSON.parse(body);if(delayedRead&&op.request?.action==='context'&&op.request.request.operation==='read'){const hold=delayedRead;delayedRead=undefined;hold.response=()=>{const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));};return;}const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));}catch(e){response.end(JSON.stringify({ok:false,error:String(e)}));}});});
+const cacheDir=mkdtempSync(out+'vite-cache-'),errors=[],pending=new Map();let server,browserOwner,browser,page;
+try{
+server=await createServer({root,cacheDir,optimizeDeps:{noDiscovery:true,include:['react','react-dom/client','@xterm/xterm']},appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
+const nativeOps=new Set(['state','ground','central','files_list','file_read','file_bytes','file_operation','file_last_reading','surface_open','surface_focus','surface_close','source_open','source_edit','source_restore','source_save']);
+server.middlewares.use('/op',(request,response)=>{let body='';request.on('data',chunk=>body+=chunk);request.on('end',async()=>{response.setHeader('content-type','application/json');try{const op=JSON.parse(body);if(nativeOps.has(op.op)){calls.push(op);const actual=await fetch(nativeOwner.url+'/op',{method:'POST',headers:{'content-type':'application/json'},body,signal:AbortSignal.timeout(10000)});response.writeHead(actual.status);response.end(Buffer.from(await actual.arrayBuffer()));return;}if(delayedRead&&op.request?.action==='context'&&op.request.request.operation==='read'){const hold=delayedRead;delayedRead=undefined;hold.response=()=>{const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));};return;}const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));}catch(e){response.end(JSON.stringify({ok:false,error:String(e)}));}});});
 server.middlewares.use('/events',(_q,res)=>{res.setHeader('content-type','application/json');res.end('{"ok":true,"receipts":[]}');});
 // Full Chromium requests a favicon; serve the actual design-system mark so the
 // controlled page has complete resources and the no-page-errors check stays strict.
 server.middlewares.use('/canvas-icon.svg',(_q,res)=>{res.setHeader('content-type','image/svg+xml');res.end(icon);});
-server.middlewares.use('/canvas-editor',async(_q,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/canvas-editor','<!doctype html><html><head><link rel="icon" type="image/svg+xml" href="/canvas-icon.svg"></head><body class="oi-desktop" style="margin:0"><script>window.__OI_KERNEL_BRIDGE__=location.origin</script><div id="root"></div><script type="module" src="/tests/canvas-editor-page.tsx"></script></body></html>'));});
+server.middlewares.use('/canvas-editor',async(_q,res)=>{res.setHeader('content-type','text/html');const bindings=JSON.stringify({sample:nativeOwner.sample,flow:nativeOwner.flow}).replace(/</g,'\\u003c');res.end(await server.transformIndexHtml('/canvas-editor','<!doctype html><html><head><link rel="icon" type="image/svg+xml" href="/canvas-icon.svg"></head><body class="oi-desktop" style="margin:0"><script>window.__OI_KERNEL_BRIDGE__=location.origin</script><script type="application/json" id="native-canvas-bindings">'+bindings+'</script><div id="root"></div><script type="module" src="/tests/canvas-editor-page.tsx"></script></body></html>'));});
 await server.listen();const url=`http://127.0.0.1:${server.httpServer.address().port}/canvas-editor`;
-const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{})});
-const page=await browser.newPage({viewport:{width:1280,height:820}});const requests=[];page.on('request',request=>requests.push(request.url()));const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',message=>{if(message.type()==='error')errors.push(`${message.text()}${message.location().url?` · ${message.location().url}`:''}`);});page.on('response',response=>{if(response.status()>=400)errors.push(`${response.status()} ${response.url()}`);});const checks=[];
+browserOwner=await chromium.launchServer({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{})});
+browser=await chromium.connect(browserOwner.wsEndpoint());
+page=await browser.newPage({viewport:{width:1280,height:820}});const requests=[];page.on('request',request=>requests.push(request.url()));page.on('pageerror',e=>errors.push(e.message));page.on('console',message=>{if(message.type()==='error')errors.push(`${message.text()}${message.location().url?` · ${message.location().url}`:''}`);});page.on('response',response=>{if(response.status()>=400)errors.push(`${response.status()} ${response.url()}`);});const checks=[];
 const check=(name,condition)=>{assert.ok(condition,name);checks.push(name);};
-const pending=new Map();page.on('request',request=>pending.set(request,Date.now()));page.on('requestfinished',request=>pending.delete(request));page.on('requestfailed',request=>{pending.delete(request);errors.push(`${request.failure()?.errorText} ${request.url()}`);});
-try{
+page.on('request',request=>pending.set(request,Date.now()));page.on('requestfinished',request=>pending.delete(request));page.on('requestfailed',request=>{pending.delete(request);errors.push(`${request.failure()?.errorText} ${request.url()}`);});
  await page.goto(url);await page.getByRole('tab',{name:'Source',exact:true}).click();await page.getByRole('textbox',{name:'Editing sample.md'}).waitFor();await page.waitForFunction(()=>window.canvasTest);
  const start=original.lastIndexOf('same');await page.evaluate(start=>canvasTest.select(start,start+7),start);
  await page.getByRole('button',{name:'Bold',exact:true}).click();await page.waitForFunction(()=>canvasTest.document().includes('**same 🙂**'));
@@ -124,7 +122,7 @@ try{
  await page.evaluate(()=>canvasTest.select(3,10));await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();await page.getByRole('button',{name:'Choose and prepare context'}).click();
  await page.locator('.prepared-context-item').waitFor();
  const flowPrepared=getContext('demo','agent-session/test');
- check('Flow new-entry range is a revision-carrying unsaved observation, not raw HTML offsets',flowPrepared.items[0].selection.anchor.kind==='observation'&&flowPrepared.items[0].selection.anchor.document_id==='controlled-flow'&&flowPrepared.items[0].selection.working_copy&&flowPrepared.items[0].selection.source_revision==='f1'&&flowPrepared.items[0].selection.text==='unsaved');
+ check('Flow new-entry range is a revision-carrying unsaved observation, not raw HTML offsets',flowPrepared.items[0].selection.anchor.kind==='observation'&&flowPrepared.items[0].selection.anchor.document_id==='controlled-flow'&&flowPrepared.items[0].selection.working_copy&&flowPrepared.items[0].selection.source_revision===nativeOwner.flowRevision&&flowPrepared.items[0].selection.text==='unsaved');
  await page.waitForFunction(()=>document.querySelector('.context-prepared-highlight'));checks.push('Flow draft retains a view-only cue');
  await page.getByRole('button',{name:'Clear prepared context',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('.prepared-context-item').length===0);
  await page.locator('[data-flow-entry="entry-2"] .flow-thread-body > p').evaluate(node=>{const range=document.createRange();range.selectNodeContents(node);const s=window.getSelection();s.removeAllRanges();s.addRange(range);});
@@ -133,12 +131,27 @@ try{
  check('ordinary rendered Flow selection keeps the second entry identity',rendered.anchor.kind==='observation'&&rendered.anchor.document_id==='controlled-flow'&&rendered.anchor.node_ref==='entry-2'&&rendered.text==='Repeated authored passage.');
  check('rendered Flow selection opens no modal',await page.getByRole('dialog').count()===0);
  await page.getByRole('button',{name:'Save · ⌘S',exact:true}).click();await page.waitForFunction(()=>canvasTest.document()==='');
- const savedDoc=JSON.parse(flowSource.match(docPattern)[1]);
+ const flowSource=nativeOwner.flowBytes(),savedDoc=JSON.parse(flowSource.match(docPattern)[1]);
  check('Flow save preserves document identity, existing entries and template bytes',savedDoc.meta.documentId==='controlled-flow'&&JSON.stringify(savedDoc.entries.slice(0,2))===JSON.stringify(flowDoc.entries)&&flowSource.replace(docPattern,'DATA')===template.replace(docPattern,'DATA'));
  check('Flow save retains all notes, media, Journal and unknown payload bytes',JSON.stringify(savedDoc.notes)===JSON.stringify(flowDoc.notes)&&JSON.stringify(savedDoc.media)===JSON.stringify(flowDoc.media)&&JSON.stringify(savedDoc.journal)===JSON.stringify(flowDoc.journal));
  await page.reload();await page.locator('.flow-thread-entry').last().waitFor();check('Flow native save roundtrips the new entry',await page.locator('.flow-thread-entry').count()===3);
  await page.screenshot({path:out+'flow-context.png'});
  check('no page errors',errors.length===0);
- writeFileSync(out+'receipt.json',JSON.stringify({standing:'controlled production-component/handler evidence; native store independently tested in Rust; not installed/provider/human proof',checks,errors,calls:calls.filter(c=>['context','prompt-context'].includes(c.request?.action)).map(c=>({op:c.op,action:c.request.action,project:c.project}))},null,2));
+ writeFileSync(out+'receipt.json',JSON.stringify({standing:'Actual native Central/oi/kernel source ownership, reads and Save; Context/session handler cases remain controlled and are not provider/two-human/installed evidence',checks,errors,native_source_calls:calls.filter(c=>nativeOps.has(c.op)),controlled_context_calls:calls.filter(c=>['context','prompt-context'].includes(c.request?.action)).map(c=>({op:c.op,action:c.request.action,project:c.project}))},null,2));
  console.log(JSON.stringify({passed:checks.length,checks,errors},null,2));
-}finally{if(errors.length)console.error(errors);writeFileSync(out+'pending-requests.json',JSON.stringify([...pending].map(([request,start])=>({url:request.url(),elapsed_ms:Date.now()-start})),null,2));await page.screenshot({path:out+'last-state.png'}).catch(()=>{});await browser.close();await server.close();rmSync(cacheDir,{recursive:true,force:true});}
+}finally{
+ if(errors.length)console.error(errors);
+ writeFileSync(out+'pending-requests.json',JSON.stringify([...pending].map(([request,start])=>({url:request.url(),elapsed_ms:Date.now()-start})),null,2));
+ // Retire the actual owner independently of browser/server disposal. A
+ // stuck screenshot or browser close cannot keep the native fixture alive.
+ const cleanupErrors=[];
+ const dispose=async(label,run,limit=5000)=>{let timer;try{await Promise.race([run(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' disposal timed out')),limit);})]);}catch(error){cleanupErrors.push(String(error));}finally{clearTimeout(timer);}};
+ await dispose('native owner',()=>nativeOwner.retire(),8000);
+ if(page)await dispose('last diagnostic screenshot',()=>page.screenshot({path:out+'last-state.png'}));
+ if(browserOwner||browser)await dispose('owned browser',()=>releaseOwnedBrowser(browser,browserOwner),9000);
+ if(server)await dispose('server',()=>server.close());
+ if(cleanupErrors.length)server?.httpServer?.closeAllConnections();
+ rmSync(cacheDir,{recursive:true,force:true});
+ writeFileSync(out+'cleanup.json',JSON.stringify({errors:cleanupErrors},null,2));
+ if(cleanupErrors.length)throw new AggregateError(cleanupErrors,'Editor walk did not dispose completely');
+}

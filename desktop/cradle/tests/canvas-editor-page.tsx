@@ -15,11 +15,12 @@ import '../src/rest.css';
 import '../src/cradle.css';
 import '../src/workspace/shell.css';
 import '../src/agent/agent.css';
-const sample={id:'sample',kind:'file' as const,ref:'central:source:sample.md',title:'sample.md',project:'demo',location:{root:'central',path:'Work/demo/sample.md',ref:'central:source:sample.md'}};
-const flowBinding={id:'flow',kind:'flow' as const,ref:'central:source:flow.html',title:'Flow.html',project:'demo',location:{root:'central',path:'Work/demo/flow.html',ref:'central:source:flow.html'}};
+const nativeBindings=JSON.parse(document.getElementById('native-canvas-bindings')!.textContent!);
+const sample={id:'sample',kind:'file' as const,ref:nativeBindings.sample.ref,title:'sample.md',project:'demo',location:nativeBindings.sample};
+const flowBinding={id:'flow',kind:'flow' as const,ref:nativeBindings.flow.ref,title:'Flow.html',project:'demo',location:nativeBindings.flow};
 const binding=location.search.includes('flow')?flowBinding:sample;
-// Only fixture controls live here. FileSurface, editor, Context, owner client and
-// the session CAS/send machine are the actual production implementations.
+// Source ownership, reads and writes use the actual native fixture. The
+// existing Context/session controls remain explicitly controlled evidence.
 function Probe({withAgent}:{withAgent:boolean}){
  const session=useEncounterSession(withAgent?{project:'demo',ref:'agent-session/test',space:'session-space/test'}:undefined);
  useEffect(()=>{window.canvasTest={

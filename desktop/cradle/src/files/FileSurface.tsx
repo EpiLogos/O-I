@@ -8,7 +8,7 @@ import type {NativeFileReading} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
 import {readDraft,writeDraft,clearSavedDraft,draftStorageKey,type HeldDraft} from "../workspace/drafts";
 import {lastFileReading,fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
-import {acquireFileReading,peekFileReading,invalidateFile} from "./resources";
+import {acquireFileReading,peekFileReading,invalidateFile,takeOpeningFileReading} from "./resources";
 import {detectFormat} from "../material/detect";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 import {hasLegacyDeviceCopy,recoverLegacyDeviceCopy} from "./legacyRecovery";
@@ -28,6 +28,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   }
   const {transport,draftOwner:activeDraftOwner,currentDraftOwner}=useKernel();
   const draftOwner=activeDraftOwner?.root===binding.location?.root?activeDraftOwner:undefined;
+  const recognizedFileOwner=()=>{const owner=currentDraftOwner();return owner?.root===binding.location?.root?owner:undefined;};
   const hasCurrentOwner=()=>!!draftOwner&&draftStorageKey(draftOwner,binding.ref??"")===draftStorageKey(currentDraftOwner(),binding.ref??"");
   const [reading,setReading]=useState<NativeFileReading>();
   const [draft,setDraft]=useState<HeldDraft>();const held=useRef(draft);held.current=draft;
@@ -38,12 +39,12 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   // inactive tab — defers its seed and its owner revalidation until the
   // person actually presents it. The latch only ever turns on, so a live
   // editor's concealment never defers anything.
-  const [presentedNow,setPresentedNow]=useState(true);
+  const [everPresented,setEverPresented]=useState(false);
   const shellRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
     const wrapper=shellRef.current?.closest('.surface-retained');
-    if(!wrapper)return;
-    const sync=()=>setPresentedNow(!wrapper.hasAttribute('hidden'));
+    if(!wrapper){setEverPresented(true);return;}
+    const sync=()=>{if(!wrapper.hasAttribute('hidden'))setEverPresented(true);};
     sync();
     const observer=new MutationObserver(sync);
     observer.observe(wrapper,{attributes:true,attributeFilter:['hidden']});
@@ -66,7 +67,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     try{
       const recovery=await lastFileReading(transport,binding.location);if(!live())return;
       const retained=recovery.retained?.reading;
-      if(retained){setReading(retained);setDraft(held.current??readDraft(draftOwner,binding.ref!)??{content:retained.content,saved_content:retained.content,base_revision:retained.revision});}
+      if(retained){setReading(retained);setDraft(held.current??readDraft(recognizedFileOwner(),binding.ref!)??{content:retained.content,saved_content:retained.content,base_revision:retained.revision});}
       setLegacyRecoverable(recovery.migration_allowed&&!!binding.ref&&hasLegacyDeviceCopy(binding.ref));
     }catch(error){if(live())setError(`${String(reason)} · ${String(error)}`);}
   };
@@ -77,7 +78,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     // resident for peers), then acquire through it.
     invalidateFile(binding.location);
     const value=await acquireFileReading(transport,binding.location).catch(async error=>{await recover(error);throw error;});setReading(value);setLegacyRecoverable(false);setError(undefined);
-    const local=preserve?(held.current??readDraft(draftOwner,binding.ref!)):undefined;
+    const local=preserve?(held.current??readDraft(recognizedFileOwner(),binding.ref!)):undefined;
     if(!local||local.content===local.saved_content){setDraft({content:value.content,saved_content:value.content,base_revision:value.revision});}
     else setDraft(local);
     window.dispatchEvent(new CustomEvent("oi:file-reading-changed",{detail:{ref:binding.ref,root:binding.location.root,reading:value}}));
@@ -90,7 +91,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     // editor holds every owner I/O — the seed and the forced revalidation —
     // until first presentation, which re-runs this effect exactly as a
     // fresh open.
-    if(!presentedNow) return;
+    if(!everPresented) return;
     if(!binding.location){setError("The saved file location is unavailable");setPending(false);return;}
     // Cache-first open (WF2): show the resident reading immediately —
     // presentation only, never authority — then keep today's owner
@@ -100,18 +101,19 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     // only the not-yet-established round trip stays pending.
     const resident=peekFileReading(transport,binding.location);
     if(resident&&binding.ref){
-      setReading(resident);setDraft(held.current&&held.current.content!==held.current.saved_content?held.current:readDraft(draftOwner,binding.ref)??{content:resident.content,saved_content:resident.content,base_revision:resident.revision});restoreView();
+      setReading(resident);setDraft(held.current&&held.current.content!==held.current.saved_content?held.current:readDraft(recognizedFileOwner(),binding.ref)??{content:resident.content,saved_content:resident.content,base_revision:resident.revision});restoreView();
       setPending(false);
     }
     // Force the owner round trip through the shared seam: the entry the seed
     // came from must not answer the revalidation too. When the open path's
     // read is genuinely still in flight this joins it instead of reloading —
     // one owner round trip for admission, renderer and editor.
-    void acquireFileReading(transport,binding.location).then(value=>{
-      if(!live)return;setReading(value);setDraft(held.current&&held.current.content!==held.current.saved_content?held.current:readDraft(draftOwner,binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
+    const opening=takeOpeningFileReading(binding,transport,binding.location);
+    void (opening?Promise.resolve(opening):acquireFileReading(transport,binding.location)).then(value=>{
+      if(!live)return;setReading(value);setDraft(held.current&&held.current.content!==held.current.saved_content?held.current:readDraft(recognizedFileOwner(),binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
       restoreView();
     }).catch(error=>recover(error,()=>live)).finally(()=>{if(live)setPending(false);});
-    const sync=(event:StorageEvent)=>{if(event.key===draftStorageKey(draftOwner,binding.ref!)){const saved=readDraft(draftOwner,binding.ref!);if(saved)setDraft(saved);}};
+    const sync=(event:StorageEvent)=>{const owner=recognizedFileOwner();if(event.key===draftStorageKey(owner,binding.ref!)){const saved=readDraft(owner,binding.ref!);if(saved){held.current=saved;setDraft(saved);}}};
     // A file changed outside the app is picked up when the window comes back to
     // the person, so re-reading is not a control they have to find. The held
     // draft is preserved; only the canonical layer is refreshed.
@@ -120,9 +122,14 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     document.addEventListener('visibilitychange',reread);
     window.addEventListener('storage',sync);
     return()=>{live=false;window.removeEventListener('focus',reread);document.removeEventListener('visibilitychange',reread);window.removeEventListener('storage',sync);};
-  },[binding.ref,binding.location?.root,draftOwner,presentedNow]);
+  },[binding.ref,binding.location?.root,binding.location?.path,everPresented,transport,currentDraftOwner]);
+  useEffect(()=>{
+    if(!draftOwner||!binding.ref||!reading||held.current&&held.current.content!==held.current.saved_content)return;
+    const retained=readDraft(draftOwner,binding.ref);
+    if(retained&&retained.content!==retained.saved_content){held.current=retained;setDraft(retained);}
+  },[draftOwner,binding.ref,reading]);
   const perform=async(run:()=>Promise<void>)=>{setPending(true);setError(undefined);try{await run();}catch(error){setError(String(error));}finally{setPending(false);}};
-  const change=(content:string)=>{if(!draft)return;const next={...draft,content};held.current=next;setDraft(next);try{if(!hasCurrentOwner())throw Error("The active source owner is unavailable");writeDraft(draftOwner,binding.ref!,next);window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref,root:binding.location?.root}}));}catch{setError("Typing remains open, but this device could not retain the draft. Keep this view open.");}};
+  const change=(content:string)=>{if(!draft)return;const next={...draft,content};held.current=next;setDraft(next);try{writeDraft(draftOwner,binding.ref!,next);window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref,root:binding.location?.root}}));}catch{setError("Typing remains open, but this device could not retain the draft. Keep this view open.");}};
   // ⌘S reaches save() twice for one keystroke — TextEditor's CodeMirror
   // `Mod-s` keymap AND the scroll pane's onKeyDown both call it. A second
   // write launched with the same base revision would land as a conflict

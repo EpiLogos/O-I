@@ -174,6 +174,10 @@ export function KernelProvider(props: { children: ReactNode }) {
 
   // Merge one outcome into the pulled read models.
   const merge = useCallback((outcome: KernelOutcome) => {
+    // A hosted World owns its own buffers, snapshot and receipt cursor.
+    // Its caller receives this qualified outcome; it cannot replace the
+    // local kernel projection merely because it carries the same source ref.
+    if ("native_owner" in outcome) return;
     admitReceipts(outcome.receipts ?? []);
     switch (outcome.result) {
       case "world_read":

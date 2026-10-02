@@ -76,10 +76,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, 
 // mounting point).
 import { TechneSummonSurface } from "./library/techneSummon";
 import { readFile } from "./files/client";
-import { acquireFileReading, acquireFileBytes, applyReceipt } from "./files/resources";
+import { acquireFileReading, acquireFileBytes, applyReceipt, offerOpeningFileReading, offerOpeningFileBytes } from "./files/resources";
 import { applyWikiProjectionReceipt } from "./techne/wikiProjectionStore";
 import { detectFormat } from "./material/detect";
-import type { CentralLocation, NativeFileReading } from "./kernel/types";
+import type { CentralLocation, NativeFileReading, NativeFileBytes } from "./kernel/types";
 import { WorldNavigator } from "./surfaces/navigator/WorldNavigator";
 import { DesktopShell } from "./workspace/DesktopShell";
 import { Glyph } from "./workspace/Glyph";
@@ -260,7 +260,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         : await acquireFileReading(kernel.transport, location);
       const opened = await kernel.apply({ op: "surface_open", surface_id: binding.id, kind: "file", source_ref: reading.location.ref, title: binding.title });
       if (opened?.result !== "surface_opened") throw new Error("Central file surface could not be opened");
-      workspaceRef.current.replaceSurface(workspaceId, { ...binding, pending: undefined, ref: reading.location.ref, title: binding.title, location: reading.location });
+      const completed:SurfaceBinding={ ...binding, pending: undefined, ref: reading.location.ref, title: binding.title, location: reading.location };
+      if(isBinary)offerOpeningFileBytes(completed,kernel.transport,reading.location,reading as NativeFileBytes);
+      else offerOpeningFileReading(completed,kernel.transport,reading.location,reading as NativeFileReading);
+      workspaceRef.current.replaceSurface(workspaceId,completed);
     } catch (error) {
       setSurfaceErrors(held => ({ ...held, [binding.id]: error instanceof Error ? error.message : String(error) }));
       workspaceRef.current.replaceSurface(workspaceId, { ...binding, pending: false });
@@ -691,6 +694,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       const opened = await kernel.apply({op:"surface_open",surface_id:id,kind:"file",source_ref:ref,title});
       if(opened?.result!=="surface_opened")throw new Error("Central file surface could not be opened");
       const binding:SurfaceBinding={id,kind:"file",ref,title,project:textReading?.project?.name,location:reading.location};
+      if(isBinaryMaterial)offerOpeningFileBytes(binding,kernel.transport,reading.location,reading as NativeFileBytes);
+      else offerOpeningFileReading(binding,kernel.transport,reading.location,reading as NativeFileReading);
       if(!temporary)workspace.replaceSurface(originWorkspaceId,binding);admitted=true;
       if (!temporary&&stillAtFile()) setState(s => activateInHostCanvas(s, id));
       await opts?.onOpened?.(binding);
