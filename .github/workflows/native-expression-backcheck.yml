@@ -316,6 +316,10 @@ jobs:
     needs: embedded
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      # The replay owns XDG_CACHE_HOME; install and launch the same browser
+      # runtime explicitly instead of looking in two different caches.
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/epi-whole-browser-runtime
     steps:
       - uses: actions/checkout@v4
         with:

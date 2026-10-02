@@ -623,6 +623,7 @@ class Replay:
         self.report['owned_environment'] = {key: self.env[key] for key in ('OI_BIN', 'OI_HOME', 'OI_DATA_HOME', 'OI_CENTRAL_ROOT',
             'OI_CENTRAL_CTRL_BIN', 'OI_CENTRAL_PROJECT_QUERY', 'OI_CRADLE_STATE', 'OI_EXPRESSION_SOCKET', 'QL_NARA_PROVIDER_CACHE',
             'OI_QL_BIN', 'OI_QL_SKY_BIN', 'OI_QL_FIELD_HOST_BIN', 'OI_QL_FIELD_WORKER_BIN', 'QL_NARA_UV', 'XDG_CACHE_HOME', 'UV_CACHE_DIR')}
+        self.report['owned_environment']['PLAYWRIGHT_BROWSERS_PATH'] = self.env.get('PLAYWRIGHT_BROWSERS_PATH')
         self.command('central-controlled-init', [ctrl, '--json', '--root', self.world, 'init'], self.out, timeout=120)
         require(self.world.is_dir(), 'Actual Central init did not create the owned world')
         first = self.start_bridge('whole')
