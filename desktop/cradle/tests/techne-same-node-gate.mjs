@@ -11,7 +11,7 @@
  * load-bearing, not a coincidence of a shared kernel. */
 import assert from 'node:assert/strict';
 import {execFileSync, spawn} from 'node:child_process';
-import {readFileSync, writeFileSync, mkdirSync, mkdtempSync, realpathSync, cpSync} from 'node:fs';
+import {readFileSync, writeFileSync, mkdirSync, mkdtempSync, realpathSync, cpSync, lstatSync, renameSync, symlinkSync, unlinkSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {dirname, resolve} from 'node:path';
@@ -24,7 +24,12 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const bootRaceMode=process.env.TECHNE_BOOT_RECOVERY_RACE??'';
 assert.ok(['','1','before-file-ack'].includes(bootRaceMode),'Unknown boot race aperture');
 const bootRace=bootRaceMode!=='';const earlyBootRace=bootRaceMode==='before-file-ack';
-const out=resolve(root,earlyBootRace?'tests/artifacts/techne-same-node-boot-early-race':bootRace?'tests/artifacts/techne-same-node-boot-race':'tests/artifacts/techne-same-node-gate');
+const checkpointRefusalMode=process.env.TECHNE_CHECKPOINT_REFUSAL??'';
+assert.ok(['','outer-read','inner-open'].includes(checkpointRefusalMode),'Unknown checkpoint refusal aperture');
+const checkpointRefusal=checkpointRefusalMode!=='';const innerCheckpointRefusal=checkpointRefusalMode==='inner-open';
+assert.ok(!(bootRace&&checkpointRefusal),'Each response ordering is a separate mandatory replay');
+if(checkpointRefusalMode==='outer-read')assert.equal(process.platform,'linux','The exact ELOOP refusal aperture is Linux-only; no unsupported-platform pass');
+const out=resolve(root,checkpointRefusal?`tests/artifacts/techne-same-node-checkpoint-${checkpointRefusalMode}`:earlyBootRace?'tests/artifacts/techne-same-node-boot-early-race':bootRace?'tests/artifacts/techne-same-node-boot-race':'tests/artifacts/techne-same-node-gate');
 mkdirSync(out, {recursive: true});
 const bins = Object.fromEntries(['OI_BIN', 'OI_AIKIT_BIN', 'OI_CENTRAL_CTRL_BIN', 'WIKI_KERNEL_BIN'].map(key => {assert.ok(process.env[key], `${key} is required`); return [key, resolve(process.env[key])];}));
 const ground = realpathSync(mkdtempSync(resolve(tmpdir(), 'techne-gate-'))), project = resolve(ground, 'Work/Notes');
@@ -104,7 +109,94 @@ async function openLiveThenSummon() {
 }
 
 let releaseBootReply,heldBootReply,heldBootReady,heldBootDelivery,releaseFileReply,heldFileReply,heldFileReady,heldFileDelivery;
+let releaseRefusalReply,releaseNewReply,heldRefusalReady,heldRefusalDelivery,heldNewReady,heldNewDelivery,refusalBasis,heldRefusal,heldNew;
+let restoreCheckpointMember;
 const probe = {};
+const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+const snapshot=f=>f.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState(),status:document.getElementById('native-status')?.textContent,timeOrigin:performance.timeOrigin,url:location.href}));
+function privateCheckpointFixture(id){
+ const recoveryRoot=resolve(env.HOME,'.oi/desktop/expression-recovery');
+ assert.equal(realpathSync(recoveryRoot),recoveryRoot);assert.ok(recoveryRoot.startsWith(ground+'/'));
+ const scope=resolve(recoveryRoot,'techne');assert.equal(realpathSync(scope),scope);
+ const member=resolve(scope,digest(Buffer.from('Checkpoint:'+id))+'.json');
+ const retained=resolve(recoveryRoot,'controlled-held-checkpoint-original.json');
+ const meta=lstatSync(member);assert.ok(meta.isFile()&&!meta.isSymbolicLink()&&meta.nlink===1);assert.ok(meta.size<=8*1024*1024+2048);
+ assert.throws(()=>lstatSync(retained),{code:'ENOENT'});
+ const bytes=readFileSync(member);writeFileSync(resolve(out,'checkpoint-before.raw.json'),bytes);
+ renameSync(member,retained);let restored=false;
+ const restore=()=>{if(restored)return;assert.ok(lstatSync(member).isSymbolicLink());unlinkSync(member);renameSync(retained,member);restored=true;const after=lstatSync(member);assert.ok(after.isFile()&&!after.isSymbolicLink()&&after.nlink===1);assert.deepEqual(readFileSync(member),bytes);};
+ try{symlinkSync(retained,member);}catch(error){renameSync(retained,member);throw error;}
+ restoreCheckpointMember=restore;
+ return {member,retained,bytes:bytes.length,sha256:digest(bytes),restore};
+}
+async function fillNativeBudget(){
+ const listed=await op({op:'expression',request:{operation:'list'}});assert.equal(listed.data.schema,'oi.expression-list/v1');assert.deepEqual(listed.data.expressions,[]);
+ const fixtures=[];
+ for(let i=0;i<64;i++){
+  const request={op:'expression',request:{operation:'create',expression_ref:`expression:controlled-checkpoint-budget-${i}`,title:`Controlled checkpoint budget fixture ${i}`,actor:'human:test-checkpoint-refusal'}};
+  const result=await op(request);assert.equal(result.data.state,'ready');assert.equal(result.data.document.expression_ref,request.request.expression_ref);fixtures.push({request,result});
+ }
+ const document=fixtures[63].result.data.document,name='controlled-budget-slot.expression.json',path=resolve(project,name);
+ const bytes=Buffer.from(JSON.stringify(document));assert.ok(bytes.length<16384);writeFileSync(path,bytes);
+ const directory=action('central.files.list',{path:'Work/Notes'});assert.equal(directory.schema,'central.directory-reading/v1');assert.equal(directory.automatic_agent_or_model_invocation,false);
+ const entries=directory.entries.filter(row=>row.name===name);assert.equal(entries.length,1);assert.equal(entries[0].kind,'file');assert.equal(entries[0].retrieval_allowed,true);
+ const reading=action('central.files.read',{location:entries[0].location});assert.equal(reading.schema,'central.file-reading/v1');assert.equal(reading.automatic_agent_or_model_invocation,false);assert.deepEqual(reading.location,entries[0].location);assert.equal(reading.content_encoding,'utf-8');assert.deepEqual(Buffer.from(reading.content),bytes);
+ const saveRequest={op:'expression',request:{operation:'open_file',location:reading.location,expected_file_revision:reading.revision,actor:'human:test-checkpoint-refusal'}};
+ const saved=await op(saveRequest);assert.equal(saved.data.state,'ready');assert.equal(saved.data.dirty,false);assert.deepEqual(saved.data.document,document);
+ const full=await op({op:'expression',request:{operation:'list'}});assert.equal(full.data.expressions.length,64);assert.ok(!full.data.expressions.some(row=>row.expression_ref===refusalBasis.savedFile.expression_ref));
+ probe.controlledNativeBudget={fixtures,saveRequest,saved,full,scope:'64 actual tiny native documents in this isolated kernel; only one is saved for a non-destructive close. All are discarded with the isolated process, never private owner data.'};
+ return document.expression_ref;
+}
+async function installCheckpointRefusal(){
+ let selected=false,newSelected=false,readyRefusal,deliveredRefusal,refuseRefusal,refuseDelivery,readyNew,deliveredNew,refuseNew,refuseNewDelivery;
+ heldRefusalReady=new Promise((yes,no)=>{readyRefusal=yes;refuseRefusal=no;});heldRefusalDelivery=new Promise((yes,no)=>{deliveredRefusal=yes;refuseDelivery=no;});
+ heldNewReady=new Promise((yes,no)=>{readyNew=yes;refuseNew=no;});heldNewDelivery=new Promise((yes,no)=>{deliveredNew=yes;refuseNewDelivery=no;});
+ for(const p of [heldRefusalReady,heldRefusalDelivery,heldNewReady,heldNewDelivery])void p.catch(()=>{});
+ const released=new Promise(yes=>{releaseRefusalReply=yes;}),newReleased=new Promise(yes=>{releaseNewReply=yes;});
+ await page.route('**/op',async route=>{
+  try{
+   const body=route.request().method()==='POST'?route.request().postDataJSON():null;
+   const exactOpen=body?.op==='expression'&&body.request?.operation==='open'&&body.request.actor==='oi:working-draft-recovery'&&body.request.document?.expression_ref===refusalBasis.savedFile.expression_ref;
+   const exactRead=body?.op==='expression_recovery'&&body.request?.operation==='read'&&body.request.kind==='checkpoint'&&body.request.scope==='techne'&&body.request.id===refusalBasis.target.document.id;
+   if(!selected&&(innerCheckpointRefusal?exactOpen:exactRead)){
+    selected=true;if(exactOpen)assert.deepEqual(body.request.document,refusalBasis.savedFile);
+    const fixture=innerCheckpointRefusal?null:privateCheckpointFixture(body.request.id);
+    let response,raw;
+    try{response=await route.fetch();raw=await response.body();}finally{fixture?.restore();}
+    assert.equal(response.status(),200);assert.ok(raw.length>0&&raw.length<=16384);const actual=JSON.parse(raw.toString('utf8'));assert.equal(actual.ok,false);assert.ok(typeof actual.error==='string'&&actual.error.length>0);
+    if(innerCheckpointRefusal)assert.equal(actual.error,'Open Expression budget exceeded');
+    else assert.equal(actual.error,'Too many levels of symbolic links (os error 40)','The actual Linux owner refusal must be ELOOP, not an unrelated parse/lock/permission error');
+    const artifact='held-real-checkpoint-refusal.raw.json';writeFileSync(resolve(out,artifact),raw);
+    heldRefusal={request:body,http_status:response.status(),actual,raw_response:{artifact,bytes:raw.length,sha256:digest(raw)},fixture:fixture?{member:fixture.member,retained:fixture.retained,bytes:fixture.bytes,sha256:fixture.sha256,restored_before_new_open:true}:null};
+    readyRefusal();await released;await route.fulfill({response,body:raw});heldRefusal.delivered_sha256=digest(raw);deliveredRefusal();
+   }else if(innerCheckpointRefusal&&selected&&!newSelected&&exactOpen){
+    newSelected=true;assert.deepEqual(body.request.document,refusalBasis.savedFile);
+    const response=await route.fetch(),raw=await response.body();assert.equal(response.status(),200);assert.ok(raw.length<=4*1024*1024+65536);const actual=JSON.parse(raw.toString('utf8'));assert.equal(actual.ok,true);assert.equal(actual.outcome?.result,'expression');assert.equal(actual.outcome.data.state,'ready');assert.deepEqual(actual.outcome.data.document,refusalBasis.savedFile);
+    const artifact='held-real-successor-open.raw.json';writeFileSync(resolve(out,artifact),raw);heldNew={request:body,http_status:response.status(),raw_response:{artifact,bytes:raw.length,sha256:digest(raw)}};
+    readyNew();await newReleased;await route.fulfill({response,body:raw});heldNew.delivered_sha256=digest(raw);deliveredNew();
+   }else await route.continue();
+  }catch(error){for(const refuse of [refuseRefusal,refuseDelivery,refuseNew,refuseNewDelivery])refuse(error);await route.abort('failed').catch(()=>{});}
+ });
+}
+async function fStatusReports(){return frame.evaluate(()=>{const witness=window.__CHECKPOINT_STATUS_WITNESS__;if(!witness)throw Error('Actual status observer is missing');witness.observer.disconnect();return witness.retained;});}
+async function finishCheckpointRefusal(expectedRef,kernelDoc,readSavedBasis){
+ if(!checkpointRefusal)return;
+ await heldRefusalDelivery;await frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady());
+ assert.equal(heldRefusal.delivered_sha256,heldRefusal.raw_response.sha256);
+  const after=await snapshot(frame);assert.equal(after.native.failed,false);assert.equal(after.native.busy,false);assert.equal(after.native.native_ref,expectedRef);
+ assert.deepEqual(after.document,probe.checkpointRefusal.beforeDelivery.document,'The old real refusal cannot replace any current rendered document field');
+ for(const key of ['native_ref','revision','file','pending','notes','bindings'])assert.deepEqual(after.native[key],probe.checkpointRefusal.beforeDelivery.native[key],key+': real old refusal cannot detach the current acknowledged basis');
+ assert.equal(after.status,probe.checkpointRefusal.beforeDelivery.status,'A stale native error cannot replace current opening status');
+ for(const key of ['sceneIndex','selected','camera','sceneElapsed','simTime'])assert.deepEqual(after.state[key],probe.checkpointRefusal.beforeDelivery.state[key],key+': stale refusal keeps current position');
+ assert.equal(after.timeOrigin,probe.checkpointRefusal.beforeDelivery.timeOrigin);assert.equal(after.url,probe.checkpointRefusal.beforeDelivery.url);
+ const reports=await fStatusReports();assert.equal(reports.overflow,false);assert.ok(reports.records.length>0,'Observe actual production status mutations, not an empty witness');
+ assert.ok(!reports.records.some(row=>row.failed||row.text.some(text=>text.includes(heldRefusal.actual.error))),'Even a transient old run/changed failure report or toast is forbidden after the newer intent');
+ probe.checkpointRefusal.statusReports=reports;
+ assert.deepEqual(await kernelDoc(),refusalBasis.savedFile);await readSavedBasis('after-real-stale-checkpoint-refusal');
+ probe.checkpointRefusal.after=after;probe.checkpointRefusal.heldRefusal=heldRefusal;probe.checkpointRefusal.heldNew=heldNew??null;
+ check(true,'The actual old checkpoint refusal preserves the newer acknowledged native/rendered world, complete saved file, current status and position');
+ await page.unroute('**/op');
+}
 const expressionEdits = [];
 try {
   await startBridge();
@@ -341,10 +433,23 @@ try {
   };
   check(savedFile.expression_ref === expectedRef && !!savedFile.entities[nodeA], 'The native Expression file holds the same Expression and occurrence identities');
   const beforeRestart = await kernelDoc();
-  if(bootRace){assert.deepEqual(beforeRestart,savedFile,'The complete live document after saving agrees with the independently retained saved file');writeFileSync(resolve(out,'acknowledged-saved-expression-file.raw.json'),savedFileBytes);await readSavedBasis('acknowledged-before-restart');}
+  if(bootRace||checkpointRefusal){assert.deepEqual(beforeRestart,savedFile,'The complete live document after saving agrees with the independently retained saved file');writeFileSync(resolve(out,'acknowledged-saved-expression-file.raw.json'),savedFileBytes);await readSavedBasis('acknowledged-before-restart');}
+  if(checkpointRefusal){
+    const target=await snapshot(frame);await frame.waitForFunction(id=>localStorage.getItem('oi.field-studies.last')===id,target.document.id);
+    const request={op:'expression_recovery',request:{operation:'read',scope:'techne',kind:'checkpoint',id:target.document.id}},checkpoint=await op(request);
+    assert.equal(checkpoint.result,'expression_recovery');assert.equal(checkpoint.data.state,'ready');assert.equal(checkpoint.data.record.id,target.document.id);
+    assert.deepEqual(checkpoint.data.record.value.view.document,savedFile);assert.deepEqual(checkpoint.data.record.value.file,target.native.file);
+    const draftRequest={op:'expression_recovery',request:{operation:'read',scope:'techne',kind:'draft',id:target.document.id}},draft=await op(draftRequest);
+    assert.equal(draft.data.state,'ready');assert.deepEqual(draft.data.record.value,target.document,'The actual last marker, persisted Journey and checkpoint agree before the refusal aperture');
+    refusalBasis={target,request,checkpoint,draftRequest,draft,savedFile};writeFileSync(resolve(out,'acknowledged-refusal-basis.json'),JSON.stringify(refusalBasis,null,2)+'\n');
+  }
   bridge.kill('SIGTERM');
   await new Promise(r => setTimeout(r, 500));
   await startBridge();
+  if(checkpointRefusal){
+    if(innerCheckpointRefusal)probe.closableBudgetRef=await fillNativeBudget();
+    await installCheckpointRefusal();
+  }
   if (bootRace) {
     let selected = false,fileSelected=false,readyHeld,delivered,refuseHeld,refuseDelivery,readyFile,deliveredFile,refuseFile,refuseFileDelivery;
     heldBootReady = new Promise((resolve,reject) => {readyHeld = resolve;refuseHeld = reject;});
@@ -379,13 +484,52 @@ try {
      }catch(error){refuseHeld(error);refuseDelivery(error);refuseFile(error);refuseFileDelivery(error);await route.abort('failed').catch(()=>{});}
     });
   }
-  await gotoMode('techne',bootRace);
+  await gotoMode('techne',bootRace||checkpointRefusal);
   if(bootRace){
     check(await page.locator('[data-host="concealed"]').count()===0,'The controlled held-reply restart has exactly one actual production receiver; original multi-host replay remains separate');
     await Promise.race([heldBootReady,frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady()).then(()=>{throw new Error('Actual boot completed without the exact controlled source-twelve-faces recovery reply to hold.');})]);
   }
   const initialOpening=bootRace?await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState()})):null;
-  const opening=frame.evaluate(path=>window.__FIELD_STUDIES__.openNativeFile(path),'Work/Notes/gate.expression.json');
+  let opening;
+  if(checkpointRefusal){
+    check(await page.locator('[data-host="concealed"]').count()===0,'The refusal aperture has one actual production receiver; the original multi-host replay remains separate');
+    await Promise.race([heldRefusalReady,frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady()).then(()=>{throw new Error('Boot completed without the exact real checkpoint refusal being held');})]);
+    const initial=await snapshot(frame);assert.equal(initial.native.native_ref,undefined);assert.equal(initial.native.failed,false);
+    // Passive DOM witness includes removed/added text nodes, so a stale toast
+    // reset by the next run cannot escape a final-state-only assertion.
+    await frame.evaluate(()=>{const retained={records:[],overflow:false,bytes:0},targets=[document.getElementById('native-status'),document.getElementById('toast')];if(targets.some(node=>!node))throw Error('Actual status surfaces are unavailable');const observer=new MutationObserver(changes=>{for(const change of changes){if(retained.records.length>=256){retained.overflow=true;return;}const text=[change.oldValue??'',...Array.from(change.addedNodes,node=>node.textContent??''),...Array.from(change.removedNodes,node=>node.textContent??'')];if(text.some(value=>value.length>16384)){retained.overflow=true;return;}const native=window.__FIELD_STUDIES__.nativeWorking();const row={target:change.target.nodeType===1?change.target.id:change.target.parentElement?.id,type:change.type,attribute:change.attributeName,text,failed:native.failed,busy:native.busy,notice:native.notice};const bytes=new TextEncoder().encode(JSON.stringify(row)).length;if(bytes>65536||retained.bytes+bytes>256*1024){retained.overflow=true;return;}retained.bytes+=bytes;retained.records.push(row);}});for(const node of targets)observer.observe(node,{subtree:true,childList:true,characterData:true,characterDataOldValue:true,attributes:true,attributeFilter:['class','hidden'],attributeOldValue:true});window.__CHECKPOINT_STATUS_WITNESS__={retained,observer};});
+    if(innerCheckpointRefusal){
+      assert.equal(initial.native.busy,true,'The actual checkpoint reopen is still busy while its native refusal is withheld');
+      const request={op:'expression',request:{operation:'close',expression_ref:probe.closableBudgetRef,actor:'human:test-checkpoint-refusal'}},closed=await op(request);assert.equal(closed.data.state,'closed');
+      const listed=await op({op:'expression',request:{operation:'list'}});assert.equal(listed.data.expressions.length,63);assert.ok(!listed.data.expressions.some(row=>row.expression_ref===expectedRef));
+      // Observe the ordinary parent host-command after the application's own
+      // listener has synchronously invoked follow(). No synthetic owner data.
+      await frame.evaluate(ref=>{window.__CHECKPOINT_FOLLOW_OBSERVATION__=null;window.addEventListener('message',function observed(event){const d=event.data;if(event.source!==window.parent||d?.v!==1||d.kind!=='host-command'||d.command!=='open-expression'||d.ref!==ref)return;window.removeEventListener('message',observed);window.__CHECKPOINT_FOLLOW_OBSERVATION__={command:JSON.parse(JSON.stringify(d)),native:window.__FIELD_STUDIES__.nativeWorking(),document:window.__FIELD_STUDIES__.getDocument(),channelAvailable:window.__OI_KERNEL_EXPRESSIONS__.kernelExpressionsAvailable()};});},expectedRef);
+      await page.evaluate(ref=>window.dispatchEvent(new CustomEvent('oi:expression-compose',{detail:{expressionRef:ref}})),expectedRef);
+      await frame.waitForFunction(()=>window.__CHECKPOINT_FOLLOW_OBSERVATION__!==null);
+      const observation=await frame.evaluate(()=>window.__CHECKPOINT_FOLLOW_OBSERVATION__);assert.equal(observation.command.ref,expectedRef);assert.equal(observation.channelAvailable,true);assert.equal(observation.native.busy,true);assert.equal(observation.native.failed,false);assert.deepEqual(observation.document,initial.document);
+      releaseRefusalReply();await heldRefusalDelivery;
+      await Promise.race([heldNewReady,frame.waitForFunction(ref=>window.__FIELD_STUDIES__.nativeWorking()?.native_ref===ref,expectedRef).then(()=>{throw new Error('Follow adopted without the exact real successor owner response being held');})]);
+      const beforeAcknowledgement=await snapshot(frame);assert.equal(beforeAcknowledgement.native.failed,false);assert.equal(beforeAcknowledgement.native.busy,true);assert.equal(beforeAcknowledgement.native.native_ref,undefined);assert.deepEqual(beforeAcknowledgement.document,initial.document);
+      assert.ok(!beforeAcknowledgement.status?.includes(heldRefusal.actual.error),'The old inner run refusal is fenced before the newer acknowledgement');
+      probe.checkpointRefusal={mode:checkpointRefusalMode,initial,closed:{request,closed,listed},observation,beforeAcknowledgement,ordering:'actual old refusal held → actual newer host command and synchronous follow intent → old refusal delivered → actual new native reply held → new reply delivered. Busy serialisation forbids claiming newer ACK preceded the old refusal.'};
+      releaseNewReply();await heldNewDelivery;
+      await frame.waitForFunction(ref=>{const w=window.__FIELD_STUDIES__.nativeWorking();return w?.native_ref===ref&&!w.busy&&!w.failed;},expectedRef);
+      const followAcknowledged=await snapshot(frame);assert.deepEqual(followAcknowledged.document,refusalBasis.target.document);assert.deepEqual(followAcknowledged.native.file,refusalBasis.target.native.file);assert.deepEqual(followAcknowledged.native.bindings,refusalBasis.checkpoint.data.record.value.view.bindings);assert.deepEqual(await kernelDoc(),savedFile);await readSavedBasis('actual-follow-ack-after-old-inner-refusal');probe.checkpointRefusal.followAcknowledged=followAcknowledged;
+      // Keep the original gate's actual file-opening acknowledgement too;
+      // an observed follow is never fabricated as this API's boolean result.
+      opening=frame.evaluate(path=>window.__FIELD_STUDIES__.openNativeFile(path),'Work/Notes/gate.expression.json');
+    }else{
+      assert.equal(initial.native.busy,false,'Outer checkpoint read is pending before the busy owner operation');
+      const restoredCheckpoint=await op(refusalBasis.request);assert.equal(restoredCheckpoint.result,'expression_recovery');assert.equal(restoredCheckpoint.data.state,'ready');assert.deepEqual(restoredCheckpoint.data.record,refusalBasis.checkpoint.data.record);
+      const restoredBytes=readFileSync(heldRefusal.fixture.member),restoredMember=lstatSync(heldRefusal.fixture.member);assert.ok(restoredMember.isFile()&&!restoredMember.isSymbolicLink()&&restoredMember.nlink===1);assert.equal(digest(restoredBytes),heldRefusal.fixture.sha256);assert.equal(restoredBytes.length,heldRefusal.fixture.bytes);
+      opening=frame.evaluate(path=>window.__FIELD_STUDIES__.openNativeFile(path),'Work/Notes/gate.expression.json');
+      const acknowledged=await opening;assert.equal(acknowledged,true);await frame.waitForFunction(ref=>{const w=window.__FIELD_STUDIES__.nativeWorking();return w?.native_ref===ref&&!w.busy;},expectedRef);
+      const beforeDelivery=await snapshot(frame);assert.equal(beforeDelivery.native.failed,false);await readSavedBasis('new-file-ack-before-old-read-refusal');
+      probe.checkpointRefusal={mode:checkpointRefusalMode,initial,restoredCheckpoint,restoredMember:{bytes:restoredBytes.length,sha256:digest(restoredBytes),is_regular:true,nlink:restoredMember.nlink},beforeDelivery,ordering:'actual checkpoint member restored and independently read → newer native file acknowledgement → old actual checkpoint refusal delivered'};
+      releaseRefusalReply();
+    }
+  }else opening=frame.evaluate(path=>window.__FIELD_STUDIES__.openNativeFile(path),'Work/Notes/gate.expression.json');
   if(earlyBootRace){
     await Promise.race([heldFileReady,opening.then(()=>{throw Error('File opening completed without the exact actual native response being held');})]);
     const beforeAcknowledgement=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState()}));
@@ -404,6 +548,8 @@ try {
   check(actualOpen===true,'The ordinary file-opening API acknowledges the exact native saved-file adoption');
   await frame.waitForFunction(ref => window.__FIELD_STUDIES__.nativeWorking()?.native_ref === ref, expectedRef, {timeout: 60000});
   const reopened = await kernelDoc();
+  if(innerCheckpointRefusal){assert.equal(heldNew.delivered_sha256,heldNew.raw_response.sha256);probe.checkpointRefusal.beforeDelivery=await snapshot(frame);}
+  await finishCheckpointRefusal(expectedRef,kernelDoc,readSavedBasis);
   if(bootRace){assert.deepEqual(reopened,savedFile,'Reopening must preserve every field of the original independently acknowledged saved native document');await readSavedBasis('after-file-adoption');if(earlyBootRace)assert.equal(heldFileReply.delivered_sha256,heldFileReply.raw_response.sha256);}
   probe.reopen = {a: reopened.entities[nodeA] === undefined ? null : true, relations: Object.keys(reopened.relations).length};
   check(JSON.stringify(workingEntity(reopened, viewA)) === JSON.stringify(workingEntity(beforeRestart, viewA)) && JSON.stringify(workingEntity(reopened, selectedB)) === JSON.stringify(workingEntity(beforeRestart, selectedB)) && reopened.entities[nodeA]?.subject?.subject_ref === 'source:a', 'After restart the reopened Expression carries A’s edits and B unchanged, under the same identities');
@@ -443,6 +589,12 @@ try {
   await frame.locator('#timeline-panel:not([hidden])').waitFor();
   const journey = await frame.evaluate(id => {const d = window.__FIELD_STUDIES__.getDocument(), st = window.__FIELD_STUDIES__.getState(); const sc = d.scenes[st.sceneIndex]; const e = sc?.entities.find(v => v.id === id); return {strip: document.querySelectorAll('#timeline-panel .scene-strip [data-action]').length, scene: sc?.name, force: e?.force.strength, tint: e?.tint, steps: e?.sequence.steps.length, doc: d.id};}, viewA);
   probe.journey = journey;
+  if(checkpointRefusal){
+    const current=await snapshot(frame);assert.deepEqual(current.document,probe.checkpointRefusal.after.document);assert.equal(current.native.failed,false);assert.equal(current.native.busy,false);
+    for(const key of ['native_ref','revision','file','pending','notes','bindings'])assert.deepEqual(current.native[key],probe.checkpointRefusal.after.native[key],key+': Journey keeps the real acknowledged basis after stale refusal');
+    assert.deepEqual(await kernelDoc(),savedFile);await readSavedBasis('Journey-after-stale-checkpoint-refusal');probe.checkpointRefusal.journey=current;
+    check(true,'Journey continues the complete saved native/rendered body and current basis after the real stale checkpoint refusal');
+  }
   if(bootRace){
     const current=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState()}));
     assert.deepEqual(current.document,probe.heldBootReply.after.document,'Journey consumes the complete same rendered document after the real late reply');
@@ -505,11 +657,23 @@ try {
   if (page) await page.screenshot({path: resolve(out, 'failure.png')}).catch(() => {});
   throw error;
 } finally {
-  releaseBootReply?.();releaseFileReply?.();
-  receipt.errors = errors; receipt.probe = probe; receipt.boot_reply_race = {requested:bootRace,mode:bootRaceMode,held:heldBootReply??null,held_file:heldFileReply??null,original_uninstrumented_multi_host_replay_required:bootRace}; receipt.expressionEdits = expressionEdits;
-  writeFileSync(resolve(out, 'receipt.json'), JSON.stringify(receipt, null, 2) + '\n');
-  writeFileSync(resolve(out, 'kernel.log'), logs.join(''));
-  if (browser) await browser.close();
-  if (server) await server.close();
-  bridge?.kill('SIGTERM');
+  const hadPrimaryFailure=!!receipt.failure,encounterPassed=receipt.passed,cleanupFailures=[];
+  receipt.encounter_passed_before_cleanup=encounterPassed;receipt.passed=false;
+  const attempt=async(name,operation)=>{try{await operation();}catch(error){cleanupFailures.push({operation:name,error:String(error).slice(0,4096)});receipt.passed=false;receipt.failure??=`Cleanup failed during ${name}`;}};
+  // An unexpected restoration failure is a failing receipt. It cannot skip
+  // releasing held real replies, retaining diagnostics or stopping our owners.
+  await attempt('restore-original-checkpoint-member',()=>restoreCheckpointMember?.());
+  for(const [name,release] of [['refusal',releaseRefusalReply],['successor',releaseNewReply],['boot',releaseBootReply],['file',releaseFileReply]])await attempt(`release-${name}-reply`,()=>release?.());
+  receipt.errors = errors; receipt.probe = probe; receipt.boot_reply_race = {requested:bootRace,mode:bootRaceMode,held:heldBootReply??null,held_file:heldFileReply??null,original_uninstrumented_multi_host_replay_required:bootRace}; receipt.checkpoint_refusal={requested:checkpointRefusal,mode:checkpointRefusalMode,held:heldRefusal??null,held_successor:heldNew??null,original_and_both_success_order_modes_required:checkpointRefusal}; receipt.expressionEdits = expressionEdits;
+  receipt.cleanup_failures=cleanupFailures;
+  await attempt('retain-receipt-before-owned-cleanup',()=>writeFileSync(resolve(out,'receipt.json'),JSON.stringify(receipt,null,2)+'\n'));
+  await attempt('retain-native-log',()=>writeFileSync(resolve(out,'kernel.log'),logs.join('')));
+  // Each operation is attempted even if its predecessor rejects. The owned
+  // native child is stopped in finally, including failed browser/server close.
+  try{await attempt('close-owned-browser',()=>browser?.close());}
+  finally{try{await attempt('close-owned-server',()=>server?.close());}
+   finally{await attempt('stop-owned-native-bridge',()=>{if(bridge&&bridge.exitCode===null&&bridge.signalCode===null&&!bridge.kill('SIGTERM'))throw Error('Owned bridge did not accept SIGTERM');});}}
+  receipt.passed=encounterPassed&&cleanupFailures.length===0;
+  await attempt('retain-final-cleanup-receipt',()=>writeFileSync(resolve(out,'receipt.json'),JSON.stringify(receipt,null,2)+'\n'));
+  if(cleanupFailures.length){console.error('Owned replay cleanup failed',JSON.stringify(cleanupFailures));if(!hadPrimaryFailure)throw new Error('Replay cleanup failed; see retained receipt and stderr');}
 }

@@ -20,6 +20,11 @@ on:
       - 'packages/oi-design-system/expressions-engine/oi/**'
       - '.github/workflows/native-expression-backcheck.yml'
   workflow_dispatch:
+    inputs:
+      build_mac_candidate:
+        description: Build exact committed Mac artifacts with the canonical packager
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -395,3 +400,87 @@ jobs:
             !${{ runner.temp }}/epi-whole-hosted/oi-data/**
             !${{ runner.temp }}/epi-whole-hosted/world/**
             !${{ runner.temp }}/epi-whole-hosted/toolchain-bin/**
+
+  epi-mac-candidate:
+    name: Exact native Mac candidate / canonical managed bundle
+    if: github.event_name == 'workflow_dispatch' && inputs.build_mac_candidate
+    needs: embedded
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ec33764868b22e98cd6ebff8f6565097f67bdb03
+          path: .native-owner/QL-MEF
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 6bcfc1661cd0eccec1a4a691503ea401d411023a
+          path: .native-owner/Central
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Actuation
+          ref: 61323a5306dac031e5deff41aab0dad16608bac7
+          path: .native-owner/Actuation
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: astral-sh/setup-uv@v6
+      - name: Install only canonical native build prerequisites
+        run: |
+          set -euo pipefail
+          test "$(uname -s)/$(uname -m)" = Darwin/arm64
+          brew install json-c pkg-config
+          curl -sSf https://install.spacetimedb.com -o "$RUNNER_TEMP/epi-mac-spacetime-install.sh"
+          shasum -a 256 "$RUNNER_TEMP/epi-mac-spacetime-install.sh" > "$RUNNER_TEMP/epi-mac-spacetime-install.sha256"
+          SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.8.1" \
+            sh "$RUNNER_TEMP/epi-mac-spacetime-install.sh" -y
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          spacetime version install 2.8.1
+          spacetime version use 2.8.1
+          spacetime --version | tee "$RUNNER_TEMP/epi-mac-spacetime-version.txt"
+          grep -q '2.8.1' "$RUNNER_TEMP/epi-mac-spacetime-version.txt"
+      - name: Build actual source archives, all-five QL owners and canonical desktop bundle
+        env:
+          EXPECTED_OI_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python3 scripts/epi-mac-candidate.py \
+            --repo "$GITHUB_WORKSPACE" \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/QL-MEF" \
+            --central-source "$GITHUB_WORKSPACE/.native-owner/Central" \
+            --act-source "$GITHUB_WORKSPACE/.native-owner/Actuation" \
+            --expected-oi-head "$EXPECTED_OI_HEAD" \
+            --expected-ql-head ec33764868b22e98cd6ebff8f6565097f67bdb03 \
+            --expected-central-head 6bcfc1661cd0eccec1a4a691503ea401d411023a \
+            --expected-act-head 61323a5306dac031e5deff41aab0dad16608bac7 \
+            --output "$RUNNER_TEMP/epi-mac-candidate"
+      - name: Retain exact native artifacts and build/source custody without installation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epi-mac-candidate-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/epi-mac-candidate/receipt.json
+            ${{ runner.temp }}/epi-mac-candidate/*-source.tar
+            ${{ runner.temp }}/epi-mac-candidate/commands/**
+            ${{ runner.temp }}/epi-mac-candidate/native/**
+            ${{ runner.temp }}/epi-mac-candidate/bundle/**
+            ${{ runner.temp }}/epi-mac-spacetime-version.txt
+            ${{ runner.temp }}/epi-mac-spacetime-install.sh
+            ${{ runner.temp }}/epi-mac-spacetime-install.sha256
