@@ -484,7 +484,8 @@ const canvasHome=document.createElement('div');canvasHome.className='canvas-home
 let awaitingNativeBoot=startsWithNativeReference;
 // An untouched startup canvas is unsubmitted until qualified recovery or
 // native adoption. Superseding boot alone does not author that canvas.
-let startupRecoveryPending=!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression;
+const startupQuery=new URLSearchParams(location.search);
+let startupRecoveryPending=!window.__JOURNEY__&&!startupQuery.has('journey')&&!startupQuery.get('expression');
 let researchInstruments:ReturnType<typeof installResearchInstruments>|undefined;
 // A deliberate peek at the live field while a research instrument stays mounted
 // and active: the engine renders only while the person is looking at it.
