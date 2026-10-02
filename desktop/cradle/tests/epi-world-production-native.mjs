@@ -18,6 +18,7 @@ import {qualifyPortableNativeSourceExpectation,qualifyPortableRuntimeExecution,r
 assert.ok(process.argv[2],'Supply a JSON configuration with bridge, output and two identity_files');
 const config=JSON.parse(readFileSync(resolve(process.argv[2]),'utf8'));
 if(config.reopen_file!==undefined)assert.equal(typeof config.reopen_file,'string','reopen_file must be the actual Central-relative path accepted by the production app file-opening API');
+if(config.reopen_acknowledgement_file)assert.ok(config.reopen_file,'Fresh process arrival requires ordinary file opening through the native file owner');
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const app=resolve(root,'expressions-app/field-studies-journeys');
 // Import the production authored-stage conversion owner. QL torus units per
@@ -562,10 +563,61 @@ try{
  // personal coordinate adoption. Preserve that arrival, then use the ordinary
  // world navigation before requiring the cosmic field's source consumers.
  // Opening a different scene is not a native failure or a missing cosmic body.
+ let savedProcessArrival=null;
  if(config.reopen_file){
   const arrival=await snapshot('00-reopened-saved-scene');
+  if(config.reopen_acknowledgement_file){
+   // Qualify the actual saved personal arrival before intentional navigation.
+   // Later cosmic receiving is a distinct encounter, not the saved selection.
+   await frame.waitForFunction(()=>{const f=window.__FIELD_STUDIES__,s=f.getState(),scene=f.getDocument().scenes[s.sceneIndex],actual=f.inspect();return scene?.entities.every(e=>actual.partitions.some(p=>p.entityId===e.id&&p.end>p.start));},null,{timeout:30000});
+   await frame.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   const a=await snapshot('00-fresh-process-saved-personal-arrival',true),aDoc=await nativeDocument(a.working.native_ref);
+   savedProcessArrival=a;
+   assert.equal(config.stage,'entry','A prior native save acknowledgement applies only to the separate fresh-process entry gate');
+   assert.ok(config.reopen_expected,'Restart entry requires exact prior acknowledged person/instance/occasion/selection');
+   const acknowledgedPath=resolve(config.reopen_acknowledgement_file),acknowledgedHash=hashFileReadOnly(acknowledgedPath);
+   assert.ok(acknowledgedHash.bytes<=24*1024*1024,'Bounded prior full native Document acknowledgement');
+   assert.equal(acknowledgedHash.sha256,config.reopen_acknowledgement_sha256,'Exact frozen prior save/inspect/file read acknowledgement');
+   const acknowledged=JSON.parse(readFileSync(acknowledgedPath,'utf8'));
+   assert.equal(acknowledged.schema,'epi.hosted-native-saved-continuation/v1');
+   assert.equal(acknowledged.prior_native_generation,config.reopen_prior_native_generation);
+   const prior=qualifiedJson(acknowledged.prior_full_receipt_ref,'Prior complete production proof');
+   assert.equal(prior.schema,'oi.epi-world-production-native-proof/v1');assert.equal(prior.passed,true);assert.equal(prior.failure,undefined);
+   assert.deepEqual(prior.continuation.file,acknowledged.file,'Only the independently acknowledged latest A save supplies the current restart fence');
+   for(const key of ['expression_ref','person_ref','event_ref','scene_ref','entity_ref'])assert.equal(prior.continuation[key],config.reopen_expected[key],'Prior completed encounter supplies restart '+key);
+   const priorSavedFile=qualifiedJson(acknowledged.prior_saved_file_ref,'Prior actual native save/file read/inspect');
+   assert.equal(priorSavedFile.owner_decode,'expression.inspect_file');
+   assert.deepEqual(priorSavedFile.document,acknowledged.document,'The restart expectation comes from prior complete native file admission, not a restarted reply');
+   assert.deepEqual({location:priorSavedFile.location,revision:priorSavedFile.revision},acknowledged.file);
+   assert.deepEqual(aDoc,acknowledged.document,'A fresh native/browser body recovers the complete exact previously acknowledged saved Document');
+   assert.deepEqual(a.working.file,acknowledged.file,'Opening must retain the actual prior acknowledged file location and CAS fence');
+   assert.equal(a.working.revision,acknowledged.document.revision);assert.ok(!a.working.pending,'No current pending edit may masquerade as durable restart');
+   assert.deepEqual(aDoc.selection,acknowledged.document.selection);
+   const canonical=['cosmic','personal','branches'].map(role=>`${a.working.native_ref}:scene:${role}`);
+   assert.equal(aDoc.scenes.length,4,'The preceding actual Save & next acknowledged exactly one deliberate fourth presentation');
+   const base=canonical.map(ref=>{const scene=aDoc.scenes.find(s=>s.scene_ref===ref);assert.ok(scene,'The exact canonical '+ref+' is still required');return scene;});
+   assert.deepEqual(base.map(s=>s.entity_refs.length),[32,9,7],'Restart keeps complete original cosmic/personal/branch membership');
+   const additional=aDoc.scenes.filter(s=>!canonical.includes(s.scene_ref));assert.equal(additional.length,1);
+   assert.deepEqual(additional[0].entity_refs,base[0].entity_refs,'The acknowledged fourth scene deliberately presents the same cosmic members');
+   assert.ok(!additional[0].presentation.scene.epiWorld,'The fourth presentation cannot duplicate the machine world receipt');
+   artifact('fresh-process-prior-save-qualification.json',{path:acknowledgedPath,...acknowledgedHash,prior_full_receipt_ref:acknowledged.prior_full_receipt_ref,file:acknowledged.file,document_revision:acknowledged.document.revision,scenes:aDoc.scenes.map(s=>({scene_ref:s.scene_ref,entity_refs:s.entity_refs})),selection:aDoc.selection});
+   check(true,'Fresh process entry retains the exact acknowledged four-scene Document, canonical 32/9/7 members, deliberate cosmic continuation, person/occasion/selection and current native file fence');
+
+   assert.deepEqual(await savedFile(a.working,'fresh-process-saved-personal-arrival'),acknowledged.document,'The ordinary restarted file decoder receives the exact full previously acknowledged saved Document');
+   const arrivedScene=aDoc.scenes.find(scene=>scene.scene_ref===config.reopen_expected.scene_ref);assert.ok(arrivedScene);
+   assert.equal(arrivedScene.scene_ref,`${a.working.native_ref}:scene:personal`,'Restart receives the acknowledged personal presentation before cosmic navigation');
+   assert.equal(aDoc.entities[config.reopen_expected.entity_ref]?.subject?.subject_ref,'ql:m-coordinate:bimba:M4.4.4.4','Saved selected subject retains the canonical shared personal locus');
+   assert.equal(a.record.world.instance_ref,config.reopen_expected.expression_ref);assert.equal(a.record.person_ref,config.reopen_expected.person_ref);assert.equal(a.record.world.event_ref,config.reopen_expected.event_ref);
+   assert.equal(a.current.reading.identity.person_ref,config.reopen_expected.person_ref);assert.equal(a.current.context.event_ref,config.reopen_expected.event_ref);
+   assert.equal(a.document.scenes[a.state.sceneIndex]?.id,config.reopen_expected.scene_ref,'The actual arrival view receives the frozen saved personal scene');assert.ok(a.state.selected.includes(config.reopen_expected.entity_ref),'The actual arrival selection receives the frozen saved personal subject');
+   requirePartitions(a,arrivedScene.entity_refs,'Saved personal arrival');requirePersonalDrivers(a,'Saved personal arrival');
+  }
   const cosmicRef=arrival.record.receiving.scene_ref;
   if(arrival.document.scenes[arrival.state.sceneIndex]?.id!==cosmicRef)await sceneNavigate(cosmicRef);
+  // Focus is an acknowledged Document edit. The first whole trial must save
+  // its deliberate cosmic selection before calling that file current below.
+  // Restart preserves its separately qualified durable personal arrival.
+  if(!config.reopen_acknowledgement_file)await action('save');
  }
  await frame.waitForFunction(()=>{const values=Object.values(window.__FIELD_STUDIES__.telemetry().sourceStatus);return values.length>=6&&values.every(value=>value.includes('source active'));},null,{timeout:30000});
  const a=await snapshot('01-person-a-cosmic-at-rest',true);
@@ -591,47 +643,19 @@ try{
  assert.ok(originalRecovery,'Original actual preparation request is required for separate immutable buffer recovery');
  await recoverOriginalRuntimeBuffers(a,originalRecovery);
 
- if(config.reopen_acknowledgement_file){
-  assert.equal(config.stage,'entry','A prior native save acknowledgement applies only to the separate fresh-process entry gate');
-  assert.ok(config.reopen_expected,'Restart entry requires exact prior acknowledged person/instance/occasion/selection');
-  const acknowledgedPath=resolve(config.reopen_acknowledgement_file),acknowledgedHash=hashFileReadOnly(acknowledgedPath);
-  assert.ok(acknowledgedHash.bytes<=24*1024*1024,'Bounded prior full native Document acknowledgement');
-  assert.equal(acknowledgedHash.sha256,config.reopen_acknowledgement_sha256,'Exact frozen prior save/inspect/file read acknowledgement');
-  const acknowledged=JSON.parse(readFileSync(acknowledgedPath,'utf8'));
-  assert.equal(acknowledged.schema,'epi.hosted-native-saved-continuation/v1');
-  assert.equal(acknowledged.prior_native_generation,config.reopen_prior_native_generation);
-  const prior=qualifiedJson(acknowledged.prior_full_receipt_ref,'Prior complete production proof');
-  assert.equal(prior.schema,'oi.epi-world-production-native-proof/v1');assert.equal(prior.passed,true);assert.equal(prior.failure,undefined);
-  assert.deepEqual(prior.continuation.file,acknowledged.file,'Only the independently acknowledged latest A save supplies the current restart fence');
-  for(const key of ['expression_ref','person_ref','event_ref','scene_ref','entity_ref'])assert.equal(prior.continuation[key],config.reopen_expected[key],'Prior completed encounter supplies restart '+key);
-  const priorSavedFile=qualifiedJson(acknowledged.prior_saved_file_ref,'Prior actual native save/file read/inspect');
-  assert.equal(priorSavedFile.owner_decode,'expression.inspect_file');
-  assert.deepEqual(priorSavedFile.document,acknowledged.document,'The restart expectation comes from prior complete native file admission, not a restarted reply');
-  assert.deepEqual({location:priorSavedFile.location,revision:priorSavedFile.revision},acknowledged.file);
-  assert.deepEqual(aDoc,acknowledged.document,'A fresh native/browser body recovers the complete exact previously acknowledged saved Document');
-  assert.deepEqual(a.working.file,acknowledged.file,'Opening must retain the actual prior acknowledged file location and CAS fence');
-  assert.equal(a.working.revision,acknowledged.document.revision);assert.ok(!a.working.pending,'No current pending edit may masquerade as durable restart');
-  assert.deepEqual(aDoc.selection,acknowledged.document.selection);
-  const canonical=['cosmic','personal','branches'].map(role=>`${a.working.native_ref}:scene:${role}`);
-  assert.equal(aDoc.scenes.length,4,'The preceding actual Save & next acknowledged exactly one deliberate fourth presentation');
-  const base=canonical.map(ref=>{const scene=aDoc.scenes.find(s=>s.scene_ref===ref);assert.ok(scene,'The exact canonical '+ref+' is still required');return scene;});
-  assert.deepEqual(base.map(s=>s.entity_refs.length),[32,9,7],'Restart keeps complete original cosmic/personal/branch membership');
-  const additional=aDoc.scenes.filter(s=>!canonical.includes(s.scene_ref));assert.equal(additional.length,1);
-  assert.deepEqual(additional[0].entity_refs,base[0].entity_refs,'The acknowledged fourth scene deliberately presents the same cosmic members');
-  assert.ok(!additional[0].presentation.scene.epiWorld,'The fourth presentation cannot duplicate the machine world receipt');
-  artifact('fresh-process-prior-save-qualification.json',{path:acknowledgedPath,...acknowledgedHash,prior_full_receipt_ref:acknowledged.prior_full_receipt_ref,file:acknowledged.file,document_revision:acknowledged.document.revision,scenes:aDoc.scenes.map(s=>({scene_ref:s.scene_ref,entity_refs:s.entity_refs})),selection:aDoc.selection});
-  check(true,'Fresh process entry retains the exact acknowledged four-scene Document, canonical 32/9/7 members, deliberate cosmic continuation, person/occasion/selection and current native file fence');
- }else{
+ if(!config.reopen_acknowledgement_file){
   check(aDoc.scenes.length===3,'The native owner stores the three connected cosmic, personal and branch scenes');
   check(aDoc.scenes.map(s=>s.entity_refs.length).join(',')==='32,9,7','The native owner retains all 32 cosmic, 9 personal and 7 branch occurrences');
  }
  const cosmic=aDoc.scenes.find(s=>s.scene_ref===a.record.receiving.scene_ref),personal=aDoc.scenes.find(s=>s.scene_ref===`${a.working.native_ref}:scene:personal`),branches=aDoc.scenes.find(s=>s.scene_ref===`${a.working.native_ref}:scene:branches`);
- assert.ok(cosmic&&personal&&branches);const openingScene=aDoc.scenes.find(s=>s.scene_ref===a.document.scenes[a.state.sceneIndex]?.id);assert.ok(openingScene);requirePartitions(a,openingScene.entity_refs,'Native opening rest');requireInitialRestTargets(a,openingScene.entity_refs,'Native opening rest');await savedFile(a.working,'person-a-opening');
+ assert.ok(cosmic&&personal&&branches);const openingScene=aDoc.scenes.find(s=>s.scene_ref===a.document.scenes[a.state.sceneIndex]?.id);assert.ok(openingScene);requirePartitions(a,openingScene.entity_refs,'Native opening rest');requireInitialRestTargets(a,openingScene.entity_refs,'Native opening rest');
+ if(!config.reopen_acknowledgement_file)await savedFile(a.working,'person-a-opening');
+ else artifact('fresh-process-cosmic-after-saved-arrival.json',{standing:'Newer live cosmic selection after exact durable personal arrival; this view is not the prior saved personal file',saved_arrival_artifact:'00-fresh-process-saved-personal-arrival.json',saved_file_artifact:'fresh-process-saved-personal-arrival-file.json',live_revision:a.working.revision,live_scene_ref:openingScene.scene_ref,prior_file_fence:savedProcessArrival.working.file});
  receipt.opening_world={expression_ref:a.working.native_ref,file:a.working.file,person_ref:a.record.person_ref,nara_ref:a.record.nara_ref,identity_source:a.record.identity_source,current_context:a.current.context,event_ref:a.record.world.event_ref,scene_ref:openingScene.scene_ref};json('receipt.json',receipt);
  console.log('VISUAL_REVIEW',resolve(out,'01-person-a-cosmic-at-rest.png'),a.working.native_ref,'native field lease not yet opened');
  phase='actual native cosmic rest visual review';await new Promise(resolve=>setTimeout(resolve,config.pause_for_review_ms??45000));
 
- if(config.reopen_expected){const expected=config.reopen_expected;check(a.working.native_ref===expected.expression_ref&&a.record.world.event_ref===expected.event_ref&&a.record.person_ref===expected.person_ref&&openingScene.scene_ref===expected.scene_ref&&a.state.selected.includes(expected.entity_ref),'The restarted native file recovers its exact saved person, occasion, scene and selected subject');receipt.reopen_expected=expected;}
+ if(config.reopen_expected){const expected=config.reopen_expected,received=savedProcessArrival??a,receivedScene=received.document.scenes[received.state.sceneIndex];check(received.working.native_ref===expected.expression_ref&&received.record.world.event_ref===expected.event_ref&&received.record.person_ref===expected.person_ref&&receivedScene?.id===expected.scene_ref&&received.state.selected.includes(expected.entity_ref),'The restarted native file recovers its exact saved person, occasion, scene and selected subject');receipt.reopen_expected=expected;}
  if(config.stage==='entry'){receipt.passed=true;throw Object.assign(new Error('entry-only complete'),{intentionalStop:true});}
 
  phase='complete register source disclosure through actual body selection';
