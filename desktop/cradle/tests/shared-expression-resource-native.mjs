@@ -90,10 +90,12 @@ try{
  const visual=()=>page.evaluate(()=>{
   const d=window.documentReading,scene=d.scenes.find(s=>s.scene_ref===d.selection.scene_ref).presentation.scene,camera=window.nativeModules.cameraForSceneView(scene.view,innerWidth,innerHeight);
   const canvas=window.surface.capture(innerWidth,innerHeight),pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
-  const poses=window.surface['adapter'].engine.lastPoses??[];
+  const engine=window.surface['adapter'].engine,poses=engine.lastPoses??[];
   return scene.entities.filter(e=>e.enabled!==false).map(entity=>{
    const pose=poses.find(p=>p.entityId===entity.id||p.id===entity.id);
-   const point=window.nativeModules.project(pose??entity.position,camera,innerWidth,innerHeight);let ink=0;
+   // Evaluated poses already use the native engine's world-unit scale.
+   // The normalized Scene camera is only the absent-body inspection basis.
+   const point=pose?engine.projectWorldToScreen(pose.x,pose.y,pose.z):window.nativeModules.project(entity.position,camera,innerWidth,innerHeight);let ink=0;
    for(let y=Math.max(0,Math.round(point.y)-45);y<Math.min(canvas.height,Math.round(point.y)+45);y++)for(let x=Math.max(0,Math.round(point.x)-45);x<Math.min(canvas.width,Math.round(point.x)+45);x++){const i=(y*canvas.width+x)*4;if(pixels[i+3]>80&&Math.min(pixels[i],pixels[i+1],pixels[i+2])<175)ink++;}
    return {id:entity.id,name:entity.name,x:point.x,y:point.y,evaluated_pose:!!pose,ink_pixels:ink};
   });
