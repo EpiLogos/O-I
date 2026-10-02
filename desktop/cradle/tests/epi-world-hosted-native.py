@@ -70,12 +70,12 @@ def parse(raw):
                       parse_constant=lambda text: (_ for _ in ()).throw(ValueError(text)))
 
 
-def read_json(path):
+def read_json(path, limit=MAX_JSON):
     path = Path(path)
     require(path.is_file() and not path.is_symlink(), 'Expected regular JSON: ' + str(path))
     with path.open('rb') as stream:
-        raw = stream.read(MAX_JSON + 1)
-    require(len(raw) <= MAX_JSON, 'JSON exceeds evidence bound: ' + str(path))
+        raw = stream.read(limit + 1)
+    require(len(raw) <= limit, 'JSON exceeds evidence bound: ' + str(path))
     return parse(raw)
 
 
@@ -463,6 +463,139 @@ class Replay:
         require(LOCUS in [entity.get('subject', {}).get('subject_ref') for entity in document['entities'].values()], 'Canonical actual personal locus required')
         return reading, document
 
+    def adopt_current_controlled_profile(self, relative, reading, document):
+        """Explicit repair of the retained controlled candidate, not loader rebasing.
+
+        The imported131 fixture and all original receipts remain immutable.
+        Only the existing native profile adoption and file CAS operations make
+        its successor. No Scene, subject, identity, occasion or authored form
+        is reconstructed here.
+        """
+        adoptions = [row for row in document['profiles']
+                     if row['profile_ref'].startswith('profile:epi-coordinate-')]
+        old_ref = 'profile:epi-coordinate-fd9f0de5a1784ac5f7166913b0fd63eaedd00fe5c3e43d597a81e0868a540ebb'
+        require(len(adoptions) == 1 and adoptions[0]['profile_ref'] == old_ref
+                and adoptions[0]['revision'] == 1
+                and adoptions[0]['overridden_parameters'] == {}
+                and adoptions[0]['source_basis']['ref'] == LOCUS,
+                'Explicit repair applies only to the reviewed original131 controlled adoption')
+        opened = self.op('profile-review-open', {'op': 'expression', 'request': {
+            'operation': 'open_file', 'location': reading['location'],
+            'expected_file_revision': reading['revision'], 'actor': 'agent:epi-fidelity-repair'}})['data']
+        require(opened['state'] == 'ready' and opened['document'] == document,
+                'Repair must begin from the complete exact admitted131 Document')
+        current = self.op('profile-review-current-coordinate', {'op': 'nara_coordinate', 'request': {
+            'coordinate_ref': LOCUS, 'face': 'bimba', 'include_content': True}})['data']
+        binding = current['binding']
+        content = current['source_content']
+        source = current['subject_binding']['sources'][0]
+        record = document['scenes'][0]['presentation']['scene']['epiWorld']
+        native_source_paths = ['fixtures/kernel/bimba-content-v1.json',
+                               'crates/ql-mef/src/bimba_content.rs',
+                               'crates/ql-mef/src/coordinate_expression.rs']
+        source_before = self.source_rows(self.ql, self.args.expected_ql_head, native_source_paths)
+        bimba = read_json(self.ql / native_source_paths[0], limit=MAX_PACKAGE)
+        original_properties = bimba['content']['nodes']['M4.4.4.4']['properties']
+        hub_rows = [row for row in record['inventory'] if row['canonical_ref'] == LOCUS]
+        require(current['schema'] == 'oi.nara-coordinate/v1'
+                and binding['face'] == 'bimba'
+                and current['subject_binding']['subject_ref'] == LOCUS
+                and source == adoptions[0]['source_basis']
+                and binding['rooted_world']['registry_revision'] == record['source_basis']['registry_revision']
+                and content['identity']['canonical_ref'] == LOCUS
+                and content['identity']['uuid'] == 'dcb274c1-fbbc-5914-b27d-dea979c78558'
+                and content['source_revision'] == record['source_basis']['source_revision']
+                and bimba['source_revision'] == content['source_revision']
+                and content['identity']['properties'] == original_properties
+                and len(hub_rows) == 1
+                and content['identity']['properties_sha256'] == hub_rows[0]['properties_sha256']
+                and any(row['record']['payload_sha256'] == hub_rows[0]['properties_sha256']
+                        for row in binding['property_sources']),
+                'Current grammar review must retain the exact whole Bimba hub basis')
+        incident = [(index, row) for index, row in enumerate(bimba['content']['relations'])
+                    if row[0] == 'M4.4.4.4' or row[2] == 'M4.4.4.4']
+        source_refs = {row['coordinate']: row['canonical_ref'] for row in record['inventory']}
+        require(len(source_refs) == len(record['inventory']), 'Complete retained source identities must be unambiguous')
+        def source_digest(value):
+            return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True,
+                                             separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+        require(len(incident) == len(content['relations']) == 23,
+                'Complete original hub incident relations are required')
+        for actual, (index, row) in zip(content['relations'], incident):
+            require(actual['source_index'] == index and actual['from_coordinate'] == row[0]
+                    and actual['kind'] == row[1] and actual['to_coordinate'] == row[2]
+                    and actual['properties'] == row[3] and actual['orientation'] == 'directed'
+                    and actual['source_revision'] == bimba['source_revision']
+                    and actual['properties_sha256'] == source_digest(row[3])
+                    and actual['relation_ref'] == 'bimba:relation:' + source_digest(row[:3])[:24]
+                    and actual['from_ref'] == source_refs[row[0]]
+                    and actual['to_ref'] == source_refs[row[2]],
+                    'Current native hub relation differs from the exact directed qualified source tuple')
+        source_after = self.source_rows(self.ql, self.args.expected_ql_head, native_source_paths)
+        require(source_after == source_before, 'Hub source custody changed during explicit grammar review')
+        profiles = current['profiles']
+        require(len(profiles) == 4
+                and profiles[-1]['profile_ref'] == binding['resolved_profile_ref']
+                and profiles[-1]['revision'] == binding['profile_revision']
+                and binding['resolved_profile_ref'] != old_ref,
+                'A real current native lineage must replace the independently identified stale grammar')
+        for index, profile in enumerate(profiles):
+            require(profile['parent_profile_refs'] == ([] if index == 0 else [profiles[index - 1]['profile_ref']]),
+                    'Native lineage must be complete and parents-first')
+            defined = self.op(f'profile-review-define-{index}', {'op': 'expression', 'request': {
+                'operation': 'profile_define', 'profile': profile, 'actor': 'agent:epi-fidelity-repair'}})['data']
+            inspected = self.op(f'profile-review-inspect-{index}', {'op': 'expression', 'request': {
+                'operation': 'profile_inspect', 'profile_ref': profile['profile_ref']}})['data']
+            require(defined['state'] == inspected['state'] == 'profile'
+                    and defined['profile'] == inspected['profile'] == profile,
+                    'Actual native profile admission and independent readback must match exact source')
+        adoption = {'profile_ref': binding['resolved_profile_ref'], 'revision': binding['profile_revision'],
+                    'source_basis': source, 'overridden_parameters': {}}
+        changes = [{'change': 'profile_release', 'profile_ref': old_ref},
+                   {'change': 'profile_adopt', 'adoption': adoption}]
+        accepted = self.op('profile-review-explicit-adoption', {'op': 'expression', 'request': {
+            'operation': 'edit', 'expression_ref': document['expression_ref'],
+            'expected_revision': document['revision'], 'actor': 'agent:epi-fidelity-repair',
+            'changes': changes}})['data']
+        expected = json.loads(json.dumps(document))
+        expected['revision'] += 1
+        expected['profiles'] = [row for row in document['profiles'] if row['profile_ref'] != old_ref] + [adoption]
+        require(accepted['state'] == 'ready' and accepted['document'] == expected,
+                'Profile repair may change only the single adoption and Document revision')
+        saved = self.op('profile-review-native-save', {'op': 'expression', 'request': {
+            'operation': 'save', 'expression_ref': expected['expression_ref'],
+            'expected_revision': expected['revision'], 'location': reading['location'],
+            'expected_file_revision': reading['revision'], 'actor': 'agent:epi-fidelity-repair',
+            'actor_kind': 'agent'}})['data']
+        require(saved['state'] == 'saved' and saved['persisted'] is True
+                and saved['readback_verified'] is True
+                and saved['expression_revision'] == expected['revision']
+                and saved['file']['location'] == reading['location'],
+                'Only an acknowledged ordinary native save supplies the successor file')
+        live = self.op('profile-review-saved-live-inspect', {'op': 'expression', 'request': {
+            'operation': 'inspect', 'expression_ref': expected['expression_ref']}})['data']
+        require(live['state'] == 'ready' and live['document'] == expected
+                and live['dirty'] is False and live['saved_revision'] == expected['revision']
+                and live['file'] == saved['file'],
+                'Actual saved live native Document and current file binding must match the explicit repair')
+        received, decoded = self.file_admission(relative, 'profile-review-saved-readback', saved['file']['revision'])
+        require(decoded == expected, 'Complete independent native saved-file admission must match the explicit repair')
+        repair = {'schema': 'epi.explicit-current-coordinate-profile-repair/v1',
+                  'source_cut': self.args.expected_ql_head,
+                  'original_document_revision': document['revision'], 'successor_document_revision': decoded['revision'],
+                  'before_file': {'location': reading['location'], 'revision': reading['revision']},
+                  'after_file': {'location': received['location'], 'revision': received['revision']},
+                  'old_adoption': adoptions[0], 'current_adoption': adoption,
+                  'current_coordinate_ref': file_ref(self.out / 'profile-review-current-coordinate.json'),
+                  'source_qualification': source_before, 'complete_properties': len(original_properties),
+                  'complete_directed_incident_relations': len(incident),
+                  'changes': changes, 'all_other_document_values_equal': True,
+                  'source_basis_unchanged': True, 'material_members': [len(scene['entity_refs']) for scene in decoded['scenes']],
+                  'standing': 'Actual explicit native candidate repair and full save/readback; original fixture retained; production loader does not rebase; whole replay follows'}
+        save(self.out / 'explicit-profile-repair.json', repair)
+        self.report['explicit_profile_repair'] = file_ref(self.out / 'explicit-profile-repair.json')
+        return received, decoded
+
     def driver(self, phase, config):
         target = self.out / f'{phase}-config.json'
         config = {**config, 'bridge': self.url, 'output': str(self.out / phase)}
@@ -664,6 +797,7 @@ class Replay:
         self.report['imported_prior_save'] = {'standing': 'Declared exact historical fixture import, not a claimed native save',
                                              'file': {'location': reading['location'], 'revision': reading['revision']},
                                              'document_ref': document['expression_ref'], 'document_revision': document['revision']}
+        reading, document = self.adopt_current_controlled_profile(relative, reading, document)
         entry = self.repo / 'desktop/cradle/expressions-app/field-studies-journeys/public/index.html'
         require(entry.is_file(), 'Build the actual production journey application before this driver')
         self.report['production_entry'] = file_ref(entry)
