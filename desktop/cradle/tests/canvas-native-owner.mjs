@@ -13,7 +13,8 @@ export async function startCanvasNativeOwner(output,initialSource,initialFlow){
  const scratch=mkdtempSync(join(output,'native-owner-')),root=join(scratch,'Central'),home=join(scratch,'oi-home');
  const env={...process.env,OI_HOME:home,OI_CENTRAL_ROOT:root,OI_CENTRAL_PROJECT_QUERY:''};
  const native=(action,input)=>{const result=JSON.parse(execFileSync(env.OI_CENTRAL_CTRL_BIN,['--root',root,'--json','action','run',action,JSON.stringify(input)],{env,encoding:'utf8',timeout:30000,maxBuffer:1024*1024}));assert.equal(result.ok,true,JSON.stringify(result));return result.data;};
- const samplePath=join(root,'Control/user/sample.md'),flowPath=join(root,'Control/user/flow.html');
+ const sourceDirectory='Work/CanvasFiles';
+ const samplePath=join(root,sourceDirectory,'sample.md'),flowPath=join(root,sourceDirectory,'flow.html');
  let child,closed=false,closedPromise,spawnFailure,stderr='';
  const bounded=async(promise,label)=>{let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label)),3000);})]);}finally{clearTimeout(timer);}};
  const retire=async()=>{
@@ -33,7 +34,7 @@ export async function startCanvasNativeOwner(output,initialSource,initialFlow){
   // agent context; only the supplied test binaries and fixture root act.
   delete env.CENTRAL_NATIVE_TOKEN;delete env.AIKIT_CONTEXT_ID;delete env.AIKIT_ISOLATION;
   env.CENTRAL_ROOT=root;env.CENTRAL_CTRL_BIN=env.OI_CENTRAL_CTRL_BIN;
-  native('central.init',{});mkdirSync(join(root,'Control/user'),{recursive:true});
+  native('central.init',{});mkdirSync(join(root,sourceDirectory),{recursive:true});
   writeFileSync(samplePath,initialSource);writeFileSync(flowPath,initialFlow);
   child=spawn(env.OI_KERNEL_BIN,['127.0.0.1:0'],{env,stdio:['ignore','pipe','pipe']});
   closedPromise=new Promise(resolve=>child.once('close',()=>{closed=true;resolve();}));
@@ -51,11 +52,19 @@ export async function startCanvasNativeOwner(output,initialSource,initialFlow){
   const active=await operation({op:'state'});
   assert.equal(active.snapshot.navigator.root.root,root);
   writeFileSync(join(output,'native-world-entry.json'),JSON.stringify({before:beforeEntry,entered,active},null,2));
-  const listed=await operation({op:'files_list',path:'Control/user',fresh:true});
+  // These are ordinary work artifacts. Protected Control/user source uses
+  // its authored source operations and must not be made file-writable just
+  // to satisfy an editor test.
+  const listed=await operation({op:'files_list',path:sourceDirectory,fresh:true});
   assert.equal(listed.result,'directory_read');
   const entries=listed.directory.entries;
   const sample=entries.find(row=>row.name==='sample.md')?.location,flow=entries.find(row=>row.name==='flow.html')?.location;assert.ok(sample);assert.ok(flow);
+  const sampleReading=await operation({op:'file_read',location:sample});assert.equal(sampleReading.result,'file_read');
   const flowReading=await operation({op:'file_read',location:flow});assert.equal(flowReading.result,'file_read');
+  const ground=await operation({op:'ground',request:{action:'recognize',path:root}});assert.equal(ground.result,'ground_reading');
+  writeFileSync(join(output,'native-editor-preconditions.json'),JSON.stringify({sample:sampleReading,flow:flowReading,ground},null,2));
+  for(const reading of [sampleReading,flowReading])assert.equal(reading.reading.operations.write.available,true,JSON.stringify(reading.reading.operations));
+  assert.equal(ground.reading.outcome,'recognized');assert.equal(ground.reading.canonical_path,root);
   const recognition=native('central.recognize',{path:root});
   writeFileSync(join(output,'native-owner-basis.json'),JSON.stringify({root,recognition,binaries:Object.fromEntries(['OI_BIN','OI_CENTRAL_CTRL_BIN','OI_KERNEL_BIN'].map(key=>[key,{path:env[key],sha256:createHash('sha256').update(readFileSync(env[key])).digest('hex')}])),sample,flow,flow_revision:flowReading.reading.revision},null,2));
   return {root,sample,flow,flowRevision:flowReading.reading.revision,flowBytes:()=>readFileSync(flowPath,'utf8'),sourceBytes:()=>readFileSync(samplePath,'utf8'),url,retire};
