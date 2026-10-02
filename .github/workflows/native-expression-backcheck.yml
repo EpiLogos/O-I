@@ -10,6 +10,9 @@ on:
       - 'desktop/cradle/tests/fixtures/native-expression*'
       - 'desktop/cradle/tests/*formation*'
       - 'desktop/cradle/tests/candidate-cache-native.mjs'
+      - 'desktop/cradle/tests/epi-*'
+      - 'desktop/cradle/tests/current-manifest-artifact-guards.mjs'
+      - 'desktop/cradle/tests/fixtures/epi-world-hosted/**'
       - 'packages/oi-design-system/expressions-engine/engine/**'
       - 'packages/oi-design-system/expressions-engine/shell/**'
       - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
@@ -303,3 +306,85 @@ jobs:
           path: /tmp/w5-checks
           retention-days: 14
           if-no-files-found: error
+
+
+  epi-whole:
+    name: Complete controlled Epi world / source-built hosted Linux
+    needs: embedded
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - id: source
+        name: Freeze actual O:I head and qualified QL adapter owner
+        run: |
+          set -euo pipefail
+          echo "oi=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          ql=$(jq -r .revision desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json)
+          test "$ql" = ec33764868b22e98cd6ebff8f6565097f67bdb03
+          echo "ql=$ql" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ steps.source.outputs.ql }}
+          path: .native-owner/QL-MEF
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          # Qualified source-horizon transaction/readback owner, not PR255's broader successor.
+          ref: 6bcfc1661cd0eccec1a4a691503ea401d411023a
+          path: .native-owner/Central
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: astral-sh/setup-uv@v6
+      - name: Actual production build and browser runtime
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libjson-c-dev pkg-config
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+          npm run build --prefix desktop/cradle
+          npm run build:journeys --prefix desktop/cradle/expressions-app
+          (cd desktop/cradle && npx playwright install --with-deps chromium)
+      - name: Complete real native production, causal receiving and owned-kernel restart
+        env:
+          EXPECTED_OI_HEAD: ${{ steps.source.outputs.oi }}
+          EXPECTED_QL_HEAD: ${{ steps.source.outputs.ql }}
+        run: |
+          set -euo pipefail
+          python3 desktop/cradle/tests/epi-world-hosted-native.py \
+            --repo "$GITHUB_WORKSPACE" \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/QL-MEF" \
+            --central-source "$GITHUB_WORKSPACE/.native-owner/Central" \
+            --expected-oi-head "$EXPECTED_OI_HEAD" \
+            --expected-ql-head "$EXPECTED_QL_HEAD" \
+            --expected-central-head 6bcfc1661cd0eccec1a4a691503ea401d411023a \
+            --fixture-archive "$GITHUB_WORKSPACE/desktop/cradle/tests/fixtures/epi-world-hosted/controlled-native.tar.gz" \
+            --fixture-sha256 b173b96c51bdf964e131c36da1cd171e97e077c340c4b6b36116c52f46093461 \
+            --uv "$(command -v uv)" \
+            --output "$RUNNER_TEMP/epi-whole-hosted"
+      - name: Retain same-environment requests, source/build custody, bodies and restart evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epi-whole-hosted-${{ github.event.pull_request.head.sha || github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/epi-whole-hosted/**
+            !${{ runner.temp }}/epi-whole-hosted/build/**
+            !${{ runner.temp }}/epi-whole-hosted/cache/**
+            !${{ runner.temp }}/epi-whole-hosted/uv-cache/**
+            !${{ runner.temp }}/epi-whole-hosted/nara-provider-cache/**
+            !${{ runner.temp }}/epi-whole-hosted/oi-home/**
+            !${{ runner.temp }}/epi-whole-hosted/oi-data/**
+            !${{ runner.temp }}/epi-whole-hosted/world/**
+            !${{ runner.temp }}/epi-whole-hosted/toolchain-bin/**

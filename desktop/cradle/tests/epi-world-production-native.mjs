@@ -13,6 +13,7 @@ import react from '@vitejs/plugin-react';
 import {build} from 'esbuild';
 import {chromium} from 'playwright';
 import {runPersonalModalConsumerProof,runSavedPersonalReleaseGate,runColdPersonalDraftGate} from './epi-personal-native-proof.mjs';
+import {qualifyPortableNativeSourceExpectation,qualifyPortableRuntimeExecution,requalifyPortableCurrentCustody} from './epi-world-portable-custody.mjs';
 
 assert.ok(process.argv[2],'Supply a JSON configuration with bridge, output and two identity_files');
 const config=JSON.parse(readFileSync(resolve(process.argv[2]),'utf8'));
@@ -38,8 +39,9 @@ let nativeSourceQualification=null;
 if(nativeOwnerExpectation){
  assert.equal(nativeOwnerExpectation.owner_cut,config.binaries?.quaternal_logic?.source_cut,'Current native owner expectations must name the independently qualified managed cut');
  // Freeze and qualify predictions before any native request. Replies never supply expected values.
- if(nativeOwnerExpectation.schema==='epi.native-world-source-expectation/v2')nativeSourceQualification=qualifyNativeSourceExpectation(nativeOwnerExpectation);
- else assert.equal(nativeOwnerExpectation.semantic_metadata_transition,undefined,'Metadata transitions require the independently source-qualified v2 expectation');
+ if(nativeOwnerExpectation.schema==='epi.native-world-source-expectation/v3')nativeSourceQualification=qualifyPortableNativeSourceExpectation(nativeOwnerExpectation,{originalWorldFile:config.original_owner_world_file,currentCut:config.binaries?.quaternal_logic?.source_cut});
+ else if(nativeOwnerExpectation.schema==='epi.native-world-source-expectation/v2')nativeSourceQualification=qualifyNativeSourceExpectation(nativeOwnerExpectation);
+ else assert.equal(nativeOwnerExpectation.semantic_metadata_transition,undefined,'Metadata transitions require an independently source-qualified v2 or v3 expectation');
 }
 const json=(name,value)=>writeFileSync(resolve(out,name),JSON.stringify(value,null,2)+'\n');
 const identities=(config.identity_files??[]).map(path=>JSON.parse(readFileSync(resolve(path),'utf8')));
@@ -257,15 +259,20 @@ async function recoverOriginalRuntimeBuffers(reading,original){
  assert.deepEqual(nativeOwnerExpectation.semantic_world_keys,keys,'Every semantic field, including schema, is qualified');
  const originalWorld=original.response?.outcome?.data?.source?.world;
  assert.ok(originalWorld,'Original actual native response must accompany its request');
+ let executionQualification;
+ if(nativeOwnerExpectation.schema==='epi.native-world-source-expectation/v3'){
+  executionQualification=qualifyPortableRuntimeExecution(nativeOwnerExpectation,original.response.outcome.data.source,actual.source);
+ }else{
  const currentExecutable=nativeOwnerExpectation.managed_all_five?.find(b=>b.name==='ql');
  const originalExecutable=nativeOwnerExpectation.original_all_five?.find(b=>b.role==='ql');
  assert.ok(currentExecutable?.read_only_bytes_verified&&originalExecutable?.read_only_bytes_verified,'Both actual executable expectations must be independently byte qualified');
- const executionQualification={};
+ executionQualification={};
  for(const [label,source,binary] of [['original',original.response.outcome.data.source,originalExecutable],['current',actual.source,currentExecutable]]){
   assert.equal(source.ql_executable,binary.path,label+': actual native execution names the exact qualified executable path');
   assert.equal(source.ql_executable_sha256,binary.sha256,label+': actual native execution names the exact qualified executable bytes');
   assert.equal(hashFileReadOnly(binary.path).sha256,binary.sha256,label+': executable bytes still agree with the independent qualification');
   executionQualification[label]={path:source.ql_executable,sha256:source.ql_executable_sha256,selection:source.ql_selection,reported_revision:source.ql_revision};
+ }
  }
  for(const [label,value] of [['current',world],['saved',expected],['original',originalWorld]])assert.deepEqual(Object.keys(value).sort(),completeKeys,label+': no world field may disappear or evade qualification');
  const sourceCopy=structuredClone(world);
@@ -584,8 +591,40 @@ try{
  assert.ok(originalRecovery,'Original actual preparation request is required for separate immutable buffer recovery');
  await recoverOriginalRuntimeBuffers(a,originalRecovery);
 
- check(aDoc.scenes.length===3,'The native owner stores the three connected cosmic, personal and branch scenes');
- check(aDoc.scenes.map(s=>s.entity_refs.length).join(',')==='32,9,7','The native owner retains all 32 cosmic, 9 personal and 7 branch occurrences');
+ if(config.reopen_acknowledgement_file){
+  assert.equal(config.stage,'entry','A prior native save acknowledgement applies only to the separate fresh-process entry gate');
+  assert.ok(config.reopen_expected,'Restart entry requires exact prior acknowledged person/instance/occasion/selection');
+  const acknowledgedPath=resolve(config.reopen_acknowledgement_file),acknowledgedHash=hashFileReadOnly(acknowledgedPath);
+  assert.ok(acknowledgedHash.bytes<=24*1024*1024,'Bounded prior full native Document acknowledgement');
+  assert.equal(acknowledgedHash.sha256,config.reopen_acknowledgement_sha256,'Exact frozen prior save/inspect/file read acknowledgement');
+  const acknowledged=JSON.parse(readFileSync(acknowledgedPath,'utf8'));
+  assert.equal(acknowledged.schema,'epi.hosted-native-saved-continuation/v1');
+  assert.equal(acknowledged.prior_native_generation,config.reopen_prior_native_generation);
+  const prior=qualifiedJson(acknowledged.prior_full_receipt_ref,'Prior complete production proof');
+  assert.equal(prior.schema,'oi.epi-world-production-native-proof/v1');assert.equal(prior.passed,true);assert.equal(prior.failure,undefined);
+  assert.deepEqual(prior.continuation.file,acknowledged.file,'Only the independently acknowledged latest A save supplies the current restart fence');
+  for(const key of ['expression_ref','person_ref','event_ref','scene_ref','entity_ref'])assert.equal(prior.continuation[key],config.reopen_expected[key],'Prior completed encounter supplies restart '+key);
+  const priorSavedFile=qualifiedJson(acknowledged.prior_saved_file_ref,'Prior actual native save/file read/inspect');
+  assert.equal(priorSavedFile.owner_decode,'expression.inspect_file');
+  assert.deepEqual(priorSavedFile.document,acknowledged.document,'The restart expectation comes from prior complete native file admission, not a restarted reply');
+  assert.deepEqual({location:priorSavedFile.location,revision:priorSavedFile.revision},acknowledged.file);
+  assert.deepEqual(aDoc,acknowledged.document,'A fresh native/browser body recovers the complete exact previously acknowledged saved Document');
+  assert.deepEqual(a.working.file,acknowledged.file,'Opening must retain the actual prior acknowledged file location and CAS fence');
+  assert.equal(a.working.revision,acknowledged.document.revision);assert.ok(!a.working.pending,'No current pending edit may masquerade as durable restart');
+  assert.deepEqual(aDoc.selection,acknowledged.document.selection);
+  const canonical=['cosmic','personal','branches'].map(role=>`${a.working.native_ref}:scene:${role}`);
+  assert.equal(aDoc.scenes.length,4,'The preceding actual Save & next acknowledged exactly one deliberate fourth presentation');
+  const base=canonical.map(ref=>{const scene=aDoc.scenes.find(s=>s.scene_ref===ref);assert.ok(scene,'The exact canonical '+ref+' is still required');return scene;});
+  assert.deepEqual(base.map(s=>s.entity_refs.length),[32,9,7],'Restart keeps complete original cosmic/personal/branch membership');
+  const additional=aDoc.scenes.filter(s=>!canonical.includes(s.scene_ref));assert.equal(additional.length,1);
+  assert.deepEqual(additional[0].entity_refs,base[0].entity_refs,'The acknowledged fourth scene deliberately presents the same cosmic members');
+  assert.ok(!additional[0].presentation.scene.epiWorld,'The fourth presentation cannot duplicate the machine world receipt');
+  artifact('fresh-process-prior-save-qualification.json',{path:acknowledgedPath,...acknowledgedHash,prior_full_receipt_ref:acknowledged.prior_full_receipt_ref,file:acknowledged.file,document_revision:acknowledged.document.revision,scenes:aDoc.scenes.map(s=>({scene_ref:s.scene_ref,entity_refs:s.entity_refs})),selection:aDoc.selection});
+  check(true,'Fresh process entry retains the exact acknowledged four-scene Document, canonical 32/9/7 members, deliberate cosmic continuation, person/occasion/selection and current native file fence');
+ }else{
+  check(aDoc.scenes.length===3,'The native owner stores the three connected cosmic, personal and branch scenes');
+  check(aDoc.scenes.map(s=>s.entity_refs.length).join(',')==='32,9,7','The native owner retains all 32 cosmic, 9 personal and 7 branch occurrences');
+ }
  const cosmic=aDoc.scenes.find(s=>s.scene_ref===a.record.receiving.scene_ref),personal=aDoc.scenes.find(s=>s.scene_ref===`${a.working.native_ref}:scene:personal`),branches=aDoc.scenes.find(s=>s.scene_ref===`${a.working.native_ref}:scene:branches`);
  assert.ok(cosmic&&personal&&branches);const openingScene=aDoc.scenes.find(s=>s.scene_ref===a.document.scenes[a.state.sceneIndex]?.id);assert.ok(openingScene);requirePartitions(a,openingScene.entity_refs,'Native opening rest');requireInitialRestTargets(a,openingScene.entity_refs,'Native opening rest');await savedFile(a.working,'person-a-opening');
  receipt.opening_world={expression_ref:a.working.native_ref,file:a.working.file,person_ref:a.record.person_ref,nara_ref:a.record.nara_ref,identity_source:a.record.identity_source,current_context:a.current.context,event_ref:a.record.world.event_ref,scene_ref:openingScene.scene_ref};json('receipt.json',receipt);
@@ -798,5 +837,7 @@ try{
 }catch(error){
  if(!error.intentionalStop){receipt.failure={phase,message:error.stack??String(error)};console.error('FAIL',phase,error.stack??String(error));if(page)try{artifact('failure-launch-context.json',{host:await page.evaluate(()=>({url:location.href,ready:document.readyState,frame_src:document.querySelector('#world')?.getAttribute('src'),host_api:!!window.__EPI_REAL_HOST__,body:document.body.innerText})),app:frame?await frame.evaluate(()=>({url:location.href,ready:document.readyState,field_api:!!window.__FIELD_STUDIES__,kernel_api:!!window.__OI_KERNEL_EXPRESSIONS__,body:document.body.innerText.slice(0,32000)})):null});await page.screenshot({path:resolve(out,'failure-independent-screen.png')});receipt.artifacts.push('failure-independent-screen.png');}catch(e){receipt.failure.boot_context_error=String(e);}if(frame)try{await snapshot('failure-'+receipt.checks.length,true);}catch(e){receipt.failure.snapshot_error=String(e);} process.exitCode=1;}
 }finally{
- clearInterval(heartbeat);receipt.entry.final_on_disk_sha256=sha(readFileSync(entryPath));receipt.entry.changed_on_disk=receipt.entry.final_on_disk_sha256!==receipt.entry.sha256;json('receipt.json',receipt);await browser?.close();await server?.close();console.log('RECEIPT',resolve(out,'receipt.json'));
+ clearInterval(heartbeat);
+ if(nativeOwnerExpectation?.schema==='epi.native-world-source-expectation/v3')try{receipt.portable_custody_after=requalifyPortableCurrentCustody(nativeOwnerExpectation,nativeSourceQualification);}catch(error){receipt.passed=false;receipt.custody_after_failure={message:error.stack??String(error)};if(!receipt.failure)receipt.failure={phase:'Current physical custody after the original whole encounter',message:error.stack??String(error)};process.exitCode=1;}
+ receipt.entry.final_on_disk_sha256=sha(readFileSync(entryPath));receipt.entry.changed_on_disk=receipt.entry.final_on_disk_sha256!==receipt.entry.sha256;json('receipt.json',receipt);await browser?.close();await server?.close();console.log('RECEIPT',resolve(out,'receipt.json'));
 }
