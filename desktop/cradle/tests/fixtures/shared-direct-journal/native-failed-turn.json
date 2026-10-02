@@ -1,0 +1,143 @@
+{
+  "agent_session": "agent-session/direct-bcd57cbdda4560c6f035152d8e97d193de4535c81b38196403367dae2cf4d763",
+  "events": [
+    {
+      "cursor": 3028,
+      "event": {
+        "draft_revision": 8,
+        "kind": "user-message",
+        "observed_at_ms": 1790961027202,
+        "payload_digest": "blake3:2caee5bde46738778342fe5e7e1f8034571acba1d414a1d6d1844dca5c7b0de8",
+        "prepared_context": {
+          "digest": "blake3:a2cfc80ce7f3a258d00c3cc069c9c6a7a2aabc8c357e9ffc8984a27672d846c3",
+          "items": [
+            {
+              "canonical_expression": "@ world:shared-expression:ann/artifact:shared-continuation-guide",
+              "expression": {
+                "expression": {
+                  "node": "subject",
+                  "value": "world:shared-expression:ann/artifact:shared-continuation-guide"
+                },
+                "node": "address"
+              },
+              "id": "blake3:8e93a382d3a6611eca12071d766f9b716862323dbcf416d344ef5f3c3351ff17",
+              "selection": {
+                "anchor": {
+                  "document_id": "shared-expression-continuation-guide-20260930",
+                  "key": "accepted-proposals",
+                  "kind": "observation",
+                  "node_ref": null,
+                  "role": "reading",
+                  "selector": "entry:ada-returned-proposal,entry:bo-returned-proposal",
+                  "url": null
+                },
+                "binding_id": "presentation:shared-artifact:ann",
+                "captured_at": "2026-10-01T19:20:00Z",
+                "owner": "world:shared-expression:ann",
+                "source_project": "world:shared-expression:ann",
+                "source_ref": "world:shared-expression:ann/artifact:shared-continuation-guide",
+                "source_revision": "central.content-fnv1a64/v1:13341:661eaac330bbefbf",
+                "text": "Shared continuation guide — Ann and Bea (corrected proposal)\nStatus: prepared by Ada r1 (agent:expressed-88d11962e8c34c2ea8209169c93f7012) from two supplied sources plus the operator's corrections. Controlled-user evidence, not a two-human experience claim. No edits or tests performed by Ada; untested items are marked.\n\nSource text, as supplied (attributed)\nAnn's guide (rev 1): ownership stays with each world's owner for source, agent identity, expression acts, hosted projection, presence, shared temporal reading and local rendering; acts carry basis_revision with indexed passages; a cursor names world/workcell/day plus act and passage seen; re-enter with your established identity; connection-qualified claims survive reconnect; resume acts on the existing act_ref (the guide calls this idempotent — untested here).\n\nBo's check for Bea (rev 1): a constructed CAS/rebase example using basis_conflict, current_revision, tombstone withdrawal and dedupe by proposal id + proposer. These are that example's model, not asserted native APIs.\n\nCorrected synthesis (Ada, for both participants)\n\nDay addressing: prefer the full world/workcell/day tuple. Unambiguous legacy bare day references are permitted; only ambiguous bare withdrawal is refused. Personal Days in this episode share one bare reference and are distinguished by world/workcell/day.\n\nSubmitting: native receiving keys on producer_key, scoped to the authenticated principal. An exact repeat returns the retained outcome; different content under the same key is refused.\n\nChanging or rebasing: submit under a new producer_key and retain a continues/provenance reference to the original contribution, so history stays attributable.\n\nInclusion: native inclusion checks expected_source_revision. If the source changed, re-read and re-review against the new exact source revision; stale reviews do not include.\n\nOperator-reported actual checks (performed by the operator, not by Ada)\n\nRemoval of the Bea body fails actual pixel acceptance.\n\nProducer loss removes liveness.\n\nTwo qualified same-date Days persist.\n\nForeign, stale and duplicate Day writes fail.\n\nUntested here\nThe sources' described conflict/retry flow, tombstone withdrawal and idempotent act resume are unverified natively; the corrected producer_key rebase flow is stated policy, not an executed test by Ada.\n\nChecklist (both participants)\n\nAddress Days by world/workcell/day; use a bare day reference only when unambiguous, and never for withdrawal when ambiguous.\n\nExact repeat → expect the retained outcome; changed content needs a new producer_key plus a continues/provenance reference.\n\nBefore inclusion, confirm expected_source_revision; on change, re-read and re-review.\n\nReturn outcomes to your own world as attributable Return.\n\nProvenance: drawn only from the two supplied public sources and the operator's stated corrections and reported checks. Nothing independently executed or verified by Ada; returns to Ann and Bea for adoption in their own registers.\n\nRevised proposed row (proposal only — untested, not operator verification):\n\nFieldProposed acceptance contentWorld identity + source CASEnter as established world:shared-expression:bea / world:shared-expression:ann; anchor contributions on the exact reviewed heads — projection:shared-artifact:bea:revision:1 @ central.content-fnv1a64/v1:6207:34edfed2b1fb950b and projection:shared-artifact:ann:revision:5 @ central.content-fnv1a64/v1:15878:582df44a1c361da9; moved head → explicit refusal, re-read, re-reviewNative-owner generation (separate)Opaque process incarnation returned by Describe, not a producer_key: expect/record current Bea generation oi:native-owner-generation:75ee55fe68412ab165fb73462018ab5ac99af62adf621d91Cursors (separate)Native journal cursor qualified by World + agent session (agent-session/direct-bcd57cbdda4…); distinct from shared temporal cursor naming world/workcell/day + act/passage; bare day_ref never for ambiguous withdrawalStandingProposed by Bo, this session; distinct from operator's completed checksNo tools, source changes, effect replay, Factory Run, or two-human claims.",
+                "title": "Shared continuation guide · both accepted proposals",
+                "working_copy": false
+              }
+            }
+          ],
+          "revision": 7,
+          "schema": "aikit.prepared-context/v1",
+          "scope": {
+            "agent_session": "agent-session/direct-bcd57cbdda4560c6f035152d8e97d193de4535c81b38196403367dae2cf4d763",
+            "project": "control:root"
+          }
+        },
+        "text": "Using the reviewed shared guide, write a replacement for ‘When the connection breaks’, at most 70 words. Tell Ann and Bea what to do after a missing reply and a competing edit: check what was accepted, preserve each author, and revise the latest guide together. Use ordinary language. Return only the proposed paragraph, without headings, metadata or claims of completed tests. Do not change sources or invoke tools."
+      }
+    },
+    {
+      "cursor": 3055,
+      "event": {
+        "connection_generation": "01M3TZ2N12WF1QYJTWG7SHPM3R",
+        "event": {
+          "Signal": {
+            "kind": {
+              "kind": "failed",
+              "reason": "429: {\"code\":\"1310\",\"message\":\"Weekly/Monthly Limit Exhausted. Your limit will reset at 2026-10-03 19:51:18\"}"
+            },
+            "native_session_id": "01a0f5f1-59b7-76f5-b356-39ab5bb37d17",
+            "provenance": [
+              "native encounter provider shared-inquiry-pi-fresh-2"
+            ],
+            "sequence": 1986
+          }
+        },
+        "kind": "provider",
+        "observed_at_ms": 1790961044174
+      }
+    },
+    {
+      "cursor": 3056,
+      "event": {
+        "connection_generation": "01M3TZ2N12WF1QYJTWG7SHPM3R",
+        "event": {
+          "TurnEnded": {
+            "agent_session": "agent-session/direct-bcd57cbdda4560c6f035152d8e97d193de4535c81b38196403367dae2cf4d763",
+            "binding": {
+              "agent_session": "agent-session/direct-bcd57cbdda4560c6f035152d8e97d193de4535c81b38196403367dae2cf4d763",
+              "model_observation": {
+                "available_models": [
+                  {
+                    "modelId": "zai/glm-4.7",
+                    "name": "GLM-4.7 · zai"
+                  },
+                  {
+                    "modelId": "zai/glm-5-turbo",
+                    "name": "GLM-5-Turbo · zai"
+                  },
+                  {
+                    "modelId": "zai/glm-5.2",
+                    "name": "GLM-5.2 · zai"
+                  },
+                  {
+                    "modelId": "zai/glm-5.2-highspeed",
+                    "name": "GLM-5.2 Highspeed · zai"
+                  },
+                  {
+                    "modelId": "zai/glm-5.3",
+                    "name": "GLM-5.3 · zai"
+                  },
+                  {
+                    "modelId": "zai/glm-5.3-flash",
+                    "name": "GLM-5.3-Flash · zai"
+                  },
+                  {
+                    "modelId": "zai/glm-5.3-highspeed",
+                    "name": "GLM-5.3 Highspeed · zai"
+                  }
+                ],
+                "current_model_id": "zai/glm-5.3-flash",
+                "native_provider": "zai",
+                "standing": "Pi native get_available_models + get_state; configuration, not an inference receipt"
+              },
+              "native_session_id": "01a0f5f1-59b7-76f5-b356-39ab5bb37d17",
+              "opened_as": "attach",
+              "provenance": [
+                "native encounter provider shared-inquiry-pi-fresh-2"
+              ]
+            },
+            "first_sequence": 1961,
+            "interruption": null,
+            "last_sequence": 1986,
+            "signals": 26,
+            "stop": {
+              "Failed": {
+                "reason": "429: {\"code\":\"1310\",\"message\":\"Weekly/Monthly Limit Exhausted. Your limit will reset at 2026-10-03 19:51:18\"}"
+              }
+            }
+          }
+        },
+        "kind": "provider",
+        "observed_at_ms": 1790961044189
+      }
+    }
+  ]
+}

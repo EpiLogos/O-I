@@ -209,6 +209,64 @@ try {
  assert.deepEqual((await world({operation:'act_inspect',act_ref:factoryAct})).act,factoryPerformed);
  report.factory_local_source={path:factoryPath,sha256:await hash(factoryPath),run_ref:factoryCapture.runRef,standing:'Captured actual Factory native owner and Central receiving; local state performed in the real Kernel/ActStore, no delivery/provider/tool effects replayed'};
  report.checks.push('Production-mapped actual Factory local state with participants.0 role and self actor binding qualifies its actual native receipt; changed or conflicting actors refuse without effects');
+ // This real remote turn was accepted, then failed without returning speech.
+ // Its native failure must reach the Expression, rather than leaving the
+ // previous activity inscription in place or inventing returned material.
+ const failedPath='tests/fixtures/shared-direct-journal/native-failed-turn.json';
+ const failedSource=JSON.parse(await readFile('tests/fixtures/shared-direct-journal/failed-source.json','utf8'));
+ const failedJournal=JSON.parse(await readFile(failedPath,'utf8'));
+ assert.equal(await hash(failedPath),failedSource.excerpt_sha256);
+ assert.equal(failedJournal.agent_session,journal.agent_session);
+ assert.equal(failedSource.world_ref,source.world_ref);
+ const failureSignal=failedJournal.events.find(row=>row.event?.event?.Signal?.kind?.kind==='failed');
+ const failureEnd=failedJournal.events.find(row=>row.event?.event?.TurnEnded);
+ assert.equal(failureSignal.event.event.Signal.sequence,failureEnd.event.event.TurnEnded.last_sequence);
+ assert.equal(failureSignal.event.event.Signal.kind.reason,failureEnd.event.event.TurnEnded.stop.Failed.reason);
+ const failureExpression='expression:controlled-native-failed-turn';
+ const failureDoc=JSON.parse(JSON.stringify(initial).split(initial.expression_ref).join(failureExpression));
+ const failureBindings=JSON.parse(JSON.stringify(bindings).split(initial.expression_ref).join(failureExpression));
+ await call('expression',{operation:'open',document:failureDoc,actor:'agent:controlled-native-replay'});
+ const failureAct='act:controlled-native-failed-turn';
+ await world({operation:'act_open',act_ref:failureAct,expression_ref:failureExpression,mode:'expressions',actor:'agent:controlled-native-replay',
+  subject_ref:session,instrument_ref:session,bindings:failureBindings,cast:[{role:'bo',participant_ref:agentRef,character_ref:character.file_ref}]});
+ const failedMapped=mapEventsWithCursor({runRef:failureExpression},{encounter:{[session]:failedJournal.events},bounds:{[session]:{from:failedSource.from,to:failedSource.to}}},
+  {performed:[],encounterAfter:{[session]:failedSource.from-1}},scope);
+ for(const op of failedMapped.ops){
+  const current=(await world({operation:'act_inspect',act_ref:failureAct})).act;
+  const built=requestFor(op,repertoire,cast,{actRef:failureAct,actor:'agent:controlled-native-replay'});
+  assert.ok(built.request,built.reason);
+  for(const[role,value]of Object.entries(built.request.bindings??{})){
+   if(value.agent_ref===agentRef)built.request.bindings[role]={...value,...failureBindings.bo,state:value.state};
+   else if(failureBindings[role]?.entity_ref)built.request.bindings[role]={...value,entity_ref:failureBindings[role].entity_ref};
+  }
+  await performWithRetry(world,{...built.request,expected_act_revision:current.revision},failureAct);
+ }
+ const failedNative=(await world({operation:'act_inspect',act_ref:failureAct})).act;
+ const failureText="Bo couldn't finish this request. Open Bo's session to see what happened.";
+ const failedTexts=failedNative.sequence.filter(p=>p.kind==='text'&&p.role==='progressText');
+ assert.equal(failedTexts.length,1,'The actual Failed and its matching TurnEnded must retain one failure inscription');
+ assert.equal(failedTexts[0].text,failureText);
+ assert.equal(failedTexts[0].event_basis.detail.reason,failureSignal.event.event.Signal.kind.reason,'Exact native failure remains inspectable behind the readable inscription');
+ assert.equal(failedNative.sequence.some(p=>p.kind==='text'&&p.role==='resultText'),false,'A failed turn without speech creates no returned artifact');
+ assert.equal(failedNative.subject_ref,session);assert.equal(failedNative.instrument_ref,session);
+ assert.equal(failedNative.bindings.bo.state,'idle');
+ const failedDocument=(await call('expression',{operation:'inspect',expression_ref:failureExpression})).document;
+ const failedScene=failedDocument.scenes.find(s=>s.scene_ref===failedDocument.selection.scene_ref);
+ assert.equal(failedScene.presentation.scene.text.find(t=>t.role==='progressText').body,failureText,'The actual native Scene carries the failure, not only its metadata');
+ const statusOp=failedMapped.ops.find(op=>op.operation==='act_text'&&op.role==='progressText');
+ const statusRequest=requestFor(statusOp,repertoire,cast,{actRef:failureAct,actor:'agent:controlled-native-replay'}).request;
+ assert.equal(requestAccepted(failedNative,statusRequest),true);
+ const terminalOnly=mapEventsWithCursor({runRef:failureExpression},{encounter:{[session]:[failureEnd]},bounds:{[session]:{from:failedSource.from,to:failedSource.to}}},
+  {performed:[],encounterAfter:{[session]:failedSource.from-1}},scope);
+ const terminalStatus=terminalOnly.ops.filter(op=>op.operation==='act_text'&&op.role==='progressText');
+ assert.equal(terminalStatus.length,1,'A fresh reading of the actual TurnEnded alone still discloses failure');
+ assert.equal(terminalStatus[0].text,failureText);assert.equal(opKey(terminalStatus[0]),opKey(statusOp));
+ assert.equal(mapEventsWithCursor({runRef:failureExpression},{encounter:{[session]:failedJournal.events},bounds:{[session]:{from:failedSource.from,to:failedSource.to}}},cursorFromAct(failedNative),scope).ops.length,0);
+ report.failed_turn={source:failedSource,path:failedPath,act_ref:failureAct,act_revision:failedNative.revision,expression_ref:failureExpression,
+  status:failureText,native_failure:failureSignal.event.event.Signal.kind.reason,returned_text:false,provider_effects_replayed:false};
+ await writeFile(join(out,'failed-turn-document.json'),JSON.stringify(failedDocument,null,2)+'\n');
+ await writeFile(join(out,'failed-turn-act.json'),JSON.stringify(failedNative,null,2)+'\n');
+ report.checks.push('Actual failed remote turn performs one readable native failure inscription; exact failure stays inspectable, no result or Run completion is invented, and native cursor continuation duplicates nothing');
  await acceptNativeLiveProducer({LiveProducer,world,call,endpoint,initial,report,signal:controller.signal});
  report.pass=true;
 } catch(error) {report.failure=String(error);throw error;}
