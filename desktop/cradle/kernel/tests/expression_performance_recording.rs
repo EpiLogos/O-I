@@ -568,15 +568,24 @@ fn actual_native_receipts_are_atomic_lossless_scene_parts_and_survive_authored_e
     assert_eq!(next.schema, RECORDING_SCHEMA);
     assert_eq!(next.native_recordings.len(), 1);
     let page = serde_json::to_value(&next.native_recordings[0]).unwrap();
-    let decoded: Value = serde_json::from_slice(
-        &serde_json::from_value::<oi_cradle_kernel::expression_performance_codec::EncodedPage>(
-            page["encoded"].clone(),
-        )
-        .unwrap()
-        .bytes()
-        .unwrap(),
-    )
+    let decoded_bytes = serde_json::from_value::<
+        oi_cradle_kernel::expression_performance_codec::EncodedPage,
+    >(page["encoded"].clone())
+    .unwrap()
+    .bytes()
     .unwrap();
+    let batch_bytes = serde_json::to_vec(&next.native_recordings[0].batch().unwrap()).unwrap();
+    let legacy_applied = [
+        br#"{"kind":"applied","value":"#.as_slice(),
+        batch_bytes.as_slice(),
+        b"}",
+    ]
+    .concat();
+    assert_eq!(
+        decoded_bytes, legacy_applied,
+        "boxing must preserve the existing real native recording bytes/hash"
+    );
+    let decoded: Value = serde_json::from_slice(&decoded_bytes).unwrap();
     assert_eq!(
         decoded["value"]["receipts"][0]["application"],
         applications[0]
@@ -778,7 +787,9 @@ fn full_actual_fifteen_minute_committed_workload_survives_native_act_file_and_18
             acknowledged_stopped: true,
         };
         let checkpoint = CheckpointBinding::from_native_management(receipt, wire).unwrap();
-        operations.push(PerformanceOperation::Checkpoint { checkpoint });
+        operations.push(PerformanceOperation::Checkpoint {
+            checkpoint: Box::new(checkpoint),
+        });
         performance = performance.edited(operations.clone()).unwrap();
         let expected_act_revision = if index == 0 {
             None
@@ -1243,6 +1254,24 @@ fn genuine_native_restore_cancellation_and_explicit_application_loss_preserve_ev
         };
         assert_eq!(termination.reservations[0].original_occurrence, occurrence);
         let page = NativeRecordingPage::from_termination(&queued, termination.clone()).unwrap();
+        let wire = serde_json::to_value(&page).unwrap();
+        let decoded = serde_json::from_value::<
+            oi_cradle_kernel::expression_performance_codec::EncodedPage,
+        >(wire["encoded"].clone())
+        .unwrap()
+        .bytes()
+        .unwrap();
+        let original_bytes = serde_json::to_vec(&termination).unwrap();
+        let legacy_terminated = [
+            br#"{"kind":"terminated","value":"#.as_slice(),
+            original_bytes.as_slice(),
+            b"}",
+        ]
+        .concat();
+        assert_eq!(decoded, legacy_terminated,
+            "real cancellation/loss must preserve original native checkpoint/input/occurrence bytes");
+        let reopened: NativeRecordingPage = serde_json::from_value(wire).unwrap();
+        assert_eq!(reopened.termination().unwrap(), Some(termination.clone()));
         let completed = queued
             .edited(vec![PerformanceOperation::RecordNative {
                 events: vec![],

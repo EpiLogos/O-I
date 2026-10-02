@@ -1190,16 +1190,16 @@ pub enum PerformanceOperation {
         segments: Vec<TempoSegment>,
     },
     AdmitBasis {
-        basis: PerformanceBasis,
+        basis: Box<PerformanceBasis>,
         pitches: Vec<Pitch>,
     },
     Checkpoint {
-        checkpoint: CheckpointBinding,
+        checkpoint: Box<CheckpointBinding>,
     },
     /// Existing native owner supplies a complete qualified asset. This edit
     /// retains bytes, and never grants playback authority by JSON or digest.
     RetainNativeSource {
-        source: crate::expression_performance_source_asset::NativePerformanceSourceAsset,
+        source: Box<crate::expression_performance_source_asset::NativePerformanceSourceAsset>,
     },
 }
 impl Performance {
@@ -1780,12 +1780,12 @@ impl Performance {
                 if pitches.iter().any(|p| p.basis != index) {
                     return Err("new pitch basis index mismatch".into());
                 }
-                self.bases.push(basis);
+                self.bases.push(*basis);
                 self.pitches.extend(pitches);
             }
             PerformanceOperation::Checkpoint { checkpoint } => {
                 checkpoint.validate()?;
-                self.checkpoints.push(checkpoint);
+                self.checkpoints.push(*checkpoint);
             }
             PerformanceOperation::RetainNativeSource { source } => {
                 source.validate()?;
@@ -1802,11 +1802,11 @@ impl Performance {
                     .iter()
                     .find(|s| s.reading().ok().as_ref() == Some(&reading))
                 {
-                    if old != &source {
+                    if old != source.as_ref() {
                         return Err("native source asset address collision".into());
                     }
                 } else {
-                    self.native_sources.push(source);
+                    self.native_sources.push(*source);
                 }
                 self.schema =
                     if self.native_recordings.is_empty() && self.native_reservations.is_empty() {

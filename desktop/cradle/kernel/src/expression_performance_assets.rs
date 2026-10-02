@@ -31,12 +31,12 @@ pub enum PerformancePart {
     EventPage(EventPage),
     EncodedEventPage(crate::expression_performance_codec::EncodedPage),
     NativeRecording(crate::expression_performance_recording::NativeRecordingPage),
-    Basis(PerformanceBasis),
-    Checkpoint(CheckpointBinding),
+    Basis(Box<PerformanceBasis>),
+    Checkpoint(Box<CheckpointBinding>),
     EncodedCheckpoint(crate::expression_performance_codec::EncodedPage),
     Index(PartIndex),
     Header(PerformanceHeader),
-    NativeSource(NativePerformanceSourceAsset),
+    NativeSource(Box<NativePerformanceSourceAsset>),
 }
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -509,7 +509,7 @@ impl PerformancePartCatalog {
                 p.bases
                     .iter()
                     .cloned()
-                    .map(PerformancePart::Basis)
+                    .map(|basis| PerformancePart::Basis(Box::new(basis)))
                     .collect::<Vec<_>>(),
             ),
             (
@@ -536,7 +536,7 @@ impl PerformancePartCatalog {
                     .cloned()
                     .map(|checkpoint| {
                         if p.native_recordings.is_empty() {
-                            Ok(PerformancePart::Checkpoint(checkpoint))
+                            Ok(PerformancePart::Checkpoint(Box::new(checkpoint)))
                         } else {
                             crate::expression_performance_codec::EncodedPage::from_value(
                                 &checkpoint,
@@ -561,7 +561,7 @@ impl PerformancePartCatalog {
                 p.native_sources
                     .iter()
                     .cloned()
-                    .map(PerformancePart::NativeSource)
+                    .map(|source| PerformancePart::NativeSource(Box::new(source)))
                     .collect::<Vec<_>>(),
             ),
         ] {

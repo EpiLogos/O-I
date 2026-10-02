@@ -68,10 +68,10 @@ fn encode(input: &[u8]) -> Vec<u8> {
             out.push(1);
             word(&mut out, distance);
             word(&mut out, best);
-            for index in at..at + best {
+            for (index, link) in links.iter_mut().enumerate().skip(at).take(best) {
                 if index + MIN_MATCH <= input.len() {
                     let h = key(input, index);
-                    links[index] = heads[h];
+                    *link = heads[h];
                     heads[h] = index;
                 }
             }

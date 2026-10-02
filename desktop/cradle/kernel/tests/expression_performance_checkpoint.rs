@@ -135,3 +135,82 @@ fn lost_actual_voice_body_velocity_source_or_queue_mapping_refuses_retention() {
         "sealed played state cannot be altered after source retention"
     );
 }
+
+#[test]
+fn actual_native_basis_and_played_checkpoint_boxed_edits_preserve_original_wire_bytes() {
+    use oi_cradle_kernel::expression_performance::{PerformanceOperation, Pitch};
+    use oi_cradle_kernel::expression_performance_assets::PerformancePart;
+    let source = read("QL_RETAINED_PERFORMANCE_FIXTURE");
+    let basis = serde_json::from_value::<PerformanceBasis>(source["basis"].clone())
+        .unwrap()
+        .seal()
+        .unwrap();
+    let pitches: Vec<Pitch> = serde_json::from_value(source["pitches"].clone()).unwrap();
+    let (receipt, pair) = actual();
+    let checkpoint = CheckpointBinding::from_native_pair(receipt, pair).unwrap();
+    let basis_bytes = serde_json::to_vec(&basis).unwrap();
+    let pitches_bytes = serde_json::to_vec(&pitches).unwrap();
+    let checkpoint_bytes = serde_json::to_vec(&checkpoint).unwrap();
+    // Construct the original unboxed wire from the actual native operands.
+    // Tags, field order and content digests remain the existing public contract.
+    let legacy_admit = [
+        br#"{"operation":"admit_basis","basis":"#.as_slice(),
+        basis_bytes.as_slice(),
+        br#","pitches":"#.as_slice(),
+        pitches_bytes.as_slice(),
+        b"}",
+    ]
+    .concat();
+    let legacy_checkpoint = [
+        br#"{"operation":"checkpoint","checkpoint":"#.as_slice(),
+        checkpoint_bytes.as_slice(),
+        b"}",
+    ]
+    .concat();
+    let legacy_basis_part = [
+        br#"{"kind":"basis","value":"#.as_slice(),
+        basis_bytes.as_slice(),
+        b"}",
+    ]
+    .concat();
+    let legacy_checkpoint_part = [
+        br#"{"kind":"checkpoint","value":"#.as_slice(),
+        checkpoint_bytes.as_slice(),
+        b"}",
+    ]
+    .concat();
+    let edits = [
+        (
+            PerformanceOperation::AdmitBasis {
+                basis: Box::new(basis.clone()),
+                pitches,
+            },
+            legacy_admit,
+        ),
+        (
+            PerformanceOperation::Checkpoint {
+                checkpoint: Box::new(checkpoint.clone()),
+            },
+            legacy_checkpoint,
+        ),
+    ];
+    for (operation, original_bytes) in edits {
+        assert_eq!(serde_json::to_vec(&operation).unwrap(), original_bytes);
+        let reopened: PerformanceOperation = serde_json::from_slice(&original_bytes).unwrap();
+        assert_eq!(reopened, operation);
+        assert_eq!(serde_json::to_vec(&reopened).unwrap(), original_bytes);
+    }
+    let parts = [
+        (PerformancePart::Basis(Box::new(basis)), legacy_basis_part),
+        (
+            PerformancePart::Checkpoint(Box::new(checkpoint)),
+            legacy_checkpoint_part,
+        ),
+    ];
+    for (part, original_bytes) in parts {
+        assert_eq!(serde_json::to_vec(&part).unwrap(), original_bytes);
+        let reopened: PerformancePart = serde_json::from_slice(&original_bytes).unwrap();
+        assert_eq!(reopened, part);
+        assert_eq!(serde_json::to_vec(&reopened).unwrap(), original_bytes);
+    }
+}

@@ -3,7 +3,7 @@
 //! Fixture generation and kernel compilation require parent finite admission.
 use oi_cradle_kernel::expression::{Availability, ReadingRef};
 use oi_cradle_kernel::expression_performance::*;
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::collections::BTreeMap;
 fn scalar(v: f64) -> Scalar {
     Scalar::new(v).unwrap()
@@ -546,7 +546,6 @@ fn document(k: &mut oi_cradle_kernel::Kernel) -> Value {
 #[test]
 fn actual_scene_act_file_edition_restart_seek_and_continue_preserve_the_complete_performance() {
     use oi_cradle_kernel::{expression::Document, expression_file, Kernel};
-    use serde_json::json;
     let p = empty()
         .edited(vec![PerformanceOperation::Record {
             events: vec![note(1, 0, 1, 0), off(2, 200, 1)],
@@ -768,7 +767,6 @@ fn actual_file_and_indexed_document_editions_preserve_full_material_without_expa
     use oi_cradle_kernel::{
         expression::Document, expression_file, expression_performance_storage::*, Kernel,
     };
-    use serde_json::json;
     let full = fifteen_minute_work();
     let mut k = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
     kernel_expression(&mut k,json!({"operation":"create","expression_ref":"expression:retained/current","title":"Full musical work","actor":"agent:retained-performance-test"})).unwrap();
@@ -830,7 +828,6 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
     use oi_cradle_kernel::{
         expression::Document, expression_act_store::ActStore, expression_file, Kernel,
     };
-    use serde_json::json;
     let full = fifteen_minute_work();
     let all: Vec<_> = full.events().cloned().collect();
     let home = std::path::PathBuf::from(

@@ -746,8 +746,8 @@ pub struct NativeRecordingBatch {
     deny_unknown_fields
 )]
 enum NativeRecordingContent {
-    Applied(NativeRecordingBatch),
-    Terminated(crate::expression_performance_reservation::NativeReservationTermination),
+    Applied(Box<NativeRecordingBatch>),
+    Terminated(Box<crate::expression_performance_reservation::NativeReservationTermination>),
 }
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -760,7 +760,7 @@ impl NativeRecordingPage {
         Ok(Self {
             schema: NATIVE_PAGE_SCHEMA.into(),
             encoded: crate::expression_performance_codec::EncodedPage::from_value(
-                &NativeRecordingContent::Applied(batch),
+                &NativeRecordingContent::Applied(Box::new(batch)),
             )?,
         })
     }
@@ -769,7 +769,7 @@ impl NativeRecordingPage {
             return Err("unsupported native recording page".into());
         }
         match self.encoded.read::<NativeRecordingContent>()? {
-            NativeRecordingContent::Applied(batch) => Ok(batch),
+            NativeRecordingContent::Applied(batch) => Ok(*batch),
             NativeRecordingContent::Terminated(_) => {
                 Err("native page is a reservation termination".into())
             }
@@ -832,7 +832,7 @@ impl NativeRecordingPage {
         Ok(Self {
             schema: NATIVE_PAGE_SCHEMA.into(),
             encoded: crate::expression_performance_codec::EncodedPage::from_value(
-                &NativeRecordingContent::Terminated(termination),
+                &NativeRecordingContent::Terminated(Box::new(termination)),
             )?,
         })
     }
@@ -847,7 +847,7 @@ impl NativeRecordingPage {
         }
         match self.encoded.read::<NativeRecordingContent>()? {
             NativeRecordingContent::Applied(_) => Ok(None),
-            NativeRecordingContent::Terminated(t) => Ok(Some(t)),
+            NativeRecordingContent::Terminated(t) => Ok(Some(*t)),
         }
     }
     pub fn reservation_updates(

@@ -570,3 +570,42 @@ fn genuine_valid_distinct_protected_native_occasions_cannot_cross_context_or_wor
         .iter()
         .any(|i| i.kind == "native_source_context_unavailable"));
 }
+
+#[test]
+fn actual_original_source_asset_boxed_native_edit_and_part_keep_exact_wire_and_replay() {
+    let (p, actual) = prepared();
+    let source = p.native_sources[0].clone();
+    let source_bytes = serde_json::to_vec(&source).unwrap();
+    let legacy_edit = [
+        br#"{"operation":"retain_native_source","source":"#.as_slice(),
+        source_bytes.as_slice(),
+        b"}",
+    ]
+    .concat();
+    let legacy_part = [
+        br#"{"kind":"native_source","value":"#.as_slice(),
+        source_bytes.as_slice(),
+        b"}",
+    ]
+    .concat();
+    let operation = PerformanceOperation::RetainNativeSource {
+        source: Box::new(source.clone()),
+    };
+    assert_eq!(serde_json::to_vec(&operation).unwrap(), legacy_edit);
+    let reopened: PerformanceOperation = serde_json::from_slice(&legacy_edit).unwrap();
+    assert_eq!(reopened, operation);
+    assert_eq!(serde_json::to_vec(&reopened).unwrap(), legacy_edit);
+    // The edit still consumes the exact source producer bundle and preserves
+    // the existing performance fingerprint on re-admission of identical data.
+    assert_eq!(p.edited(vec![reopened]).unwrap(), p);
+    let part = PerformancePart::NativeSource(Box::new(source));
+    assert_eq!(serde_json::to_vec(&part).unwrap(), legacy_part);
+    let reopened: PerformancePart = serde_json::from_slice(&legacy_part).unwrap();
+    assert_eq!(reopened, part);
+    let PerformancePart::NativeSource(retained) = reopened else {
+        panic!("native source part lost");
+    };
+    retained
+        .verify_native_replay(&p.bases[0], &actual["source_assets"])
+        .unwrap();
+}
