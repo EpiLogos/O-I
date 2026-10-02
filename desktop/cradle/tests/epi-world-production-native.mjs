@@ -648,6 +648,13 @@ try{
  check(a.record.inventory.length===2141,'Production construction consumes the complete admitted 2,141-subject Bimba inventory');
  const aDoc=await nativeDocument(a.working.native_ref);artifact('person-a-native-owner-document.json',aDoc);
  const actualCosmic=a.document.scenes[a.state.sceneIndex],nativeCosmic=aDoc.scenes.find(scene=>scene.scene_ref===a.record.receiving.scene_ref),budget=expressionCapabilities.composition_budget;
+ const expectedClockCaption='Gold circle and diamond. Advance one tick moves the M1/M3 source clocks by 30° and aligns Clock A with their new position.';
+ for(const material of [nativeCosmic?.presentation?.scene,nativeCosmic?.presentation?.saved,actualCosmic]){
+  const labels=material?.text?.filter(label=>label.id===`${a.record.receiving.scene_ref}:label-clock-a`);
+  assert.equal(labels?.length,1,'The actual native live/saved and loaded cosmic material each retain one Clock A caption');
+  assert.equal(labels[0].body,expectedClockCaption,'Ordinary new or retained-world admission receives the source-qualified Clock A caption');
+ }
+ check(true,'The corrected Clock A meaning reaches actual native live/saved material and the loaded ordinary receiving scene');
  check(nativeCosmic?.entity_refs.length===32&&actualCosmic.entities.length===32&&actualCosmic.entities.filter(e=>e.kind==='formation'&&e.enabled!==false).length<=budget.render_formations&&actualCosmic.entities.filter(e=>e.kind==='pin'&&e.enabled!==false).length<=budget.render_pins&&nativeCosmic.entity_refs.length<=budget.scene_members,'All32 required cosmic bodies fit actual native/renderer budgets before the existing no-body-drop receiving gates');
  check(aDoc.scenes.filter(s=>s.presentation?.scene?.epiWorld).length===1&&aDoc.scenes.every(s=>!s.presentation?.saved?.epiWorld)&&!a.record.native_source.world,'One complete machine world receipt is retained once, independently of authored saved material');
  check(a.record.world.basis&&a.record.world.binding&&a.record.world.event&&JSON.stringify(a.record.world.basis)===JSON.stringify(a.record.world.binding.native_basis)&&JSON.stringify(a.record.world.event)===JSON.stringify(a.record.world.basis.input),'The retained complete world preserves its exact admitted coupled input and receiving native basis');
@@ -737,6 +744,34 @@ try{
  check(returned.s.selected.includes(locus)&&returned.r.world.event_ref===a.record.world.event_ref&&returned.w.native_ref===a.working.native_ref,'Source Return preserves the selected Personal Pratibimba, instance and occasion');
  await sceneNavigate(branches.scene_ref);const ba=await snapshot('04-personal-branch-routes');requirePartitions(ba,branches.entity_refs,'Branches');
  await sceneNavigate(cosmic.scene_ref);
+
+ phase='saved independent phase admission and ordinary original Return';
+ const savedPhase=await snapshot('04a-saved-independent-phase-before-return',true),composeCountBeforeReturn=nativeComposes.length;
+ // A retained independent inscription phase is genuine continuation. M1 advance
+ // deliberately aligns it with the new M3 source position (#254 D5, no separate
+ // trajectory). Prove its admission, then use ordinary Return before predicting
+ // the relative tick from the immutable source-aligned opening. Never replace
+ // the saved fixture, native arithmetic or the original one-tick predicates.
+ await action('reset');const firstReturn=await snapshot('04b-ordinary-original-return-before-tick',true);
+ const firstReturnComposes=nativeComposes.slice(composeCountBeforeReturn);
+ assert.equal(firstReturnComposes.length,3,'Ordinary first Return admits the saved continuation, recomposes the immutable opening and resumes its native CAS-retained receipt');
+ const admittedSaved=firstReturnComposes[0],originalRecomposition=firstReturnComposes[1],returnedOpening=firstReturnComposes[2];
+ assert.deepEqual(admittedSaved.request.request.request.world.start,savedPhase.record.continuation_start,'The actual first native compose receives the complete saved continuation');
+ assert.deepEqual(admittedSaved.source.world.native_readback.continuous_clock,nativeReadback(savedPhase).continuous_clock,'Both independent saved clock phases are genuinely admitted before Return');
+ assert.deepEqual(originalRecomposition.request.request.request.world.start,savedPhase.record.world.native_readback.continuation_start,'The second actual native compose receives the complete immutable original continuation');
+ assert.deepEqual(returnedOpening.request.request.request.world.start,firstReturn.record.continuation_start,'The final actual native compose resumes the complete CAS-retained original continuation');
+ assert.deepEqual(originalRecomposition.source.world.native_readback.continuous_clock,returnedOpening.source.world.native_readback.continuous_clock,'Original recomposition and retained receiving preserve both complete original clock axes');
+ assert.notEqual(originalRecomposition.lease,returnedOpening.lease,'Retaining the native original receipt closes its intermediate lease before resumed receiving');
+ check(true,'First ordinary Return genuinely admits the complete saved independent clock continuation before recomposing the original opening');
+ const originalBeforeTick=savedPhase.record.world.native_readback,returnedBeforeTick=nativeReadback(firstReturn);
+ for(const key of ['schema','clock_semantics','event_ref','subject_ref','continuation_start','continuous_clock','m1_carrier','m1_clock','m3_clock','selected_aperture','form','form_process'])assert.deepEqual(storedJsonNumbers(returnedBeforeTick[key]),storedJsonNumbers(originalBeforeTick[key]),'First Return restores complete original '+key);
+ assert.deepEqual(firstReturn.record.world,savedPhase.record.world,'First Return preserves all immutable original source material');
+ assert.deepEqual(firstReturn.current,savedPhase.current,'First Return preserves actual personal reception');
+ assert.notEqual(returnedOpening.lease,admittedSaved.lease,'First Return closes the admitted saved lifetime and acknowledges a fresh original lifetime');
+ assert.equal(firstReturn.native.lease,returnedOpening.lease);assert.equal(firstReturn.native.native.acknowledged.samples_elapsed,'0');
+ await requireCurrentRuntime(firstReturn,'First ordinary original Return');
+ check(true,'The first ordinary Return restores both full original clock axes, source form and continuation through actual native receiving, preserving the person, occasion and Expression');
+ artifact('first-original-return-admission.json',{saved:savedPhase.record.native_readback,original:originalBeforeTick,returned:returnedBeforeTick,admitted_saved_lease:admittedSaved.lease,original_recomposition_lease:originalRecomposition.lease,returned_opening_lease:returnedOpening.lease,scope:'Complete clock/source semantics and current receiving; process-local revision/generation counters are not immutable original byte identities'});
 
  phase='native one-tick receiving';
  const opening=await snapshot('05-before-native-play',true);assert.ok(opening.state.fieldPaused&&opening.rendered.steps===0&&opening.rendered.simTime===0,'The ordinary quiet receiving test starts with genuine reduced-motion hold before any simulated or verifier probe step');

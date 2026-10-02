@@ -13,6 +13,8 @@ import type {Change,ExpressionDocument,ExpressionRequest,ReadingRef,SubjectBindi
 import type {NativeCurrentReading} from '../../../src/nara/nativeCurrent.js';
 
 export const PERSONAL_LOCUS={coordinate:'#4.4.4.4',canonical:'ql:m-coordinate:bimba:M4.4.4.4',uuid:'dcb274c1-fbbc-5914-b27d-dea979c78558'} as const;
+export const EPI_CLOCK_A_CAPTION='Gold circle and diamond. Advance one tick moves the M1/M3 source clocks by 30° and aligns Clock A with their new position.';
+export const EPI_OLD_CLOCK_A_CAPTION='Gold circle and diamond. Advance one native tick to turn the inscription by 30°.';
 /** Authored seven-centre mixture, recovered from the existing Kundalini
  * presentation. This is no native M2 coefficient; native driver frequencies,
  * shares and orientation remain owner readings. The shared resonator stays off. */
@@ -532,7 +534,7 @@ export function buildEpiWorldMaterial(input:EpiMaterialInput):EpiWorldMaterialPl
  const label=(role:string,title:string,body:string,y:number)=>({id:`${overviewRef}:label-${role}`,visible:true,kicker:'',title,italic:'',body,x:.045,y,width:230,size:15,align:'left' as const,role:`${role}.caption`});
  overview.text.push(
   label('earth','⊕ Earth · observer','The origin of this sky reading. Planetary positions retain their actual geocentric longitudes.',.29),
-  label('clock-a','Clock A · inscription','Gold circle and diamond. Advance one native tick to turn the inscription by 30°.',.43),
+  label('clock-a','Clock A · inscription',EPI_CLOCK_A_CAPTION,.43),
   label('clock-b','Clock B · lens','Blue circle and diamond. Its continuous phase is distinct from the selected reading aperture.',.56),
   label('register','Source registers','360 degrees · 24 governors · 36 decans\n64 codons · 72 skins · 18 aperture and ground readings',.69)
  );

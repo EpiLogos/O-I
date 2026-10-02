@@ -1,7 +1,7 @@
 /** Ordinary native production: one admitted occasion → reusable material →
  * one Expression CAS → owner readback → the existing application loader.
  * This coordinator contains no domain solver and no second document store. */
-import {buildEpiWorldMaterial,verifyEpiWorldReadback,rebindEpiPersonalSubjects,PERSONAL_WAVE_PRESENTATION,type EpiWorldMaterialPlan,type PersonalInstance,type CoordinateSource,type RegisterRole} from './epiWorldMaterial.js';
+import {buildEpiWorldMaterial,verifyEpiWorldReadback,rebindEpiPersonalSubjects,PERSONAL_WAVE_PRESENTATION,EPI_CLOCK_A_CAPTION,EPI_OLD_CLOCK_A_CAPTION,type EpiWorldMaterialPlan,type PersonalInstance,type CoordinateSource,type RegisterRole} from './epiWorldMaterial.js';
 import {coordinateSourceFromNative,prepareEpiMaterialInputFromNative,requiredEpiWorldCoordinates,type NativeSceneWorldReading,type BimbaInventoryPage,type BimbaCoordinateContent} from './epiWorldSource.js';
 import {validateCoordinateExpression,type CoordinateExpressionResult,type CoordinateProfile} from '../../../src/nara/coordinateExpression.js';
 import type {ExpressionDocument,ExpressionRequest,ExpressionResult,ReadingRef,SubjectBinding} from '../../../src/expression/types.js';
@@ -253,6 +253,14 @@ export function createEpiWorldProduction(port:EpiProductionPort){
    if(!acknowledged||!sameSceneData(acknowledged,personalCorrection.record)||epiPersonalResonanceCorrection(received.document,acknowledged).changes.length)throw Error('The exact live and saved personal wave correction was not acknowledged.');
    record=acknowledged;
   }
+  const captionDocument=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
+  if(!captionDocument.document)throw Error('The saved cosmic material cannot be read for its clock caption.');
+  const captionChanges=epiClockCaptionCorrection(captionDocument.document,record);
+  if(captionChanges.length){
+   await port.edit(document=>epiClockCaptionCorrection(document,record));
+   const received=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
+   if(!received.document||!sameSceneData(readEpiWorldRecord(received.document),record)||!sameSceneData(received.document.scenes.find(s=>s.scene_ref===record.receiving.scene_ref)?.presentation,captionChanges[0].presentation)||epiClockCaptionCorrection(received.document,record).length)throw Error('The native clock caption correction was not acknowledged.');
+  }
   const updated={...record,identity_source:identity.source,identity_input_revision:identity.reading.input_revision};
   const current=await pin(updated),context=current.context!;
   const previous:PersonalInstance={person:record.receiving.personal.person,identity:record.receiving.personal.identity,instance_ref:record.world.instance_ref,nara_ref:record.nara_ref,event_ref:record.world.event_ref,snapshot_ref:record.world.snapshot_ref,...(record.receiving.personal.current?{current:record.receiving.personal.current}:{})};
@@ -273,6 +281,25 @@ export function createEpiWorldProduction(port:EpiProductionPort){
   return{record:held,current,identity};
  }
  return{construct,pin,rebind,read:readEpiWorldRecord};
+}
+
+/** Correct only the former generated caption in its exact cosmic Scene. Native
+ * readings, private identity, custom wording and all layout remain unchanged. */
+export function epiClockCaptionCorrection(document:ExpressionDocument,record:EpiWorldRecord):Record<string,unknown>[] {
+ if(!sameSceneData(readEpiWorldRecord(document),record))throw Error('The clock caption basis differs from the actual native world.');
+ const sceneRef=`${document.expression_ref}:scene:cosmic`;
+ if(record.world.instance_ref!==document.expression_ref||record.receiving.scene_ref!==sceneRef)throw Error('The clock caption belongs to another Expression or Scene.');
+ if(!['epi-world-20261001-v3','epi-world-20261001-v4','epi-world-20261001-v5'].includes(record.authored_revision))return[];
+ const material=document.scenes.find(s=>s.scene_ref===sceneRef)?.presentation;
+ if(!object(material?.scene)||!object(material?.saved)||material.scene.id!==sceneRef||material.saved.id!==sceneRef||!Array.isArray(material.scene.text)||!Array.isArray(material.saved.text))throw Error('The clock caption requires complete live and saved cosmic material.');
+ const presentation=structuredClone(material);let changed=false;
+ for(const scene of [presentation.scene,presentation.saved]){
+  const labels=(scene!.text as unknown[]).filter(label=>object(label)&&label.id===`${sceneRef}:label-clock-a`);
+  if(labels.length>1)throw Error('The generated clock caption has an ambiguous authored identity.');
+  const label=labels[0];
+  if(object(label)&&label.role==='clock-a.caption'&&label.title==='Clock A · inscription'&&label.body===EPI_OLD_CLOCK_A_CAPTION){label.body=EPI_CLOCK_A_CAPTION;changed=true;}
+ }
+ return changed?[{change:'scene_material_set',scene_ref:sceneRef,presentation}]:[];
 }
 
 /** Admission uses the renderer's actual allocation owners, including native
