@@ -351,6 +351,13 @@ jobs:
           ref: 6bcfc1661cd0eccec1a4a691503ea401d411023a
           path: .native-owner/Central
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          # Existing source-qualified native context owner; no provider or gateway is launched.
+          ref: 64d4e1d12fd95a331db75e1f1df21f332aebab6f
+          path: .native-owner/AIKit
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -376,9 +383,11 @@ jobs:
             --repo "$GITHUB_WORKSPACE" \
             --ql-source "$GITHUB_WORKSPACE/.native-owner/QL-MEF" \
             --central-source "$GITHUB_WORKSPACE/.native-owner/Central" \
+            --aikit-source "$GITHUB_WORKSPACE/.native-owner/AIKit" \
             --expected-oi-head "$EXPECTED_OI_HEAD" \
             --expected-ql-head "$EXPECTED_QL_HEAD" \
             --expected-central-head 6bcfc1661cd0eccec1a4a691503ea401d411023a \
+            --expected-aikit-head 64d4e1d12fd95a331db75e1f1df21f332aebab6f \
             --fixture-archive "$GITHUB_WORKSPACE/desktop/cradle/tests/fixtures/epi-world-hosted/controlled-native.tar.gz" \
             --fixture-sha256 b173b96c51bdf964e131c36da1cd171e97e077c340c4b6b36116c52f46093461 \
             --uv "$(command -v uv)" \

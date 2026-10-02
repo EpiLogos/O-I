@@ -274,7 +274,7 @@ class OwnedProcesses:
 class Replay:
     def __init__(self, args):
         self.args = args
-        self.repo, self.ql, self.central = (Path(v).resolve(strict=True) for v in (args.repo, args.ql_source, args.central_source))
+        self.repo, self.ql, self.central, self.aikit = (Path(v).resolve(strict=True) for v in (args.repo, args.ql_source, args.central_source, args.aikit_source))
         self.out = Path(args.output).absolute()
         require(not self.out.exists(), 'Use a fresh owned evidence directory')
         self.out.mkdir(parents=True)
@@ -294,6 +294,7 @@ class Replay:
                      'OI_NATIVE_OWNER_SOCKET', 'OI_NATIVE_OWNER_OFFER', 'RUSTC', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'CC', 'CXX'):
             self.env.pop(name, None)
         self.env['CARGO_BUILD_JOBS'] = '2'
+        self.env['AIKIT_HOME'] = str(self.out / 'aikit-home')
         self.env['XDG_CACHE_HOME'] = str(self.out / 'cache')
         self.env['UV_CACHE_DIR'] = str(self.out / 'uv-cache')
         self.env['QL_NARA_UV'] = str(Path(args.uv).resolve(strict=True))
@@ -617,7 +618,8 @@ class Replay:
         self.report['source_cuts'] = {
             'oi': self.cut(self.repo, self.args.expected_oi_head),
             'ql': self.cut(self.ql, self.args.expected_ql_head),
-            'central': self.cut(self.central, self.args.expected_central_head)}
+            'central': self.cut(self.central, self.args.expected_central_head),
+            'aikit': self.cut(self.aikit, self.args.expected_aikit_head)}
         provenance = read_json(self.repo / 'desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json')
         require(provenance['revision'] == self.args.expected_ql_head, 'Copied adapter provenance must bind the actual owner cut')
         for name, checksum in provenance['files'].items():
@@ -719,18 +721,22 @@ class Replay:
         oi_cli_env = {**self.env, 'CARGO_TARGET_DIR': str(self.out / 'build/oi-cli')}
         kernel_env = {**self.env, 'CARGO_TARGET_DIR': str(self.out / 'build/oi-kernel')}
         central_env = {**self.env, 'CARGO_TARGET_DIR': str(self.out / 'build/central')}
+        aikit_env = {**self.env, 'CARGO_TARGET_DIR': str(self.out / 'build/aikit')}
         self.command('oi-cli-build', ['cargo', 'build', '--locked', '--manifest-path', self.repo / 'cli/Cargo.toml', '--bin', 'oi'], self.repo, oi_cli_env)
         self.command('oi-kernel-build', ['cargo', 'build', '--locked', '--manifest-path', self.repo / 'desktop/cradle/kernel/Cargo.toml', '--bin', 'walk-bridge'], self.repo, kernel_env)
         self.command('central-build', ['cargo', 'build', '--locked', '--manifest-path', self.central / 'Cargo.toml', '-p', 'ctrl'], self.central, central_env)
+        self.command('aikit-build', ['cargo', 'build', '--locked', '--manifest-path', self.aikit / 'Cargo.toml', '--bin', 'aikit'], self.aikit, aikit_env)
+        aikit = str(self.out / 'build/aikit/debug/aikit')
+        self.command('aikit-version', [aikit, '--version'], self.out, timeout=30)
         self.bridge = str(self.out / 'build/oi-kernel/debug/walk-bridge')
         oi = str(self.out / 'build/oi-cli/debug/oi')
         ctrl = str(self.out / 'build/central/debug/ctrl')
-        self.report['host_owners'] = {'oi': file_ref(oi), 'bridge': file_ref(self.bridge), 'central': file_ref(ctrl)}
+        self.report['host_owners'] = {'oi': file_ref(oi), 'bridge': file_ref(self.bridge), 'central': file_ref(ctrl), 'aikit': file_ref(aikit)}
         qualified_native = self.out / 'qualified-native'
         qualified_native.mkdir()
         preserved = []
         for role, original in [(row['name'], row) for row in binaries] + [(name, self.report['host_owners'][key])
-                for name, key in [('oi', 'oi'), ('walk-bridge', 'bridge'), ('ctrl', 'central')]]:
+                for name, key in [('oi', 'oi'), ('walk-bridge', 'bridge'), ('ctrl', 'central'), ('aikit', 'aikit')]]:
             destination = qualified_native / role
             with Path(original['path']).open('rb') as source, destination.open('xb') as target:
                 shutil.copyfileobj(source, target, 1024 * 1024)
@@ -739,21 +745,22 @@ class Replay:
             require(copied['sha256'] == original['sha256'] and copied['bytes'] == original['bytes'], 'Qualified native copy differs: ' + role)
             preserved.append({'name': role, 'qualified_owner_output': original, 'artifact_copy': copied})
         save(qualified_native / 'digest-manifest.json', {'schema': 'epi.hosted-qualified-native-artifact-copies/v1',
-             'custody': 'source-built-hosted', 'scope': 'Exact eight current source-built owner images; no original Mac images or Rust build tree',
+             'custody': 'source-built-hosted', 'scope': 'Exact nine current source-built owner images, including the actual AIKit context owner; no original Mac images or Rust build tree',
              'source_cuts': self.report['source_cuts'], 'images': preserved})
         self.report['qualified_native_artifact_copies'] = file_ref(qualified_native / 'digest-manifest.json')
         by_role = {row['name']: row for row in binaries}
         self.owned.expected = {k: by_role[k] for k in ('ql', 'ql-field-host', 'ql-field-worker', 'ql-focused-host')}
         self.owned.expected['walk-bridge'] = self.report['host_owners']['bridge']
+        self.owned.expected['aikit'] = self.report['host_owners']['aikit']
         self.world = self.out / 'world'
         self.env.update({'OI_BIN': oi, 'OI_HOME': str(self.out / 'oi-home'), 'OI_DATA_HOME': str(self.out / 'oi-data'),
-                         'OI_CENTRAL_ROOT': str(self.world), 'OI_CENTRAL_CTRL_BIN': ctrl,
+                         'OI_CENTRAL_ROOT': str(self.world), 'OI_CENTRAL_CTRL_BIN': ctrl, 'OI_AIKIT_BIN': aikit,
                          'OI_CENTRAL_PROJECT_QUERY': 'controlled-no-project', 'OI_CRADLE_STATE': str(self.out / 'cradle-state.json'),
                          'OI_EXPRESSION_SOCKET': str(self.out / 'expression.sock'),
                          'QL_NARA_PROVIDER_CACHE': str(self.out / 'nara-provider-cache'),
                          'OI_QL_BIN': by_role['ql']['path'], 'OI_QL_SKY_BIN': by_role['ql-sky']['path'],
                          'OI_QL_FIELD_HOST_BIN': by_role['ql-field-host']['path'], 'OI_QL_FIELD_WORKER_BIN': by_role['ql-field-worker']['path']})
-        self.report['owned_environment'] = {key: self.env[key] for key in ('OI_BIN', 'OI_HOME', 'OI_DATA_HOME', 'OI_CENTRAL_ROOT',
+        self.report['owned_environment'] = {key: self.env[key] for key in ('OI_BIN', 'OI_HOME', 'OI_DATA_HOME', 'AIKIT_HOME', 'OI_AIKIT_BIN', 'OI_CENTRAL_ROOT',
             'OI_CENTRAL_CTRL_BIN', 'OI_CENTRAL_PROJECT_QUERY', 'OI_CRADLE_STATE', 'OI_EXPRESSION_SOCKET', 'QL_NARA_PROVIDER_CACHE',
             'OI_QL_BIN', 'OI_QL_SKY_BIN', 'OI_QL_FIELD_HOST_BIN', 'OI_QL_FIELD_WORKER_BIN', 'QL_NARA_UV', 'XDG_CACHE_HOME', 'UV_CACHE_DIR')}
         self.report['owned_environment']['PLAYWRIGHT_BROWSERS_PATH'] = self.env.get('PLAYWRIGHT_BROWSERS_PATH')
@@ -866,16 +873,18 @@ class Replay:
         self.report['source_recheck'] = {
             'ql': self.cut(self.ql, self.args.expected_ql_head), 'oi': self.cut(self.repo, self.args.expected_oi_head),
             'central': self.cut(self.central, self.args.expected_central_head),
+            'aikit': self.cut(self.aikit, self.args.expected_aikit_head),
+            'aikit_image_unchanged': file_ref(aikit) == self.report['host_owners']['aikit'],
             'oi_source_unchanged': self.source_rows(self.repo, self.args.expected_oi_head, OI_SCOPE) == oi_sources,
             'ql_source_unchanged': self.source_rows(self.ql, self.args.expected_ql_head, [row['path'] for row in ql_rows]) == ql_rows}
-        require(self.report['source_recheck']['oi_source_unchanged'] and self.report['source_recheck']['ql_source_unchanged'], 'Qualified source changed during native receiving')
+        require(self.report['source_recheck']['oi_source_unchanged'] and self.report['source_recheck']['ql_source_unchanged'] and self.report['source_recheck']['aikit_image_unchanged'], 'Qualified source changed during native receiving')
         self.report['passed'] = True
         self.report['standing'] = 'Executed strict whole production and separate owned-kernel/fresh-browser entry in one source-built hosted Linux environment; managed installed Mac/H remain separate'
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('repo', 'ql-source', 'central-source', 'expected-oi-head', 'expected-ql-head', 'expected-central-head',
+    for name in ('repo', 'ql-source', 'central-source', 'aikit-source', 'expected-oi-head', 'expected-ql-head', 'expected-central-head', 'expected-aikit-head',
                  'fixture-archive', 'fixture-sha256', 'uv', 'output'):
         parser.add_argument('--' + name, required=True)
     args = parser.parse_args()
