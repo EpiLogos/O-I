@@ -44,13 +44,13 @@ if(requiredReturn){
  assert.equal(pages[0].target_ref,document.expression_ref);
  assert.equal(pages[0].scene_ref,document.selection.scene_ref);
  assert.equal(text.body,pages[0].text,'The renderer must receive the actual first retained native page');
- report.native_return={act_ref:act.act_ref,revision:act.revision,complete_source_bytes:Buffer.byteLength(source.text),pages:pages.length,selected_page:pages[0].scene_ref};
+ report.native_return={act_ref:act.act_ref,revision:act.revision,complete_source_bytes:Buffer.byteLength(source.text),pages:pages.length,selected_page:pages[0].scene_ref,scene_refs:pages.map(page=>page.scene_ref)};
 }
 const bundle=join(out,'renderer.js');
 // Use the shipped native camera companion, exactly as the production Stage.
 const camera=resolve(cradle,'../../packages/oi-design-system/expressions-engine/shell/camera.mjs');
 report.camera={source:camera,sha256:createHash('sha256').update(await readFile(camera)).digest('hex')};
-await build({stdin:{contents:`import {EngineSurface} from './src/stage/engineSurface.ts';import {expressionRenderConfig} from './src/expression/engineProjection.ts';import {cameraForSceneView,project} from '../../packages/oi-design-system/expressions-engine/shell/camera.mjs';import {paintText} from '../../packages/oi-design-system/expressions-engine/shell/capture.mjs';window.nativeModules={EngineSurface,expressionRenderConfig,cameraForSceneView,project,paintText};`,resolveDir:cradle},bundle:true,format:'iife',platform:'browser',target:'es2022',nodePaths:[join(cradle,'node_modules')],outfile:bundle});
+await build({stdin:{contents:`import {EngineSurface} from './src/stage/engineSurface.ts';import {expressionRenderConfig} from './src/expression/engineProjection.ts';import {cameraForSceneView,project} from '../../packages/oi-design-system/expressions-engine/shell/camera.mjs';import {paintText,textLayout} from '../../packages/oi-design-system/expressions-engine/shell/capture.mjs';window.nativeModules={EngineSurface,expressionRenderConfig,cameraForSceneView,project,paintText,textLayout};`,resolveDir:cradle},bundle:true,format:'iife',platform:'browser',target:'es2022',nodePaths:[join(cradle,'node_modules')],outfile:bundle});
 const html='<!doctype html><style>body{margin:0;background:white}#stage{position:relative;width:100vw;height:100vh}#inscriptions{position:absolute;inset:0;z-index:1;pointer-events:none}</style><div id="stage"><canvas id="inscriptions"></canvas></div><script src="/renderer.js"></script>';
 const server=createServer(async(req,res)=>{try{res.setHeader('content-type',req.url==='/renderer.js'?'text/javascript':req.url==='/composition.json'?'application/json':'text/html');res.end(req.url==='/renderer.js'?await readFile(bundle):req.url==='/composition.json'?JSON.stringify(composition):html);}catch(error){res.statusCode=500;res.end(String(error));}});
 let browserOwner,browser,page,cdp,browserCdp;
@@ -98,17 +98,60 @@ try{
  });
  const resultText=scene.presentation.scene.text.find(t=>t.role==='resultText');
  if(requiredReturn||resultText?.bodySize===18){
-  report.visual.returned_text=await page.evaluate(()=>{
-   const scene=window.documentReading.scenes.find(s=>s.scene_ref===window.documentReading.selection.scene_ref).presentation.scene;
+  const measurePage=sceneRef=>page.evaluate(async sceneRef=>{
+   const d=window.documentReading;
+   const reading={...d,selection:{...d.selection,scene_ref:sceneRef}};
+   const scene=d.scenes.find(s=>s.scene_ref===sceneRef)?.presentation?.scene;
+   if(!scene)throw new Error('Retained native page material is absent: '+sceneRef);
+   const cfg=window.nativeModules.expressionRenderConfig(reading);
+   window.surface.presentConfig(d.expression_ref,cfg,sceneRef);
+   let timer;
+   try{await Promise.race([window.surface.whenReady(d.expression_ref),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Retained native page did not render within12s')),12000);})]);}finally{clearTimeout(timer);}
+   const result=scene.text.find(t=>t.role==='resultText');
+   if(!result)throw new Error('Retained native page has no returned text');
+   const layout=window.nativeModules.textLayout(result,innerWidth,innerHeight);
    const canvas=document.querySelector('#inscriptions'),ctx=canvas.getContext('2d'),original=ctx.fillText.bind(ctx),draws=[];
    ctx.clearRect(0,0,canvas.width,canvas.height);
    ctx.fillText=(value,x,y)=>{if(ctx.font==='18px Arial'&&value.trim())draws.push({text:value,x,y,width:ctx.measureText(value).width,font:ctx.font});original(value,x,y);};
    try{window.nativeModules.paintText(ctx,scene,innerWidth,innerHeight);}finally{ctx.fillText=original;}
    const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
-   return draws.map(draw=>{let ink=0;for(let y=Math.max(0,Math.floor(draw.y));y<Math.min(canvas.height,Math.ceil(draw.y+24));y++)for(let x=Math.max(0,Math.floor(draw.x));x<Math.min(canvas.width,Math.ceil(draw.x+draw.width));x++){const at=(y*canvas.width+x)*4;if(pixels[at+3]>30&&Math.min(pixels[at],pixels[at+1],pixels[at+2])<175)ink++;}return {...draw,ink_pixels:ink,inside_viewport:draw.x>=0&&draw.y>=0&&draw.x+draw.width<=innerWidth&&draw.y+18<=innerHeight};});
-  });
-  assert.ok(report.visual.returned_text.length,'Actual authored18px proposal must have visible native text lines');
-  assert.ok(report.visual.returned_text.every(line=>line.inside_viewport&&line.ink_pixels>3),'Each returned text line must render within the actual viewport');
+   const lines=draws.map(draw=>{let ink=0;for(let y=Math.max(0,Math.floor(draw.y));y<Math.min(canvas.height,Math.ceil(draw.y+24));y++)for(let x=Math.max(0,Math.floor(draw.x));x<Math.min(canvas.width,Math.ceil(draw.x+draw.width));x++){const at=(y*canvas.width+x)*4;if(pixels[at+3]>30&&Math.min(pixels[at],pixels[at+1],pixels[at+2])<175)ink++;}return {...draw,ink_pixels:ink,inside_column:draw.width<=layout.width+1,inside_viewport:draw.x>=0&&draw.y>=0&&draw.x+draw.width<=innerWidth&&draw.y+18<=innerHeight};});
+   // Read the actual production connection layer's evaluated paths, including
+   // their current physical poses and camera. Authored coordinates alone do
+   // not establish where the visible connections have developed.
+   const adapter=window.surface['adapter'],connection=adapter.connectionLayer;
+   connection?.update();
+   const paths=(connection?.paths??[]).map(path=>({binding_ref:path.binding.binding_ref,points:path.points.map(p=>adapter.engine.projectWorldToScreen(p.x,p.y,p.z))}));
+   const intersects=(a,b,line)=>{
+    if(!a.visible||!b.visible)return false;
+    let low=0,high=1;
+    for(const [start,delta,min,max] of [[a.x,b.x-a.x,line.x-4,line.x+line.width+4],[a.y,b.y-a.y,line.y-4,line.y+24]]){
+     if(!delta){if(start<min||start>max)return false;continue;}
+     const t1=(min-start)/delta,t2=(max-start)/delta;
+     low=Math.max(low,Math.min(t1,t2));high=Math.min(high,Math.max(t1,t2));
+     if(low>high)return false;
+    }
+    return true;
+   };
+   const overlaps=[];
+   for(const path of paths)for(const line of lines)if(path.points.some((p,i)=>i&&intersects(path.points[i-1],p,line)))overlaps.push({binding_ref:path.binding_ref,text:line.text});
+   return {scene_ref:sceneRef,body:result.body,lines,expected_connections:cfg.oiExpressionBindings.relations.map(r=>r.binding_ref).sort(),rendered_connections:paths.map(p=>p.binding_ref).sort(),overlaps};
+  },sceneRef);
+  report.visual.retained_pages=[];
+  const refs=report.native_return?.scene_refs??[composition.selection.scene_ref];
+  for(const [index,ref] of refs.entries()){
+   const reading=await measurePage(ref);
+   report.visual.retained_pages.push(reading);
+   await page.screenshot({path:join(out,`native-scene-page-${index+1}.png`)});
+   assert.ok(reading.lines.length,'Each actual retained native page must have visible18px text');
+   assert.equal(reading.lines.map(line=>line.text).join('').replace(/\s/g,''),reading.body.replace(/\s/g,''),'All retained source characters must be painted without truncation');
+   assert.ok(reading.lines.every(line=>line.inside_column&&line.inside_viewport&&line.ink_pixels>3),`Native page must fit its readable column and viewport: ${JSON.stringify(reading)}`);
+   assert.ok(reading.expected_connections.length,'This actual shared undertaking must retain its co-present native relations');
+   assert.deepEqual(reading.rendered_connections,reading.expected_connections,'The actual co-present native connections must remain rendered');
+   assert.deepEqual(reading.overlaps,[],`Native connections must not cross the returned text: ${ref}`);
+  }
+  const first=await measurePage(composition.selection.scene_ref);
+  report.visual.returned_text=first.lines;
  }
  const start=await sample('stable native material');
  report.visual.before=await visual();

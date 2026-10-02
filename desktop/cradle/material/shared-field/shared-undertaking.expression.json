@@ -235,6 +235,11 @@
         "accepts": "text",
         "role": "caption",
         "text_id": "incoming-request"
+      },
+      {
+        "accepts": "text",
+        "role": "checkLabel",
+        "text_id": "check-label"
       }
     ],
     "schema": "oi.expression-reuse/v1",
@@ -1956,7 +1961,7 @@
               "name": "Ada · Ann’s native Direct agent",
               "position": {
                 "x": -2.25,
-                "y": -0.16,
+                "y": -0.86,
                 "z": 0
               },
               "role": "self",
@@ -2276,7 +2281,7 @@
               "name": "Bo · Bea’s native Direct agent",
               "position": {
                 "x": 2.25,
-                "y": -0.16,
+                "y": -0.86,
                 "z": 0
               },
               "role": "bo",
@@ -2556,7 +2561,7 @@
               "visible": true,
               "width": 180,
               "x": 0.04,
-              "y": 0.59
+              "y": 0.77
             },
             {
               "align": "center",
@@ -2571,7 +2576,7 @@
               "visible": true,
               "width": 180,
               "x": 0.83,
-              "y": 0.59
+              "y": 0.77
             },
             {
               "align": "center",
@@ -2586,6 +2591,21 @@
               "width": 300,
               "x": 0.4,
               "y": 0.8
+            },
+            {
+              "id": "check-label",
+              "role": "checkLabel",
+              "visible": true,
+              "x": 0.6,
+              "y": 0.81,
+              "width": 190,
+              "align": "center",
+              "kicker": "",
+              "title": "Recovery check",
+              "italic": "",
+              "body": "Bea’s competing edit.",
+              "size": 18,
+              "bodySize": 14
             },
             {
               "align": "left",
@@ -2648,7 +2668,7 @@
               "visible": true,
               "width": 800,
               "x": 0.23,
-              "y": 0.29
+              "y": 0.25
             },
             {
               "align": "left",
@@ -2662,7 +2682,7 @@
               "visible": true,
               "width": 800,
               "x": 0.23,
-              "y": 0.2
+              "y": 0.17
             }
           ],
           "toolbelt": [
