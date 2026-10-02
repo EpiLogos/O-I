@@ -7,7 +7,7 @@ import {promisify} from 'node:util';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {decodeBasis,mapEventsWithCursor,opKey,occurrenceKey,wireBasis,type CastMember} from '../../desktop/cradle/src/contributions/factory/live/eventMap';
-import {cursorFromAct,performWithRetry,requestFor} from '../../desktop/cradle/src/contributions/factory/live/producer';
+import {cursorFromAct,performWithRetry, requestAccepted,requestFor} from '../../desktop/cradle/src/contributions/factory/live/producer';
 import {resolveRepertoire} from '../../desktop/cradle/src/contributions/factory/live/repertoire';
 import type {WorldAct,WorldRequest} from '../../desktop/cradle/src/expression/world';
 import {nativeExpressionRequest} from './native-expression-transport.mjs';
@@ -84,7 +84,7 @@ const listing=await world({operation:'material_list'});
 const repertoire=resolveRepertoire(listing.materials,{explicit:args.material});
 if(repertoire.basis!=='explicit')throw Error('The admitted native material is unavailable');
 const sessionKey=args.world+'/'+args.session;
-const cast:CastMember[]=[{role:args.role,agent_ref:args.agent,label:args.name??'Agent',session_refs:[sessionKey],attempt_refs:[],...(args.profile?{profile_ref:args.profile}:{})}];
+const cast:CastMember[]=[{role:args.role,agent_ref:args.world+'/'+args.agent,label:args.name??'Agent',session_refs:[sessionKey],attempt_refs:[],...(args.profile?{profile_ref:args.world+'/'+args.profile}:{})}];
 const binding={kind:'agent',agent_ref:args.world+'/'+args.agent,label:args.name??'Agent',entity_ref:args.entity,character_ref:args.character,...(args.profile?{profile_ref:args.world+'/'+args.profile}:{})};
 for(let attempt=0;attempt<3;attempt++){
   act=await inspect();
@@ -139,26 +139,29 @@ while(!stopping&&!closed){
     const end=events.findIndex((e:any)=>e.event?.kind==='provider'&&e.event?.event?.TurnEnded);
     const admitted=end<0?events:events.slice(0,end+1);
     const reconstructed={...cursor,encounterAfter:{...cursor.encounterAfter,[sessionKey]:from-1},sessions:{}};
-    const mapped=mapEventsWithCursor({runRef:args.expression},{encounter:{[sessionKey]:admitted},bounds:{[sessionKey]:{from,to:admitted.at(-1)?.cursor??after}}},reconstructed,{cast,humanRefs:{[sessionKey]:args.world+'/'+args.person},replyRole:'resultText',replyChars:4096,messageRole:'communication',worldRef:args.world,phaseScenes:{working:'work-passage',speaking:'review',idle:'continuation'}});
+    const mapped=mapEventsWithCursor({runRef:args.expression},{encounter:{[sessionKey]:admitted},bounds:{[sessionKey]:{from,to:admitted.at(-1)?.cursor??after}}},reconstructed,{cast,humanRefs:{[sessionKey]:args.world+'/'+args.person},replyRole:'resultText',replyChars:4096,messageRole:'communication',worldRef:args.world,phaseScenes:{working:'work-passage',speaking:'review'}});
     for(const op of mapped.ops){
       act=await inspect();const accepted=cursorFromAct(act);
-      if(accepted.performed.includes(opKey(op)))continue;
       const resolved=requestFor(op,repertoire,[{...cast[0],character_ref:args.character}],{actRef:args.act,actor:args.actor??args.person});
       if(!resolved.request)throw Error(resolved.reason);
       const request:any={...resolved.request,expected_act_revision:act.revision};
       if(request.bindings){for(const [role,value]of Object.entries(request.bindings) as [string,any][]){
-        if(value.agent_ref===args.agent)request.bindings[role]={...value,...binding,state:value.state};
+        if(value.agent_ref===binding.agent_ref)request.bindings[role]={...value,...binding,state:value.state};
         else if(admittedBindings[role]?.entity_ref)request.bindings[role]={...value,entity_ref:admittedBindings[role].entity_ref};
       }}
+      if(accepted.performed.includes(opKey(op))){
+        if(!requestAccepted(act,request))throw Error('The retained occurrence has different native request material');
+        continue;
+      }
       try{await performWithRetry(world,request,args.act);}
       catch(error){
         // Lost replies may follow an accepted effect. Only its exact native
         // passage proves acceptance; an unreadable Act never permits resend.
         const recovered=await inspect();
-        if(!cursorFromAct(recovered).performed.includes(opKey(op)))throw error;
+        if(!requestAccepted(recovered,request))throw error;
       }
       act=await inspect();
-      if(!cursorFromAct(act).performed.includes(opKey(op)))throw Error('Native Act has no acceptance passage for '+JSON.stringify(wireBasis(op.basis)));
+      if(!requestAccepted(act,request))throw Error('Native Act has no exact request acceptance passage for '+JSON.stringify(wireBasis(op.basis)));
       if(op.operation==='act_text'&&!act.sequence.some(p=>{const b=decodeBasis(p.event_basis);return b&&occurrenceKey(b.event_ref,b.occurrence)===opKey(op)&&p.target_scene_ref;}))throw Error('The returned text has no performed native scene layer');
       emit('performed',{operation:op.operation,key:opKey(op),act_revision:act.revision,basis:wireBasis(op.basis)});
     }

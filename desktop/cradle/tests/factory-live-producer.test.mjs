@@ -154,10 +154,12 @@ test("with no material the events stay addressable but unresolved — never an i
   const io = fakeIO({material: []});
   const producer = new P.LiveProducer(io, config);
   await producer.open();
-  await producer.pass();
+  await assert.rejects(() => producer.pass(), /No material/);
   const unresolved = producer.state.performed.filter(p => p.state === "unresolved");
   assert.ok(unresolved.length > 0 && unresolved.every(p => /No material/.test(p.error)));
-  assert.ok(producer.state.performed.some(p => p.state === "performed" && p.op.operation === "act_text"), "text still fills its role");
+  assert.ok(!producer.state.performed.some(p => p.state === "performed"), "Unresolved material holds later operations in their source order");
+  assert.deepEqual(producer.state.cursor.performed, [], "Unresolved occurrences have no native acceptance");
+  assert.deepEqual(producer.state.cursor.encounterAfter, {}, "Unaccepted work does not consume its journal");
 });
 
 test("repertoire: the selected Expression's gestures, skill refs and unit context", () => {

@@ -11,6 +11,7 @@ import {resolve,join} from 'node:path';
 import {build} from '../node_modules/esbuild/lib/main.js';
 import {chromium} from 'playwright';
 import {filterExpressionComposition} from '../../../shared-field/expression-projection.mjs';
+import {retireNativeBrowserOwners} from './native-expression-central.mjs';
 const cradle=fileURLToPath(new URL('../',import.meta.url));
 const source=process.env.OI_SHARED_NATIVE_DOCUMENT;
 assert.ok(source?.startsWith('/'),'OI_SHARED_NATIVE_DOCUMENT must name an actual saved native Expression');
@@ -24,20 +25,46 @@ const scene=composition.scenes.find(s=>s.scene_ref===composition.selection.scene
 assert.ok(scene.presentation,'The actual producer must have supplied native Scene material');
 assert.ok(scene.presentation.scene.entities.some(e=>e.sequence.enabled),'The actual saved scene must contain running formation sequences');
 const report={standing:'Source renderer on actual saved native material; controlled user identities, no replayed effects; installed acceptance separate',source:{path:source,sha256:createHash('sha256').update(original).digest('hex'),expression_ref:document.expression_ref,revision:document.revision},samples:[],visual:{},pass:false};
+const requiredReturn=process.env.OI_SHARED_REQUIRED_RETURN_TEXT==='1';
+if(requiredReturn){
+ const actPath=process.env.OI_SHARED_NATIVE_ACT,receiptPath=process.env.OI_SHARED_NATIVE_OWNER_RECEIPT;
+ assert.ok(actPath?.startsWith('/')&&receiptPath?.startsWith('/'),'Required returned text must name its actual native Act and owner receipt');
+ const actBytes=await readFile(actPath),act=JSON.parse(actBytes),receipt=JSON.parse(await readFile(receiptPath,'utf8'));
+ assert.equal(receipt.pass,true,'The actual native owner must have accepted this document');
+ assert.equal(receipt.native_document.sha256,report.source.sha256);
+ assert.equal(receipt.native_act.sha256,createHash('sha256').update(actBytes).digest('hex'));
+ const text=scene.presentation.scene.text.find(layer=>layer.role==='resultText');
+ assert.ok(text,'The required returned native text slot is absent');
+ assert.equal(text.bodySize,18,'The required native text must retain its authored18px size');
+ const source=act.sequence.find(passage=>passage.kind==='text'&&passage.role==='resultText'&&passage.native_ref);
+ assert.ok(source,'The actual Act must retain the complete returned source');
+ const pages=act.sequence.filter(passage=>passage.kind==='edition'&&passage.native_ref===source.native_ref);
+ assert.ok(pages.length>1,'The complete reply must produce native retained pages');
+ assert.equal(pages.map(page=>page.text).join(''),source.text);
+ assert.equal(pages[0].target_ref,document.expression_ref);
+ assert.equal(pages[0].scene_ref,document.selection.scene_ref);
+ assert.equal(text.body,pages[0].text,'The renderer must receive the actual first retained native page');
+ report.native_return={act_ref:act.act_ref,revision:act.revision,complete_source_bytes:Buffer.byteLength(source.text),pages:pages.length,selected_page:pages[0].scene_ref};
+}
 const bundle=join(out,'renderer.js');
-// Read the current native camera source pending its bounded vendored refresh.
-// This remains the instrument's actual implementation, never a replacement.
-const camera=join(cradle,'expressions-app/field-studies-journeys/src/camera.ts');
+// Use the shipped native camera companion, exactly as the production Stage.
+const camera=resolve(cradle,'../../packages/oi-design-system/expressions-engine/shell/camera.mjs');
 report.camera={source:camera,sha256:createHash('sha256').update(await readFile(camera)).digest('hex')};
-await build({stdin:{contents:`import {EngineSurface} from './src/stage/engineSurface.ts';import {expressionRenderConfig} from './src/expression/engineProjection.ts';import {cameraForSceneView,project} from './expressions-app/field-studies-journeys/src/camera.ts';import {paintText} from '../../packages/oi-design-system/expressions-engine/shell/capture.mjs';window.nativeModules={EngineSurface,expressionRenderConfig,cameraForSceneView,project,paintText};`,resolveDir:cradle},bundle:true,format:'iife',platform:'browser',target:'es2022',nodePaths:[join(cradle,'node_modules')],outfile:bundle,plugins:[{name:'current-native-camera-source',setup(b){b.onResolve({filter:/camera\.mjs$/},args=>args.path.includes('expressions-engine')||args.importer.includes('expressions-engine')?{path:camera}:undefined);}}]});
+await build({stdin:{contents:`import {EngineSurface} from './src/stage/engineSurface.ts';import {expressionRenderConfig} from './src/expression/engineProjection.ts';import {cameraForSceneView,project} from '../../packages/oi-design-system/expressions-engine/shell/camera.mjs';import {paintText} from '../../packages/oi-design-system/expressions-engine/shell/capture.mjs';window.nativeModules={EngineSurface,expressionRenderConfig,cameraForSceneView,project,paintText};`,resolveDir:cradle},bundle:true,format:'iife',platform:'browser',target:'es2022',nodePaths:[join(cradle,'node_modules')],outfile:bundle});
 const html='<!doctype html><style>body{margin:0;background:white}#stage{position:relative;width:100vw;height:100vh}#inscriptions{position:absolute;inset:0;z-index:1;pointer-events:none}</style><div id="stage"><canvas id="inscriptions"></canvas></div><script src="/renderer.js"></script>';
 const server=createServer(async(req,res)=>{try{res.setHeader('content-type',req.url==='/renderer.js'?'text/javascript':req.url==='/composition.json'?'application/json':'text/html');res.end(req.url==='/renderer.js'?await readFile(bundle):req.url==='/composition.json'?JSON.stringify(composition):html);}catch(error){res.statusCode=500;res.end(String(error));}});
-await new Promise(r=>server.listen(0,'127.0.0.1',r));
-const browser=await chromium.launch({headless:true,args:['--enable-webgl']});
-const page=await browser.newPage({viewport:{width:1440,height:900}}),cdp=await page.context().newCDPSession(page),browserCdp=await browser.newBrowserCDPSession();
-await cdp.send('Performance.enable');
-const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+let browserOwner,browser,page,cdp,browserCdp;
+const errors=[];
+const startup=async operation=>{let timer;try{return await Promise.race([operation(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Owned renderer startup exceeded15s')),15000);})]);}finally{clearTimeout(timer);}};
 try{
+ await startup(()=>new Promise((accept,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',accept);}));
+ browserOwner=await chromium.launchServer({timeout:15000,headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-webgl']});
+ browser=await chromium.connect(browserOwner.wsEndpoint(),{timeout:15000});
+ page=await startup(()=>browser.newPage({viewport:{width:1440,height:900}}));
+ cdp=await startup(()=>page.context().newCDPSession(page));
+ browserCdp=await startup(()=>browser.newBrowserCDPSession());
+ await startup(()=>cdp.send('Performance.enable'));
+ page.on('pageerror',e=>errors.push(String(e)));
  await page.goto(`http://127.0.0.1:${server.address().port}`);
  await page.evaluate(async()=>{
   const d=window.documentReading=await (await fetch('/composition.json')).json();
@@ -69,6 +96,20 @@ try{
    return {id:entity.id,name:entity.name,x:point.x,y:point.y,ink_pixels:ink};
   });
  });
+ const resultText=scene.presentation.scene.text.find(t=>t.role==='resultText');
+ if(requiredReturn||resultText?.bodySize===18){
+  report.visual.returned_text=await page.evaluate(()=>{
+   const scene=window.documentReading.scenes.find(s=>s.scene_ref===window.documentReading.selection.scene_ref).presentation.scene;
+   const canvas=document.querySelector('#inscriptions'),ctx=canvas.getContext('2d'),original=ctx.fillText.bind(ctx),draws=[];
+   ctx.clearRect(0,0,canvas.width,canvas.height);
+   ctx.fillText=(value,x,y)=>{if(ctx.font==='18px Arial'&&value.trim())draws.push({text:value,x,y,width:ctx.measureText(value).width,font:ctx.font});original(value,x,y);};
+   try{window.nativeModules.paintText(ctx,scene,innerWidth,innerHeight);}finally{ctx.fillText=original;}
+   const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+   return draws.map(draw=>{let ink=0;for(let y=Math.max(0,Math.floor(draw.y));y<Math.min(canvas.height,Math.ceil(draw.y+24));y++)for(let x=Math.max(0,Math.floor(draw.x));x<Math.min(canvas.width,Math.ceil(draw.x+draw.width));x++){const at=(y*canvas.width+x)*4;if(pixels[at+3]>30&&Math.min(pixels[at],pixels[at+1],pixels[at+2])<175)ink++;}return {...draw,ink_pixels:ink,inside_viewport:draw.x>=0&&draw.y>=0&&draw.x+draw.width<=innerWidth&&draw.y+18<=innerHeight};});
+  });
+  assert.ok(report.visual.returned_text.length,'Actual authored18px proposal must have visible native text lines');
+  assert.ok(report.visual.returned_text.every(line=>line.inside_viewport&&line.ink_pixels>3),'Each returned text line must render within the actual viewport');
+ }
  const start=await sample('stable native material');
  report.visual.before=await visual();
  await page.screenshot({path:join(out,'native-scene-before.png')});
@@ -112,7 +153,7 @@ try{
  await page.evaluate(()=>{window.surface.release(window.documentReading.expression_ref);window.surface.dispose();});
  await cdp.send('HeapProfiler.collectGarbage');
  assert.equal(await page.locator('canvas[data-oi-stage="engine"]').count(),0,'Disposal removes the actual renderer canvas');
- assert.deepEqual(errors,[]);report.pass=true;
+ assert.deepEqual(errors,[]);assert.deepEqual(await page.evaluate(()=>window.errors),[]);report.pass=true;
  console.log(JSON.stringify({pass:true,source:report.source,webgl:report.webgl,samples:report.samples,visual:report.visual},null,2));
 }catch(error){report.failure=String(error);throw error;}
-finally{await writeFile(join(out,'resource-replay.json'),JSON.stringify(report,null,2));await browser.close();await new Promise(r=>server.close(r));}
+finally{report.owner_cleanup=await retireNativeBrowserOwners({browser,browserOwner,server});for(const[owner,result]of Object.entries(report.owner_cleanup))if(!result.ok){report.pass=false;report.cleanup_failure=`${owner}: ${result.error}`;}await writeFile(join(out,'resource-replay.json'),JSON.stringify(report,null,2));if(report.cleanup_failure)throw new Error(report.cleanup_failure);}

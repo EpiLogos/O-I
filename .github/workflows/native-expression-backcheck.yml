@@ -6,6 +6,18 @@ on:
       - 'desktop/cradle/kernel/**'
       - 'desktop/cradle/src/expressions/**'
       - 'desktop/cradle/src/kernel/types.ts'
+      - 'desktop/cradle/material/shared-field/**'
+      - 'desktop/cradle/material/expressive-material/**'
+      - 'desktop/cradle/src/contributions/factory/live/**'
+      - 'desktop/cradle/src/expression/**'
+      - 'desktop/cradle/src/stage/**'
+      - 'desktop/cradle/tests/shared-direct*'
+      - 'desktop/cradle/tests/factory-live-producer.test.mjs'
+      - 'desktop/cradle/tests/fixtures/shared-direct-journal/**'
+      - 'desktop/cradle/tests/fixtures/shared-native-expression/**'
+      - 'desktop/cradle/tests/shared-expression-resource-native.mjs'
+      - 'shared-field/expression-projection.mjs'
+      - 'shared-field/scripts/direct-expression-activity-producer.mts'
       - 'desktop/cradle/tests/native-expression*'
       - 'desktop/cradle/tests/*formation*'
       - 'desktop/cradle/tests/candidate-cache-native.mjs'
@@ -153,6 +165,28 @@ jobs:
           mkdir -p /tmp/w5-checks
           cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml 2>&1 | tee /tmp/w5-checks/kernel.log
+      - name: Retained Direct speech through real native Factory material and Act acceptance
+        if: ${{ !cancelled() }}
+        env:
+          NATIVE_EXPRESSION_BRIDGE: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
+          OI_SHARED_TEXT_OUT: /tmp/w5-checks/shared-native-text
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shared-direct-journal.test.mjs tests/factory-live-producer.test.mjs 2>&1 | tee /tmp/w5-checks/shared-consumer-regressions.log
+          node tests/shared-direct-native-owner.mjs 2>&1 | tee /tmp/w5-checks/shared-native-text.log
+      - name: Actually rendered native proposal, required-body failure and bounded live resources
+        if: ${{ !cancelled() }}
+        env:
+          OI_SHARED_NATIVE_DOCUMENT: /tmp/w5-checks/shared-native-text/document.json
+          OI_SHARED_NATIVE_ACT: /tmp/w5-checks/shared-native-text/act.json
+          OI_SHARED_NATIVE_OWNER_RECEIPT: /tmp/w5-checks/shared-native-text/native-owner.json
+          OI_SHARED_REQUIRED_RETURN_TEXT: '1'
+          OI_SHARED_RESOURCE_OUT: /tmp/w5-checks/shared-native-text-render
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node tests/shared-expression-resource-native.mjs 2>&1 | tee /tmp/w5-checks/shared-native-text-render.log
       - name: Build the exact real QL host and C++ material owner
         if: always()
         run: |

@@ -39,8 +39,8 @@
  * `act_list` (by expression_ref) so the timeline and the follow cursor span
  * every act of the Run.
  *
- * The IO is injected (FactoryLive supplies kernel reads), so the loop is
- * exercised in tests without a kernel.
+ * FactoryLive supplies kernel reads through the same owner-bound IO seam
+ * used by native acceptance.
  */
 import type {JournalEventLike} from "../../../agent/tape/model";
 import {advanceCursor, castOf, decodeBasis, journalBounds, runWindow, emptyCursor, mapEventsWithCursor, occurrenceKey, opKey, wireBasis, type ActOp, type Binding, type CastMember as CastMemberOfRun, type CursorState, type LiveJournals, type LiveReadings} from "./eventMap";
@@ -149,7 +149,7 @@ export function requestFor(op: ActOp, repertoire: Repertoire, cast: LiveCastMemb
 }
 
 const RACES = new Set(["revision_conflict", "act_revision_conflict", "material_revision_changed"]);
-const REFUSED = /refus|conflict|unavailable|unbound|error|invalid|changed/;
+const REFUSED = /refus|conflict|unavailable|unbound|error|invalid|changed|unknown/;
 
 /** Send one world request; a revision race re-reads the act and retries
  * once with fresh guards. Any other refusal throws with the kernel's state. */
@@ -163,25 +163,82 @@ export class PassageLimit extends Error {
 export const chainIndex = (base: string, actRef: string): number => actRef === base ? 1 : actRef.startsWith(`${base}:`) && /^\d+$/.test(actRef.slice(base.length + 1)) ? Number(actRef.slice(base.length + 1)) : 0;
 export const chainRef = (base: string, index: number) => index <= 1 ? base : `${base}:${index}`;
 
+/** A recovery/skip receipt must retain this exact native request, not merely
+ * reuse its occurrence. No second acknowledgement store is introduced. */
+export function requestAccepted(act: WorldAct | undefined, request: WorldRequest): boolean {
+  if (!act || !("act_ref" in request) || act.act_ref !== request.act_ref || !("event_basis" in request) || !request.event_basis) return false;
+  const basis = request.event_basis;
+  const subset = (expected: object | undefined, actual: object | undefined): boolean => !expected || !!actual && Object.entries(expected).every(([key, value]) => value === undefined || JSON.stringify((actual as Record<string, unknown>)[key]) === JSON.stringify(value));
+  return act.sequence.some(passage => {
+    if (!passage.target_ref || !subset(basis, passage.event_basis)) return false;
+    if (request.operation === "act_text") return passage.kind === "text" && passage.role === request.role
+      && passage.field === (request.field ?? "body") && passage.text === request.text && passage.value === request.value;
+    if (request.operation === "act_operate") return passage.kind === "operate" && passage.operation === request.operation_kind
+      && passage.native_ref === request.native_ref && (request.mode === undefined || passage.mode === request.mode)
+      && passage.summary === request.summary;
+    if (request.operation !== "act_select" && request.operation !== "act_gesture") return false;
+    const material = request.material;
+    if (material?.file_ref && passage.file_ref !== material.file_ref || material?.expression_ref && passage.expression_ref !== material.expression_ref
+      || material?.revision && passage.revision !== material.revision
+      || material?.scene_ref && passage.scene_ref !== material.scene_ref && !passage.scene_ref?.endsWith(`:scene:${material.scene_ref}`)) return false;
+    if (!subset(request.transition, passage.transition)) return false;
+    if (request.operation === "act_gesture") return passage.kind === "gesture" && passage.gesture === request.gesture
+      && passage.role === request.role && (!request.entity_ref || passage.native_ref === request.entity_ref);
+    const state = request.state ?? material?.state;
+    const kind = request.kind ?? (state && !material?.scene_ref ? "state" : "scene");
+    if (passage.kind !== kind || passage.role !== request.role || passage.state !== state || passage.summary !== request.summary
+      || !subset(request.captions, passage.captions)) return false;
+    return Object.entries(request.bindings ?? {}).every(([role, binding]) => subset(binding, passage.bindings?.[role]));
+  });
+}
+
+/** Reconcile an uncertain request through the native owner before sending
+ * anything further. An unreadable owner or conflicting retained payload is
+ * unavailable work, never permission to resend. */
+export async function reconcilePendingDelivery(world: WorldCall, request: WorldRequest): Promise<ActOutcome> {
+  if (!("act_ref" in request)) throw new Error("Pending delivery has no native Act identity");
+  const fresh = await actInspect(world, request.act_ref);
+  if (fresh.act?.act_ref !== request.act_ref) throw new Error("Pending native delivery remains unreadable; no resend is permitted");
+  const basis = "event_basis" in request ? decodeBasis(request.event_basis) : undefined;
+  const key = basis && occurrenceKey(basis.event_ref, basis.occurrence);
+  if (key && cursorFromAct(fresh.act).performed.includes(key) && !requestAccepted(fresh.act, request)) throw new Error("The pending occurrence retains different native request material");
+  return fresh;
+}
+
 export async function performWithRetry(world: WorldCall, request: WorldRequest, actRef: string): Promise<ActOutcome> {
-  const first = await world(request) as ActOutcome;
+  const eventBasis = "event_basis" in request ? decodeBasis(request.event_basis) : undefined;
+  const accepted = (outcome: ActOutcome | undefined) => outcome?.act?.act_ref === actRef
+    && (!eventBasis || cursorFromAct(outcome.act).performed.includes(occurrenceKey(eventBasis.event_ref, eventBasis.occurrence)));
+  const admit = (outcome: ActOutcome): ActOutcome => {
+    if (!accepted(outcome)) throw new Error(`${request.operation}: no native Act acceptance receipt`);
+    return outcome;
+  };
+  let first: ActOutcome;
+  try { first = await world(request) as ActOutcome; }
+  catch (error) {
+    // A lost response can follow an accepted native write. Read its receipt;
+    // this recovery never repeats the operation or claims unobserved acceptance.
+    const fresh = await actInspect(world, actRef).catch(() => undefined);
+    if (accepted(fresh) && requestAccepted(fresh?.act, request)) return fresh!;
+    throw error;
+  }
   if (first && typeof first === "object" && first.state === "act_passage_limit") throw new PassageLimit(actRef);
   if (!first || typeof first !== "object" || !RACES.has(String(first.state))) {
     if (first && typeof first === "object" && typeof first.state === "string" && REFUSED.test(first.state)) throw new Error(`${request.operation}: ${first.state}`);
-    return first;
+    return admit(first);
   }
   const fresh = await actInspect(world, actRef).catch(() => undefined);
   // Another producer may have accepted this occurrence before our stale
   // revision was refused. Its native passage is the acceptance receipt.
-  const eventBasis = "event_basis" in request ? decodeBasis(request.event_basis) : undefined;
-  if (fresh?.act && eventBasis && cursorFromAct(fresh.act).performed.includes(occurrenceKey(eventBasis.event_ref, eventBasis.occurrence))) return fresh;
+  if (requestAccepted(fresh?.act, request)) return fresh!;
+  if (fresh?.act?.act_ref !== actRef) throw new Error(`${request.operation}: no native Act reading to qualify retry`);
   const retry = {...request} as WorldRequest & {expected_act_revision?: number; expected_revision?: number};
   if (fresh?.act) retry.expected_act_revision = fresh.act.revision;
   if (typeof first.current_revision === "number") retry.expected_revision = first.current_revision;
   const second = await world(retry) as ActOutcome;
   if (second && typeof second === "object" && second.state === "act_passage_limit") throw new PassageLimit(actRef);
   if (second && typeof second === "object" && typeof second.state === "string" && (RACES.has(second.state) || REFUSED.test(second.state))) throw new Error(`${request.operation}: ${second.state}`);
-  return second;
+  return admit(second);
 }
 
 /** Stand-in hash for skipped keys recorded in the catch-up passage (FNV-1a). */
@@ -255,6 +312,9 @@ export class LiveProducer {
   private skipped = new Set<string>();
   /** The act currently performed into (the chain's newest). */
   private current: string;
+  /** Uncertain delivery is reconciled against its native passage before any
+   * subsequent pass can send it again. This is IO custody, not source state. */
+  private pendingRequest?: WorldRequest;
   constructor(io: LiveIO, config: LiveConfig, cursor: CursorState = emptyCursor()) {
     this.io = io;
     this.config = config;
@@ -444,6 +504,17 @@ export class LiveProducer {
 
   /** One follow pass. Returns the operations performed. */
   async pass(): Promise<ActOp[]> {
+    if (this.pendingRequest) {
+      const request = this.pendingRequest;
+      const pendingAct = "act_ref" in request ? request.act_ref : this.current;
+      this.state.sources["expression-delivery"] = "unavailable";
+      const fresh = await reconcilePendingDelivery(this.io.world, request);
+      this.state.sources["expression-delivery"] = "read";
+      const retained = cursorFromAct(fresh.act).performed;
+      if (requestAccepted(fresh.act, request)) this.state.cursor = {...this.state.cursor, performed: [...new Set([...this.state.cursor.performed, ...retained])].slice(-4000)};
+      if (pendingAct === this.current) this.state.act = fresh.act;
+      this.pendingRequest = undefined;
+    }
     this.passes++;
     const previousRevision = this.state.cursor.telemetry?.stateRevision;
     const watch = await this.source("factory-telemetry", () => this.io.watch(this.state.cursor.telemetry));
@@ -541,18 +612,22 @@ export class LiveProducer {
     // Dedupe by event_ref + occurrence before any world request.
     const already = new Set(this.state.cursor.performed);
     const performed: PerformedPassage[] = skipped.map(op => ({key: opKey(op), op, state: "skipped" as const, at: Date.now()}));
-    const done: ActOp[] = [...skipped];
+    const done: ActOp[] = [];
+    let blocked = false;
     if (skipped.length) {
       // Recorded passages stand for the history the catch-up skipped (their
       // keys by hash in `native_ref`, chunked to the kernel's text bound).
       const hashes = skipped.map(op => keyHash(opKey(op)));
       for (let i = 0; i < hashes.length; i += 400) {
         const chunk = hashes.slice(i, i + 400);
-        for (const hash of chunk) this.skipped.add(hash);
-        await performWithRetry(this.io.world, {operation: "act_operate", act_ref: this.current, actor: this.config.actor, mode: "factory", operation_kind: CATCH_UP_KIND,
+        const request: WorldRequest = {operation: "act_operate", act_ref: this.current, actor: this.config.actor, mode: "factory", operation_kind: CATCH_UP_KIND,
           native_ref: `live-catch-up:${chunk.join(".")}`, summary: `Caught up: ${skipped.length} earlier event${skipped.length === 1 ? "" : "s"} not performed`,
-          event_basis: {family: "activity", source: "factory-live", event_ref: this.config.runRef, occurrence: `catch-up:${i / 400}`}}, this.current).catch(() => undefined);
+          event_basis: {family: "activity", source: "factory-live", event_ref: this.config.runRef, occurrence: `catch-up:${i / 400}`}};
+        try { await performWithRetry(this.io.world, request, this.current); }
+        catch (error) { this.pendingRequest = request; throw error; }
+        for (const hash of chunk) this.skipped.add(hash);
       }
+      done.push(...skipped);
     }
     for (const op of ops) {
       if (this.stopped) break;
@@ -560,7 +635,7 @@ export class LiveProducer {
       if (already.has(key) || this.skipped.has(keyHash(key))) continue;
       already.add(key);
       let {request, material, reason} = requestFor(op, this.repertoire, cast, {...this.config, actRef: this.current});
-      if (!request) { performed.push({key, op, state: "unresolved", error: reason, at: Date.now()}); done.push(op); continue; }
+      if (!request) { performed.push({key, op, state: "unresolved", error: reason, at: Date.now()}); blocked = true; break; }
       // Object-local operations address the entity presenting that agent now.
       const localise = (built: WorldRequest) => {
         if (built.operation !== "act_gesture" && !(built.operation === "act_select" && built.state)) return built;
@@ -579,23 +654,41 @@ export class LiveProducer {
           if (!(error instanceof PassageLimit)) throw error;
           await this.rollover(cast);
           ({request, material} = requestFor(op, this.repertoire, cast, {...this.config, actRef: this.current}));
-          await performWithRetry(this.io.world, localise(request!), this.current);
+          request = localise(request!);
+          const outcome = await performWithRetry(this.io.world, request, this.current);
+          this.state.act = outcome.act ?? this.state.act;
         }
         performed.push({key, op, material, state: "performed", at: Date.now()});
+        done.push(op);
       } catch (error) {
-        // Recorded with its reason; never retried on every pass.
+        // Keep the original ordering and read cursors. A refused/unconfirmed
+        // operation has no native acceptance and cannot consume its source.
         performed.push({key, op, material, state: "refused", error: error instanceof Error ? error.message : String(error), at: Date.now()});
+        this.pendingRequest = request;
+        blocked = true;
+        break;
       }
-      done.push(op);
     }
     const attemptRevision = this.held.attempts && typeof this.held.attempts === "object" && typeof (this.held.attempts as {revision?: unknown}).revision === "number" ? (this.held.attempts as {revision: number}).revision : undefined;
-    const cursor = advanceCursor(this.state.cursor, done, journals, watch ? [{type: "cursor", cursor: watch.cursor}] : undefined, attemptRevision, mapped.sessions);
+    const cursor = advanceCursor(this.state.cursor, done, blocked ? {} : journals,
+      !blocked && watch ? [{type: "cursor", cursor: watch.cursor}] : undefined,
+      blocked ? undefined : attemptRevision, blocked ? undefined : mapped.sessions);
     // The act is re-read every pass (a kernel-local read): passages performed
     // by others — the Expressions application playing it, a seek, a mode
     // continuation — reach this view's timeline too.
     let act = this.state.act;
-    try { act = (await actInspect(this.io.world, this.current)).act ?? act; } catch { /* keep the last reading */ }
+    try {
+      act = (await actInspect(this.io.world, this.current)).act ?? act;
+      // Recover accepted occurrences after a lost acknowledgement while the
+      // raw journal/telemetry cursor and unfinished chunk state remain held.
+      const pending = this.pendingRequest;
+      const basis = pending && "event_basis" in pending ? decodeBasis(pending.event_basis) : undefined;
+      const pendingKey = basis && occurrenceKey(basis.event_ref, basis.occurrence);
+      const confirmed = cursorFromAct(act).performed.filter(key => key !== pendingKey || requestAccepted(act, pending!));
+      cursor.performed = [...new Set([...cursor.performed, ...confirmed])].slice(-4000);
+    } catch { /* keep the last reading; unconfirmed work stays pending */ }
     this.set({cast, cursor, act, performed: [...this.state.performed, ...performed].slice(-MAX_PERFORMED), lastPassAt: Date.now()});
+    if (blocked) throw new Error(performed.at(-1)?.error ?? "Native material remains unresolved");
     return done.filter(op => !skipped.includes(op));
   }
 

@@ -453,14 +453,8 @@ const personBinding = (ref: string): Binding => ({kind: "agent", agent_ref: ref,
 const bindings = (entries: Record<string, Binding | undefined>): Record<string, Binding> =>
   Object.fromEntries(Object.entries(entries).filter((entry): entry is [string, Binding] => !!entry[1]));
 const materialBody = (value: string, maxBytes: number) => {
-  const encoder = new TextEncoder();
-  let bytes = 0, body = "";
-  for (const point of value.trim()) {
-    bytes += encoder.encode(point).length;
-    if (bytes > maxBytes) break;
-    body += point;
-  }
-  return body;
+  if (new TextEncoder().encode(value).byteLength > maxBytes) throw new Error(`Direct reply exceeds the native ${maxBytes}-byte text bound; source cursor remains pending`);
+  return value;
 };
 
 // ---------------------------------------------------------------------------
@@ -748,10 +742,11 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
       const at = ms(event.observed_at_ms);
       const kind = str(event.kind);
       const chunkRun = (runKind: "reply" | "thought", text: string) => {
-        if (run?.kind === runKind) { run.text = encounterScope ? (run.text + text).slice(0, encounterScope.replyChars ?? 4096) : (run.text + text).slice(-2000); return; }
-        if (!text.trim()) return;
+        const scopedReply = encounterScope && runKind === "reply";
+        if (run?.kind === runKind) { run.text = scopedReply ? materialBody(run.text + text, encounterScope.replyChars ?? 4096) : (run.text + text).slice(-2000); return; }
+        if (scopedReply ? !text.length : !text.trim()) return;
         closeRun();
-        run = {kind: runKind, first: entry.cursor, text, at};
+        run = {kind: runKind, first: entry.cursor, text: scopedReply ? materialBody(text, encounterScope.replyChars ?? 4096) : text.slice(-2000), at};
         turnClosed = false;
         const state = runKind === "reply" ? "speaking" : "working";
         phaseScene(state, runKind === "reply" ? "encounter.reply" : "encounter.thought", `cursor:${entry.cursor}`, entry.cursor, at);

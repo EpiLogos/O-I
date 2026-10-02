@@ -1,12 +1,11 @@
 name: O-I desktop bundle
 
-# Builds the packaged Desktop bundle on a linux runner and emits the
+# Builds each packaged Desktop bundle on its native runner and emits the
 # artifact in the suite-manifest asset shape (target/name/sha256), so the
 # suite manifest can record it and `oi desktop install` can adopt it.
 #
-# The first real bundle cannot be built on macOS or Windows: the AppImage
-# packaging path is linux-only. This workflow is the linux host; the
-# omarchy machine can run desktop/cradle/package-bundle.sh directly.
+# package-bundle.sh owns both Linux AppImage and Darwin arm64 .app adoption.
+# Hosted builds keep compilation off the participants' physical Workcells.
 
 on:
   workflow_dispatch:
@@ -19,8 +18,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  bundle-linux:
-    runs-on: ubuntu-latest
+  bundle-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_suffix: ''
+          - os: macos-15
+            target: aarch64-apple-darwin
+            artifact_suffix: '-aarch64-apple-darwin'
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     permissions:
       contents: read
@@ -43,6 +52,7 @@ jobs:
       # channel, and a digest assertion would break on any upstream
       # re-release.
       - name: Refresh the pinned AppImage tooling in the tauri cache
+        if: runner.os == 'Linux'
         run: |
           set -euo pipefail
           tools="${HOME}/.cache/tauri"
@@ -74,6 +84,7 @@ jobs:
           chmod +x "${tools}/linuxdeploy-plugin-gtk.sh"
 
       - name: Install Tauri linux system packages
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -89,7 +100,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-unknown-linux-gnu
+          targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: desktop/cradle/src-tauri
@@ -99,13 +110,36 @@ jobs:
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
 
+      # The installed client is built from the current module's generated
+      # bindings, through the same pinned native route as shared-field.yml.
+      # This requires no hosted database, login or participant credential.
+      - name: Install the pinned native SharedField compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sSf https://install.spacetimedb.com | \
+            SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.8.1" \
+            sh -s -- -y
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          spacetime version install 2.8.1
+          spacetime version use 2.8.1
+          spacetime --version
+
+      - name: Build the selected native module and generate its exact client bindings
+        run: |
+          set -euo pipefail
+          npm install --prefix shared-field/spacetimedb --no-audit --no-fund
+          spacetime build --module-path shared-field/spacetimedb
+          spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb -y
+
       - name: Package the desktop bundle (frontend, native shell, normalized archive)
         run: desktop/cradle/package-bundle.sh --out desktop/cradle/dist
 
       - name: Prove the emitted asset record matches the archive bytes
         run: |
           python3 - <<'PY'
-          import hashlib, json, pathlib, sys
+          import hashlib, json, pathlib, subprocess, tarfile
           dist = pathlib.Path("desktop/cradle/dist")
           assets = sorted(dist.glob("*.asset.json"))
           archives = sorted(dist.glob("*.tar.gz"))
@@ -117,6 +151,10 @@ jobs:
               digest = hashlib.sha256(archive.read_bytes()).hexdigest()
               assert digest == asset["sha256"], f"sha256 mismatch for {archive}: {digest} != {asset['sha256']}"
               assert pathlib.Path(str(archive) + ".sha256").read_text().startswith(digest)
+              with tarfile.open(archive, "r:gz") as packed:
+                  bundle = json.load(packed.extractfile("oi-desktop-bundle/BUNDLE.json"))
+              assert bundle["target"] == asset["target"]
+              assert bundle["source_revision"] == subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
               print(f"verified {asset['name']} sha256={digest}")
           PY
 
@@ -128,7 +166,7 @@ jobs:
       - name: Retain the bundle artifact, checksum sidecar and asset record
         uses: actions/upload-artifact@v4
         with:
-          name: oi-desktop-bundle-${{ github.sha }}
+          name: oi-desktop-bundle-${{ github.sha }}${{ matrix.artifact_suffix }}
           path: |
             desktop/cradle/dist/*.tar.gz
             desktop/cradle/dist/*.sha256
