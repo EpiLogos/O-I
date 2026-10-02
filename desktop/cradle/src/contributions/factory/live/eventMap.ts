@@ -178,6 +178,10 @@ export const EVENT_INVENTORY: readonly InventoryEntry[] = [
     identity: ["agent_session", "connection_generation", "Signal.sequence = TurnEnded.last_sequence"], payload: ["Signal.kind.stop_reason", "Signal.kind.reason", "TurnEnded.stop"],
     yields: [{op: "act_select", state: "idle"}], roles: {self: "the session's agent"}, native: true,
     note: "A provider `completed` and the TurnEnded that follows it are one occurrence (the turn), never two."},
+  {id: "encounter.failure", family: "activity", source: "aikit-encounter", event: "provider Signal failed | TurnEnded.stop.Failed",
+    identity: ["agent_session", "connection_generation", "Signal.sequence = TurnEnded.last_sequence"], payload: ["Signal.kind.reason", "TurnEnded.stop.Failed.reason"],
+    yields: [{op: "act_text", role: "progressText"}], roles: {progressText: "readable failed-turn status; exact failure retained in native event detail"}, native: true,
+    note: "A failed turn retires its activity inscription. It does not create returned work or complete the undertaking."},
   // ── harness-stream (not native) ───────────────────────────────────────
   {id: "harness.skill", family: "skill-invocation", source: "harness-stream", event: "claude stream-json assistant tool_use name=Skill",
     identity: ["session_id", "message.content[].id"], payload: ["message.content[].input.skill"],
@@ -729,6 +733,11 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
       const scene = encounterScope?.phaseScenes?.[state];
       if (scene) emit({operation: "act_select", scene, bindings: actorBindings(state), basis: jb(entry, session, occurrence + "/scene", cursorOf, at)}, at);
     };
+    const failedTurn = (terminal: string, cursorOf: number, reason: unknown, at?: number) => {
+      const label = oneLine(member?.label ?? "The agent", 60);
+      emit({operation: "act_text", role: "progressText", text: `${label} couldn't finish this request. Open ${label}'s session to see what happened.`, bindings: {},
+        basis: jb("encounter.failure", session, terminal + "/failure", cursorOf, at, {reason})}, at);
+    };
     const closeRun = () => {
       if (run?.kind === "reply" && run.text.trim()) emit({operation: "act_text", role: encounterScope?.replyRole ?? "progressText", text: encounterScope ? materialBody(run.text, encounterScope.replyChars ?? 4096) : oneLine(run.text, 240), bindings: {}, basis: jb("encounter.reply", session, `cursor:${run.first}/text`, run.first, run.at)}, run.at);
       run = undefined;
@@ -794,6 +803,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         if (!turnClosed) {
           phaseScene("idle", "encounter.turn-end", terminal, entry.cursor, at);
           emit({operation: "act_select", state: "idle", role: self, bindings: actorBindings("idle"), basis: jb("encounter.turn-end", session, terminal, entry.cursor, at, {stop: ended.stop})}, at);
+          if (obj(ended.stop) && obj(ended.stop.Failed)) failedTurn(terminal, entry.cursor, ended.stop.Failed.reason, at);
         }
         turnClosed = false;
         continue;
@@ -823,6 +833,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         const terminal = typeof sequence === "number" ? `turn-end:${str(event.connection_generation) ?? ""}:${sequence}` : `cursor:${entry.cursor}`;
         phaseScene("idle", "encounter.turn-end", terminal, entry.cursor, at);
         emit({operation: "act_select", state: "idle", role: self, bindings: actorBindings("idle"), basis: jb("encounter.turn-end", session, terminal, entry.cursor, at, {signal: signalKind, reason: signal.stop_reason ?? signal.reason})}, at);
+        if (signalKind === "failed") failedTurn(terminal, entry.cursor, signal.reason, at);
         turnClosed = true;
       }
     }
