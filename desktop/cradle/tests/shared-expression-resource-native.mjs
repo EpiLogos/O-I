@@ -90,10 +90,12 @@ try{
  const visual=()=>page.evaluate(()=>{
   const d=window.documentReading,scene=d.scenes.find(s=>s.scene_ref===d.selection.scene_ref).presentation.scene,camera=window.nativeModules.cameraForSceneView(scene.view,innerWidth,innerHeight);
   const canvas=window.surface.capture(innerWidth,innerHeight),pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+  const poses=window.surface['adapter'].engine.lastPoses??[];
   return scene.entities.filter(e=>e.enabled!==false).map(entity=>{
-   const point=window.nativeModules.project(entity.position,camera,innerWidth,innerHeight);let ink=0;
+   const pose=poses.find(p=>p.entityId===entity.id||p.id===entity.id);
+   const point=window.nativeModules.project(pose??entity.position,camera,innerWidth,innerHeight);let ink=0;
    for(let y=Math.max(0,Math.round(point.y)-45);y<Math.min(canvas.height,Math.round(point.y)+45);y++)for(let x=Math.max(0,Math.round(point.x)-45);x<Math.min(canvas.width,Math.round(point.x)+45);x++){const i=(y*canvas.width+x)*4;if(pixels[i+3]>80&&Math.min(pixels[i],pixels[i+1],pixels[i+2])<175)ink++;}
-   return {id:entity.id,name:entity.name,x:point.x,y:point.y,ink_pixels:ink};
+   return {id:entity.id,name:entity.name,x:point.x,y:point.y,evaluated_pose:!!pose,ink_pixels:ink};
   });
  });
  const resultText=scene.presentation.scene.text.find(t=>t.role==='resultText');
@@ -167,6 +169,7 @@ try{
  }
  const start=await sample('stable native material');
  report.visual.before=await visual();
+ assert.ok(report.visual.before.every(body=>body.evaluated_pose&&body.ink_pixels>20),`Every required shared body must paint at its actual developed pose: ${JSON.stringify(report.visual.before)}`);
  await page.screenshot({path:join(out,'native-scene-before.png')});
  for(let i=0;i<6;i++){
   await page.waitForTimeout(10000);
