@@ -47,6 +47,8 @@ pub struct Limits {
     pub stderr_bytes: usize,
 }
 
+pub type OutputObserver<'a> = dyn FnMut(&[u8], &[u8]) -> bool + 'a;
+
 pub fn run(command: Command, input: Option<&[u8]>, limits: Limits) -> Result<Output, Failure> {
     run_cancellable(command, input, limits, None)
 }
@@ -75,7 +77,7 @@ pub fn run_observed(
     limits: Limits,
     cancelled: Option<&dyn Fn() -> bool>,
     deadline: Option<&dyn Fn() -> Instant>,
-    observe: &mut dyn FnMut(&[u8], &[u8]) -> bool,
+    observe: &mut OutputObserver<'_>,
 ) -> Result<Output, Failure> {
     run_inner(command, input, limits, cancelled, deadline, Some(observe))
 }
@@ -86,7 +88,7 @@ fn run_inner(
     limits: Limits,
     cancelled: Option<&dyn Fn() -> bool>,
     deadline: Option<&dyn Fn() -> Instant>,
-    observe: Option<&mut dyn FnMut(&[u8], &[u8]) -> bool>,
+    observe: Option<&mut OutputObserver<'_>>,
 ) -> Result<Output, Failure> {
     if limits.timeout.is_zero() || limits.stdout_bytes == 0 || limits.stderr_bytes == 0 {
         return Err(Failure {
@@ -300,7 +302,7 @@ mod unix {
         limits: Limits,
         cancelled: Option<&dyn Fn() -> bool>,
         deadline: Option<&dyn Fn() -> Instant>,
-        mut observe: Option<&mut dyn FnMut(&[u8], &[u8]) -> bool>,
+        mut observe: Option<&mut OutputObserver<'_>>,
     ) -> Result<Output, Failure> {
         // Count launch/setup time once those OS operations return; the pump
         // cannot interrupt an OS spawn that has not returned a child handle.

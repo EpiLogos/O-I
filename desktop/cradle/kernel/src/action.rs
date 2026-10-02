@@ -98,9 +98,20 @@ pub enum ActionDispatch {
         native: Option<Value>,
     },
     /// Physical read failure or incompatible response, not semantic refusal.
-    OwnerFailed { owner_operation: String, detail: String, child_pid: Option<u32>, cleanup: Option<String> },
+    OwnerFailed {
+        owner_operation: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+    },
     /// Receipt loss after launch must preserve the original owner operation.
-    OwnerOutcomeUnknown { owner_operation: String, detail: String, child_pid: Option<u32>, cleanup: Option<String>, native: Option<Value> },
+    OwnerOutcomeUnknown {
+        owner_operation: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
+    },
     /// The owner executable could not be launched — absence, not an error.
     OwnerUnavailable {
         owner_operation: String,
@@ -112,11 +123,43 @@ impl ActionDispatch {
     pub(crate) fn owner_error(operation: &str, error: OwnerCallError) -> Self {
         let owner_operation = operation.to_owned();
         match error {
-            OwnerCallError::Unavailable { detail } => Self::OwnerUnavailable { owner_operation, detail },
-            OwnerCallError::Refused { message, native } => Self::OwnerRefused { owner_operation, message, native },
-            OwnerCallError::Malformed { detail } => Self::OwnerFailed { owner_operation, detail, child_pid: None, cleanup: None },
-            OwnerCallError::TransportFailed { detail, child_pid, cleanup } => Self::OwnerFailed { owner_operation, detail, child_pid, cleanup },
-            OwnerCallError::OutcomeUnknown { detail, child_pid, cleanup, native } => Self::OwnerOutcomeUnknown { owner_operation, detail, child_pid, cleanup, native },
+            OwnerCallError::Unavailable { detail } => Self::OwnerUnavailable {
+                owner_operation,
+                detail,
+            },
+            OwnerCallError::Refused { message, native } => Self::OwnerRefused {
+                owner_operation,
+                message,
+                native,
+            },
+            OwnerCallError::Malformed { detail } => Self::OwnerFailed {
+                owner_operation,
+                detail,
+                child_pid: None,
+                cleanup: None,
+            },
+            OwnerCallError::TransportFailed {
+                detail,
+                child_pid,
+                cleanup,
+            } => Self::OwnerFailed {
+                owner_operation,
+                detail,
+                child_pid,
+                cleanup,
+            },
+            OwnerCallError::OutcomeUnknown {
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            } => Self::OwnerOutcomeUnknown {
+                owner_operation,
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            },
         }
     }
 }

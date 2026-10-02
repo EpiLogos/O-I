@@ -37,36 +37,78 @@ pub enum OwnerCallError {
     /// The owner executable could not be launched. Absence, not an error.
     Unavailable { detail: String },
     /// The owner answered, and the answer was no.
-    Refused { message: String, #[serde(default, skip_serializing_if = "Option::is_none")] native: Option<Value> },
+    Refused {
+        message: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        native: Option<Value>,
+    },
     /// The owner answered something the contract cannot parse.
     Malformed { detail: String },
     /// The launched operation may have acted; loss of its receipt is not refusal.
-    OutcomeUnknown { detail: String, child_pid: Option<u32>, cleanup: Option<String>, native: Option<Value> },
+    OutcomeUnknown {
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
+    },
     /// A contracted read failed physically after launch. It is not owner absence.
-    TransportFailed { detail: String, child_pid: Option<u32>, cleanup: Option<String> },
+    TransportFailed {
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+    },
 }
 
 /// Caller-owned classification of effects, never permission to perform them.
 /// Generic native commands remain conservative; only a closed owner contract
 /// permits ReadOnly. No command-name suffix is used to infer this distinction.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Effect { ReadOnly, MayMutate }
+pub enum Effect {
+    ReadOnly,
+    MayMutate,
+}
 impl Effect {
-    pub(crate) fn lost_response(self, detail: String, child_pid: Option<u32>, cleanup: Option<String>, native: Option<Value>) -> OwnerCallError {
+    pub(crate) fn lost_response(
+        self,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
+    ) -> OwnerCallError {
         match self {
-            Self::MayMutate => OwnerCallError::OutcomeUnknown { detail, child_pid, cleanup, native },
+            Self::MayMutate => OwnerCallError::OutcomeUnknown {
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            },
             Self::ReadOnly => OwnerCallError::Malformed { detail },
         }
     }
     pub(crate) fn physical_failure(self, error: crate::native_process::Failure) -> OwnerCallError {
         if !error.launched {
             return if error.kind == crate::native_process::FailureKind::Launch {
-                OwnerCallError::Unavailable { detail: error.detail }
-            } else { OwnerCallError::Malformed { detail: error.detail } };
+                OwnerCallError::Unavailable {
+                    detail: error.detail,
+                }
+            } else {
+                OwnerCallError::Malformed {
+                    detail: error.detail,
+                }
+            };
         }
         match self {
-            Self::MayMutate => OwnerCallError::OutcomeUnknown { detail: error.detail, child_pid: error.child_pid, cleanup: error.cleanup, native: None },
-            Self::ReadOnly => OwnerCallError::TransportFailed { detail: error.detail, child_pid: error.child_pid, cleanup: error.cleanup },
+            Self::MayMutate => OwnerCallError::OutcomeUnknown {
+                detail: error.detail,
+                child_pid: error.child_pid,
+                cleanup: error.cleanup,
+                native: None,
+            },
+            Self::ReadOnly => OwnerCallError::TransportFailed {
+                detail: error.detail,
+                child_pid: error.child_pid,
+                cleanup: error.cleanup,
+            },
         }
     }
 }
@@ -74,8 +116,10 @@ impl Effect {
 impl OwnerCallError {
     pub fn detail(&self) -> String {
         match self {
-            Self::Unavailable { detail } | Self::Malformed { detail }
-            | Self::OutcomeUnknown { detail, .. } | Self::TransportFailed { detail, .. } => detail.clone(),
+            Self::Unavailable { detail }
+            | Self::Malformed { detail }
+            | Self::OutcomeUnknown { detail, .. }
+            | Self::TransportFailed { detail, .. } => detail.clone(),
             Self::Refused { message, .. } => message.clone(),
         }
     }
@@ -314,7 +358,12 @@ impl CentralClient {
         self.run_envelope_effect(action, input, Effect::ReadOnly)
     }
 
-    fn run_envelope_effect(&self, action: &str, mut input: Value, effect: Effect) -> Result<Value, OwnerCallError> {
+    fn run_envelope_effect(
+        &self,
+        action: &str,
+        mut input: Value,
+        effect: Effect,
+    ) -> Result<Value, OwnerCallError> {
         if let Some(object) = input.as_object_mut() {
             // An absent project takes the configured co-reference; an explicit
             // null names the Central root register and is carried as absence,
@@ -361,27 +410,71 @@ impl CentralClient {
             command.arg(String::from_utf8(encoded.clone()).expect("JSON is UTF-8"));
             None
         };
-        let output = crate::native_process::run(command, stdin, crate::native_process::Limits {
-            timeout: std::time::Duration::from_secs(if effect == Effect::ReadOnly { 20 } else { 300 }),
-            stdout_bytes: 32 * 1024 * 1024,
-            stderr_bytes: 64 * 1024,
-        }).map_err(|error| effect.physical_failure(error))?;
-        let lost = |detail: String| effect.lost_response(format!("{action}: {detail}"), None, None, None);
-        let value: Value = serde_json::from_slice(&output.stdout).map_err(|error| lost(format!(
-            "invalid structured output ({error}; status {}): {}", output.status, String::from_utf8_lossy(&output.stderr)
-        )))?;
-        let lost = |detail: String| effect.lost_response(format!("{action}: {detail}"), None, None, Some(value.clone()));
-        if !value.is_object() || value["ok"].as_bool().is_none() || !matches!(value["status"].as_str(), Some("success" | "cancelled" | "invalid_input" | "invalid_central_structure" | "unavailable_capability" | "connector_failure" | "partial_completion" | "verification_failure" | "internal_failure")) {
+        let output = crate::native_process::run(
+            command,
+            stdin,
+            crate::native_process::Limits {
+                timeout: std::time::Duration::from_secs(if effect == Effect::ReadOnly {
+                    20
+                } else {
+                    300
+                }),
+                stdout_bytes: 32 * 1024 * 1024,
+                stderr_bytes: 64 * 1024,
+            },
+        )
+        .map_err(|error| effect.physical_failure(error))?;
+        let lost =
+            |detail: String| effect.lost_response(format!("{action}: {detail}"), None, None, None);
+        let value: Value = serde_json::from_slice(&output.stdout).map_err(|error| {
+            lost(format!(
+                "invalid structured output ({error}; status {}): {}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr)
+            ))
+        })?;
+        let lost = |detail: String| {
+            effect.lost_response(
+                format!("{action}: {detail}"),
+                None,
+                None,
+                Some(value.clone()),
+            )
+        };
+        if !value.is_object()
+            || value["ok"].as_bool().is_none()
+            || !matches!(
+                value["status"].as_str(),
+                Some(
+                    "success"
+                        | "cancelled"
+                        | "invalid_input"
+                        | "invalid_central_structure"
+                        | "unavailable_capability"
+                        | "connector_failure"
+                        | "partial_completion"
+                        | "verification_failure"
+                        | "internal_failure"
+                )
+            )
+        {
             return Err(lost("no native ActionResult".into()));
         }
         if value["ok"] == true {
             if !output.status.success() || value["status"] != "success" {
-                return Err(lost(format!("contradictory native success/status {}", output.status)));
+                return Err(lost(format!(
+                    "contradictory native success/status {}",
+                    output.status
+                )));
             }
-            if value.get("data").is_none() { return Err(lost("success without native data".into())); }
+            if value.get("data").is_none() {
+                return Err(lost("success without native data".into()));
+            }
         } else {
-            if value["status"] == "success" || !value["error"]["message"].is_string()
-                || !value["error"]["code"].is_string() {
+            if value["status"] == "success"
+                || !value["error"]["message"].is_string()
+                || !value["error"]["code"].is_string()
+            {
                 return Err(lost("incompatible native failure".into()));
             }
             // This explicit marker belongs to the native publication owner;
@@ -389,17 +482,24 @@ impl CentralClient {
             if value["error"]["code"] == "central.publication_uncertain" {
                 return Err(OwnerCallError::OutcomeUnknown {
                     detail: value["error"]["message"].as_str().unwrap().into(),
-                    child_pid: None, cleanup: None, native: Some(value),
+                    child_pid: None,
+                    cleanup: None,
+                    native: Some(value),
                 });
             }
             // Central's current native IO envelope has no effect marker.
             // Its generic internal/partial failures do not prove a mutation
             // absent. Keep the complete native code/details, never mine prose.
-            if effect == Effect::MayMutate && (value["status"] == "internal_failure"
-                || value["status"] == "partial_completion" || value["status"] == "connector_failure") {
+            if effect == Effect::MayMutate
+                && (value["status"] == "internal_failure"
+                    || value["status"] == "partial_completion"
+                    || value["status"] == "connector_failure")
+            {
                 return Err(OwnerCallError::OutcomeUnknown {
                     detail: value["error"]["message"].as_str().unwrap().into(),
-                    child_pid: None, cleanup: None, native: Some(value),
+                    child_pid: None,
+                    cleanup: None,
+                    native: Some(value),
                 });
             }
         }
@@ -414,7 +514,12 @@ impl CentralClient {
         self.run_effect(action, input, Effect::ReadOnly)
     }
 
-    fn run_effect(&self, action: &str, input: Value, effect: Effect) -> Result<Value, OwnerCallError> {
+    fn run_effect(
+        &self,
+        action: &str,
+        input: Value,
+        effect: Effect,
+    ) -> Result<Value, OwnerCallError> {
         let value = self.run_envelope_effect(action, input, effect)?;
         if value["ok"] != true {
             return Err(OwnerCallError::Refused {
@@ -593,7 +698,14 @@ impl CentralClient {
                 "central.document.mutate"
             }
         };
-        let effect = if matches!(request, ReceivingRequest::List { .. } | ReceivingRequest::Read { .. }) { Effect::ReadOnly } else { Effect::MayMutate };
+        let effect = if matches!(
+            request,
+            ReceivingRequest::List { .. } | ReceivingRequest::Read { .. }
+        ) {
+            Effect::ReadOnly
+        } else {
+            Effect::MayMutate
+        };
         self.run_effect(action, Value::Object(input), effect)
     }
 
@@ -707,19 +819,28 @@ impl CentralClient {
         let receipt: SourceWriteReceipt =
             serde_json::from_value(data.get("receipt").cloned().unwrap_or_else(|| data.clone()))
                 .map_err(|error| OwnerCallError::OutcomeUnknown {
-                    detail: format!("decode Central source write receipt: {error}"), child_pid: None, cleanup: None, native: Some(data.clone()),
+                    detail: format!("decode Central source write receipt: {error}"),
+                    child_pid: None,
+                    cleanup: None,
+                    native: Some(data.clone()),
                 })?;
         if receipt.schema != SOURCE_WRITE_RECEIPT_SCHEMA {
             return Err(OwnerCallError::OutcomeUnknown {
                 detail: format!(
                     "unsupported Central source write receipt schema `{}`",
                     receipt.schema
-                ), child_pid: None, cleanup: None, native: Some(data.clone()),
+                ),
+                child_pid: None,
+                cleanup: None,
+                native: Some(data.clone()),
             });
         }
         if receipt.automatic_agent_or_model_invocation {
             return Err(OwnerCallError::OutcomeUnknown {
-                detail: "Central source write violated zero-background-Agent law".to_owned(), child_pid: None, cleanup: None, native: Some(data.clone()),
+                detail: "Central source write violated zero-background-Agent law".to_owned(),
+                child_pid: None,
+                cleanup: None,
+                native: Some(data.clone()),
             });
         }
         Ok(receipt)
@@ -1128,13 +1249,29 @@ pub enum SourceWriteFailure {
     },
     /// The owner refused or could not serve for a reason that is not a
     /// revision move. Returned as it stands; never retried around.
-    OwnerRefused { source_ref: String, message: String, native: Option<Value> },
+    OwnerRefused {
+        source_ref: String,
+        message: String,
+        native: Option<Value>,
+    },
     /// The launched source write has no reliable native receipt. The proposal
     /// stays dirty; a later current reading cannot prove this caller's success.
-    OutcomeUnknown { source_ref: String, detail: String, child_pid: Option<u32>, cleanup: Option<String>, native: Option<Value> },
-    Failed { source_ref: String, detail: String },
+    OutcomeUnknown {
+        source_ref: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
+    },
+    Failed {
+        source_ref: String,
+        detail: String,
+    },
     /// The owner executable is unavailable. Honest absence, not an error.
-    Unavailable { source_ref: String, detail: String },
+    Unavailable {
+        source_ref: String,
+        detail: String,
+    },
 }
 
 impl SourceWriteFailure {

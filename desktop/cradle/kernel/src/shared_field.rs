@@ -109,9 +109,18 @@ fn resolve_client(
     }
 }
 
-/// Launching this path fails with the reason in the Unavailable detail.
+/// Known absence is refused before launching or allocating a client lease.
 const NO_CLIENT: &str =
     "<no SharedField client: this installed desktop carries no bundled shared-field/ resource>";
+
+fn require_client(executable: &OsString) -> Result<(), CallError> {
+    if executable.as_os_str() == std::ffi::OsStr::new(NO_CLIENT) {
+        return Err(CallError::Unavailable {
+            detail: NO_CLIENT.into(),
+        });
+    }
+    Ok(())
+}
 
 /// The source checkout a development build may fall back to.
 fn development_repository() -> Option<PathBuf> {
@@ -143,6 +152,9 @@ pub fn call(request: &Value) -> Result<Value, CallError> {
         Some("observe" | "observe-stop" | "enter" | "leave")
     ) {
         encode_request(request)?;
+    }
+    if matches!(request["kind"].as_str(), Some("observe" | "enter")) {
+        require_client(&client_executable().into_os_string())?;
     }
     if matches!(request["kind"].as_str(), Some("observe" | "observe-stop")) {
         renew_presence();
@@ -193,7 +205,7 @@ fn renew_presence() {
 
 fn release_presence(request: &Value) {
     if let (Ok(key), Some(registry)) = (presence_key(request), PRESENCE.get()) {
-        if let Ok(mut leases) = registry.lock() {
+        if let Ok(leases) = registry.lock() {
             if let Some(lease) = leases.get(&key) {
                 lease.stopped.store(true, Ordering::Release);
             }
@@ -285,6 +297,10 @@ fn presence_connection(
             return;
         }
     };
+    if let Err(error) = require_client(executable) {
+        let _ = send.send(Err(error));
+        return;
+    }
     let admitted = AtomicBool::new(false);
     let startup_deadline = Instant::now() + startup_timeout;
     let deadline = || {
@@ -556,8 +572,9 @@ fn observation_call(
     executable: &OsString,
     cancelled: impl Fn() -> bool,
 ) -> Result<Value, CallError> {
-    let command = Command::new(executable);
     let input = encode_request(request)?;
+    require_client(executable)?;
+    let command = Command::new(executable);
     let output = observation_output(command, &input, Duration::from_secs(65), cancelled)?;
     decode_owner_output(&output, Effect::ReadOnly)
 }
@@ -658,6 +675,7 @@ fn call_with_deadline(
 ) -> Result<Value, CallError> {
     let effect = request_effect(request);
     let input = encode_request(request)?;
+    require_client(executable)?;
     let output = crate::native_process::run(
         Command::new(executable),
         Some(&input),
@@ -1114,7 +1132,8 @@ mod tests {
         });
         let retained = Ok(value.clone());
         for _ in 0..120 {
-            let next = cached_observation_reading(Some(&retained), Some("delivered-material")).unwrap();
+            let next =
+                cached_observation_reading(Some(&retained), Some("delivered-material")).unwrap();
             assert_eq!(next["state"], "unchanged");
             assert_eq!(next["status"], value["snapshot"]["status"]);
             assert_eq!(next["reading_status"], value["reading"]["status"]);
@@ -1123,17 +1142,32 @@ mod tests {
         }
         // Fresh bodies and changed material get the entire retained reading.
         for cursor in [None, Some(""), Some("prior-material")] {
-            assert_eq!(cached_observation_reading(Some(&retained), cursor).unwrap(), value);
+            assert_eq!(
+                cached_observation_reading(Some(&retained), cursor).unwrap(),
+                value
+            );
         }
     }
 
     #[test]
     fn a_cursor_never_suppresses_an_observation_failure_or_pending_read() {
-        let failure = CallError::Unavailable { detail: "The owned connection ended".into() };
-        assert_eq!(cached_observation_reading(Some(&Err(failure.clone())), Some("delivered-material")), Err(failure));
-        assert_eq!(cached_observation_reading(None, Some("delivered-material")).unwrap()["state"], "observing");
+        let failure = CallError::Unavailable {
+            detail: "The owned connection ended".into(),
+        };
+        assert_eq!(
+            cached_observation_reading(Some(&Err(failure.clone())), Some("delivered-material")),
+            Err(failure)
+        );
+        assert_eq!(
+            cached_observation_reading(None, Some("delivered-material")).unwrap()["state"],
+            "observing"
+        );
         let unavailable = serde_json::json!({"state":"unavailable", "cursor":"delivered-material", "detail":"No native owner reading"});
-        assert_eq!(cached_observation_reading(Some(&Ok(unavailable.clone())), Some("delivered-material")).unwrap(), unavailable);
+        assert_eq!(
+            cached_observation_reading(Some(&Ok(unavailable.clone())), Some("delivered-material"))
+                .unwrap(),
+            unavailable
+        );
     }
 
     #[test]
@@ -1197,6 +1231,45 @@ mod tests {
             ),
             other => panic!("expected Unavailable, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn observation_and_presence_refuse_known_absence_before_native_dispatch() {
+        let executable = OsString::from(NO_CLIENT);
+        let cancellation_polled = AtomicBool::new(false);
+        let error = observation_call(
+            &serde_json::json!({"kind":"observe", "ref":{"field_id":"missing-client"}}),
+            &executable,
+            || {
+                cancellation_polled.store(true, Ordering::Release);
+                false
+            },
+        )
+        .unwrap_err();
+        assert_eq!(
+            error,
+            CallError::Unavailable {
+                detail: NO_CLIENT.into()
+            }
+        );
+        assert!(!cancellation_polled.load(Ordering::Acquire));
+
+        let lease = PresenceLease {
+            last_poll: Mutex::new(Instant::now()),
+            stopped: AtomicBool::new(false),
+            finished: AtomicBool::new(false),
+            reading: Mutex::new(None),
+        };
+        let (send, receive) = mpsc::channel();
+        presence_connection(
+            &serde_json::json!({"kind":"enter", "field_ref":"missing-client", "participant_ref":"participant", "hold_presence":true}),
+            &executable,
+            &lease,
+            &send,
+            Duration::from_secs(1),
+        );
+        assert_eq!(receive.try_recv().unwrap().unwrap_err(), error);
+        assert!(lease.reading.lock().unwrap().is_none());
     }
 
     use super::*;

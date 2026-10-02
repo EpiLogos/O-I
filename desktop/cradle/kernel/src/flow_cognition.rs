@@ -142,7 +142,8 @@ pub fn dispatch_contemplate(cwd: &Path, flow_ref: &str, input: Option<&Value>) -
     let seam_error = |error: String| ActionDispatch::OwnerFailed {
         owner_operation: basis.owner_operation().to_owned(),
         detail: error,
-        child_pid: None, cleanup: None,
+        child_pid: None,
+        cleanup: None,
     };
     let seams = match basis.seams() {
         Ok(seams) => seams,
@@ -157,14 +158,29 @@ pub fn dispatch_contemplate(cwd: &Path, flow_ref: &str, input: Option<&Value>) -
     }
     let owner_operation = basis.owner_operation().to_owned();
     let borrowed: Vec<&str> = args.iter().map(String::as_str).collect();
-    match knowledge::run_effect(cwd, &borrowed, if basis.executed() { Effect::MayMutate } else { Effect::ReadOnly }) {
+    match knowledge::run_effect(
+        cwd,
+        &borrowed,
+        if basis.executed() {
+            Effect::MayMutate
+        } else {
+            Effect::ReadOnly
+        },
+    ) {
         Ok(data) => match verify_cognition_payload(&data, basis.executed()) {
             Ok(()) => ActionDispatch::Invoked {
                 owner_operation,
                 data,
             },
-            Err(detail) => ActionDispatch::owner_error(&owner_operation,
-                (if basis.executed() { Effect::MayMutate } else { Effect::ReadOnly }).lost_response(detail, None, None, Some(data))),
+            Err(detail) => ActionDispatch::owner_error(
+                &owner_operation,
+                (if basis.executed() {
+                    Effect::MayMutate
+                } else {
+                    Effect::ReadOnly
+                })
+                .lost_response(detail, None, None, Some(data)),
+            ),
         },
         Err(error) => ActionDispatch::owner_error(&owner_operation, error),
     }
@@ -344,7 +360,8 @@ pub fn dispatch_contemplate_now(
     let seam_error = |error: String| ActionDispatch::OwnerFailed {
         owner_operation: basis.owner_operation().to_owned(),
         detail: error,
-        child_pid: None, cleanup: None,
+        child_pid: None,
+        cleanup: None,
     };
     let dir = match SeamDir::new("contemplate-now") {
         Ok(dir) => dir,
@@ -384,7 +401,15 @@ pub fn dispatch_contemplate_now(
     }
     let owner_operation = basis.owner_operation().to_owned();
     let borrowed: Vec<&str> = args.iter().map(String::as_str).collect();
-    match knowledge::run_effect(cwd, &borrowed, if basis.executed() { Effect::MayMutate } else { Effect::ReadOnly }) {
+    match knowledge::run_effect(
+        cwd,
+        &borrowed,
+        if basis.executed() {
+            Effect::MayMutate
+        } else {
+            Effect::ReadOnly
+        },
+    ) {
         Ok(data) => {
             if data.get("version").and_then(Value::as_str) != Some(NOW_CONTEMPLATE_VERSION)
                 || data
@@ -396,7 +421,6 @@ pub fn dispatch_contemplate_now(
                     (if basis.executed() { Effect::MayMutate } else { Effect::ReadOnly }).lost_response(
                         format!("AIKit returned an unsupported NOW contemplation payload (version {:?}, expected {NOW_CONTEMPLATE_VERSION})", data.get("version")),
                         None, None, Some(data)));
-
             }
             ActionDispatch::Invoked {
                 owner_operation,
@@ -440,22 +464,64 @@ pub enum HorizonSupply {
         owner_operation: String,
         detail: String,
     },
-    OwnerFailed { owner_operation: String, detail: String, child_pid: Option<u32>, cleanup: Option<String> },
-    OwnerOutcomeUnknown { owner_operation: String, detail: String, child_pid: Option<u32>, cleanup: Option<String>, native: Option<Value> },
+    OwnerFailed {
+        owner_operation: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+    },
+    OwnerOutcomeUnknown {
+        owner_operation: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
+    },
 }
 impl HorizonSupply {
     fn owner_error(operation: &str, error: OwnerCallError) -> Self {
         let owner_operation = operation.to_owned();
         match error {
-            OwnerCallError::Unavailable { detail } => Self::OwnerUnavailable { owner_operation, detail },
-            OwnerCallError::Refused { message, native } => Self::OwnerRefused { owner_operation, message, native },
-            OwnerCallError::Malformed { detail } => Self::OwnerFailed { owner_operation, detail, child_pid: None, cleanup: None },
-            OwnerCallError::TransportFailed { detail, child_pid, cleanup } => Self::OwnerFailed { owner_operation, detail, child_pid, cleanup },
-            OwnerCallError::OutcomeUnknown { detail, child_pid, cleanup, native } => Self::OwnerOutcomeUnknown { owner_operation, detail, child_pid, cleanup, native },
+            OwnerCallError::Unavailable { detail } => Self::OwnerUnavailable {
+                owner_operation,
+                detail,
+            },
+            OwnerCallError::Refused { message, native } => Self::OwnerRefused {
+                owner_operation,
+                message,
+                native,
+            },
+            OwnerCallError::Malformed { detail } => Self::OwnerFailed {
+                owner_operation,
+                detail,
+                child_pid: None,
+                cleanup: None,
+            },
+            OwnerCallError::TransportFailed {
+                detail,
+                child_pid,
+                cleanup,
+            } => Self::OwnerFailed {
+                owner_operation,
+                detail,
+                child_pid,
+                cleanup,
+            },
+            OwnerCallError::OutcomeUnknown {
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            } => Self::OwnerOutcomeUnknown {
+                owner_operation,
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            },
         }
     }
 }
-
 
 /// The AIKit side of one changed-since compose: the typed owner receipt, or
 /// the owner's own failure, stated explicitly.
@@ -480,22 +546,64 @@ pub enum AikitChangedSince {
         owner_operation: String,
         detail: String,
     },
-    OwnerFailed { owner_operation: String, detail: String, child_pid: Option<u32>, cleanup: Option<String> },
-    OwnerOutcomeUnknown { owner_operation: String, detail: String, child_pid: Option<u32>, cleanup: Option<String>, native: Option<Value> },
+    OwnerFailed {
+        owner_operation: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+    },
+    OwnerOutcomeUnknown {
+        owner_operation: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
+    },
 }
 impl AikitChangedSince {
     fn owner_error(operation: &str, error: OwnerCallError) -> Self {
         let owner_operation = operation.to_owned();
         match error {
-            OwnerCallError::Unavailable { detail } => Self::OwnerUnavailable { owner_operation, detail },
-            OwnerCallError::Refused { message, native } => Self::OwnerRefused { owner_operation, message, native },
-            OwnerCallError::Malformed { detail } => Self::OwnerFailed { owner_operation, detail, child_pid: None, cleanup: None },
-            OwnerCallError::TransportFailed { detail, child_pid, cleanup } => Self::OwnerFailed { owner_operation, detail, child_pid, cleanup },
-            OwnerCallError::OutcomeUnknown { detail, child_pid, cleanup, native } => Self::OwnerOutcomeUnknown { owner_operation, detail, child_pid, cleanup, native },
+            OwnerCallError::Unavailable { detail } => Self::OwnerUnavailable {
+                owner_operation,
+                detail,
+            },
+            OwnerCallError::Refused { message, native } => Self::OwnerRefused {
+                owner_operation,
+                message,
+                native,
+            },
+            OwnerCallError::Malformed { detail } => Self::OwnerFailed {
+                owner_operation,
+                detail,
+                child_pid: None,
+                cleanup: None,
+            },
+            OwnerCallError::TransportFailed {
+                detail,
+                child_pid,
+                cleanup,
+            } => Self::OwnerFailed {
+                owner_operation,
+                detail,
+                child_pid,
+                cleanup,
+            },
+            OwnerCallError::OutcomeUnknown {
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            } => Self::OwnerOutcomeUnknown {
+                owner_operation,
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            },
         }
     }
 }
-
 
 /// ONE typed changed-since-thought reading: both owner sides explicit.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -562,7 +670,9 @@ fn central_horizon(client: &CentralClient, project: &str) -> HorizonSupply {
                 adapted,
                 owner_operation,
             },
-            Err(detail) => HorizonSupply::owner_error(&owner_operation, OwnerCallError::Malformed { detail }),
+            Err(detail) => {
+                HorizonSupply::owner_error(&owner_operation, OwnerCallError::Malformed { detail })
+            }
         },
         Err(error) => HorizonSupply::owner_error(&owner_operation, error),
     }
@@ -654,7 +764,8 @@ fn aikit_changed_since(cwd: &Path, thought: &Value, horizon: &HorizonSupply) -> 
             return AikitChangedSince::OwnerFailed {
                 owner_operation,
                 detail,
-                child_pid: None, cleanup: None,
+                child_pid: None,
+                cleanup: None,
             }
         }
     };
@@ -664,7 +775,8 @@ fn aikit_changed_since(cwd: &Path, thought: &Value, horizon: &HorizonSupply) -> 
             return AikitChangedSince::OwnerFailed {
                 owner_operation,
                 detail,
-                child_pid: None, cleanup: None,
+                child_pid: None,
+                cleanup: None,
             }
         }
     };
@@ -685,7 +797,8 @@ fn aikit_changed_since(cwd: &Path, thought: &Value, horizon: &HorizonSupply) -> 
                 return AikitChangedSince::OwnerFailed {
                     owner_operation,
                     detail,
-                    child_pid: None, cleanup: None,
+                    child_pid: None,
+                    cleanup: None,
                 };
             }
         }
@@ -699,9 +812,15 @@ fn aikit_changed_since(cwd: &Path, thought: &Value, horizon: &HorizonSupply) -> 
                     .and_then(Value::as_str)
                     .is_none()
             {
-                return AikitChangedSince::owner_error(&owner_operation, OwnerCallError::Malformed {
-                    detail: format!("AIKit returned an unsupported changed-since receipt (version {:?})", receipt.get("version")),
-                });
+                return AikitChangedSince::owner_error(
+                    &owner_operation,
+                    OwnerCallError::Malformed {
+                        detail: format!(
+                            "AIKit returned an unsupported changed-since receipt (version {:?})",
+                            receipt.get("version")
+                        ),
+                    },
+                );
             }
             AikitChangedSince::Invoked {
                 owner_operation,

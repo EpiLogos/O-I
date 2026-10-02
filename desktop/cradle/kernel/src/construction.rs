@@ -30,7 +30,8 @@ fn refuse(operation: &str, message: impl Into<String>) -> ActionDispatch {
     ActionDispatch::OwnerFailed {
         owner_operation: operation.into(),
         detail: message.into(),
-        child_pid: None, cleanup: None,
+        child_pid: None,
+        cleanup: None,
     }
 }
 fn owner_error(operation: &str, error: knowledge::CallError) -> ActionDispatch {
@@ -195,14 +196,11 @@ pub fn invoke(
         return refuse(operation, e);
     }
     let wiki_action = if project.is_some() {
-            "projectcentral.wiki.read"
-        } else {
-            "central.wiki.read"
-        };
-    let wiki = match client.run_read(
-        wiki_action,
-        json!({"project":project}),
-    ) {
+        "projectcentral.wiki.read"
+    } else {
+        "central.wiki.read"
+    };
+    let wiki = match client.run_read(wiki_action, json!({"project":project})) {
         Ok(wiki) => wiki,
         Err(e) => return ActionDispatch::owner_error(wiki_action, e),
     };

@@ -316,7 +316,10 @@ pub fn operate(
         input["actor"] = json!("oi-desktop-user");
         input["actor_kind"] = json!("human");
     }
-    let effect = if matches!(request, Request::History { .. } | Request::RecoveryPreview { .. }) {
+    let effect = if matches!(
+        request,
+        Request::History { .. } | Request::RecoveryPreview { .. }
+    ) {
         crate::flow::Effect::ReadOnly
     } else {
         crate::flow::Effect::MayMutate
@@ -343,13 +346,23 @@ pub fn operate(
         Request::RecoveryPreview { .. } => "central.file-recovery-preview/v1",
     };
     if result["schema"] != schema || result["location"] != json!(location) {
-        return Ok(failed(effect.lost_response("Central returned a redirected or unsupported file operation".into(), None, None, Some(result))));
+        return Ok(failed(effect.lost_response(
+            "Central returned a redirected or unsupported file operation".into(),
+            None,
+            None,
+            Some(result),
+        )));
     }
     if matches!(request, Request::Write { .. } | Request::Restore { .. })
         && !["created", "written", "unchanged", "conflict"]
             .contains(&result["outcome"].as_str().unwrap_or(""))
     {
-        return Ok(failed(effect.lost_response("Central returned an unsupported mutation outcome".into(), None, None, Some(result))));
+        return Ok(failed(effect.lost_response(
+            "Central returned an unsupported mutation outcome".into(),
+            None,
+            None,
+            Some(result),
+        )));
     }
     Ok(result)
 }

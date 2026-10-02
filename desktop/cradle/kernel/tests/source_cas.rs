@@ -123,12 +123,16 @@ fn actual_owner_refs_content_and_wire_round_trip() {
 fn real_owner_commit_with_lost_receipt_keeps_dirty_proposal_and_unknown_outcome() {
     use std::os::unix::fs::PermissionsExt;
     let ground = Ground::new();
-    let binary = fs::canonicalize(PathBuf::from(std::env::var_os("OI_CENTRAL_CTRL_BIN").expect("pin the actual Central candidate"))).unwrap();
+    let binary = fs::canonicalize(PathBuf::from(
+        std::env::var_os("OI_CENTRAL_CTRL_BIN").expect("pin the actual Central candidate"),
+    ))
+    .unwrap();
     let wrapper = ground.root.join("lose actual source-write receipt");
     let receipt_path = ground.root.join("actual-source-write-receipt.json");
     // This is a transport fault AFTER the real native owner completes. It
     // neither constructs a protocol answer nor substitutes an owner effect.
-    let program = format!(r#"#!/usr/bin/env python3
+    let program = format!(
+        r#"#!/usr/bin/env python3
 import json, os, signal, subprocess, sys
 binary = {binary}
 receipt_path = {receipt_path}
@@ -157,30 +161,60 @@ os.kill(os.getpid(), signal.SIGKILL)
     fs::write(&wrapper, program).unwrap();
     fs::set_permissions(&wrapper, fs::Permissions::from_mode(0o700)).unwrap();
     let before = oi_cradle_kernel::history::read(&ground.client, "Editor", &ground.source).unwrap();
-    let mut kernel = Kernel::new(CentralClient::with(wrapper, Some(ground.root.clone()), "Editor".into()));
+    let mut kernel = Kernel::new(CentralClient::with(
+        wrapper,
+        Some(ground.root.clone()),
+        "Editor".into(),
+    ));
     ground.open(&mut kernel);
     let original = kernel.snapshot().buffers[&ground.source].clone();
     let proposal = "Real native effect, receipt deliberately lost\n";
     ground.edit(&mut kernel, proposal);
-    let returned = kernel.apply(KernelOp::SourceSave { project: None, source_ref: ground.source.clone() }).unwrap();
-    let KernelOpResult::SourceSaveFailed { buffer, failure } = returned.result else { panic!("lost receipt cannot establish completion") };
-    assert!(matches!(failure, SourceWriteFailure::OutcomeUnknown { source_ref, .. } if source_ref == ground.source));
+    let returned = kernel
+        .apply(KernelOp::SourceSave {
+            project: None,
+            source_ref: ground.source.clone(),
+        })
+        .unwrap();
+    let KernelOpResult::SourceSaveFailed { buffer, failure } = returned.result else {
+        panic!("lost receipt cannot establish completion")
+    };
+    assert!(
+        matches!(failure, SourceWriteFailure::OutcomeUnknown { source_ref, .. } if source_ref == ground.source)
+    );
     assert!(buffer.dirty);
     assert_eq!(buffer.content, proposal);
     assert_eq!(buffer.saved_content, original.saved_content);
     assert_eq!(buffer.base_revision, original.base_revision);
-    assert!(buffer.conflict.is_none(), "an observed revision cannot classify our own missing receipt as conflict");
-    let receipt: serde_json::Value = serde_json::from_slice(&fs::read(&receipt_path).unwrap()).unwrap();
+    assert!(
+        buffer.conflict.is_none(),
+        "an observed revision cannot classify our own missing receipt as conflict"
+    );
+    let receipt: serde_json::Value =
+        serde_json::from_slice(&fs::read(&receipt_path).unwrap()).unwrap();
     assert_eq!(receipt["ok"], true);
     assert_eq!(receipt["action"], "projectcentral.source.write");
     assert_eq!(receipt["data"]["source"]["ref"], ground.source);
-    let actual = ground.client.source_read(Some("Editor"), &ground.source).unwrap();
+    let actual = ground
+        .client
+        .source_read(Some("Editor"), &ground.source)
+        .unwrap();
     assert_eq!(actual.content, proposal);
     assert_eq!(fs::read_to_string(&ground.file).unwrap(), proposal);
-    assert_eq!(actual.revision.revision, receipt["data"]["revision"]["revision"].as_str().unwrap());
+    assert_eq!(
+        actual.revision.revision,
+        receipt["data"]["revision"]["revision"].as_str().unwrap()
+    );
     let after = oi_cradle_kernel::history::read(&ground.client, "Editor", &ground.source).unwrap();
-    assert_eq!(after.changes.len(), before.changes.len() + 1, "no automatic resend is admitted");
-    assert!(kernel.snapshot().buffers[&ground.source].dirty, "independent owner readback is not our own delivered receipt");
+    assert_eq!(
+        after.changes.len(),
+        before.changes.len() + 1,
+        "no automatic resend is admitted"
+    );
+    assert!(
+        kernel.snapshot().buffers[&ground.source].dirty,
+        "independent owner readback is not our own delivered receipt"
+    );
 }
 
 #[test]

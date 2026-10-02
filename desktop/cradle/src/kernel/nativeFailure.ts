@@ -3,11 +3,13 @@ import type {NativeCallFailure} from "./types";
 /** The kernel's physical-call failure projection, not a native success
  * receipt. Keep its original invocation and full owner error for readback. */
 export class NativeOwnerFailure extends Error {
-  constructor(readonly reading:NativeCallFailure) {
+  readonly reading:NativeCallFailure;
+  constructor(reading:NativeCallFailure) {
     const failure=reading.failure;
     const detail=failure.message??failure.detail??"Native call failed";
     const outcome=reading.owner_operation==="projectcentral.source.read"?"The outcome of this native source reading is unknown.":"The outcome is unknown.";
     super(`${reading.owner_operation}: ${detail}${failure.kind==="outcome_unknown"?` ${outcome} Retain the original selection and inspect native owner records before invoking this operation again.`:""}`);
+    this.reading=reading;
     this.name="NativeOwnerFailure";
   }
 }

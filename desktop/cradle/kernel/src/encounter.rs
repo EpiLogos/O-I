@@ -50,11 +50,11 @@
 //!   event lines, and the folded document is validated by the owner
 //!   correlate contract itself. A store root that does not exist means the
 //!   stream side was never queryable — it is omitted, never faked empty.
+use crate::flow::{Effect, OwnerCallError};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use crate::flow::{Effect, OwnerCallError};
 
 pub const ENCOUNTER_SCHEMA: &str = "oi.cradle.encounter/v1";
 
@@ -106,7 +106,10 @@ pub enum EncounterInput {
         owner_operation: String,
         detail: String,
     },
-    Failed { owner_operation: String, error: OwnerCallError },
+    Failed {
+        owner_operation: String,
+        error: OwnerCallError,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -313,7 +316,11 @@ pub enum EncounterDisposition {
         message: String,
         native: Option<Value>,
     },
-    Failed { owner: String, owner_operation: String, error: OwnerCallError },
+    Failed {
+        owner: String,
+        owner_operation: String,
+        error: OwnerCallError,
+    },
     /// A proposed reply arrived after a later disposition was already
     /// recorded; the reply is stale and must not be applied.
     StaleReply {
@@ -367,18 +374,28 @@ fn decode_aikit_envelope(output: &std::process::Output) -> Result<Value, OwnerCa
     crate::knowledge::decode_envelope(output, Effect::ReadOnly)
 }
 
-fn owner_read(command: Command, input: Option<&[u8]>) -> Result<std::process::Output, OwnerCallError> {
-    crate::native_process::run(command, input, crate::native_process::Limits {
-        timeout: std::time::Duration::from_secs(20),
-        stdout_bytes: 8 * 1024 * 1024, stderr_bytes: 64 * 1024,
-    }).map_err(|error| Effect::ReadOnly.physical_failure(error))
+fn owner_read(
+    command: Command,
+    input: Option<&[u8]>,
+) -> Result<std::process::Output, OwnerCallError> {
+    crate::native_process::run(
+        command,
+        input,
+        crate::native_process::Limits {
+            timeout: std::time::Duration::from_secs(20),
+            stdout_bytes: 8 * 1024 * 1024,
+            stderr_bytes: 64 * 1024,
+        },
+    )
+    .map_err(|error| Effect::ReadOnly.physical_failure(error))
 }
 
 /// Pull one session's durable lifecycle history through the pinned W3-A
 /// owner operation. Read-only: records nothing.
 fn aikit_lifecycle_history(cwd: &Path, session: &str) -> Result<Value, OwnerCallError> {
     let mut command = Command::new(aikit_executable());
-    command.arg("-C")
+    command
+        .arg("-C")
         .arg(cwd)
         .args(["session", "lifecycle", "history"])
         .arg(session)
@@ -395,15 +412,17 @@ fn actuation_correlate(cwd: &Path, corpus: &Value) -> Result<Value, OwnerCallErr
     let executable = actuation_executable().ok_or_else(|| OwnerCallError::Unavailable {
         detail: "OI_ACTUATION_BIN is not bound and the suite exposes no oi owner route to the Actuation correlate operation".into(),
     })?;
-    let corpus_text =
-        serde_json::to_vec(corpus).map_err(|error| OwnerCallError::Malformed {
-            detail: format!("actuation corpus is not serialisable: {error}"),
-        })?;
+    let corpus_text = serde_json::to_vec(corpus).map_err(|error| OwnerCallError::Malformed {
+        detail: format!("actuation corpus is not serialisable: {error}"),
+    })?;
     if corpus_text.len() > 16 * 1024 * 1024 {
-        return Err(OwnerCallError::Malformed { detail: "Actuation correlate corpus exceeds the 16 MiB input budget".into() });
+        return Err(OwnerCallError::Malformed {
+            detail: "Actuation correlate corpus exceeds the 16 MiB input budget".into(),
+        });
     }
     let mut command = Command::new(&executable);
-    command.arg("correlate")
+    command
+        .arg("correlate")
         .arg("-")
         .arg("--json")
         .current_dir(cwd);
@@ -779,8 +798,15 @@ pub fn assemble(
             None
         }
         Err(error) => {
-            reading.inputs.aikit_lifecycle = EncounterInput::Failed { owner_operation: AIKIT_LIFECYCLE_OPERATION.into(), error: error.clone() };
-            reading.disposition = EncounterDisposition::Failed { owner: OWNER_AIKIT.into(), owner_operation: AIKIT_LIFECYCLE_OPERATION.into(), error };
+            reading.inputs.aikit_lifecycle = EncounterInput::Failed {
+                owner_operation: AIKIT_LIFECYCLE_OPERATION.into(),
+                error: error.clone(),
+            };
+            reading.disposition = EncounterDisposition::Failed {
+                owner: OWNER_AIKIT.into(),
+                owner_operation: AIKIT_LIFECYCLE_OPERATION.into(),
+                error,
+            };
             None
         }
     };
@@ -806,8 +832,15 @@ pub fn assemble(
     let actuation_read_model = match streams {
         Some(Err(detail)) => {
             let error = OwnerCallError::Malformed { detail };
-            reading.inputs.actuation_correlation = EncounterInput::Failed { owner_operation: ACTUATION_CORRELATE_OPERATION.into(), error: error.clone() };
-            reading.disposition = EncounterDisposition::Failed { owner: OWNER_ACTUATION.into(), owner_operation: ACTUATION_CORRELATE_OPERATION.into(), error };
+            reading.inputs.actuation_correlation = EncounterInput::Failed {
+                owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
+                error: error.clone(),
+            };
+            reading.disposition = EncounterDisposition::Failed {
+                owner: OWNER_ACTUATION.into(),
+                owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
+                error,
+            };
             None
         }
         _ => match actuation_correlate(cwd, &corpus) {
@@ -845,8 +878,15 @@ pub fn assemble(
                 None
             }
             Err(error) => {
-                reading.inputs.actuation_correlation = EncounterInput::Failed { owner_operation: ACTUATION_CORRELATE_OPERATION.into(), error: error.clone() };
-                reading.disposition = EncounterDisposition::Failed { owner: OWNER_ACTUATION.into(), owner_operation: ACTUATION_CORRELATE_OPERATION.into(), error };
+                reading.inputs.actuation_correlation = EncounterInput::Failed {
+                    owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
+                    error: error.clone(),
+                };
+                reading.disposition = EncounterDisposition::Failed {
+                    owner: OWNER_ACTUATION.into(),
+                    owner_operation: ACTUATION_CORRELATE_OPERATION.into(),
+                    error,
+                };
                 None
             }
         },
@@ -866,7 +906,9 @@ pub fn assemble(
     // against a live, uncancelled request.
     let owner_failure = matches!(
         reading.disposition,
-        EncounterDisposition::Unavailable { .. } | EncounterDisposition::Refused { .. } | EncounterDisposition::Failed { .. }
+        EncounterDisposition::Unavailable { .. }
+            | EncounterDisposition::Refused { .. }
+            | EncounterDisposition::Failed { .. }
     );
     if owner_failure {
         return reading;
