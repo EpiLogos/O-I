@@ -37,6 +37,7 @@ OI_SCOPE = [
     'desktop/cradle/tests/epi-world-production-native.mjs',
     'desktop/cradle/tests/epi-personal-native-proof.mjs',
     'desktop/cradle/tests/epi-scene-damping-native-proof.mjs',
+    'desktop/cradle/tests/epi-scene-axis-native-proof.mjs',
     'desktop/cradle/tests/epi-world-portable-custody.mjs',
     'desktop/cradle/tests/build-portable-expectation.mjs',
     D30_TEMPLATE_PATH,
@@ -872,6 +873,7 @@ class Replay:
             require(whole.get(name, {}).get('passed') is True, 'Full production driver omitted required personal gate: ' + name)
         require(whole.get('consumer_replays') is not None, 'Actual receiving discrimination cannot be skipped')
         require(whole.get('scene_damping', {}).get('passed') is True, 'D30 actual Scene/native material gate cannot be skipped')
+        require(whole.get('scene_axes', {}).get('passed') is True, 'Ordinary native independent-axis/private-form gate cannot be skipped')
         observed = self.owned.evidence()
         require(not observed['errors'], 'Actual owned process observation failed')
         for role in ('ql-field-host', 'ql-field-worker'):
@@ -886,7 +888,7 @@ class Replay:
         require(selection['entity_ref'] == continuation['entity_ref'] and selection['scene_ref'] == continuation['scene_ref'],
                 'Restart must use actual acknowledged saved selection')
         expected = {key: continuation[key] for key in ('expression_ref', 'event_ref', 'person_ref', 'scene_ref', 'entity_ref')}
-        prior_saved_file_path = self.out / 'whole-production/d30-current-material-file.json'
+        prior_saved_file_path = self.out / 'whole-production/m3-axis-final-current-continuation-file.json'
         prior_saved_file = read_json(prior_saved_file_path)
         require(current_doc == prior_saved_file['document']
                 and hashlib.sha256(current_reading['content'].encode()).hexdigest() == prior_saved_file['content_sha256']
@@ -919,6 +921,7 @@ class Replay:
                     'reopen_prior_native_generation': first['native_generation']})
         require(reopened.get('reopen_expected') == expected, 'Fresh browser did not execute exact saved continuation gate')
         require(reopened.get('scene_damping_restart', {}).get('passed') is True, 'Fresh owned-kernel/browser material receiving gate cannot be skipped')
+        require(reopened.get('scene_axes_restart', {}).get('passed') is True, 'Fresh owned-kernel/browser must consume the exact independently acknowledged saved continuous axes')
         self.stop_bridge()
         self.owned.evidence()
         for before in binaries:

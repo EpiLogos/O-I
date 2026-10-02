@@ -1,3 +1,4 @@
+import {nativeAxisRequest,type NativeAxisPhase} from './axis';
 import {SCENE_MATERIAL_STANDING,type NativeSceneMaterial} from './material';
 import {projectNativeSources,editNativeBasis,NativeDomainReading,NativeBasisEdit} from './domain';
 import {InstrumentSession} from './ql/instrument-session.mjs';
@@ -558,6 +559,7 @@ export class NativeFieldController {
    this.finishCommand(session,true,revision,'resume interrupted by a newer hold');
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
  });}
+ setAxis(axis:0|1,phase:NativeAxisPhase){const request=nativeAxisRequest(axis,phase);return this.operate({operation:'set-axis',...request});}
  operate(command:unknown){return this.serial(async()=>{
   const following=this.status==='following';this.hold('native operation');const revision=this.holdRevision;
   const session=await this.idle();

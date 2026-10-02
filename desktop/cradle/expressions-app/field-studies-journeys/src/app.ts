@@ -1,3 +1,4 @@
+import {nativeAxisRequest,nativeSceneAxes} from './native-field/axis';
 import {installBlueprintHUD} from './blueprintHUD.js';
 import {blueprintMember} from './blueprintGeometry.js';
 import {installNativeField} from "./nativeField";
@@ -909,6 +910,14 @@ function drawGuides(){const svg=$('guides');svg.setAttribute('viewBox',`0 0 ${wi
  svg.innerHTML=markup;overlayDirty=false;
 }
 function resize(){width=innerWidth;height=innerHeight;engine.resize(width,height,physisPixelRatio??(devicePixelRatio||1));renderText();renderLive();overlayDirty=true;needsFrame=true;}
+function privateFormGeometry(reading:NativeM3Reading,view:KernelConversion|undefined,sceneId:string){
+ const work=nativeWorkspace?.inspect();if(work?.pending||work?.failed)throw Error('Wait for this native Expression and selection to be acknowledged before presenting a private form.');
+ if(epiWorld&&(reading.person_ref!==epiWorld.person_ref||reading.nara_ref!==epiWorld.nara_ref
+  ||reading.identity_source_ref!==epiWorld.identity_source.source_ref||reading.identity_revision!==epiWorld.identity_source.revision
+  ||reading.event_ref!==epiWorld.world.event_ref||!readEpiPersonalContext(view,sceneId)))
+  throw Error('Read this saved person and occasion before presenting a private form in this world.');
+ return naraFormGeometry(reading,view,sceneId,epiWorld?`${epiWorld.world.instance_ref}:entity:world-current-form-hinge`:undefined);
+}
 function frameData(delta:number):EngineFrame{const base=activeScene();
  // Recorded takes override base values while the playhead moves; the revision
  // term follows the playhead so the engine rebuilds only when authored content
@@ -924,7 +933,7 @@ function frameData(delta:number):EngineFrame{const base=activeScene();
  const evidenceAllowed=!epiWorld||!!readEpiPersonalContext(evidenceView,base.id);
  const evidenceProjection=evidenceAllowed?privateEvidenceField?.project(evidenceView,base.id)??null:null;
  let formationGeometryProjection:import('../../src/engine/formationGeometryProjection').FormationGeometryProjection|null=null;
- if(privateFormReading){try{formationGeometryProjection=naraFormGeometry(privateFormReading,nativeWorkspace?.nativeView(),base.id);}catch{privateFormReading=null;}}
+ if(privateFormReading){try{formationGeometryProjection=privateFormGeometry(privateFormReading,nativeWorkspace?.nativeView(),base.id);}catch{privateFormReading=null;naraInstrument.refresh();}}
  formationGeometryProjection=epi?.geometry??formationGeometryProjection;
  return {stationaryFormationAdmission:epiWorld?epiStationaryReception(current,epiWorld,admittedReading,nativeWorkspace?.nativeView()?.document as unknown as import('../../../src/expression/types').ExpressionDocument|undefined):undefined,formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundPlan:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,connectionFocusIds:epiWorld?selected:undefined,sourceBodyPicking:!!epiWorld,connectionRestOpacity:epiWorld?.receiving.scene_ref===base.id?0.12:1,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:(editing&&!presenting&&guidesVisible)||!!epiWorld?selected:[],authoringRevision:store.revision*1e7+epiReceptionRevision*1e3+(tracksActive?1+Math.floor(sceneElapsed*60):0)};}
 function recordableTracks(){return workspace.entries.flatMap(entry=>{const subject=entry.scope==='selected'?(selectedEntity()??scene().entities.find(e=>e.kind==='formation')):scene().entities.find(e=>e.id===entry.entityId);const bind=entry.scope==='field'?PARAMETERS.find(p=>p.key===entry.key)?.bind:subject?entityTargets(scene()).find(t=>t.entityId===subject.id&&t.key===entry.key)?.bind:undefined;if(!bind)return [];const track:PropertyTrack={id:uid('track'),bind,entityId:entry.scope==='field'?undefined:subject?.id,points:[]};return isShared(store.document,scene(),bind)||readTrackValue(scene(),track)===undefined?[]:[track];});}
@@ -1271,7 +1280,8 @@ const naraInstrument=installNaraInstrument({enterWorld:async identity=>{if(world
   }
   needsFrame=true;naraInstrument.refresh();
  },
- presentForm:reading=>{if(reading)naraFormGeometry(reading,nativeWorkspace?.nativeView(),scene().id);privateFormReading=reading;needsFrame=true;},
+ presentForm:reading=>{if(reading)privateFormGeometry(reading,nativeWorkspace?.nativeView(),scene().id);privateFormReading=reading;needsFrame=true;},
+ formPresentationCurrent:reading=>{if(privateFormReading!==reading)return false;try{privateFormGeometry(reading,nativeWorkspace?.nativeView(),scene().id);return true;}catch{return false;}},
  presentEvidence:input=>{
   const view=nativeWorkspace?.nativeView(),field=input?createEvidenceField(input,view,scene().id):null;
   if(input&&epiWorld){
@@ -1449,6 +1459,14 @@ epiEncounter=installEpiWorldEncounter({
  identity:()=>{closeEntryGate();naraInstrument.open('identity');},
  ask:async()=>{await nativeWorkspace?.select(scene().id,selected[0]??null);naraInstrument.open('conversation');},
  navigate:async(ref,entityRef)=>{const view=nativeWorkspace?.nativeView(),binding=Object.entries(view?.bindings??{}).find(([,b])=>b.scene_ref===ref);if(!binding)throw Error('This Scene is not part of the open native world.');const index=store.document.scenes.findIndex(s=>s.id===binding[0]);if(index!==sceneIndex&&!await setScene(index))return;const occurrence=binding[1].occurrences.find(o=>o.entity_ref===entityRef);selected=occurrence?[occurrence.view_entity_id]:[];await nativeWorkspace?.select(scene().id,selected[0]??null);editing=false;contextKind='';inspectorOpen=false;renderAll();},
+ axes:()=>{
+  const record=epiWorld;if(!record)return null;
+  const reading=nativeField?.controller.reading,world=(reading?.source as {world?:{instance_ref?:string}}|null|undefined)?.world;
+  if(reading?.lease){if(!['following','held'].includes(reading.status)||world?.instance_ref!==record.world.instance_ref||reading.native?.event_ref!==record.world.event_ref||reading.native?.subject_ref!==record.person_ref||!reading.native?.available)return null;try{return nativeSceneAxes(reading.presented_clock);}catch{return null;}}
+  try{const readback=requireEpiNativeReadback(record,record.native_readback??record.world.native_readback,record.native_readback!==undefined);return nativeSceneAxes(readback.continuous_clock);}catch{return null;}
+ },
+ setAxis:async(axis,phase)=>{const admitted=nativeAxisRequest(axis,phase);const controller=await playEpiWorld();await controller.setAxis(admitted.axis,admitted.phase);needsFrame=true;epiEncounter?.refresh();},
+ form:()=>naraInstrument.open('form'),
  step:async()=>{await (await playEpiWorld()).m1Advance(1);await retainEpiNativeReading();},
  damping:()=>{const i=nativeField?.controller.reading.instrument?.influence,r=epiWorld;return r&&i?.instance_ref===r.world.instance_ref&&i.event_ref===r.world.event_ref&&i.subject_ref===r.person_ref?i.material.damping_per_second:r?.current_material_policy?.material.damping_per_second??(r?epiOpeningMaterial(r).damping_per_second:0);},
  // The native edit keeps this lease alive. Save/departure retain its policy
