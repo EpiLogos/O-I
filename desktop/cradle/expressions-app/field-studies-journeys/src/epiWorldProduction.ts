@@ -196,7 +196,7 @@ export function createEpiWorldProduction(port:EpiProductionPort){
   if(locus.binding.rooted_world.registry_revision!==record.source_basis.registry_revision)throw Error('The saved world has a different current coordinate source.');
   const inspected=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
   if(!inspected.document)throw Error('The saved native world cannot be read before personal reception.');
-  const adopted=inspected.document.profiles.filter(profile=>profile.profile_ref.startsWith('profile:epi-coordinate-'));
+  const adopted=(inspected.document.profiles??[]).filter(profile=>profile.profile_ref.startsWith('profile:epi-coordinate-'));
   const source=locus.subject_binding.sources[0];
   if(adopted.length!==1||adopted[0].profile_ref!==locus.binding.resolved_profile_ref||adopted[0].revision!==locus.binding.profile_revision||!sameSceneData(adopted[0].source_basis,source))throw Error('The saved coordinate profile needs review. Open Coordinate Atlas, read Personal Pratibimba, and choose Use profile for this Expression before receiving its personal current.');
   for(const profile of locus.profiles)await defineProfile({operation:'profile_define',profile,actor:'human:epi-world-reopen'});
