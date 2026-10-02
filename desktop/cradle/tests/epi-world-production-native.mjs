@@ -667,6 +667,43 @@ try{
   assert.equal(labels[0].body,expectedClockCaption,'Ordinary new or retained-world admission receives the source-qualified Clock A caption');
  }
  check(true,'The corrected Clock A meaning reaches actual native live/saved material and the loaded ordinary receiving scene');
+ // Typography is consumed by the ordinary app, not inferred from text presence.
+ // The installed1280px window leaves a1020px Expression iframe beside Central.
+ // Width/height changes exercise layout only; the complete current Document
+ // and its native subject/occasion stay unchanged. Narrow/short measurements
+ // are retained as limitations, not promoted to a universal responsive pass.
+ const captionDocumentBefore=await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument());
+ const captionNativeBefore=await nativeDocument(a.working.native_ref),captionViewport=page.viewportSize();
+ const captionMeasurements=[];
+ try{
+  for(const size of [{width:1020,height:819,required:true},{width:1440,height:1000,required:true},{width:760,height:900,required:false},{width:360,height:900,required:false},{width:1020,height:600,required:false}]){
+   await page.setViewportSize({width:size.width,height:size.height});
+   await frame.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height,size,{timeout:10000});
+   await frame.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   const measured=await frame.evaluate(()=>{const api=window.__FIELD_STUDIES__,d=api.getDocument(),s=d.scenes[api.getState().sceneIndex],rect=element=>{const r=element.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,top:r.top,right:r.right,bottom:r.bottom,left:r.left};};
+    return{width:innerWidth,height:innerHeight,scene:s.id,total_duration:d.scenes.reduce((sum,scene)=>sum+scene.duration,0),duration:s.duration,entities:s.entities.map(e=>e.id),layers:s.text.filter(t=>t.visible).map(t=>{const article=document.querySelector('[data-text-id='+JSON.stringify(t.id)+']'),h1=article?.querySelector('h1'),p=article?.querySelector('p');if(!article||!h1||!p)throw Error('A required authored caption is absent from the ordinary receiving DOM');return{id:t.id,title:t.title,body:t.body,kicker:t.kicker,authored_size:t.size,inline_size:h1.style.fontSize,computed_size:getComputedStyle(h1).fontSize,actual_title:h1.textContent,actual_body:p.textContent,kicker_count:article.querySelectorAll('.kicker').length,box:rect(article),heading_box:rect(h1),body_box:rect(p)};})};});
+   // Preserve actual operands even if an exact size/body assertion refuses.
+   artifact('ordinary-caption-layout-current-'+size.width+'x'+size.height+'.json',{standing:'Unasserted actual DOM measurement; no receiving acceptance',requested:size,measurement:measured});
+   const ref=a.record.receiving.scene_ref;
+   assert.deepEqual(measured.layers.map(t=>t.id),[ref+':caption',ref+':label-earth',ref+':label-clock-a',ref+':label-clock-b',ref+':label-register'],'The complete authored five-caption cohort remains ordinary material');
+   assert.equal(measured.scene,actualCosmic.id);assert.equal(measured.duration,3600);
+   if(!config.reopen_acknowledgement_file)assert.equal(measured.total_duration,10800);
+   else assert.equal(measured.total_duration,captionDocumentBefore.scenes.reduce((sum,scene)=>sum+scene.duration,0),'The later saved continuation retains its acknowledged complete Journey duration, including any native Save & next scene');
+   assert.deepEqual(measured.entities,actualCosmic.entities.map(e=>e.id),'The layout repair preserves all32 cosmic bodies, including the seven centres');
+   for(const layer of measured.layers){const expected=size.width<761?Math.min(36,layer.authored_size):size.width<1051?Math.min(38,layer.authored_size):layer.authored_size;
+    assert.equal(layer.inline_size,expected+'px');assert.equal(layer.computed_size,expected+'px','Responsive CSS must not overrule the shared authored heading size');
+    assert.equal(layer.actual_title,layer.title);assert.equal(layer.actual_body,layer.body);assert.equal(layer.kicker_count,layer.kicker?1:0,'An empty kicker has no ordinary rule, label or gap');
+    for(const box of [layer.box,layer.heading_box,layer.body_box])for(const value of Object.values(box))assert.ok(Number.isFinite(value),'Caption geometry must be finite');
+   }
+   measured.visible_bounds=measured.layers.every(t=>t.box.left>=0&&t.box.top>=0&&t.box.right<=measured.width&&t.box.bottom<=measured.height);
+   measured.overlaps=measured.layers.flatMap((left,index)=>measured.layers.slice(index+1).filter(right=>left.box.left<right.box.right&&right.box.left<left.box.right&&left.box.top<right.box.bottom&&right.box.top<left.box.bottom).map(right=>[left.id,right.id]));
+   measured.required=size.required;captionMeasurements.push(measured);artifact('ordinary-caption-layout-measurements.json',{standing:'Actual ordinary DOM receiving; literal text/geometry only, no shape/contrast/human legibility acceptance',measurements:captionMeasurements});
+   if(size.required){assert.equal(measured.visible_bounds,true,'Every generated caption must remain within the actual original/wide reading viewport');assert.deepEqual(measured.overlaps,[],'The actual generated caption boxes must not overlap at installed1020x819 and wide rest');}
+  }
+ }finally{if(captionViewport)await page.setViewportSize(captionViewport);}
+ assert.deepEqual(await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument()),captionDocumentBefore,'Layout measurements preserve the complete authored Document');
+ assert.deepEqual(await nativeDocument(a.working.native_ref),captionNativeBefore,'Layout measurements preserve the complete native Document/person/occasion basis');
+ check(true,'Ordinary generated captions retain exact text and authored heading sizes without overlap at the installed iframe and wide rest; narrow/short geometry is independently retained');
  check(nativeCosmic?.entity_refs.length===32&&actualCosmic.entities.length===32&&actualCosmic.entities.filter(e=>e.kind==='formation'&&e.enabled!==false).length<=budget.render_formations&&actualCosmic.entities.filter(e=>e.kind==='pin'&&e.enabled!==false).length<=budget.render_pins&&nativeCosmic.entity_refs.length<=budget.scene_members,'All32 required cosmic bodies fit actual native/renderer budgets before the existing no-body-drop receiving gates');
  check(aDoc.scenes.filter(s=>s.presentation?.scene?.epiWorld).length===1&&aDoc.scenes.every(s=>!s.presentation?.saved?.epiWorld)&&!a.record.native_source.world,'One complete machine world receipt is retained once, independently of authored saved material');
  check(a.record.world.basis&&a.record.world.binding&&a.record.world.event&&JSON.stringify(a.record.world.basis)===JSON.stringify(a.record.world.binding.native_basis)&&JSON.stringify(a.record.world.event)===JSON.stringify(a.record.world.basis.input),'The retained complete world preserves its exact admitted coupled input and receiving native basis');

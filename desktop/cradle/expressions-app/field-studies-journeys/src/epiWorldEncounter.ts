@@ -27,7 +27,7 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
  let register:{role:RegisterRole;entity_ref:string;title:string;index:number|null}|null=null;
  let skyBody:EpiWorldRecord['world']['scene']['bodies'][number]|null=null;
  const registerRoles:readonly RegisterRole[]=['degree','governor','decan','codon','skin','aperture'];
- const run=async(operation:()=>Promise<void>)=>{if(busy)return;const at=++operationGeneration;busy=true;failure='';render();try{await operation();}catch(e){if(at===operationGeneration)failure=e instanceof Error?e.message:String(e);}finally{if(at===operationGeneration){busy=false;render();}}};
+ const run=async(operation:()=>Promise<void>)=>{if(busy)return;const at=++operationGeneration;busy=true;failure='';render();try{await operation();}catch(e){if(at===operationGeneration){notice='';failure=e instanceof Error?e.message:String(e);}}finally{if(at===operationGeneration){busy=false;render();}}};
  function selectedContent(){
   const d=host.document(),r=host.record(),e=host.selected()?d?.entities[host.selected()!]:null;
   if(!e)return null;
@@ -118,5 +118,5 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
  disclosure.addEventListener('cancel',e=>{e.preventDefault();void returnFromSource();});
  bar.addEventListener('input',event=>{const input=event.target as HTMLInputElement;if(input.matches('[data-epi-axis-turns],[data-epi-axis-half]')){const axis=input.dataset.epiAxisTurns??input.dataset.epiAxisHalf;for(const field of bar.querySelectorAll<HTMLInputElement>(`[data-epi-axis-turns="${axis}"],[data-epi-axis-half="${axis}"]`))field.dataset.edited='true';}});
  const phaseTimer=window.setInterval(()=>{if(busy||bar.hidden||document.hidden)return;const axes=host.axes?.(),controls=bar.querySelector<HTMLFieldSetElement>('[data-epi-axis-controls]');if(controls)controls.disabled=!axes||!host.setAxis;if(!axes)return;for(const axis of [0,1] as const){const phase=axes[axis===0?'inscription':'lensing'],turns=bar.querySelector<HTMLInputElement>(`[data-epi-axis-turns="${axis}"]`),half=bar.querySelector<HTMLInputElement>(`[data-epi-axis-half="${axis}"]`);if(turns&&half&&turns.dataset.edited!=='true'&&half.dataset.edited!=='true'){turns.value=phase.turns;half.value=String(phase.half_degrees);}}},250);
- if(quiet)host.quiet(true);render();return{refresh:render,source,status(text:string){notice=text;render();},fail(text:string){failure=text;render();},destroy(){generation++;clearInterval(phaseTimer);bar.remove();disclosure.remove();}};
+ if(quiet)host.quiet(true);render();return{refresh:render,source,status(text:string){notice=text;render();},fail(text:string){notice='';failure=text;render();},destroy(){generation++;clearInterval(phaseTimer);bar.remove();disclosure.remove();}};
 }

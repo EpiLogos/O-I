@@ -56,7 +56,7 @@ export function wrap(ctx:CanvasRenderingContext2D,value:string,width:number):str
  return lines;
 }
 export function paintText(ctx:CanvasRenderingContext2D,s:Scene,w:number,h:number){const col=s.field.palette[0];for(const t of captureTextLayers(s)){if(!t.visible)continue;const l=textLayout(t,w,h);let y=l.y;const align=t.align,anchor=align==='center'?l.x+l.width/2:align==='right'?l.x+l.width:l.x;ctx.save();ctx.fillStyle=col;ctx.textBaseline='top';ctx.textAlign=align;
- ctx.globalAlpha=.65;ctx.font=`${l.kicker}px Arial`;if(align==='left'){ctx.fillRect(l.x,y+5,18,1);ctx.fillText(t.kicker,anchor+27,y);}else ctx.fillText(t.kicker,anchor,y);y+=l.kicker*1.5+l.kickerGap;
+ if(t.kicker){ctx.globalAlpha=.65;ctx.font=`${l.kicker}px Arial`;if(align==='left'){ctx.fillRect(l.x,y+5,18,1);ctx.fillText(t.kicker,anchor+27,y);}else ctx.fillText(t.kicker,anchor,y);y+=l.kicker*1.5+l.kickerGap;}
  ctx.globalAlpha=1;ctx.font=`${l.size}px Georgia`;if('letterSpacing'in ctx)ctx.letterSpacing=`${-l.size*.054}px`;
  for(const line of wrap(ctx,t.title,l.width)){ctx.fillText(line,anchor,y);y+=l.size*1.08;}ctx.font=`italic ${l.size}px Georgia`;for(const line of wrap(ctx,t.italic,l.width)){if(line){ctx.fillText(line,anchor,y);y+=l.size*1.08;}}
  y+=l.titleGap;if('letterSpacing'in ctx)ctx.letterSpacing='0px';
