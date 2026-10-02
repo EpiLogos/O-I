@@ -224,7 +224,7 @@ export function KernelProvider(props: { children: ReactNode }) {
     [merge, transport, reportOpError],
   );
 
-  const refreshListing = useCallback(async (live = () => true, signal?: AbortSignal) => {
+  const refreshListing = useCallback(async (live: () => boolean = () => true, signal?: AbortSignal) => {
     const lifetime = ownerReadLifetime.current;
     if (!lifetime) return;
     const current = () => ownerReadLifetime.current === lifetime && !lifetime.signal.aborted && live();
@@ -252,7 +252,7 @@ export function KernelProvider(props: { children: ReactNode }) {
     setReadModelEpoch(epoch => epoch + 1);
   }, [transport]);
 
-  const refreshOwnerModels = useCallback(async (lostReplay: boolean, live = () => true, signal?: AbortSignal) => {
+  const refreshOwnerModels = useCallback(async (lostReplay: boolean, live: () => boolean = () => true, signal?: AbortSignal) => {
     const lifetime = ownerReadLifetime.current;
     if (!lifetime) return;
     const current = () => ownerReadLifetime.current === lifetime && !lifetime.signal.aborted && live();
