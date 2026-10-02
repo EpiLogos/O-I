@@ -14,6 +14,7 @@ import type { KernelTransportStatus, NativeFileReading } from "../kernel/types";
 import { readFile, fileOperation, type FileMutation } from "../files/client";
 import { invalidateFile } from "../files/resources";
 import { islandSpan, type DocumentIdentity } from "./identity";
+import {draftStorageKey, type DraftOwner} from "../workspace/drafts";
 
 export const DESKTOP_ACTOR = "oi-desktop-user";
 export const DESKTOP_ACTOR_KIND = "human";
@@ -64,9 +65,15 @@ export async function saveDocumentPayload(
     identity: DocumentIdentity;
     basisFileRevision: string;
     frameIslandText: string;
+    owner: DraftOwner | undefined;
+    currentOwner: () => DraftOwner | undefined;
   },
 ): Promise<{ outcome: DocumentSaveOutcome; reading?: NativeFileReading }> {
   const { location, project, identity, basisFileRevision, frameIslandText } = args;
+  const scope = draftStorageKey(args.owner, location.ref);
+  const ownerCurrent = () => !!scope && args.owner?.root === location.root && scope === draftStorageKey(args.currentOwner(), location.ref);
+  const ownerRefusal = () => ({outcome: {state: "refused" as const, detail: "The active source owner is unavailable or changed. Your page edits remain open; wait for recognition before saving."}});
+  if (!ownerCurrent()) return ownerRefusal();
   if (identity.payload !== "ql-doc") {
     return { outcome: { state: "refused", detail: "This document keeps no savable payload island; author it in source." } };
   }
@@ -94,6 +101,7 @@ export async function saveDocumentPayload(
     if (owner.content !== saved.content) {
       return { outcome: { state: "conflict", detail: "The owner's source differs from the open file. Reload and review before saving.", currentRevision: owner.revision }, reading: saved };
     }
+    if (!ownerCurrent()) return ownerRefusal();
     const written = await dispatchAction(transport, "projectcentral.source.write", saved.source.ref, {
       project: project ?? saved.project?.name ?? null,
       source_ref: saved.source.ref,
@@ -117,6 +125,7 @@ export async function saveDocumentPayload(
   if (saved.operations?.write && !saved.operations.write.available) {
     return { outcome: { state: "refused", detail: `Central holds this document read-only: ${saved.operations.write.reason ?? "no write authority"}` }, reading: saved };
   }
+  if (!ownerCurrent()) return ownerRefusal();
   const result = await fileOperation<FileMutation>(transport, location, { action: "write", expected_revision: saved.revision, content });
   if (result.outcome === "conflict") {
     return { outcome: { state: "conflict", detail: "The document changed while this page was open. Reload to review; your page edits are still here.", currentRevision: result.current?.revision }, reading: result.current };

@@ -14,7 +14,7 @@ import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
  */
 
 import { useEffect, useRef, useState } from "react";
-import { readDraft, writeDraft } from "../workspace/drafts";
+import { readDraft, writeDraft, draftStorageKey } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
 import { SharedFieldMaterial } from "../receiving/SharedFieldMaterial";
 import { DayDieFace } from "../receiving/DayDieFace";
@@ -40,6 +40,7 @@ function shortRevision(revision: string | undefined): string {
 export function SourceSurface(props: SourceSurfaceProps) {
   const { binding } = props;
   const kernel = useKernel();
+  const hasCurrentOwner = () => !!kernel.draftOwner && draftStorageKey(kernel.draftOwner, binding.ref ?? "") === draftStorageKey(kernel.currentDraftOwner(), binding.ref ?? "");
   const buffer = kernel.snapshot.buffers[binding.ref ?? ""];
   const error = kernel.sourceErrors[binding.ref ?? ""];
   const nativeFailure = nativeFailureReading(error);
@@ -48,9 +49,8 @@ export function SourceSurface(props: SourceSurfaceProps) {
   // surface can mount while its buffer has not arrived yet, and hook counts
   // must match across that transition.
   const [view,setView]=useState<"rendered"|"source">("rendered");
-  const initialDraft = useRef(binding.ref ? readDraft(binding.ref) : null);
   const [draftError, setDraftError] = useState<string | null>(null);
-  const [text, setText] = useState(initialDraft.current?.content ?? buffer?.content ?? "");
+  const [text, setText] = useState(buffer?.content ?? "");
   const [caret,setCaret]=useState({line:1,column:1,selected:false});
   const textareaRef = useRef<EditorHandle>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -85,11 +85,43 @@ export function SourceSurface(props: SourceSurfaceProps) {
   // back to a stale clean layer.
   const lastSynced = useRef<string | null>(null);
   const pendingEdits = useRef(0);
+  const saving = useRef(false);
+  const authoredHere = useRef(false);
+  const unadmittedEdit = useRef<{scope: string | undefined; content: string}>();
+  const restoredDraftScope = useRef<string>();
+  const currentDraftScope = useRef<string>();
+  currentDraftScope.current = binding.ref ? draftStorageKey(kernel.draftOwner, binding.ref) : undefined;
+  useEffect(() => {
+    const key = binding.ref ? draftStorageKey(kernel.draftOwner, binding.ref) : undefined;
+    if (!key || !buffer || restoredDraftScope.current === key || pendingEdits.current > 0) return;
+    restoredDraftScope.current = key;
+    if (buffer.dirty || authoredHere.current) return;
+    const draft = readDraft(kernel.draftOwner, binding.ref!);
+    if (!draft || draft.content === draft.saved_content) return;
+    void kernel.apply({op: "source_restore", source_ref: binding.ref!, ...draft}).then(result => {
+      if (currentDraftScope.current !== key || authoredHere.current) return;
+      if (!result) setDraftError("The retained draft remains on this device, but its native buffer could not be restored.");
+      else if ("buffer" in result && result.buffer.source_ref === binding.ref) {
+        lastSynced.current = result.buffer.content; setText(result.buffer.content);
+      }
+    });
+  }, [kernel.draftOwner, binding.ref, buffer, kernel.apply]);
+  useEffect(() => {
+    const proposal = unadmittedEdit.current;
+    const scope = binding.ref ? draftStorageKey(kernel.draftOwner, binding.ref) : undefined;
+    if (!proposal || !scope || proposal.scope !== scope || !hasCurrentOwner()) return;
+    unadmittedEdit.current = undefined;
+    pendingEdits.current += 1;
+    void kernel.editBuffer(binding.ref!, proposal.content).then(result => {
+      if ((result?.result !== "buffer_edited" || result.buffer.content !== proposal.content) && lastSynced.current === proposal.content) {
+        unadmittedEdit.current = proposal;
+        setDraftError(kernel.lastOpError() ?? "The native buffer did not accept your typing. Your proposal remains open.");
+      }
+    }).finally(() => { pendingEdits.current -= 1; });
+  }, [kernel.draftOwner, binding.ref, kernel.editBuffer]);
   useEffect(() => {
     if (!buffer) return;
-    if (pendingEdits.current > 0) return;
-    if (lastSynced.current === null && initialDraft.current && buffer.content !== initialDraft.current.content) return;
-    if (buffer.dirty && lastSynced.current !== null) return;
+    if (pendingEdits.current > 0 || unadmittedEdit.current) return;
     if (lastSynced.current === buffer.content) return;
     lastSynced.current = buffer.content;
     setText(buffer.content);
@@ -115,14 +147,30 @@ export function SourceSurface(props: SourceSurfaceProps) {
   }, [kernel.snapshot.focus.subject?.ref, binding.ref]);
 
   const onEdit = (value: string) => {
+    authoredHere.current = true;
     setText(value);
     if (binding.ref && buffer) {
-      try { writeDraft(binding.ref, { content: value, base_revision: buffer.base_revision, saved_content: buffer.saved_content }); setDraftError(null); }
+      try { writeDraft(kernel.draftOwner, binding.ref, { content: value, base_revision: buffer.base_revision, saved_content: buffer.saved_content }); setDraftError(null); }
       catch { setDraftError("This draft could not be saved on this device. Keep this window open until the source is saved."); }
     }
     lastSynced.current = value; // this surface authored it — no mirror-back
+    if (!hasCurrentOwner()) {
+      // Retain the proposal under its captured owner; never relabel it for a
+      // subsequently recognized directory. Admit it only if that same owner
+      // returns. This covers the last input event before the read-only render.
+      unadmittedEdit.current = {scope: draftStorageKey(kernel.draftOwner, binding.ref ?? ""), content: value};
+      setDraftError("Your typing remains open. Wait for the active source owner to be recognized before continuing.");
+      return;
+    }
+    unadmittedEdit.current = undefined;
     pendingEdits.current += 1;
-    void kernel.editBuffer(binding.ref ?? "", value).finally(() => {
+    const scope = draftStorageKey(kernel.draftOwner, binding.ref ?? "");
+    void kernel.editBuffer(binding.ref ?? "", value).then(result => {
+      if ((result?.result !== "buffer_edited" || result.buffer.content !== value) && lastSynced.current === value) {
+        unadmittedEdit.current = {scope, content: value};
+        setDraftError(kernel.lastOpError() ?? "The native buffer did not accept your typing. Your proposal remains open.");
+      }
+    }).finally(() => {
       pendingEdits.current -= 1;
     });
   };
@@ -130,11 +178,34 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const onSave = () => {
     // Always queue an explicit save after preceding edits. The renderer's
     // dirty flag can still be one response behind a fast Cmd+S.
+    if (!hasCurrentOwner()) {
+      setDraftError("Your draft remains open. Wait for the active source owner to be recognized before saving.");
+      return;
+    }
     if (dayDocument) {
       setDraftError("This native Day has protected source ownership. Use Save Daily Die to native source in Rendered view; the original form’s Save HTML copy remains a separate export.");
       return;
     }
-    if (binding.ref) void kernel.saveSource(binding.ref);
+    if (binding.ref) {
+      if (saving.current) return;
+      saving.current = true;
+      const content = lastSynced.current ?? text;
+      const scope = draftStorageKey(kernel.draftOwner, binding.ref);
+      // A queued edit may have been refused while recognition was pending.
+      // Save only after the native buffer accepts this exact visible proposal.
+      pendingEdits.current += 1;
+      void kernel.editBuffer(binding.ref, content).then(async edited => {
+        if (edited?.result !== "buffer_edited" || edited.buffer.content !== content) {
+          if (lastSynced.current === content) unadmittedEdit.current = {scope, content};
+          setDraftError(kernel.lastOpError() ?? "The native buffer did not accept your proposal; nothing was saved.");
+          return;
+        }
+        if (lastSynced.current === content) unadmittedEdit.current = undefined;
+        const saved = await kernel.saveSource(binding.ref!);
+        if (saved?.result !== "source_saved") setDraftError(kernel.lastOpError() ?? "The native source did not accept this save. Your proposal remains open.");
+        else setDraftError(null);
+      }).finally(() => { pendingEdits.current -= 1; saving.current = false; });
+    }
   };
   const updateCaret=()=>{const el=textareaRef.current;if(!el)return;const before=el.value.slice(0,el.selectionStart);const lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});retainView();};
   const extension=buffer?.path?.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";
@@ -194,8 +265,8 @@ export function SourceSurface(props: SourceSurfaceProps) {
     <EditorFrame
       className={`source-editor${buffer.dirty ? " dirty" : ""}${saveFailed ? " conflicted" : ""}`}
       label={`Editor ${binding.title}`}
-      toolbar={<>{(dayDocument!==null||documentView)&&<IconTabStrip className="source-view-toggle" aria-label="Document view" current={(dieView||(documentView&&view==="rendered"))?"rendered":"source"} onSelect={id=>setView(id as "rendered"|"source")} showLabels items={[{id:"rendered",label:"Rendered",icon:"file"},{id:"source",label:"Source",icon:"terminal"}]}/>}{buffer.root_register&&<button type="button" className="source-reread-day" data-action="source.day-reread" onClick={()=>void kernel.rereadSource(binding.ref!)}>Re-read canonical</button>}<EditorCommands editor={textareaRef} markdown={markdown} readOnly={!!dayDocument}/></>}
-      footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={breadcrumb}>{breadcrumb}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{sourceSaveLabel(buffer.dirty,!!dayDocument)}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty||!!dayDocument}>Save · ⌘S</button></>}
+      toolbar={<>{(dayDocument!==null||documentView)&&<IconTabStrip className="source-view-toggle" aria-label="Document view" current={(dieView||(documentView&&view==="rendered"))?"rendered":"source"} onSelect={id=>setView(id as "rendered"|"source")} showLabels items={[{id:"rendered",label:"Rendered",icon:"file"},{id:"source",label:"Source",icon:"terminal"}]}/>}{buffer.root_register&&<button type="button" className="source-reread-day" data-action="source.day-reread" disabled={!kernel.draftOwner} onClick={()=>void kernel.rereadSource(binding.ref!)}>Re-read canonical</button>}<EditorCommands editor={textareaRef} markdown={markdown} readOnly={!!dayDocument||!kernel.draftOwner}/></>}
+      footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={breadcrumb}>{breadcrumb}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{sourceSaveLabel(buffer.dirty,!!dayDocument)}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty||!!dayDocument||!kernel.draftOwner}>Save · ⌘S</button></>}
       data={{kind:"source",ref:binding.ref,dirty:buffer.dirty,conflicted:saveFailed}}
     >
       {draftError && <p role="alert">{draftError}</p>}
@@ -205,19 +276,31 @@ export function SourceSurface(props: SourceSurfaceProps) {
       {documentView&&<div hidden={view!=="rendered"} style={{height:"100%",minHeight:0}}><SourceDocumentHost binding={binding} text={text} bufferDirty={buffer.dirty} conflicted={saveFailed} onComposeSave={async composed=>{
           // The page save is one ordered act: surface bookkeeping, the
           // buffer edit, then the CAS save — awaited, never racing.
+          authoredHere.current = true;
           setText(composed);
           lastSynced.current=composed;
           pendingEdits.current+=1;
           try{
-            if(binding.ref){try{writeDraft(binding.ref,{content:composed,base_revision:buffer.base_revision,saved_content:buffer.saved_content});setDraftError(null);}catch{setDraftError("This draft could not be saved on this device. Keep this window open until the source is saved.");}}
-            await kernel.editBuffer(binding.ref!,composed);
-            await kernel.saveSource(binding.ref!);
+            if(binding.ref){try{writeDraft(kernel.draftOwner, binding.ref,{content:composed,base_revision:buffer.base_revision,saved_content:buffer.saved_content});setDraftError(null);}catch{setDraftError("This draft could not be saved on this device. Keep this window open until the source is saved.");}}
+            const scope = draftStorageKey(kernel.draftOwner, binding.ref!);
+            if (!hasCurrentOwner()) {
+              unadmittedEdit.current = {scope, content: composed};
+              throw Error("The active source owner is unavailable. Your page proposal remains open; wait for recognition before saving.");
+            }
+            const edited = await kernel.editBuffer(binding.ref!,composed);
+            if (edited?.result !== "buffer_edited" || edited.buffer.content !== composed) {
+              if (lastSynced.current === composed) unadmittedEdit.current = {scope, content: composed};
+              throw Error(kernel.lastOpError() ?? "The native buffer did not accept your proposal; nothing was saved.");
+            }
+            if (lastSynced.current === composed) unadmittedEdit.current = undefined;
+            const saved = await kernel.saveSource(binding.ref!);
+            if (saved?.result !== "source_saved") throw Error(kernel.lastOpError() ?? "The native source did not accept this save. Your proposal remains open.");
           }finally{pendingEdits.current-=1;}
         }}/></div>}
       {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
       <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown} hidden={dieView||(documentView&&view==="rendered")}>
         <div className="source-editor-body">
-          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave} readOnly={!!dayDocument}/>
+          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave} readOnly={!!dayDocument||!kernel.draftOwner}/>
         </div>
         {conflict ? (
         <div className="source-conflict" role="alert" data-conflict-kind="revision-conflict">

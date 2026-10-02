@@ -37,7 +37,7 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
    if(!binding.location)throw new Error("The source is not currently readable. Review its captured snapshot.");
    const saved=await readFile(latest.current.kernel.transport,binding.location);
    if(saved.revision!==s.source_revision)throw new Error("The source revision changed. Reselect it or review the captured snapshot.");
-   const draft=readDraft(s.source_ref);const content=draft?.base_revision===s.source_revision?draft.content:saved.content;
+   const draft=readDraft(binding.location?.root===latest.current.kernel.draftOwner?.root?latest.current.kernel.draftOwner:undefined,s.source_ref);const content=draft?.base_revision===s.source_revision?draft.content:saved.content;
    if(s.working_copy&&!draft)throw new Error("The unsaved source basis is no longer open. Review its captured snapshot.");
    if(!exactText({text:s.text,start:anchor.start,end:anchor.end},content))throw new Error("The selected range changed. Reselect it or review the captured snapshot.");
   };
@@ -60,7 +60,7 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
     if(next.kind==="element"){if(!next.observationKey||!await observationIsCurrent(next.observationKey))throw new Error("The page selection changed. Select it again.");if(revision&&binding.location){const saved=await readFile(transport,binding.location);if(saved.revision!==revision)throw new Error("The observed source revision changed. Select it again.");}}
     else {
      const buffer=binding.ref?latest.current.kernel.snapshot.buffers[binding.ref]:undefined;
-     const draft=binding.ref?readDraft(binding.ref):undefined;
+     const draft=binding.ref?readDraft(binding.location?.root===latest.current.kernel.draftOwner?.root?latest.current.kernel.draftOwner:undefined,binding.ref):undefined;
      let content:string;
      if(buffer){if(revision&&buffer.base_revision!==revision)throw new Error("The source revision changed. Select it again.");revision=buffer.base_revision;workingCopy=buffer.dirty;content=buffer.content;}
      else if(draft){if(revision&&draft.base_revision!==revision)throw new Error("The source revision changed. Select it again.");revision=draft.base_revision;workingCopy=draft.content!==draft.saved_content;content=draft.content;}

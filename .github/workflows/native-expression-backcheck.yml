@@ -8,6 +8,9 @@ on:
       - 'desktop/cradle/src/kernel/types.ts'
       - 'desktop/cradle/src/files/resources.ts'
       - 'desktop/cradle/tests/retained-files-native.test.mjs'
+      - 'desktop/cradle/tests/draft-owner-native.test.mjs'
+      - 'desktop/cradle/src/workspace/drafts.ts'
+      - 'desktop/cradle/src/document/hostSave.ts'
       - 'desktop/cradle/material/shared-field/**'
       - 'desktop/cradle/material/expressive-material/**'
       - 'desktop/cradle/src/contributions/factory/live/**'
@@ -175,10 +178,12 @@ jobs:
         env:
           OI_NATIVE_RETAINED_FILES: '1'
           OI_KERNEL_BIN: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
+          OI_NATIVE_TEST_ROOT: /tmp/w5-checks/native-fixtures
         run: |
           set -o pipefail
           cd desktop/cradle
           node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/retained-files-native.test.mjs 2>&1 | tee /tmp/w5-checks/retained-files-native.log
+          node --experimental-webstorage --localstorage-file=/tmp/w5-checks/draft-native.bin --experimental-strip-types --import ./tests/ts-register.mjs --test tests/draft-owner-native.test.mjs 2>&1 | tee /tmp/w5-checks/draft-owner-native.log
       - name: Retained Direct speech through real native Factory material and Act acceptance
         if: ${{ !cancelled() }}
         env:

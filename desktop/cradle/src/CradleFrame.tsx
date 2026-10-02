@@ -81,7 +81,6 @@ import { applyWikiProjectionReceipt } from "./techne/wikiProjectionStore";
 import { detectFormat } from "./material/detect";
 import type { CentralLocation, NativeFileReading } from "./kernel/types";
 import { WorldNavigator } from "./surfaces/navigator/WorldNavigator";
-import { readDraft } from "./workspace/drafts";
 import { DesktopShell } from "./workspace/DesktopShell";
 import { Glyph } from "./workspace/Glyph";
 import { useWorkspaces } from "./workspace/store";
@@ -394,8 +393,6 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         const sourceOpened = await kernel.apply({ op: "source_open", source_ref: binding.ref, project: binding.project });
         if (sourceOpened?.result !== "source_opened") throwNativeFailure(kernel.lastOpError());
         if (sourceOpened?.result !== "source_opened") throw new Error("Central did not return this source's reading");
-        const draft = readDraft(binding.ref);
-        if (draft) await kernel.apply({ op: "source_restore", source_ref: binding.ref, ...draft });
       }
       if (activeBindingId(stateRef.current) === binding.id && stateRef.current.surfaces[binding.id]?.ref === binding.ref && (kernel.transport.kind!=="tauri" || document.hasFocus())) await kernel.surfaceFocus(binding.id);
       setSurfaceErrors(held => {
