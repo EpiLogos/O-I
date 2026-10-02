@@ -112,7 +112,7 @@ try{
    const layout=window.nativeModules.textLayout(result,innerWidth,innerHeight);
    const canvas=document.querySelector('#inscriptions'),ctx=canvas.getContext('2d'),original=ctx.fillText.bind(ctx),draws=[];
    ctx.clearRect(0,0,canvas.width,canvas.height);
-   ctx.fillText=(value,x,y)=>{if(ctx.font==='18px Arial'&&value.trim())draws.push({text:value,x,y,width:ctx.measureText(value).width,font:ctx.font});original(value,x,y);};
+   ctx.fillText=(value,x,y)=>{if(ctx.font==='18px Arial')draws.push({text:value,x,y,width:ctx.measureText(value).width,font:ctx.font});original(value,x,y);};
    try{window.nativeModules.paintText(ctx,scene,innerWidth,innerHeight);}finally{ctx.fillText=original;}
    const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
    const lines=draws.map(draw=>{let ink=0;for(let y=Math.max(0,Math.floor(draw.y));y<Math.min(canvas.height,Math.ceil(draw.y+24));y++)for(let x=Math.max(0,Math.floor(draw.x));x<Math.min(canvas.width,Math.ceil(draw.x+draw.width));x++){const at=(y*canvas.width+x)*4;if(pixels[at+3]>30&&Math.min(pixels[at],pixels[at+1],pixels[at+2])<175)ink++;}return {...draw,ink_pixels:ink,inside_column:draw.width<=layout.width+1,inside_viewport:draw.x>=0&&draw.y>=0&&draw.x+draw.width<=innerWidth&&draw.y+18<=innerHeight};});
@@ -134,7 +134,7 @@ try{
     return true;
    };
    const overlaps=[];
-   for(const path of paths)for(const line of lines)if(path.points.some((p,i)=>i&&intersects(path.points[i-1],p,line)))overlaps.push({binding_ref:path.binding_ref,text:line.text});
+   for(const path of paths)for(const line of lines)if(line.text.trim()&&path.points.some((p,i)=>i&&intersects(path.points[i-1],p,line)))overlaps.push({binding_ref:path.binding_ref,text:line.text});
    return {scene_ref:sceneRef,body:result.body,lines,expected_connections:cfg.oiExpressionBindings.relations.map(r=>r.binding_ref).sort(),rendered_connections:paths.map(p=>p.binding_ref).sort(),overlaps};
   },sceneRef);
   report.visual.retained_pages=[];
@@ -143,9 +143,9 @@ try{
    const reading=await measurePage(ref);
    report.visual.retained_pages.push(reading);
    await page.screenshot({path:join(out,`native-scene-page-${index+1}.png`)});
-   assert.ok(reading.lines.length,'Each actual retained native page must have visible18px text');
-   assert.equal(reading.lines.map(line=>line.text).join('').replace(/\s/g,''),reading.body.replace(/\s/g,''),'All retained source characters must be painted without truncation');
-   assert.ok(reading.lines.every(line=>line.inside_column&&line.inside_viewport&&line.ink_pixels>3),`Native page must fit its readable column and viewport: ${JSON.stringify(reading)}`);
+   assert.ok(reading.lines.some(line=>line.text.trim()),'Each actual retained native page must have visible18px text');
+   assert.equal(reading.lines.map(line=>line.text).join(''),reading.body.replace(/\n/g,''),'Actual native wrapping must paint every literal retained source character, including whitespace');
+   assert.ok(reading.lines.filter(line=>line.text.trim()).every(line=>line.inside_column&&line.inside_viewport&&line.ink_pixels>3),`Native page must fit its readable column and viewport: ${JSON.stringify(reading)}`);
    assert.ok(reading.expected_connections.length,'This actual shared undertaking must retain its co-present native relations');
    assert.deepEqual(reading.rendered_connections,reading.expected_connections,'The actual co-present native connections must remain rendered');
    assert.deepEqual(reading.overlaps,[],`Native connections must not cross the returned text: ${ref}`);
