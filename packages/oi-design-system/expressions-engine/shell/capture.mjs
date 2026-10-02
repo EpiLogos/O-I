@@ -116,9 +116,10 @@ function paintText(ctx, s, w, h) {
     }
     y += l.titleGap;
     if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+    const bodyWidth = typeof t.bodySize === "number" && Number.isFinite(t.bodySize) && t.bodySize >= 8 && t.bodySize <= 72 ? l.width : Math.min(l.width, 230);
     ctx.font = `${l.body}px Arial`;
     ctx.globalAlpha = 0.65;
-    for (const line of wrap(ctx, t.body, /^nara-answer-[a-f0-9]{64}:(primary|source)$/.test(t.role ?? "") ? l.width : Math.min(l.width, 230))) {
+    for (const line of wrap(ctx, t.body, bodyWidth)) {
       ctx.fillText(line, anchor, y);
       y += l.body * 1.85;
     }

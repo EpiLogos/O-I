@@ -61,9 +61,31 @@ export async function proveCaptureTextLayout(frame,cfg){
   // Controlled variations of layout input never enter a native document/store.
   const probe={...first,text:[{...layer,role:layer.role.replace(/:source$/,':primary'),body:probeBody,bodySize:18,visible:true}]};
   const paintedProbe=receive(probe,probeBody);require(paintedProbe.column===width,'Original1440px/648px answer column changed');
+  // These are layout-only variations of the same parent's actual native text,
+  // not native edits or replacement answers. Role names cannot change the font,
+  // column, literal text or complete paint trace of explicit authored typography.
+  const authoredTrace=calls.map(call=>({...call})),authoredRoleProbes=[];
+  require(Math.max(...authoredTrace.filter(call=>call.font==='18px Arial').map(call=>call.measured_width))>230,'The former230px role cap was not discriminated');
+  for(const role of ['resultText','caption',undefined]){
+   const varied={...first,text:[{...layer,role,body:probeBody,bodySize:18,visible:true}]};
+   const received=receive(varied,probeBody);
+   require(received.column===width&&received.body_size===18,'Explicit authored typography/column changed by role');
+   require(JSON.stringify(calls)===JSON.stringify(authoredTrace),'Role changed the complete actual native-text paint trace');
+   authoredRoleProbes.push({role:role??null,...received});
+  }
+  // Omitting bodySize preserves the pre-existing legacy paragraph default.
+  const legacy={...first,text:[{...layer,role:'caption',body:probeBody,bodySize:undefined,visible:true}]};
+  calls=[];paintText(ctx,legacy,1440,900);
+  const legacyLayout=textLayout(legacy.text[0],1440,900),legacyColumn=Math.min(legacyLayout.width,230),legacyCalls=calls.filter(call=>call.font===legacyLayout.body+'px Arial');
+  require(legacyLayout.body===11,'Legacy body-size default changed');
+  ctx.save();ctx.font=legacyLayout.body+'px Arial';if('letterSpacing'in ctx)ctx.letterSpacing='0px';
+  const legacyExpected=probeBody.split('\n').flatMap(paragraph=>wrap(ctx,paragraph,legacyColumn));ctx.restore();
+  require(JSON.stringify(legacyCalls.map(call=>call.text))===JSON.stringify(legacyExpected),'Legacy default paragraph column changed');
+  require(legacyCalls.map(call=>call.text).join('')===probeBody.replace(/\n/g,''),'Legacy receiving changed literal text');
+  for(const call of legacyCalls)require(call.measured_width<=legacyColumn,'Legacy default paints outside its existing column');
   require(await bytesHash(await fetchModule())===cfg.module_sha256,'Capture module changed during receiving proof');
   return {schema:'oi.capture-text-layout-receiving/v1',passed:true,module:{url:moduleUrl.href,sha256:cfg.module_sha256},source_material:{receipt_sha256:cfg.material_receipt_sha256,reference_receipt_sha256:cfg.reference_receipt_sha256,value_path:cfg.reference_value_path},
-   environment:{user_agent:navigator.userAgent,device_pixel_ratio:devicePixelRatio,font:'18px Arial',fonts_status:document.fonts.status,canvas:[1440,900]},reference:{literal:cfg.reference,original_measured_width:referenceWidth,...reference},ordinary:ordinaryResult,unicode:unicodeResult,whitespace:whitespaceResult,pages,painted_probe:paintedProbe,
+   environment:{user_agent:navigator.userAgent,device_pixel_ratio:devicePixelRatio,font:'18px Arial',fonts_status:document.fonts.status,canvas:[1440,900]},reference:{literal:cfg.reference,original_measured_width:referenceWidth,...reference},ordinary:ordinaryResult,unicode:unicodeResult,whitespace:whitespaceResult,pages,painted_probe:paintedProbe,authored_role_probes:authoredRoleProbes,legacy_default:{column:legacyColumn,body_size:legacyLayout.body,lines:legacyCalls.length},
    excludes:['Native attribution is separately parent-verified; supplied source hashes are not native authority','No whole-world/native numerical/GPU/audio/installed/H claim','Horizontal fit/full literal layout only; fixed viewport vertical clipping is disclosed and unchanged','Canvas text measurement/draw calls do not prove glyph shape or human legibility']};
  },cfg);
 }
