@@ -16,6 +16,29 @@ test('publication preserves explicitly admitted native Factory scene, body and m
   assert.deepEqual(validateExpressionComposition(composition), composition);
 });
 
+test('shared publication retains authored readable text through native admission and receiving', () => {
+  const doc = JSON.parse(readFileSync(new URL('../desktop/cradle/material/shared-field/shared-undertaking.expression.json', import.meta.url), 'utf8'));
+  const review = doc.scenes.find(scene => scene.presentation.scene.text.some(layer => layer.role === 'resultText' && layer.bodySize === 18));
+  assert.ok(review, 'The actual authored shared material must contain the readable returned proposal');
+  const source = review.presentation.scene.text.find(layer => layer.role === 'resultText');
+  const {composition, omissions} = filterExpressionComposition(doc, {include_scene_material: true});
+  const received = validateExpressionComposition(composition);
+  const slot = received.scenes.find(scene => scene.scene_ref === review.scene_ref).presentation.scene.text.find(layer => layer.role === 'resultText');
+  assert.equal(slot.bodySize, source.bodySize, 'Publication and receiving preserve authored typography');
+  assert.equal(slot.body, source.body);
+  assert.equal(slot.passage, undefined, 'Native Act passage controls remain inside their owner');
+  assert.ok(omissions.material.some(item => item.scene_ref === review.scene_ref && item.path.endsWith('.passage')));
+  assert.ok(!omissions.material.some(item => item.path.endsWith('.bodySize')));
+});
+
+test('the native author validator still refuses invalid published text sizes', () => {
+  for (const bodySize of [7, 73, '18']) {
+    const doc = authored();
+    doc.scenes[0].presentation.scene.text[0].bodySize = bodySize;
+    assert.throws(() => filterExpressionComposition(doc, {include_scene_material: true}), /page text/i);
+  }
+});
+
 test('scene admission never copies adjacent native originals, credentials or unknown nested payloads', () => {
   const doc = authored(), material = doc.scenes[0].presentation.scene;
   material.native = {original: {private: 'PRIVATE-ORIGINAL'}, config: {secret: 'PRIVATE-CONFIG'}};

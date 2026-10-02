@@ -21,7 +21,7 @@ const sceneShape = {
   field: {background: scalar, palette: [scalar], material: scalar, params: keys('count size sizeBias opacity roundness softness irregularity elongation orientation contrast densityScale densityPhase edgeWeight halo speed circulation turbulence turbulenceScale recovery dispersion pointerStrength pointerRadius pointerFalloff depth grain snapRigidity densityTether curlDepth vortexRadius gravityX gravityY gravityZ quadraticDrag thermalJitter speedLimit zConfinement timeScale gravitySoftening gravityFalloff swirlRadius frequency dominance excitation')},
   engine: keys('inkMode paletteId templateGeometry templateDimension paletteSource grainProfile backgroundMode resonatorMode focusOrder resonanceEnabled morphEnabled trajectory driveShape autoOscillate relationalEnabled relationalMode pointerMode pointerClick pointerClickStrength pointerClickRadius colorMode colorEnabled dotShape autoFitSizes mediumEnabled collisionEnabled collisionMode pairwiseEnabled fontFamily fontWeight mediumPlane mediumDimension autoSweep sweepDirection volumeEnabled volumeProfile depthPerspective depthOcclusion vortex3d dispersion3d depthTintColor'),
   entities: [form],
-  text: [keys('id visible kicker title italic body x y width size align role')],
+  text: [keys('id visible kicker title italic body x y width size bodySize align role')],
   composition: keys('layout plane focus focusDuration focusDwell carryTint carryStation frequencyDriver'),
   morph: keys('thetaRate phiRate thetaOffset phiOffset law depth dwell'),
   automation: [keys('id enabled target type wave min max rate phase blend duration delay loop firedAt easing clockId syncWith entityId')],

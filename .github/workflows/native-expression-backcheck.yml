@@ -18,6 +18,8 @@ on:
       - 'desktop/cradle/tests/fixtures/shared-native-expression/**'
       - 'desktop/cradle/tests/shared-expression-resource-native.mjs'
       - 'shared-field/expression-projection.mjs'
+      - 'shared-field/expression-material.mjs'
+      - 'shared-field/expression-material.test.mjs'
       - 'shared-field/scripts/direct-expression-activity-producer.mts'
       - 'desktop/cradle/tests/native-expression*'
       - 'desktop/cradle/tests/*formation*'
@@ -175,6 +177,7 @@ jobs:
           set -o pipefail
           cd desktop/cradle
           node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shared-direct-journal.test.mjs tests/factory-live-producer.test.mjs 2>&1 | tee /tmp/w5-checks/shared-consumer-regressions.log
+          node --test ../../shared-field/expression-material.test.mjs 2>&1 | tee /tmp/w5-checks/shared-material-admission.log
           node tests/shared-direct-native-owner.mjs 2>&1 | tee /tmp/w5-checks/shared-native-text.log
       - name: Actually rendered native proposal, required-body failure and bounded live resources
         if: ${{ !cancelled() }}

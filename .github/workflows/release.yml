@@ -52,12 +52,23 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
+      - name: Actual finite native version probes for an installer candidate
+        if: github.event_name == 'workflow_dispatch' && inputs.scope == 'bootstrap'
+        run: cargo test --manifest-path cli/Cargo.toml --locked --target '${{ matrix.target }}' native_update_version_probe -- --nocapture
       - name: Build locked O:I bootstrap
+        env:
+          SUITE_BUILD_REVISION: ${{ github.sha }}
         run: cargo build --manifest-path cli/Cargo.toml --locked --release --target '${{ matrix.target }}' --bin oi
       - name: Package exact-SHA pre-local artifact
         shell: bash
         run: |
           set -euo pipefail
+          native_version=$(cli/target/${{ matrix.target }}/release/oi --version)
+          test -n "$native_version"
+          case "$native_version" in
+            *"${GITHUB_SHA:0:12}"*) ;;
+            *) echo "native bootstrap version does not name the exact source cut" >&2; exit 1 ;;
+          esac
           short_sha="${GITHUB_SHA:0:12}"
           name="oi-prelocal-${short_sha}-${{ matrix.target }}"
           mkdir -p "dist/$name"
