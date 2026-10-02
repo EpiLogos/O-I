@@ -71,6 +71,7 @@ const receipt={schema:'oi.epi-world-production-native-proof/v1',passed:false,
 let server,browser,page,frame,phase='setup',heartbeat;const nativeComposes=[],nativePrepared=[],nativeFrames=[],nativeInspections=[],nativeM3=[];
 const check=(value,label)=>{assert.ok(value,label);receipt.checks.push(label);console.log('PASS',label);json('receipt.json',receipt);};
 const artifact=(name,value)=>{json(name,value);receipt.artifacts.push(name);};
+const retainStage=label=>{receipt.current_stage=label;(receipt.stage_events??=[]).push({stage:label,phase,at:new Date().toISOString(),completed_checks:receipt.checks.length,issued_requests:receipt.issued_requests.length,response_arrivals:receipt.operations.length,request_failures:receipt.request_failures.length});json('receipt.json',receipt);console.log('STAGE',label);};
 const summarizeRequest=q=>({op:q?.op,operation:q?.request?.operation,expression_ref:q?.request?.expression_ref,coordinate_ref:q?.request?.coordinate_ref??q?.request?.request?.coordinate_ref});
 async function op(request){
  const response=await fetch(config.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});
@@ -873,10 +874,17 @@ try{
  phase='save and production continuation';await action('save');const saved=await snapshot('08-saved-personal-world');await savedFile(saved.working,'person-a-saved');
  await sceneNavigate(personal.scene_ref);await frame.evaluate(ref=>window.__FIELD_STUDIES__.selectEntity(ref),locus);await action('save');
  const continuation=await snapshot('09-before-browser-reopen');
+ retainStage('browser production reopen: before navigation');
  await page.goto(url+'&expression='+encodeURIComponent(a.working.native_ref));
+ retainStage('browser production reopen: navigation completed; awaiting host');
  await page.waitForFunction(()=>document.querySelector('#world')?.getAttribute('src')?.startsWith('/__epi_application'),null,{timeout:90000});
+ retainStage('browser production reopen: host ready; awaiting frame');
  frame=await page.locator('#world').elementHandle().then(el=>el.contentFrame());
- await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.epiWorld(),null,{timeout:90000});await readyCurrent(identities[0].reading.person_ref);await noAlert();
+ retainStage('browser production reopen: frame acquired; awaiting application API');
+ await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.epiWorld(),null,{timeout:90000});
+ retainStage('browser production reopen: application API ready; awaiting exact current');
+ await readyCurrent(identities[0].reading.person_ref);await noAlert();
+ retainStage('browser production reopen: exact current acknowledged');
  const reopened=await snapshot('10-production-owner-reopen');
  const checkpoint=await op({op:'expression_recovery',request:{operation:'find_checkpoint',scope:'expressions',expression_ref:a.working.native_ref}});
  assert.equal(checkpoint.result,'expression_recovery');assert.equal(checkpoint.data.state,'ready');
@@ -940,6 +948,7 @@ try{
  receipt.continuation={...receipt.continuation,file:receipt.scene_axes.saved_acknowledgement.working.file,scene_count:receipt.scene_axes.saved_acknowledgement.scene_count};
  receipt.passed=true;
 }catch(error){
+ retainStage('failure: '+phase);
  if(!error.intentionalStop){receipt.failure={phase,message:error.stack??String(error)};console.error('FAIL',phase,error.stack??String(error));if(page)try{artifact('failure-launch-context.json',{host:await page.evaluate(()=>({url:location.href,ready:document.readyState,frame_src:document.querySelector('#world')?.getAttribute('src'),host_api:!!window.__EPI_REAL_HOST__,body:document.body.innerText})),app:frame?await frame.evaluate(()=>({url:location.href,ready:document.readyState,field_api:!!window.__FIELD_STUDIES__,kernel_api:!!window.__OI_KERNEL_EXPRESSIONS__,body:document.body.innerText.slice(0,32000)})):null});await page.screenshot({path:resolve(out,'failure-independent-screen.png')});receipt.artifacts.push('failure-independent-screen.png');}catch(e){receipt.failure.boot_context_error=String(e);}if(frame)try{await snapshot('failure-'+receipt.checks.length,true);}catch(e){receipt.failure.snapshot_error=String(e);} process.exitCode=1;}
 }finally{
  clearInterval(heartbeat);

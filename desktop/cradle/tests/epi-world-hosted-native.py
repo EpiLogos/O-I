@@ -318,9 +318,32 @@ class Replay:
             registered = self.owned.add(process, label, allow_completed=True)
             try:
                 code = process.wait(timeout=timeout)
-            except BaseException:
-                if registered:
-                    self.owned.stop(process)
+            except BaseException as error:
+                cleanup_receipt, cleanup_error = None, None
+                try:
+                    if registered:
+                        cleanup_receipt = self.owned.stop(process)
+                except BaseException as stop_error:
+                    cleanup_error = repr(stop_error)
+                    raise
+                finally:
+                    # Preserve the actual failed command after the same owned
+                    # stop, including a cumulative deadline and final outputs.
+                    self.report['commands'].append({
+                        'name': label, 'argv': argv, 'cwd': str(cwd),
+                        'pid': process.pid, 'exit': process.poll(),
+                        'output_custody': ('final after successful identity-owned family stop'
+                                           if cleanup_receipt is not None and process.poll() is not None
+                                           else 'observed; complete owned-family output finality unproved'),
+                        'cleanup_attempted': registered,
+                        'cleanup_receipt': cleanup_receipt, 'cleanup_error': cleanup_error,
+                        'failure': repr(error),
+                        'timed_out': isinstance(error, subprocess.TimeoutExpired),
+                        'timeout_seconds': timeout,
+                        'stdout_ref': file_ref(base.with_suffix('.stdout')),
+                        'stderr_ref': file_ref(base.with_suffix('.stderr')),
+                        'elapsed_seconds': time.monotonic() - started})
+                    save(self.out / 'receipt.json', self.report)
                 raise
         row = {'name': label, 'argv': argv, 'cwd': str(cwd), 'exit': code,
                'stdout_ref': file_ref(base.with_suffix('.stdout')),
@@ -608,8 +631,14 @@ class Replay:
         target = self.out / f'{phase}-config.json'
         config = {**config, 'bridge': self.url, 'output': str(self.out / phase)}
         save(target, config)
+        # The complete software-GPU workload reached the saved-personal
+        # snapshot with only 43 seconds of the former 1200s envelope remaining.
+        # Its remaining mandatory gates need their original operation bounds.
+        # This finite aggregate budget changes no prediction or local deadline;
+        # separate fresh-process entry retains its original 1200s envelope.
+        aggregate_seconds = 3600 if phase == 'whole-production' else 1200
         self.command(phase, ['node', self.repo / 'desktop/cradle/tests/epi-world-production-native.mjs', target],
-                     self.repo / 'desktop/cradle', timeout=1200)
+                     self.repo / 'desktop/cradle', timeout=aggregate_seconds)
         receipt = read_json(self.out / phase / 'receipt.json')
         require(receipt['schema'] == 'oi.epi-world-production-native-proof/v1' and receipt['passed'] is True
                 and 'failure' not in receipt and not receipt['entry']['changed_on_disk'], 'Original strict production driver failed')

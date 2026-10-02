@@ -52,10 +52,42 @@ mkdirSync(dirname(installed), {recursive: true});
 cpSync(resolve(root, 'expressions-app/dist'), installed, {recursive: true});
 
 let bridge, bridgeUrl, server, browser, page, frame;
-async function startBridge() {
-  bridge = spawn(bins.WIKI_KERNEL_BIN, ['127.0.0.1:0'], {cwd: project, env, stdio: ['ignore', 'pipe', 'pipe']});
+async function startBridge(address = '127.0.0.1:0') {
+  bridge = spawn(bins.WIKI_KERNEL_BIN, [address], {cwd: project, env, stdio: ['ignore', 'pipe', 'pipe']});
   bridge.stderr.on('data', v => logs.push(v.toString()));
   bridgeUrl = await new Promise((yes, no) => {let text = ''; const timer = setTimeout(() => no(new Error('Kernel did not start')), 30000); bridge.on('error', e => {clearTimeout(timer); no(e);}); bridge.on('exit', code => {clearTimeout(timer); no(new Error(`Kernel exited ${code}: ${logs.slice(-3)}`));}); bridge.stdout.on('data', chunk => {text += chunk; const m = text.match(/listening on (http:\/\/[^ ]+)/); if (m) {clearTimeout(timer); yes(m[1]);}});});
+}
+async function restartBridge(stage) {
+  const previousUrl=bridgeUrl,previousPid=bridge.pid;
+  const priorResponse=await fetch(`${bridgeUrl}/event-replay?cursor=1&limit=1`);
+  assert.equal(priorResponse.status,200);const priorPage=await priorResponse.json();
+  assert.equal(priorPage.schema,'oi.kernel-event-replay/v1');assert.match(priorPage.generation,/^[A-Za-z0-9-]{1,128}$/);
+  await new Promise((yes,no)=>{
+    const timer=setTimeout(()=>no(new Error('The owned native bridge did not exit before restart')),30000);
+    bridge.once('exit',()=>{clearTimeout(timer);yes();});bridge.once('error',error=>{clearTimeout(timer);no(error);});
+    if(!bridge.kill('SIGTERM')){clearTimeout(timer);no(new Error('The owned native bridge refused SIGTERM'));}
+  });
+  // Browser continuation is origin-bound. Reopen the actual owner on its
+  // prior listening address; never copy/fabricate last-work or session keys.
+  await startBridge(new URL(previousUrl).host);
+  assert.equal(bridgeUrl,previousUrl);assert.notEqual(bridge.pid,previousPid);
+  const nextResponse=await fetch(`${bridgeUrl}/event-replay?cursor=1&limit=1`);
+  assert.equal(nextResponse.status,200);const nextPage=await nextResponse.json();
+  assert.equal(nextPage.schema,'oi.kernel-event-replay/v1');assert.match(nextPage.generation,/^[A-Za-z0-9-]{1,128}$/);
+  assert.notEqual(nextPage.generation,priorPage.generation);
+  (probe.nativeRestarts??=[]).push({stage,previous_pid:previousPid,current_pid:bridge.pid,previous_url:previousUrl,current_url:bridgeUrl,prior_native_page:priorPage,current_native_page:nextPage});
+}
+async function acknowledgedCurrentDraft(stage,request) {
+  // File adoption and an ordinary Library switch legitimately schedule an
+  // acknowledged backup. Qualify that complete CURRENT basis before testing
+  // a later read/restart; a dated pre-adoption CAS is historical evidence.
+  await frame.waitForFunction(()=>document.getElementById('save-status')?.textContent==='Working copy backed up on this device',null,{timeout:60000});
+  const document=await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument());
+  assert.equal(request.request.kind,'draft');assert.equal(request.request.id,document.id);
+  const actual=await op(request);assert.equal(actual.result,'expression_recovery');assert.equal(actual.data.state,'ready');
+  assert.deepEqual(actual.data.record.value,document,'The independently acknowledged recovery value is the complete current rendered draft');
+  (probe.acknowledgedRecoveryBases??=[]).push({stage,request,actual,document});
+  return actual;
 }
 async function op(value) {const r = await fetch(`${bridgeUrl}/op`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(value)}); const data = await r.json(); assert.equal(data.ok, true, JSON.stringify(data)); return data.outcome;}
 function savedFrame(title) {return JSON.parse(readFileSync(wikiPath, 'utf8')).objects.find(o => o.object === 'frame' && o['aikit.constellation/v1']?.title === title);}
@@ -460,9 +492,7 @@ try {
     probe.presentedContinuation={presented,sessionBefore,after,concealedPresence:await concealed.evaluate(()=>window.__FIELD_STUDIES__.sessionPresence()),scope:'Actual two suppressed hidden-host autosave cycles; no timer or synthetic visibility substitutes the native host observer'};
   }
   bootTarget=presented.document.id;
-  bridge.kill('SIGTERM');
-  await new Promise(r => setTimeout(r, 500));
-  await startBridge();
+  await restartBridge('original-same-origin-cold-opening');
   if(checkpointRefusal){
     if(innerCheckpointRefusal)probe.closableBudgetRef=await fillNativeBudget();
     await installCheckpointRefusal();
@@ -502,6 +532,9 @@ try {
     });
   }
   await gotoMode('techne',bootRace||checkpointRefusal);
+  const continued=await frame.evaluate(()=>({origin:location.origin,last:localStorage.getItem('oi.field-studies.last'),session:JSON.parse(localStorage.getItem('oi.expression-session.v1')??'null')}));
+  assert.equal(continued.origin,new URL(presented.url).origin);assert.equal(continued.last,sessionBefore.last);assert.deepEqual(continued.session,sessionBefore.session);
+  probe.sameOriginContinuation=continued;
   if(bootRace){
     check(await page.locator('[data-host="concealed"]').count()===0,'The controlled held-reply restart has exactly one actual production receiver; original multi-host replay remains separate');
     await Promise.race([heldBootReady,frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady()).then(()=>{throw new Error('Actual boot completed without the exact acknowledged presented-work recovery reply to hold.');})]);
@@ -577,15 +610,18 @@ try {
   const register = JSON.parse(readFileSync(wikiPath, 'utf8'));
   check(register.objects.some(o => o.ref === recorded[0].ref), 'Independent readback: the native Wiki register (source of truth) still holds the typed relationship after restart');
   if(bootRace){
-    const recoveryBeforeDelivery=await op(heldBootReply.request);
+    const recoveryBeforeDelivery=await acknowledgedCurrentDraft('current-file-adoption-before-late-read',heldBootReply.request);
     assert.equal(recoveryBeforeDelivery.result,'expression_recovery');assert.equal(recoveryBeforeDelivery.data.state,'ready');
-    assert.deepEqual(recoveryBeforeDelivery.data.record,heldBootReply.native_record,'Opening the native file must preserve the complete prior recovery record and revision');
+    assert.ok(recoveryBeforeDelivery.data.record.revision>=heldBootReply.native_record.revision);
+    // Only projection's adoption timestamp may differ from the dated draft;
+    // every authored field and both exact native/saved bodies remain guarded.
+    assert.deepEqual(recoveryBeforeDelivery.data.record.value,{...heldBootReply.native_record.value,updatedAt:recoveryBeforeDelivery.data.record.value.updatedAt},'Opening the native file must preserve the complete prior authored recovery body');
     const before=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState(),timeOrigin:performance.timeOrigin,url:location.href}));
     releaseBootReply();await frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady());await heldBootDelivery;
     const after=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState(),timeOrigin:performance.timeOrigin,url:location.href}));
     const nativeAfter=await kernelDoc(),recoveryAfterDelivery=await op(heldBootReply.request);
     assert.equal(recoveryAfterDelivery.result,'expression_recovery');assert.equal(recoveryAfterDelivery.data.state,'ready');
-    assert.deepEqual(recoveryAfterDelivery.data.record,heldBootReply.native_record,'Delivering the late read must preserve its complete durable recovery record and revision');
+    assert.deepEqual(recoveryAfterDelivery.data.record,recoveryBeforeDelivery.data.record,'Delivering the late read must preserve its complete durable recovery record and revision');
     assert.deepEqual(after.document,before.document,'A real late boot reply cannot replace any rendered document field');
     assert.deepEqual(nativeAfter,savedFile,'A real boot reply cannot rewrite the independently acknowledged complete saved native document');
     await readSavedBasis('after-boot-and-file-acknowledgements');
@@ -659,13 +695,15 @@ try {
     await readSavedBasis('after-ordinary-target-checkpoint-switch');
     probe.ordinaryTargetSwitch={target,targetRequest,targetCheckpoint,departingTarget,returnedTarget};
     check(true,'An ordinary Library switch installs its target first, then restores the exact target checkpoint/native file/body without a stale version refusal');
-    const exited=new Promise(resolve=>bridge.once('exit',resolve));bridge.kill('SIGTERM');await exited;await startBridge();
+    const currentRecoveryBeforeRestart=await acknowledgedCurrentDraft('ordinary-target-switch-before-separate-owner-restart',heldBootReply.request);
+    assert.deepEqual(currentRecoveryBeforeRestart.data.record.value,returnedTarget.document);
+    await restartBridge('separate-native-owner-current-record-continuation');
     const recoveryAfterRestart=await op(heldBootReply.request);
     await readSavedBasis('after-separate-owner-restart');
     assert.equal(recoveryAfterRestart.result,'expression_recovery');assert.equal(recoveryAfterRestart.data.state,'ready');
-    assert.deepEqual(recoveryAfterRestart.data.record,heldBootReply.native_record,'A separate restarted native owner must still read the same complete recovery record and revision');
+    assert.deepEqual(recoveryAfterRestart.data.record,currentRecoveryBeforeRestart.data.record,'A separate restarted native owner must still read the same complete recovery record and revision');
     probe.heldBootReply.recoveryAfterRestart=recoveryAfterRestart;
-    check(true,'The untouched original recovery record remains available through the actual native recovery reader after a separate kernel restart');
+    check(true,'The independently acknowledged current recovery record remains exact through the actual native recovery reader after a separate kernel restart');
   }
   receipt.passed = true;
 } catch (error) {

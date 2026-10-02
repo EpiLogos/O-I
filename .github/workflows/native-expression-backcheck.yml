@@ -391,7 +391,7 @@ jobs:
     name: Complete controlled Epi world / source-built hosted Linux
     needs: [embedded, native-kernel-regressions]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 95
     env:
       # The replay owns XDG_CACHE_HOME; install and launch the same browser
       # runtime explicitly instead of looking in two different caches.
