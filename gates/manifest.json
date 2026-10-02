@@ -212,7 +212,7 @@
         "job": "canvas",
         "step": "Production editor selection and send interaction"
       },
-      "command": "node tests/canvas-editor-browser.mjs",
+      "command": "cargo build --manifest-path kernel/Cargo.toml --target-dir \"$PWD/kernel/target\" --locked --bin walk-bridge && OI_KERNEL_BIN=\"$PWD/kernel/target/debug/walk-bridge\" node tests/canvas-editor-browser.mjs",
       "retry": 1
     },
     {

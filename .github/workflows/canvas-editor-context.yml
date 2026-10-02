@@ -52,16 +52,20 @@ jobs:
           npx tsc --noEmit 2>&1 | tee ../../canvas-types.log
           node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/canvas-editor-contract.test.mjs tests/material-html-lifecycle.test.mjs 2>&1 | tee ../../canvas-contracts.log
           npm run test:situation 2>&1 | tee ../../situation-frame.log
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - name: Build the exact native replay owner
+        run: cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --target-dir desktop/cradle/kernel/target --locked --bin walk-bridge
       - name: Install browser
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium
       - name: Production editor selection and send interaction
         working-directory: desktop/cradle
+        env:
+          OI_KERNEL_BIN: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
         run: set -o pipefail; node tests/canvas-editor-browser.mjs 2>&1 | tee ../../canvas-browser.log
       - name: Production bundle
         working-directory: desktop/cradle
         run: set -o pipefail; npx vite build 2>&1 | tee ../../canvas-build.log
-      - uses: dtolnay/rust-toolchain@1.98.0
       - name: Kernel adapter compatibility
         run: set -o pipefail; cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets 2>&1 | tee canvas-kernel.log
       - name: Existing experience-source integrity
