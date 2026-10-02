@@ -8,6 +8,7 @@ use oi_cradle_kernel::{
     CentralClient,
 };
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 use std::os::unix::fs::PermissionsExt;
 use std::{
     fs,
@@ -66,7 +67,10 @@ fn real_native_owner_admission_effects_refusals_restart_and_release() {
     let input_path = PathBuf::from(
         std::env::var_os("NATIVE_EXPRESSION_INPUT").expect("explicit native input required"),
     );
-    let input: Value = serde_json::from_slice(&fs::read(&input_path).unwrap()).unwrap();
+    // Attribute the exact consumed bytes, rather than a later preflight read.
+    let input_bytes = fs::read(&input_path).unwrap();
+    let input_sha256 = format!("{:x}", Sha256::digest(&input_bytes));
+    let input: Value = serde_json::from_slice(&input_bytes).unwrap();
     let scratch = Scratch(std::env::temp_dir().join(format!(
             "oi-native-test-{}-{}",
             std::process::id(),
@@ -295,9 +299,14 @@ print(json.dumps({'ok':True,'data':data}))
         )
         .unwrap();
     timings.sort_by(f64::total_cmp);
+    assert_eq!(
+        format!("{:x}", Sha256::digest(fs::read(&input_path).unwrap())),
+        input_sha256,
+        "consumed native input changed during manager acceptance"
+    );
     let report = json!({"schema":"oi.native-expression-native-acceptance/v1","pass":true,
         "standing":"real QL C/Rust/C++ through production process manager; controlled Central disclosure and captured sky/geometry inputs; not live ephemeris or measured acoustics",
-        "input":input_path,"platform":std::env::consts::OS,"open_ms":open_ms,"close_ms":close_ms,"read_samples":timings.len(),"read_p50_ms":timings[12],"read_p95_ms":timings[22],
+        "input":input_path,"input_sha256":input_sha256,"platform":std::env::consts::OS,"open_ms":open_ms,"close_ms":close_ms,"read_samples":timings.len(),"read_p50_ms":timings[12],"read_p95_ms":timings[22],
         "same_source_original_preserved":true,"native_pcm_nonzero":true,"native_targets_changed":true,"native_m1_replace_effect":true,"native_m3_transcription_effect":true,"one_owner":true,"refusals_unchanged":true,"restart_not_rewind":true});
     println!("{report}");
     if let Some(path) = std::env::var_os("NATIVE_EXPRESSION_NATIVE_RECEIPT") {

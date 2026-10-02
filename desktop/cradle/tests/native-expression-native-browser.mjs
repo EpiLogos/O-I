@@ -13,9 +13,9 @@ import {chromium} from 'playwright';
 const paths={bridge:process.env.NATIVE_EXPRESSION_BRIDGE,host:process.env.OI_QL_FIELD_HOST_BIN,worker:process.env.OI_QL_FIELD_WORKER_BIN,input:process.env.NATIVE_EXPRESSION_INPUT};
 for(const [name,path] of Object.entries(paths))assert.ok(path&&path.startsWith('/'),`Explicit absolute ${name} path required; no PATH or fixture fallback`);
 const out=resolve(process.env.NATIVE_EXPRESSION_OUT??'walk/artifacts/native-expression-native');await mkdir(out,{recursive:true});
-const temp=await mkdtemp(join(tmpdir(),'native-expression-joined-')),input=JSON.parse(await readFile(paths.input,'utf8'));
+const temp=await mkdtemp(join(tmpdir(),'native-expression-joined-')),inputBytes=await readFile(paths.input),input=JSON.parse(inputBytes.toString('utf8'));
 const report={schema:'oi.native-expression-joined-browser/v1',standing:'real C/Rust/C++ owner and WebGL; controlled Central disclosure and captured input; not installed Mac, live ephemeris, measured material or speaker/microphone evidence',checks:[],timings_ms:[],sources:{},machine:{platform:platform(),logical_cpus:cpus().length},pass:false};
-for(const [name,path] of Object.entries(paths))report.sources[name]={path,sha256:createHash('sha256').update(await readFile(path)).digest('hex')};
+for(const [name,path] of Object.entries(paths))report.sources[name]={path,sha256:createHash('sha256').update(name==='input'?inputBytes:await readFile(path)).digest('hex')};
 const central=join(temp,'central.py');
 await writeFile(central,`#!/usr/bin/env python3
 import json,pathlib,sys,hashlib
@@ -143,6 +143,7 @@ try{
  await page.evaluate(()=>{window.disposeRelay();document.querySelector('iframe').remove();});await page.waitForTimeout(100);assert.equal(closes,1);assert.deepEqual(errors,[]);report.checks.push('native owner released exactly once');
  report.measurement={standing:'bounded single scenario, not sustained real-time performance acceptance',latency_by_operation:{}};
  for(const operation of new Set(report.timings_ms.map(x=>x.operation))){const values=report.timings_ms.filter(x=>x.operation===operation).map(x=>x.elapsed).sort((a,b)=>a-b);report.measurement.latency_by_operation[operation]={count:values.length,mean_ms:values.reduce((a,b)=>a+b,0)/values.length,p95_ms:values[Math.ceil(values.length*.95)-1],max_ms:values.at(-1)};}
+ assert.equal(createHash('sha256').update(await readFile(paths.input)).digest('hex'),report.sources.input.sha256,'consumed native input changed during browser acceptance');
  report.pass=true;report.requests={opens,closes};report.final_sources=latestSources;console.log(JSON.stringify({...report,final_sources:'retained in artifact'},null,2));
 }catch(error){report.failure=String(error);report.reading=await page.frames().find(f=>f!==page.mainFrame())?.evaluate(()=>window.__FIELD_STUDIES__?.native()).catch(()=>null);await page.screenshot({path:join(out,'failure.png')}).catch(()=>{});throw error;}
 finally{

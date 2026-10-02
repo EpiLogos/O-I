@@ -24,8 +24,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      # The vendored clients name the exact QL cut they were copied from; the
-      # owner is checked out there, so identity and behaviour have one pin.
+      # These unchanged clients are qualified byte-for-byte at the named native
+      # cut. Keep browser scheduling and current native behaviour on one pin.
       - id: ql
         run: echo "revision=$(jq -r .revision desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
@@ -34,6 +34,29 @@ jobs:
           ref: ${{ steps.ql.outputs.revision }}
           path: .native-owner/QL-MEF
           persist-credentials: false
+      - name: Qualify the exact native cut, copied clients and retained default
+        env:
+          EXPECTED_QL_HEAD: ${{ steps.ql.outputs.revision }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks/native
+          test "$(git -C .native-owner/QL-MEF rev-parse HEAD)" = "$EXPECTED_QL_HEAD"
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          owner = Path('.native-owner/QL-MEF')
+          copied = Path('desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql')
+          provenance = json.loads((copied / 'PROVENANCE.json').read_text())
+          records = []
+          for name, expected in provenance['files'].items():
+              native_hash = hashlib.sha256((owner / 'adapters/retained-field' / name).read_bytes()).hexdigest()
+              copied_hash = hashlib.sha256((copied / name).read_bytes()).hexdigest()
+              assert native_hash == copied_hash == expected, name + ': copied client differs from qualified native cut'
+              records.append({'file': name, 'sha256': expected, 'native_equals_copy': True})
+          Path('/tmp/w5-checks/native/client-qualification.json').write_text(json.dumps({'revision': provenance['revision'], 'files': records}, indent=2) + '\n')
+          PY
+          python3 .native-owner/QL-MEF/scripts/check-scene-default-source.py > /tmp/w5-checks/native/default-source.json
+          python3 .native-owner/QL-MEF/scripts/test-scene-default-source.py > /tmp/w5-checks/native/default-source-tests.log 2>&1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -116,13 +139,28 @@ jobs:
           cargo build --locked --release --manifest-path .native-owner/QL-MEF/Cargo.toml -p ql-mef --bin ql-field-host -p ql-cli --bin ql 2>&1 | tee /tmp/w5-checks/native/build.log
           cp .native-owner/QL-MEF/cpp/build/ql-field-worker /tmp/w5-checks/native/
           cp .native-owner/QL-MEF/target/release/ql-field-host /tmp/w5-checks/native/
-          sha256sum /tmp/w5-checks/native/ql-field-* > /tmp/w5-checks/native/binaries.sha256
+          cp .native-owner/QL-MEF/target/release/ql /tmp/w5-checks/native/
+          sha256sum /tmp/w5-checks/native/ql /tmp/w5-checks/native/ql-field-* > /tmp/w5-checks/native/binaries.sha256
+      - name: Generate and re-admit current native input; refuse retained stale sources
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 desktop/cradle/tests/native-expression-current-input.py \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/QL-MEF" \
+            --expected-ql-head "${{ steps.ql.outputs.revision }}" \
+            --ql "$GITHUB_WORKSPACE/.native-owner/QL-MEF/target/release/ql" \
+            --host "$GITHUB_WORKSPACE/.native-owner/QL-MEF/target/release/ql-field-host" \
+            --worker "$GITHUB_WORKSPACE/.native-owner/QL-MEF/cpp/build/ql-field-worker" \
+            --historical-input "$GITHUB_WORKSPACE/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json" \
+            --expected-historical-sha256 7af61b3ceb9a08f04d892c36b80b629fed4e5e2341775cff5aedab77ebdb22ca \
+            --output /tmp/w5-checks/native/current-input \
+            2>&1 | tee /tmp/w5-checks/native/current-input.log
       - name: Real native effects through the production process manager
         if: always()
         env:
           OI_QL_FIELD_HOST_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/target/release/ql-field-host
           OI_QL_FIELD_WORKER_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/cpp/build/ql-field-worker
-          NATIVE_EXPRESSION_INPUT: ${{ github.workspace }}/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json
+          NATIVE_EXPRESSION_INPUT: /tmp/w5-checks/native/current-input/input.json
           NATIVE_EXPRESSION_NATIVE_RECEIPT: /tmp/w5-checks/native/acceptance.json
         run: |
           set -o pipefail
@@ -133,7 +171,7 @@ jobs:
           NATIVE_EXPRESSION_BRIDGE: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
           OI_QL_FIELD_HOST_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/target/release/ql-field-host
           OI_QL_FIELD_WORKER_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/cpp/build/ql-field-worker
-          NATIVE_EXPRESSION_INPUT: ${{ github.workspace }}/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json
+          NATIVE_EXPRESSION_INPUT: /tmp/w5-checks/native/current-input/input.json
         run: |
           set -o pipefail
           cd desktop/cradle
@@ -143,6 +181,74 @@ jobs:
             --bridge "$NATIVE_EXPRESSION_BRIDGE" --input "$NATIVE_EXPRESSION_INPUT" \
             --output /tmp/w5-checks/local-join --run-browser-join \
             2>&1 | tee /tmp/w5-checks/native-browser.log
+      - name: Join actual native input custody across helper, manager and browser
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, re, runpy
+          from pathlib import Path
+          api = runpy.run_path('desktop/cradle/tests/native-expression-current-input.py')
+          require = api['require']
+          report = {'schema': 'oi.native-expression-input-consumer-join/v1', 'pass': False,
+                    'standing': 'same consumed input bytes across separate native admission, manager and software-GPU traces; no installed/personal-world or listening claim'}
+          try:
+              base = Path('/tmp/w5-checks')
+              paths = {'helper': base / 'native/current-input/receipt.json',
+                       'manager': base / 'native/acceptance.json',
+                       'local': base / 'local-join/local-receipt.json',
+                       'browser': base / 'local-join/browser/joined.json'}
+              receipts = {}
+              report['receipts'] = {}
+              for name, path in paths.items():
+                  require(path.is_file() and not path.is_symlink(), name + ': receipt must be a regular file')
+                  with path.open('rb') as source:
+                      raw = source.read(api['MAX_JSON'] + 1)
+                  receipts[name] = api['parse'](raw)
+                  report['receipts'][name] = {'path': str(path), 'sha256': hashlib.sha256(raw).hexdigest()}
+              helper, manager, local, browser = (receipts[name] for name in ('helper', 'manager', 'local', 'browser'))
+              for name, schema in [('helper', 'oi.native-expression-current-input/v1'),
+                                   ('manager', 'oi.native-expression-native-acceptance/v1'),
+                                   ('browser', 'oi.native-expression-joined-browser/v1')]:
+                  value = receipts[name]
+                  require(value.get('schema') == schema and value.get('pass') is True
+                          and 'failure' not in value and 'error' not in value, name + ': unsuccessful receipt')
+              require(local.get('schema') == 'oi.native-expression-local/v1'
+                      and local.get('status') == 'isolated-native-browser-passed'
+                      and 'failure' not in local and 'error' not in local, 'local: unsuccessful receipt')
+              code = local['checks']['browser_process']['code']
+              require(type(code) is int and code == 0, 'local: browser process did not succeed')
+              require(all(type(browser['requests'][key]) is int and browser['requests'][key] == 1
+                          for key in ('opens', 'closes')), 'browser: incomplete native lifetime')
+              verified = local['checks']['browser_receipt']
+              require(verified['schema'] == browser['schema']
+                      and verified['sha256'] == report['receipts']['browser']['sha256']
+                      and Path(verified['path']).resolve(strict=True) == paths['browser'].resolve(strict=True),
+                      'local: different verified browser receipt')
+              expected = base / 'native/current-input/input.json'
+              require(expected.is_file() and not expected.is_symlink(), 'generated input is unavailable')
+              records = {'helper': helper['input'],
+                         'manager': {'path': manager['input'], 'sha256': manager['input_sha256']},
+                         'local': local['files']['input'], 'browser': browser['sources']['input']}
+              actual_hash = api['digest'](expected)
+              for name, value in records.items():
+                  path = Path(value['path'])
+                  require(path.is_absolute() and path.is_file() and not path.is_symlink()
+                          and path.resolve(strict=True) == expected.resolve(strict=True), name + ': different input path')
+                  checksum = value['sha256']
+                  require(isinstance(checksum, str) and re.fullmatch('[0-9a-f]{64}', checksum) is not None
+                          and checksum == actual_hash, name + ': different consumed input bytes')
+              report['input'] = {'path': str(expected), 'sha256': actual_hash}
+              report['consumers'] = records
+              report['pass'] = True
+          except Exception as error:
+              report['failure'] = str(error)
+          finally:
+              target = Path('/tmp/w5-checks/native/input-consumer-join.json')
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(json.dumps(report, indent=2) + '\n')
+          require(report['pass'], report.get('failure', 'input consumer join did not pass'))
+          PY
       - name: Scene causal trace and deliberately disconnected consumer
         if: always()
         env:
