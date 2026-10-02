@@ -103,13 +103,33 @@ test('a native M1 advance goes to the same owner while following; its acknowledg
   assert.equal(ops(owner,'m1-advance').length,1);assert.deepEqual(ops(owner,'m1-advance')[0].request.command,{operation:'m1-advance',ticks:1});
   assert.equal(c.status,'following','a live determinant event does not hold the field');
   // One exchange per tick: no second influence read while the audio waits.
-  assert.equal(ops(owner,'influence').length,1);const after=c.reading.instrument.acting.voices[0];
+  assert.equal(ops(owner,'influence').length,1);const after=c.reading.instrument.influence.voices[0];
+  assert.equal(c.reading.instrument.acting,null,'a carried current body is not an old inspected scene');
+  assert.equal(c.reading.domain,null);assert.equal(c.currentEvent,null,'complete event basis awaits genuine Inspect');
   assert.notEqual(after.m,before.m,'the tick re-reads the skin');assert.equal(after.frequency_hz,before.frequency_hz,'the sky keeps its pitch');
   assert.equal(c.reading.instrument.sources_stale,true);
   drain(c,audio);assert.equal(c.inspectTargets().target_a[2],Math.fround(Math.fround(8/12)*120),'re-read targets present behind scheduled sound');
   await wait(1600);assert.equal(await c.refreshSources(),true);
   assert.equal(c.reading.instrument.acting.m1.tick12,8);assert.equal(c.reading.instrument.sources_stale,false);
  }finally{await c.dispose();}
+});
+
+test('an acknowledged cadence event without its body counts once and stays stale until genuine Inspect (protocol only)',async()=>{
+ const {owner,c}=await open(),request=owner.request.bind(owner),generation=BigInt(c.reading.native.acknowledged.generation);
+ owner.request=async packet=>{const reply=await request(packet);if(packet.request?.command?.operation==='m1-advance')delete reply.influence;return reply;};
+ try{
+  c.play(12);
+  for(let i=0;i<100&&(c.reading.instrument.cadence.applied!==1);i++)await wait(10);
+  c.pause('one protocol acknowledgement observed');
+  assert.equal(ops(owner,'m1-advance').length,1,'no retry or queued replacement of the acknowledged event');
+  assert.equal(owner.state.tick12,8);assert.equal(BigInt(c.reading.native.acknowledged.generation),generation+2n);
+  assert.equal(c.reading.instrument.cadence.applied,1,'cadence counts native protocol ACK even when body receiving refuses');
+  assert.equal(c.reading.native.available,true);assert.equal(c.reading.instrument.refusal,null,'an acknowledged event is not labelled refused');
+  assert.equal(c.reading.instrument.acting,null);assert.equal(c.reading.instrument.influence,null);assert.equal(c.reading.domain,null);assert.equal(c.currentEvent,null);
+  assert.equal(c.reading.instrument.sources_stale,true);assert.equal(c.reading.instrument.influence_stale,true);
+  await assert.rejects(c.m1Advance(1),/complete current Scene influence/);assert.throws(()=>c.play(1),/complete current Scene influence/);
+  await c.inspectSources();assert.equal(c.reading.instrument.acting.m1.tick12,8);assert.equal(c.reading.instrument.sources_stale,false);assert.equal(c.reading.instrument.influence_stale,false);
+ }finally{await c.dispose();assert.equal(owner.calls.filter(packet=>packet.operation==='close').length,1);}
 });
 
 test('a determinant edit carries the whole current event with one field changed and M1 revised',async()=>{

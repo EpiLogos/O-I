@@ -4,7 +4,7 @@ import {NativeProjection,type NativeTargetMap} from './projection';
 import type {NativePort} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
-import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
+import {isScene,SCENE_PROVIDER,SCENE_INFLUENCE,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -38,6 +38,129 @@ const TRANSIENT=/owner busy|held before the event|presentation capacity|requires
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
  beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
 class NativeCloseError extends Error{}
+const sceneObject=(v:any)=>!!v&&typeof v==='object'&&!Array.isArray(v);
+const sceneNeed=(ok:unknown,reason:string):void=>{if(!ok)throw new Error(`native scene reading: ${reason}`);};
+const sceneInteger=(v:any,min:number,max:number)=>Number.isInteger(v)&&v>=min&&v<=max;
+const sceneU64=(v:any)=>typeof v==='string'&&/^(0|[1-9][0-9]{0,19})$/.test(v)&&BigInt(v)<(1n<<64n);
+const sceneText=(v:any)=>typeof v==='string'&&v.length>0&&v.length<=4096;
+const sceneSame=(a:any,b:any):boolean=>{
+ if(a===b)return true;
+ if(Array.isArray(a)||Array.isArray(b))return Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((v:any,i:number)=>sceneSame(v,b[i]));
+ if(!sceneObject(a)||!sceneObject(b))return false;
+ const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(key=>Object.prototype.hasOwnProperty.call(b,key)&&sceneSame(a[key],b[key]));
+};
+/** continuous/scene_field.rs PLANETS; Uranus is the unvoiced anchor, not a tenth voice. */
+export const NATIVE_SCENE_VOICES=Object.freeze(['#2-5-0/1','#2-5-2','#2-5-3','#2-5-4','#2-5-5','#2-5-6','#2-5-7','#2-5-8','#2-5-9']);
+/** Declared application receiving capacity, not a native semantic restriction.
+ * The real 5b2 event/influence are 11,354/13,875 bytes as compact
+ * escaped-ASCII JSON (influence13,782 with literal Unicode), at depth5/8.
+ * Each supported metadata projection is <=256 KiB (native input/reply ceilings
+ * remain32/64 MiB). Count before copy, with a conservative JSON escape bound;
+ * explicit depth/breadth caps prevent unknown amplification. */
+export const SCENE_METADATA_BUDGET=Object.freeze({escaped_utf8_bytes:256*1024,depth:128,nodes:128*1024,keys:64*1024});
+const SCENE_METADATA_KEYS={
+ event:new Set(['schema','m1','m2','m3','m3_commands','harmonic_source','frequency_bindings','condition_frequency_bindings','sky_frequency_bindings','source_receipts']),
+ influence:new Set(['schema','instance_ref','event_ref','subject_ref','generation','samples_elapsed','m1_revision','m3_generation','shape_ref','address72','voices','geometry','material','material_standing','native_readback','effects']),
+ field:new Set(['schema','event_ref','subject_ref','generation','samples_elapsed','shape_ref','geometry_ref','material_ref','model_ref','m2_identity','clock','target_count','amplitude_count']),
+};
+export function copySceneMetadata(value:any,kind:keyof typeof SCENE_METADATA_KEYS){
+ sceneNeed(sceneObject(value),`${kind} metadata unavailable`);
+ const budget=SCENE_METADATA_BUDGET,seen=new WeakSet<object>();let bytes=0,nodes=0,keys=0;
+ const add=(n:number)=>{bytes+=n;sceneNeed(bytes<=budget.escaped_utf8_bytes,`${kind} metadata exceeds supported receiving byte budget`);};
+ const visit=(v:any,depth:number):void=>{
+  sceneNeed(depth<=budget.depth&&++nodes<=budget.nodes,`${kind} metadata exceeds supported receiving depth/node budget`);
+  if(v===null){add(4);return;}
+  if(typeof v==='string'){add(2+6*v.length);return;} // JSON escape upper bound, not serialization/allocation.
+  if(typeof v==='number'){sceneNeed(Number.isFinite(v),`${kind} metadata contains a non-JSON number`);add(String(v).length);return;}
+  if(typeof v==='boolean'){add(v?4:5);return;}
+  sceneNeed(v&&typeof v==='object'&&(Array.isArray(v)||Object.getPrototypeOf(v)===Object.prototype||Object.getPrototypeOf(v)===null)&&!seen.has(v),`${kind} metadata contains non-JSON or cyclic objects`);
+  seen.add(v);add(2);
+  if(Array.isArray(v)){
+   sceneNeed(Object.getPrototypeOf(v)===Array.prototype,`${kind} metadata contains a custom array prototype`);
+   sceneNeed(v.length<=budget.nodes,`${kind} metadata exceeds supported receiving node budget`);
+   // Borrowed enumeration: never allocate Object.keys for an unbounded shape.
+   // structuredClone copies enumerable array extras, so refuse them before copy.
+   for(const key in v){
+    if(!Object.prototype.hasOwnProperty.call(v,key))continue;
+    sceneNeed(++keys<=budget.keys,`${kind} metadata exceeds supported receiving key budget`);
+    const index=Number(key);
+    sceneNeed(Number.isInteger(index)&&index>=0&&index<v.length&&String(index)===key,`${kind} metadata contains a non-index array member`);
+    const d=Object.getOwnPropertyDescriptor(v,key);sceneNeed(d&&'value' in d,`${kind} metadata contains array accessors`);
+   }
+   for(let i=0;i<v.length;i++){const d=Object.getOwnPropertyDescriptor(v,String(i));sceneNeed(d&&'value' in d,`${kind} metadata contains holes/accessors`);add(i?1:0);visit(d!.value,depth+1);}
+  }else{
+   let first=true;
+   for(const key in v){
+    if(!Object.prototype.hasOwnProperty.call(v,key))continue;
+    sceneNeed(++keys<=budget.keys,`${kind} metadata exceeds supported receiving key budget`);
+    if(depth===0)sceneNeed(SCENE_METADATA_KEYS[kind].has(key),`${kind} metadata has an unsupported root field`);
+    const d=Object.getOwnPropertyDescriptor(v,key);sceneNeed(d&&'value' in d,`${kind} metadata contains accessors`);
+    add((first?0:1)+3+6*key.length);first=false;visit(d!.value,depth+1);
+   }
+  }
+  seen.delete(v);
+ };
+ visit(value,0);return structuredClone(value);
+}
+const SCENE_MATERIAL_STANDING='declared-material-policy: no source table fixes presentation scale, damping, strike amplitude or output gain (QL-MEF #135)';
+/** Read-only receiving checks against this native receipt. No pitch, phase,
+ * geometry, clock, form or unavailable source quantity is computed here.
+ * `domain`/`sources` may be supplied only by THIS operation's fresh Inspect. */
+export function qualifySceneInfluence(influence:any,field:any,reading:any,domain?:NativeDomainReading,sources?:any){
+ const acknowledged=reading?.acknowledged;
+ sceneNeed(sceneObject(influence)&&influence.schema===SCENE_INFLUENCE,'acting influence unavailable');
+ sceneNeed(influence.instance_ref===reading.instance_ref&&influence.event_ref===reading.event_ref&&influence.subject_ref===reading.subject_ref&&
+  influence.generation===acknowledged?.generation&&influence.samples_elapsed===acknowledged?.samples_elapsed,'influence belongs to another native owner/cursor');
+ sceneNeed(sceneU64(influence.generation)&&sceneU64(influence.samples_elapsed)&&sceneU64(influence.m1_revision)&&
+  Number.isSafeInteger(influence.m3_generation)&&influence.m3_generation>=0,'exact influence revisions unavailable');
+ sceneNeed(field?.schema==='ql.continuous-field/v1'&&field.event_ref===reading.event_ref&&field.subject_ref===reading.subject_ref&&
+  field.generation===acknowledged.generation&&field.samples_elapsed===acknowledged.samples_elapsed,'influence field/cursor mismatch');
+ sceneNeed(field.geometry_ref===`${SCENE_PROVIDER}:m1-torus#1-5-1`&&field.material_ref===`${SCENE_PROVIDER}:declared-linear-medium`&&
+  field.model_ref==='ql.continuous-linear-mode/v1','scene field owner bindings unavailable');
+ sceneNeed(sceneText(influence.shape_ref)&&influence.shape_ref===field.shape_ref&&sceneInteger(influence.address72,0,71),'shape or 72-address unavailable');
+ const voices=influence.voices;
+ sceneNeed(Array.isArray(voices)&&voices.length===NATIVE_SCENE_VOICES.length&&(Array.isArray(field.amplitudes_metres)?field.amplitudes_metres.length:field.amplitude_count)===voices.length,'complete native nine-voice body unavailable');
+ for(let i=0;i<NATIVE_SCENE_VOICES.length;i++){
+  const v=voices[i];
+  sceneNeed(sceneObject(v)&&v.planet_ref===NATIVE_SCENE_VOICES[i]&&Number.isFinite(v.longitude_radians)&&Number.isFinite(v.frequency_hz)&&v.frequency_hz>0&&
+   sceneInteger(v.m,1,12)&&sceneInteger(v.n,1,12)&&(v.helix==='bimba'||v.helix==='pratibimba')&&sceneInteger(v.ql_position,0,255)&&
+   Number.isFinite(v.weight)&&v.weight>=0&&v.weight<=1&&Number.isFinite(v.phase_radians),`voice ${i} is missing, malformed or out of native order`);
+ }
+ const g=influence.geometry,m=influence.material;
+ sceneNeed(sceneObject(g)&&sceneInteger(g.longitude_samples,4,65535)&&sceneInteger(g.latitude_samples,4,65535)&&
+  g.longitude_samples*g.latitude_samples<=Math.floor(262144/NATIVE_SCENE_VOICES.length)&&(Array.isArray(field.targets)?field.targets.length:field.target_count)===g.longitude_samples*g.latitude_samples&&
+  Number.isFinite(g.metres_per_unit)&&g.metres_per_unit>0&&g.metres_per_unit<=1000&&sceneInteger(g.attachment,0,2),'native geometry outside its supported contract');
+ sceneNeed(sceneObject(m)&&Number.isFinite(m.damping_per_second)&&m.damping_per_second>=0&&m.damping_per_second<=1e6&&
+  Number.isFinite(m.strike_metres)&&m.strike_metres>0&&m.strike_metres<=1&&Number.isFinite(m.audio_gain_per_metre)&&Math.abs(m.audio_gain_per_metre)<=1e6&&
+  typeof m.strike_on_event==='boolean'&&influence.material_standing===SCENE_MATERIAL_STANDING,'declared native material policy unavailable');
+ const readback=influence.native_readback;
+ sceneNeed(sceneObject(readback)&&readback.schema==='ql.scene-source-reading/v1'&&readback.event_ref===reading.event_ref&&readback.subject_ref===reading.subject_ref&&
+  readback.m1_revision===influence.m1_revision&&readback.m3_generation===influence.m3_generation&&
+  Number.isSafeInteger(readback.profile_generation)&&readback.profile_generation>=0&&readback.profile_generation===field.m2_identity?.profile_generation&&
+  field.m2_identity?.event_ref===reading.event_ref&&sceneObject(readback.continuous_clock_native)&&sceneObject(field.clock)&&sceneSame(readback.continuous_clock_native,field.clock),'native source readback differs from its acknowledged field');
+ // These may contain explicit unavailable readings. Preserve their owner shape,
+ // rather than inventing scalar values for selected aperture/form/continuation.
+ for(const key of ['continuous_clock','m1_clock','m1_carrier','m3_clock','form','selected_aperture','form_process','continuation_start','clock_semantics'])
+  sceneNeed(sceneObject(readback[key]),`native source readback omitted ${key}`);
+ sceneNeed(readback.form_process.instance_ref===reading.instance_ref,'native form reading belongs to another instance');
+ sceneNeed(Array.isArray(influence.effects)&&influence.effects.length===6&&influence.effects.every((e:any)=>sceneObject(e)&&
+  ['determinant','through','effect','units','range','timing','consumer','warrant'].every(key=>sceneText(e[key]))),'native influence warrants unavailable');
+ if(domain!==undefined){
+  sceneNeed(isScene(sources)&&influence.m1_revision===domain.m1.revision&&influence.m3_generation===domain.m3.generation&&
+   readback.profile_generation===domain.m2.generation&&influence.address72===sources?.current?.derivation?.mef_table_index,'Inspect influence differs from THIS inspected basis');
+  const modes=sources.current.m2.resonator.modes,sky=sources.current.derivation?.sky_voices,quartet=sources.current.m2.vimarsha?.reading?.nodal_quartet;
+  sceneNeed(Array.isArray(modes)&&modes.length===9&&Array.isArray(sky)&&sky.length===9&&Array.isArray(quartet)&&quartet.length===4,'Inspect source voice/shape basis unavailable');
+  for(let i=0;i<9;i++){
+   const v=voices[i],mode=modes[i],node=quartet[i%4];
+   sceneNeed(mode?.mode_ref===`scene:planet/${v.planet_ref}`&&mode.source_coordinate===v.planet_ref&&mode.frequency_hz===v.frequency_hz&&
+    mode.damping_per_second===m.damping_per_second&&sky[i]?.planet_ref===v.planet_ref&&sky[i].frequency_hz===v.frequency_hz&&
+    node?.m===v.m&&node?.n===v.n&&node?.helix===v.helix,`Inspect voice ${i} differs from its actual native determining sources`);
+  }
+ }
+ return influence;
+}
+type NativeExchangeScope={serial:number;instance_ref:string;event_ref:string;subject_ref:string;acknowledged:{generation:string;samples_elapsed:string}};
+type NativeExchangeReceipt={serial:number;epoch:number;session:InstrumentSession;opened:any;lease:string;request:any;reply:any};
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
  * Determinant events (M1 advance, a changed event) go to the same serial owner;
@@ -56,7 +179,8 @@ export class NativeFieldController {
  private admitting:number|null=null;
  private suspension:{tokens:Set<symbol>;epoch:number;revision:number;restore:boolean;reason:string}|null=null;
  private restoring:{epoch:number;revision:number}|null=null;
- private scene=false;private influenceReading:any=null;private acting:SceneActing|null=null;
+ private scene=false;private ownerKind:'scene'|'supplied'|null=null;private influenceReading:any=null;private acting:SceneActing|null=null;
+ private exchangeSerial=0;private exchangeReceipt:NativeExchangeReceipt|null=null;private readingError:string|null=null;
  private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
@@ -75,24 +199,92 @@ export class NativeFieldController {
   // Keep the acknowledgement for release; a failed close is never reissued.
   opened.closing.catch(()=>{});return opened.closing as Promise<void>;
  }
+ /** A bounded, one-use receipt of THIS exchange; the copied adapter validates
+  * its acknowledgement before the awaited operation returns. Never lastInfluence. */
+ private exchangeScope(session:InstrumentSession):NativeExchangeScope{
+  const reading=session.reading;
+  return{serial:this.exchangeSerial,instance_ref:reading.instance_ref,event_ref:reading.event_ref,subject_ref:reading.subject_ref,acknowledged:{...reading.acknowledged}};
+ }
+ private takeAcknowledgedExchange(session:InstrumentSession,operation:string,scope:NativeExchangeScope){
+  const receipt=this.exchangeReceipt;this.exchangeReceipt=null;
+  sceneNeed(receipt&&receipt.serial>scope.serial&&receipt.serial===this.exchangeSerial&&receipt.session===session&&receipt.epoch===this.epoch&&
+   receipt.opened===this.opened&&receipt.lease===this.opened?.lease&&this.current(session),'exchange belongs to another request/lifetime');
+  const {request,reply}=receipt!,reading=session.reading,field=reply.field;
+  sceneNeed(reading.available&&request.schema==='ql.field-host-request/v1'&&request.command?.operation===operation&&
+   request.instance_ref===scope.instance_ref&&request.event_ref===scope.event_ref&&request.subject_ref===scope.subject_ref&&
+   request.expected_generation===scope.acknowledged.generation&&request.expected_samples_elapsed===scope.acknowledged.samples_elapsed&&sceneU64(request.request_id)&&
+   reply.schema==='ql.field-host-receipt/v1'&&reply.status==='ok'&&reply.available===true&&reply.instance_ref===request.instance_ref&&
+   reply.request_id===request.request_id&&reply.last_request_id===request.request_id,'exchange acknowledgement differs from this exact request');
+  sceneNeed(field?.event_ref===reading.event_ref&&field?.subject_ref===reading.subject_ref&&field?.generation===reading.acknowledged.generation&&
+   field?.samples_elapsed===reading.acknowledged.samples_elapsed&&reading.instance_ref===request.instance_ref,'exchange was not validated at the current acknowledged cursor');
+  return reply;
+ }
+ private invalidateCurrentReading(error:unknown){
+  this.domain=null;this.event=null;this.acting=null;this.influenceReading=null;
+  this.sourcesStale=true;this.influenceStale=true;this.readingError=String(error instanceof Error?error.message:error);
+ }
+ private acknowledgedSceneEvent(){
+  this.checkpoint=null;this.domain=null;this.event=null;this.acting=null;this.influenceReading=null;
+  this.sourcesStale=true;this.influenceStale=true;this.readingError=null;this.refusal=null;
+ }
  private async readSources(session:InstrumentSession){
-  const sources=await session.inspect(),reading=session.reading;
-  if(this.session!==session||this.dead)throw new Error('native source reply belongs to a released lifetime');
-  const domain=projectNativeSources(sources,{event_ref:reading.event_ref,subject_ref:reading.subject_ref,generation:reading.acknowledged.generation});
-  this.sources=sources;this.domain=domain;this.scene=isScene(sources);
-  if(this.scene){this.event=eventFromSources(sources);this.acting=readScene(sources,this.influenceReading,this.opened?.source);}
-  this.sourcesStale=false;this.lastInspect=performance.now();
-  return sources;
+  const scope=this.exchangeScope(session);
+  try{
+   const sources=await session.inspect(),reply=this.takeAcknowledgedExchange(session,'inspect',scope),reading=session.reading;
+   sceneNeed(!reply.metadataRefusal,`THIS native-source Inspect metadata refused: ${reply.metadataRefusal}`);
+   const domain=projectNativeSources(sources,{event_ref:reading.event_ref,subject_ref:reading.subject_ref,generation:reading.acknowledged.generation});
+   // Provenance of a supplied modal basis does not grant Scene-only operations.
+   // Scene Inspect carries both event and influence, even at an unchanged cursor.
+   const scene=this.ownerKind==='scene'||this.opened?.source?.schema==='oi.native-expression-composed-source/v1'||reply.hasEvent||reply.hasInfluence;
+   sceneNeed(this.ownerKind===null||this.ownerKind===(scene?'scene':'supplied'),'native owner kind changed within its admitted lifetime');
+   let influence:any=null,event:any=null,acting:SceneActing|null=null;
+   if(scene){
+    sceneNeed(!reply.metadataRefusal,`THIS scene-owner Inspect metadata refused: ${reply.metadataRefusal}`);
+    sceneNeed(reply.hasEvent&&reply.hasInfluence,'THIS scene-owner Inspect omitted its event or complete acting influence');
+    influence=qualifySceneInfluence(reply.influence,reply.field,reading,domain,sources);
+    event=eventFromSources(sources);
+    // CoupledInput omits an empty sky binding list on serialization. This
+    // documented serde default is not a new event or a numerical correction.
+    const nativeEvent=structuredClone(reply.event);
+    sceneNeed(sceneObject(nativeEvent),'Inspect omitted its native event');
+    if(!Object.prototype.hasOwnProperty.call(nativeEvent,'sky_frequency_bindings'))nativeEvent.sky_frequency_bindings=[];
+    sceneNeed(sceneSame(nativeEvent,event),'Inspect event differs from its freshly inspected source');
+    acting=readScene(sources,influence,this.opened?.source);
+   }
+   this.sources=sources;this.domain=domain;this.scene=scene;this.ownerKind=scene?'scene':'supplied';
+   this.event=event;this.acting=acting;this.influenceReading=influence;this.sourcesStale=false;this.influenceStale=false;this.readingError=null;
+   this.lastInspect=performance.now();return sources;
+  }catch(error){if(this.current(session))this.invalidateCurrentReading(error);throw error;}
  }
  private async readInfluence(session:InstrumentSession){
-  const influence=await session.influence();
-  if(this.session!==session||this.dead)throw new Error('native influence reply belongs to a released lifetime');
-  this.admitInfluence(influence);
-  return influence;
+  const scope=this.exchangeScope(session);
+  try{
+   const influence=await session.influence(),reply=this.takeAcknowledgedExchange(session,'influence',scope);
+   sceneNeed(!reply.metadataRefusal,`THIS influence acknowledgement metadata refused: ${reply.metadataRefusal}`);
+   sceneNeed(this.ownerKind==='scene'&&reply.hasInfluence&&sceneSame(reply.influence,influence),'THIS Scene influence acknowledgement omitted or changed its reading');
+   this.admitInfluence(qualifySceneInfluence(reply.influence,reply.field,session.reading));return this.influenceReading;
+  }catch(error){if(this.current(session))this.invalidateCurrentReading(error);throw error;}
  }
  private admitInfluence(influence:any){
+  // A direct/carried reading may be newer than inspected M1/M3. It is admitted
+  // against its own ACK/readback; never rejected against or paired with old M1.
+  if(this.domain&&(influence.m1_revision!==this.domain.m1.revision||influence.m3_generation!==this.domain.m3.generation)){
+   this.domain=null;this.event=null;this.sourcesStale=true;
+  }
   this.influenceReading=influence;this.influenceStale=false;
-  if(this.sources)this.acting=readScene(this.sources,influence,this.opened?.source);
+  this.acting=!this.sourcesStale&&this.sources?readScene(this.sources,influence,this.opened?.source):null;
+ }
+ private receiveCarriedInfluence(session:InstrumentSession,command:string,scope:NativeExchangeScope){
+  const reply=this.takeAcknowledgedExchange(session,command,scope);
+  sceneNeed(!reply.metadataRefusal,`THIS determinant ACK metadata refused: ${reply.metadataRefusal}`);
+  sceneNeed(this.ownerKind==='scene'&&reply.hasInfluence,'THIS determinant ACK omitted its complete native influence');
+  this.admitInfluence(qualifySceneInfluence(reply.influence,reply.field,session.reading));
+ }
+ private eventWasAcknowledged(session:InstrumentSession,scope:NativeExchangeScope){
+  const reading=session.reading;
+  // The adapter commits this cursor before scheduling/presentation can fail.
+  return this.current(session)&&reading.available&&reading.acknowledged.generation!==scope.acknowledged.generation&&
+   reading.acknowledged.samples_elapsed===scope.acknowledged.samples_elapsed;
  }
  status:NativeStatus='manual';reason:string|null=null;
  onChange:()=>void=()=>{};
@@ -138,10 +330,10 @@ export class NativeFieldController {
   presentation_units_per_metre:this.projection?.scale??null,
   presentation_level:{value:this.levelValue,...PRESENTATION_LEVEL},
   native:this.session?.reading??this.lastNative,muted:this.muted,
-  domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
+  domain:this.domain,source_currentness:this.sourcesStale||this.influenceStale?`native cursor acknowledged; ${this.influenceStale?'acting influence unavailable':'acting influence current'}; complete sources await fresh Inspect`:this.domain?(following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
   presented_clock:clock,
   instrument:this.scene?{schema:'oi.scene-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
-   opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,
+   opening_event_available:!!this.opening,sources_stale:this.sourcesStale,reading_error:this.readingError,cadence:this.cadenceReading(),refusal:this.refusal,
    presentation:INSTRUMENT_PRESENTATION}:null,
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
   exact_seek:false,restart:'explicit new native process; no implicit rewind',
@@ -225,8 +417,42 @@ export class NativeFieldController {
    }
    this.projection=new NativeProjection(stage,opened.receipt.field,presentation);
    this.renderer.setNativeDomain(true);
-   this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
-    transport:{request:(request:any)=>this.port.request({operation:'exchange',lease:opened.lease,request}),close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
+   let session:InstrumentSession;
+   const transport={request:async(request:any)=>{
+    const serial=++this.exchangeSerial;this.exchangeReceipt=null;
+    if(epoch!==this.epoch||this.opened!==opened||!this.current(session))throw new Error('native request belongs to a released lifetime');
+    const sent=structuredClone({schema:request.schema,instance_ref:request.instance_ref,event_ref:request.event_ref,subject_ref:request.subject_ref,
+     request_id:request.request_id,expected_generation:request.expected_generation,expected_samples_elapsed:request.expected_samples_elapsed,command:{operation:request.command?.operation}});
+    const reply=await this.port.request({operation:'exchange',lease:opened.lease,request});
+    if(epoch!==this.epoch||this.opened!==opened||!this.current(session)||!session.reading.available)throw new Error('native reply belongs to a released or uncertain lifetime');
+    const field=reply?.field,hasEvent=Object.prototype.hasOwnProperty.call(reply??{},'event'),hasInfluence=Object.prototype.hasOwnProperty.call(reply??{},'influence');
+    const refusals:string[]=[];let influenceRefused=false;
+    const copy=(value:any,kind:keyof typeof SCENE_METADATA_KEYS)=>{
+     try{return copySceneMetadata(value,kind);}catch(error){refusals.push(String(error instanceof Error?error.message:error));if(kind==='influence')influenceRefused=true;return undefined;}
+    };
+    const event=hasEvent?copy(reply.event,'event'):undefined,influence=hasInfluence?copy(reply.influence,'influence'):undefined;
+    const selectedField:any=field?{schema:field.schema,event_ref:field.event_ref,subject_ref:field.subject_ref,generation:field.generation,samples_elapsed:field.samples_elapsed,
+     shape_ref:field.shape_ref,geometry_ref:field.geometry_ref,material_ref:field.material_ref,model_ref:field.model_ref,m2_identity:field.m2_identity,clock:field.clock,
+     target_count:Array.isArray(field.targets)?field.targets.length:null,amplitude_count:Array.isArray(field.amplitudes_metres)?field.amplitudes_metres.length:null}:null;
+    // Optional native field leaves are absent JSON members, never undefined data.
+    if(selectedField)for(const key in selectedField)if(selectedField[key]===undefined)delete selectedField[key];
+    const metadata=selectedField?copy(selectedField,'field'):null;
+    const acknowledgedField=metadata??{schema:field?.schema,event_ref:field?.event_ref,subject_ref:field?.subject_ref,generation:field?.generation,samples_elapsed:field?.samples_elapsed};
+    // No target/PCM/source-array copy. Original presence and refusal stay with
+    // THIS slot. A metadata refusal is not an accepted empty body or rollback.
+    this.exchangeReceipt={serial,epoch,session,opened,lease:opened.lease,request:sent,reply:{
+     schema:reply?.schema,status:reply?.status,available:reply?.available,instance_ref:reply?.instance_ref,request_id:reply?.request_id,last_request_id:reply?.last_request_id,
+     hasEvent,hasInfluence,event,influence,field:acknowledgedField,metadataRefusal:refusals.length?refusals.join('; '):null}};
+    if(influenceRefused){
+     // Let the unchanged adapter validate/acknowledge the exact native field.
+     // Only the explicitly refused metadata is withheld from its clone/cache;
+     // the shared receiver later fails on metadataRefusal and clears old body.
+     const received={...reply};delete received.influence;return received;
+    }
+    return reply;
+   },close:()=>{void this.closeOwner(opened).catch(()=>{});}};
+   session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
+    transport,fieldBinding:this.projection,muted:true});this.session=session;
    this.recovery=this.renderer.onRetainedRecoveryRequired(state=>{this.contextLost=state==='lost';this.hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`);});
    const sources=await this.readSources(this.session);
    if(this.scene){await this.readInfluence(this.session);this.opening=eventFromSources(sources);}
@@ -337,6 +563,7 @@ export class NativeFieldController {
   const session=await this.idle();
   try{
    await session.recover('native operation admission');const result=await session.operate(command);
+   this.invalidateCurrentReading('native operation acknowledged; complete reading awaits fresh Inspect');
    await this.readSources(session);if(this.scene)await this.readInfluence(session);
    await session.recover('native operation readback admitted; rebase device only');
    this.finishCommand(session,following,revision,'native operation applied while held; resume explicitly');return result;
@@ -352,10 +579,10 @@ export class NativeFieldController {
   * while held, the event commits and the owner stays held. */
  private determinant(operation:string,build:()=>any,needsEvent:boolean,cadence=false):Promise<void>{
   const session=this.session;
-  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: determinant events belong to a scene owner'));
+  if(!session||!this.scene||this.influenceStale||!this.influenceReading)return Promise.reject(new Error('A complete current Scene influence must be admitted before determinant events'));
   if(this.status==='following'&&!this.suspension){
    const live=async()=>{
-    this.operating++;
+    this.operating++;let scope:NativeExchangeScope|null=null,acknowledged=false;
     try{
      // A beat may wait for the pump's exchange to finish, never past its own
      // period: later beats are skipped meanwhile, never queued behind it.
@@ -372,18 +599,22 @@ export class NativeFieldController {
      }
      const command=build();
      const sent=performance.now();
-     await session.operate(command);
+     scope=this.exchangeScope(session);await session.operate(command);acknowledged=true;
      this.timing={fill_ms:sent-this.timingStart,operate_ms:performance.now()-sent};
      if(!this.current(session))return;
-     // The owner acknowledged: the event happened. A busy follow-up read only
-     // leaves the influence stale for the next refresh; it never un-counts it.
-     this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.refusal=null;
-     // The acknowledgement carried the new influence; take it without a
-     // second exchange (the audio pump must not wait on another read).
-     const carried=session.lastInfluence;
-     if(carried&&carried.generation===session.reading.acknowledged?.generation)this.admitInfluence(carried);
+     // This event happened. Admit only THIS ACK's complete body, independently
+     // of the old sources; otherwise await a genuine current read, never undo.
+     this.acknowledgedSceneEvent();
+     try{this.receiveCarriedInfluence(session,command.operation,scope);}
+     catch(error){this.invalidateCurrentReading(error);this.pause('native event acknowledged; current reading unavailable');}
      this.changed();
-    }catch(error){if(!(cadence&&TRANSIENT.test(String(error))))this.refused(operation,error,session);throw error;}
+    }catch(error){
+     if(scope&&(acknowledged||this.eventWasAcknowledged(session,scope))){
+      if(this.current(session)){this.acknowledgedSceneEvent();this.invalidateCurrentReading(error);this.hold(`native event acknowledged; presentation/read unavailable: ${String(error)}`);}
+      return; // Cadence counts the native commit; this is not a refused event.
+     }
+     if(!(cadence&&TRANSIENT.test(String(error))))this.refused(operation,error,session);throw error;
+    }
     finally{this.operating--;}
    };
    return cadence?live():this.serial(live);
@@ -391,17 +622,25 @@ export class NativeFieldController {
   return this.serial(async()=>{
    const following=this.status==='following',prior=this.reason;this.hold('native determinant event');const revision=this.holdRevision;
    const held=await this.idle();
-   this.operating++;
+   this.operating++;let scope:NativeExchangeScope|null=null,acknowledged=false;
    try{
     await held.recover('native determinant admission');
     if(needsEvent&&this.sourcesStale)await this.readSources(held);
-    await held.operate(build());
-    this.refusal=null;
+    const command=build();scope=this.exchangeScope(held);await held.operate(command);acknowledged=true;
+    if(!this.current(held))return;
+    this.acknowledgedSceneEvent();
+    try{this.receiveCarriedInfluence(held,command.operation,scope);}catch(error){this.invalidateCurrentReading(error);}
+    // A genuine fresh Inspect may restore a missing carried reading. It must
+    // qualify its own envelope and complete body at the acknowledged cursor.
     await this.readSources(held);await this.readInfluence(held);
     await held.recover('native determinant readback admitted; rebase device only');
     this.reason=following?null:prior;
     this.finishCommand(held,following,revision,'determinant applied while held; resume explicitly');
    }catch(error){
+    if(scope&&(acknowledged||this.eventWasAcknowledged(held,scope))){
+     if(this.current(held)){this.acknowledgedSceneEvent();this.invalidateCurrentReading(error);this.hold(`native event acknowledged; presentation/read unavailable: ${String(error)}`);}
+     return;
+    }
     if(this.refused(operation,error,held)){held.hold(prior??'determinant refused');this.status='held';this.reason=prior??'determinant refused';this.changed();}
     else if(this.current(held))this.hold(String(error));
     throw error;
@@ -466,7 +705,7 @@ export class NativeFieldController {
   * is skipped while the owner is busy, suspended while held/hidden/unavailable,
   * and the cadence stops on release or refusal. */
  play(ticksPerSecond:number){
-  if(!this.scene||!this.session)throw new Error('Open the live instrument first');
+  if(!this.scene||!this.session||this.influenceStale||!this.influenceReading)throw new Error('Admit the complete current Scene influence before playing');
   if(!(Number.isFinite(ticksPerSecond)&&ticksPerSecond>0&&ticksPerSecond<=12))throw new Error('cadence must be within (0, 12] ticks per second');
   this.pause('rate changed');
   const period=1000/ticksPerSecond;
@@ -509,7 +748,8 @@ export class NativeFieldController {
    await session.recover('native basis edit admission');await this.readSources(session);
    const basis=editNativeBasis(this.sources,edit);
    await session.recover('complete basis inspected; native edit admission');
-   const result=await session.operate({operation:'replace',basis});await this.readSources(session);
+   const result=await session.operate({operation:'replace',basis});
+   this.invalidateCurrentReading('native basis replacement acknowledged; complete reading awaits fresh Inspect');await this.readSources(session);
    await session.recover('native basis readback admitted; rebase device only');
    this.finishCommand(session,following,revision,'native basis applied while held; resume explicitly');return result;
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
@@ -542,7 +782,7 @@ export class NativeFieldController {
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
-  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;
+  this.scene=false;this.ownerKind=null;this.exchangeReceipt=null;this.readingError=null;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.influenceStale=false;this.level=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const admission=settleAdmission?this.admission:null;
