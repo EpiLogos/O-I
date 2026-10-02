@@ -350,10 +350,25 @@ fn point_activation(activation_root: &Path, exe: &str, data_root: &Path) -> Resu
 /// adoption: an unmanaged binary that names the desired cut is linked into
 /// management without a rebuild; nothing else is ever adopted.
 fn binary_names_cut(executable: &Path, version_command: &[String], revision: &str) -> bool {
-    let Some(output) = Command::new(executable).args(version_command)
-        .stdin(Stdio::null()).output().ok()
+    let Some(output) = update_version_output(executable, version_command).ok()
         .filter(|output| output.status.success())
     else { return false; };
+    version_output_names_cut(&output, revision)
+}
+
+// Version discovery is still a physical native process: cap both streams and
+// retain custody through exit/EOF, including a stuck child or inherited pipe.
+fn update_version_output(executable: &Path, version_command: &[String]) -> Result<std::process::Output, String> {
+    let mut command = Command::new(executable);
+    command.args(version_command);
+    oi_cradle_kernel::native_process::run(command, None, oi_cradle_kernel::native_process::Limits {
+        timeout: std::time::Duration::from_secs(5),
+        stdout_bytes: 8192,
+        stderr_bytes: 8192,
+    }).map_err(|error| error.to_string())
+}
+
+fn version_output_names_cut(output: &std::process::Output, revision: &str) -> bool {
     let text = format!(
         "{}{}",
         String::from_utf8_lossy(&output.stdout),
@@ -647,8 +662,10 @@ fn build_plan(
         let discovered = {
             let resolved = resolve_executable(&target.exe);
             let inside = resolved.as_ref().is_some_and(|path| path.starts_with(data_root));
-            let receipted = entry.is_some();
-            if inside || receipted { None } else { resolved }
+            // An older managed generation must not hide a qualified external
+            // candidate. plan_product keeps a healthy current generation and
+            // admits an external image only when it names the desired cut.
+            if inside { None } else { resolved }
         };
         if let Some(path) = &discovered {
             drift.push(format!(
@@ -912,11 +929,17 @@ fn prepare_entry(
     if sha256_file(&staged)? != sha256 {
         return Err(format!("{id}: staged binary digest changed during staging"));
     }
-    let smoke = Command::new(&staged).args(&target.version_command)
-        .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).status()
+    let smoke = update_version_output(&staged, &target.version_command)
         .map_err(|error| format!("{id}: cannot smoke-check staged binary: {error}"))?;
-    if !smoke.success() {
+    if !smoke.status.success() {
         return Err(format!("{id}: staged binary failed its version smoke check"));
+    }
+    // The external path can change between planning and staging. Qualify the
+    // staged image itself before any activation or receipt names this cut.
+    if entry.action == PlanAction::Adopt
+        && !version_output_names_cut(&smoke, &desired.revision)
+    {
+        return Err(format!("{id}: staged adoption image no longer names the desired cut {}", short_rev(&desired.revision)));
     }
     let gate_ref = gate_path.as_ref().map(|path| path.display().to_string()).unwrap_or_default();
     let gate_receipt = json!({
@@ -1666,6 +1689,26 @@ fn resident_restart_succeeded(outcome: &str) -> bool {
 #[cfg(test)]
 mod update_flow_tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn native_update_version_probe_refuses_actual_unbounded_output() {
+        let result = update_version_output(Path::new("/usr/bin/yes"), &["native-version-output".to_owned()]);
+        let error = result.expect_err("a continuously writing OS process must not be captured without a bound");
+        assert!(error.contains("bounded output"), "{error}");
+        assert!(error.contains("leader reaped") && error.contains("owned group absent"), "native cleanup must be confirmed: {error}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn native_update_version_probe_refuses_actual_stuck_process() {
+        let started = std::time::Instant::now();
+        let result = update_version_output(Path::new("/bin/sleep"), &["30".to_owned()]);
+        let error = result.expect_err("a nonanswering OS process must not outlive version discovery");
+        assert!(error.contains("deadline"), "{error}");
+        assert!(error.contains("leader reaped") && error.contains("owned group absent"), "native cleanup must be confirmed: {error}");
+        assert!(started.elapsed() < std::time::Duration::from_secs(8), "version refusal exceeded its cleanup budget");
+    }
 
     fn git(root: &Path, args: &[&str]) -> String {
         let output = Command::new("git").arg("-C").arg(root).args(args)
