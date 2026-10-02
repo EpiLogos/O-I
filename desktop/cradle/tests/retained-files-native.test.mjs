@@ -8,6 +8,7 @@ import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {listFiles,readFile,lastFileReading} from '../src/files/client.ts';
+import {acquireFileReading,acquireFileBytes,peekFileReading,peekFileBytes} from '../src/files/resources.ts';
 
 test('native retained readings survive restart and missing branches but never bypass fresh retrieval exclusion',{skip:process.env.OI_NATIVE_RETAINED_FILES!=='1',timeout:120000},async()=>{
  for(const name of ['OI_KERNEL_BIN','OI_CENTRAL_CTRL_BIN','OI_BIN'])assert.ok(process.env[name],`${name} is required`);
@@ -25,5 +26,14 @@ test('native retained readings survive restart and missing branches but never by
   const denied=await lastFileReading(transport,location);assert.equal(denied.retained,null);assert.equal(denied.migration_allowed,false,'fresh exclusion wins even after a previously allowed recovery');
   await rm(join(root,parent,'.no-agent-retrieval'));await writeFile(join(root,parent,'reading.md'),'Current source resumed.\n');const fresh=await readFile(transport,location);assert.equal(fresh.content,'Current source resumed.\n');assert.notEqual(fresh.revision,reading.revision);
   await assert.rejects(readFile(transport,{...location,root:root+'-different'}));const foreign=await lastFileReading(transport,{...location,root:root+'-different'});assert.equal(foreign.retained,null);assert.equal(foreign.migration_allowed,false);
+  // The real native owner rejects this foreign root. Its consumer cache must
+  // preserve that same qualification after an allowed text AND binary read.
+  const cached=await acquireFileReading(transport,location);assert.equal(cached.content,fresh.content);
+  const cachedBytes=await acquireFileBytes(transport,location);assert.equal(cachedBytes.location.root,location.root);
+  const neighbouring={...location,root:root+'-different'};
+  assert.equal(peekFileReading(neighbouring),undefined,'a matching ref cannot expose another root\'s retained text');
+  assert.equal(peekFileBytes(neighbouring),undefined,'a matching ref cannot expose another root\'s retained bytes');
+  await assert.rejects(acquireFileReading(transport,neighbouring),'text cache must not bypass the actual native root refusal');
+  await assert.rejects(acquireFileBytes(transport,neighbouring),'byte cache must not bypass the actual native root refusal');
  }finally{await stop();await rm(scratch,{recursive:true,force:true});}
 });

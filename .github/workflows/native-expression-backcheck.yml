@@ -6,6 +6,8 @@ on:
       - 'desktop/cradle/kernel/**'
       - 'desktop/cradle/src/expressions/**'
       - 'desktop/cradle/src/kernel/types.ts'
+      - 'desktop/cradle/src/files/resources.ts'
+      - 'desktop/cradle/tests/retained-files-native.test.mjs'
       - 'desktop/cradle/material/shared-field/**'
       - 'desktop/cradle/material/expressive-material/**'
       - 'desktop/cradle/src/contributions/factory/live/**'
@@ -168,6 +170,15 @@ jobs:
           mkdir -p /tmp/w5-checks
           cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml 2>&1 | tee /tmp/w5-checks/kernel.log
+      - name: Actual Central retained-file authority and foreign-root cache refusal
+        if: ${{ !cancelled() }}
+        env:
+          OI_NATIVE_RETAINED_FILES: '1'
+          OI_KERNEL_BIN: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/retained-files-native.test.mjs 2>&1 | tee /tmp/w5-checks/retained-files-native.log
       - name: Retained Direct speech through real native Factory material and Act acceptance
         if: ${{ !cancelled() }}
         env:
