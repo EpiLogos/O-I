@@ -248,26 +248,37 @@ impl PerformanceBasis {
     fn hash(&self) -> Result<String, String> {
         // Excludes only the self-digest. Removing any determining relation
         // changes this fingerprint, even if a renderer still shows a label.
-        digest(&(
-            &self.schema,
-            &self.identity,
-            &self.sources,
-            &self.m1_coordinate,
-            self.m1_prime,
-            &self.m1,
-            &self.m2_plan,
-            &self.audio_determination,
-            &self.m3_score,
-            &self.m3_replay,
-            &self.m4_episode,
-            &self.prepared_body,
-            &self.tuning,
-            &self.force_state,
-            &self.form_state,
-            &self.context,
-            self.seed,
-            &self.required_assets,
-        ))
+        // serde implements native Rust tuples only through length 16. Serialize
+        // the original 18-element tuple explicitly; field order and JSON bytes
+        // remain the v1 basis fingerprint, without an intermediate Value map.
+        struct BasisDigest<'a>(&'a PerformanceBasis);
+        impl Serialize for BasisDigest<'_> {
+            fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                use serde::ser::SerializeTuple;
+                let b = self.0;
+                let mut tuple = serializer.serialize_tuple(18)?;
+                tuple.serialize_element(&b.schema)?;
+                tuple.serialize_element(&b.identity)?;
+                tuple.serialize_element(&b.sources)?;
+                tuple.serialize_element(&b.m1_coordinate)?;
+                tuple.serialize_element(&b.m1_prime)?;
+                tuple.serialize_element(&b.m1)?;
+                tuple.serialize_element(&b.m2_plan)?;
+                tuple.serialize_element(&b.audio_determination)?;
+                tuple.serialize_element(&b.m3_score)?;
+                tuple.serialize_element(&b.m3_replay)?;
+                tuple.serialize_element(&b.m4_episode)?;
+                tuple.serialize_element(&b.prepared_body)?;
+                tuple.serialize_element(&b.tuning)?;
+                tuple.serialize_element(&b.force_state)?;
+                tuple.serialize_element(&b.form_state)?;
+                tuple.serialize_element(&b.context)?;
+                tuple.serialize_element(&b.seed)?;
+                tuple.serialize_element(&b.required_assets)?;
+                tuple.end()
+            }
+        }
+        digest(&BasisDigest(self))
     }
     pub fn seal(mut self) -> Result<Self, String> {
         self.validate_content()?;

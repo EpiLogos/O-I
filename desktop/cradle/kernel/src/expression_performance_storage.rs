@@ -471,7 +471,7 @@ impl ActPerformanceCustody {
     pub fn has_native_recordings(&self) -> bool {
         self.performance_catalogs
             .values()
-            .any(PerformancePartCatalog::has_native_recordings)
+            .any(|catalog| catalog.has_native_recordings())
     }
     pub fn schema(&self) -> &'static str {
         if self.has_native_recordings() {

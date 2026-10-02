@@ -150,6 +150,63 @@ fn cursor(p: &Performance, sample: u64, seq: u64) -> ReplayCursor {
     }
 }
 #[test]
+fn native_basis_digest_keeps_original_eighteen_field_tuple_bytes_and_complete_tail() {
+    use sha2::{Digest, Sha256};
+    let b = basis();
+    // Use serde's existing tuple encoding for each original prefix/tail, then
+    // join only their array delimiters. This independently specifies the old
+    // ordered 18-field wire without the new production Serialize implementation.
+    let mut original = serde_json::to_vec(&(
+        &b.schema,
+        &b.identity,
+        &b.sources,
+        &b.m1_coordinate,
+        b.m1_prime,
+        &b.m1,
+        &b.m2_plan,
+        &b.audio_determination,
+        &b.m3_score,
+        &b.m3_replay,
+        &b.m4_episode,
+        &b.prepared_body,
+        &b.tuning,
+        &b.force_state,
+        &b.form_state,
+        &b.context,
+    ))
+    .unwrap();
+    let tail = serde_json::to_vec(&(b.seed, &b.required_assets)).unwrap();
+    assert_eq!(original.pop(), Some(b']'));
+    assert_eq!(tail.first(), Some(&b'['));
+    original.push(b',');
+    original.extend_from_slice(&tail[1..]);
+    let fields: Value = serde_json::from_slice(&original).unwrap();
+    assert_eq!(fields.as_array().unwrap().len(), 18);
+    assert_eq!(fields[16], serde_json::to_value(b.seed).unwrap());
+    assert_eq!(
+        fields[17],
+        serde_json::to_value(&b.required_assets).unwrap()
+    );
+    assert_eq!(
+        b.content_digest,
+        format!("sha256:{:x}", Sha256::digest(&original))
+    );
+    let reopened: PerformanceBasis =
+        serde_json::from_slice(&serde_json::to_vec(&b).unwrap()).unwrap();
+    reopened.validate().unwrap();
+    assert_eq!(reopened.content_digest, b.content_digest);
+    let mut lost_seed = reopened.clone();
+    lost_seed.seed.0 += 1;
+    assert!(lost_seed.validate().is_err());
+    let mut lost_asset = reopened;
+    lost_asset.required_assets.push(ReadingRef {
+        r#ref: "asset:digest-regression/required".into(),
+        revision: "1".into(),
+        availability: Availability::Available,
+    });
+    assert!(lost_asset.validate().is_err());
+}
+#[test]
 fn actual_prime_source_and_distinct_native_generations_survive_serialization() {
     let p = empty();
     let wire = serde_json::to_vec(&p).unwrap();
