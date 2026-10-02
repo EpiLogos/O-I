@@ -93,13 +93,15 @@ function paintText(ctx, s, w, h) {
     ctx.fillStyle = col;
     ctx.textBaseline = "top";
     ctx.textAlign = align;
-    ctx.globalAlpha = 0.65;
-    ctx.font = `${l.kicker}px Arial`;
-    if (align === "left") {
-      ctx.fillRect(l.x, y + 5, 18, 1);
-      ctx.fillText(t.kicker, anchor + 27, y);
-    } else ctx.fillText(t.kicker, anchor, y);
-    y += l.kicker * 1.5 + l.kickerGap;
+    if (t.kicker) {
+      ctx.globalAlpha = 0.65;
+      ctx.font = `${l.kicker}px Arial`;
+      if (align === "left") {
+        ctx.fillRect(l.x, y + 5, 18, 1);
+        ctx.fillText(t.kicker, anchor + 27, y);
+      } else ctx.fillText(t.kicker, anchor, y);
+      y += l.kicker * 1.5 + l.kickerGap;
+    }
     ctx.globalAlpha = 1;
     ctx.font = `${l.size}px Georgia`;
     if ("letterSpacing" in ctx) ctx.letterSpacing = `${-l.size * 0.054}px`;
