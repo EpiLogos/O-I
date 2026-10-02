@@ -29,6 +29,9 @@ MAX_JSON = 24 * 1024 * 1024
 MAX_PACKAGE = 64 * 1024 * 1024
 ROLES = ('ql', 'ql-field-host', 'ql-field-worker', 'ql-focused-host', 'ql-sky')
 PERSONS = ('person:controlled-world-a', 'person:controlled-world-b')
+D30_TEMPLATE_PATH = 'desktop/cradle/tests/fixtures/epi-world-hosted/expectation-template-d30-6a81fc44.json'
+D30_TEMPLATE_SHA256 = 'd16c3ee6f757cff878939c2c5cd768a8412c20ae6e43b59cfe87364b2dad3c60'
+D30_SUCCESSION_SHA256 = '2c36eb34c388903d7d6dd97c3a36f2b399c164d0974680f09bfe9d0958fabd8f'
 LOCUS = 'ql:m-coordinate:bimba:M4.4.4.4'
 OI_SCOPE = [
     'desktop/cradle/tests/epi-world-production-native.mjs',
@@ -36,6 +39,8 @@ OI_SCOPE = [
     'desktop/cradle/tests/epi-scene-damping-native-proof.mjs',
     'desktop/cradle/tests/epi-world-portable-custody.mjs',
     'desktop/cradle/tests/build-portable-expectation.mjs',
+    D30_TEMPLATE_PATH,
+    'desktop/cradle/tests/fixtures/epi-world-hosted/source-succession-d30-6a81fc44.json',
     'desktop/cradle/tests/epi-world-hosted-native.py',
     'desktop/cradle/tests/current-manifest-artifact-guards.mjs',
     'desktop/cradle/expressions-app/field-studies-journeys/src/app.ts',
@@ -613,14 +618,41 @@ class Replay:
     def run(self):
         require(platform.system() == 'Linux' and Path('/proc').is_dir(), 'This explicit hosted custody route requires Linux /proc')
         fixture, fm = self.package()
-        template = fixture / fm['expectation_template']
-        t = read_json(template)
+        original_template = fixture / fm['expectation_template']
+        require(file_ref(original_template)['sha256'] == '98d9ed07dbfe9212f9eedff6583c894d074d89f3d96d08d9b07d82e35c89f845',
+                'Historical archive retains its original reviewed Ec template byte-exact')
+        template = Path(self.args.source_expectation_template).resolve(strict=True)
+        require(template == self.repo / D30_TEMPLATE_PATH and file_ref(template)['sha256'] == D30_TEMPLATE_SHA256,
+                'Explicit exact reviewed D30 source-expectation template required')
+        t = read_json(template, 1024 * 1024)
         require(t['schema'] == 'epi.native-world-source-expectation-template/v3', 'Reviewed source-only v3 template required')
+        require(t['source_succession']['path'] == 'source-succession-d30-6a81fc44.json', 'Exact adjacent source-succession record required')
+        succession_path = template.parent / t['source_succession']['path']
+        succession_ref = file_ref(succession_path)
+        require(succession_ref['sha256'] == D30_SUCCESSION_SHA256 == t['source_succession']['sha256']
+                and succession_ref['bytes'] == t['source_succession']['bytes'], 'Exact reviewed source-succession artifact required')
+        succession = read_json(succession_path, 1024 * 1024)
+        require(succession['schema'] == 'epi.native-source-succession/v1'
+                and succession['current_source_cut'] == self.args.expected_ql_head == '6a81fc441e4dda477f4de3a7ebd59c368cb28f37',
+                'No arbitrary source cut or template retag is admitted')
+        prior = read_json(original_template, 1024 * 1024)
+        predicted = parse(json.dumps(prior, allow_nan=False))
+        field_path = 'crates/ql-mef/src/continuous/scene_field.rs'
+        field_hash = next(row['sha256'] for row in succession['constructor_source_locks']['current'] if row['path'] == field_path)
+        predicted['expected_native_owner_sources']['field']['revision'] = 'sha256:' + field_hash
+        next(row for row in predicted['source_locks'] if row['path'] == field_path)['sha256'] = field_hash
+        next(row for row in predicted['semantic_metadata_transition']['derivation_sources'] if row['path'] == field_path)['sha256'] = field_hash
+        predicted['source_succession'] = t['source_succession']
+        require(t == predicted, 'Every original semantic/numerical/buffer/sky/ledger prediction must remain exact before any native build or request')
+        self.report['source_expectation_selection'] = {'original_template': file_ref(original_template),
+            'current_template': file_ref(template), 'source_succession': succession_ref,
+            'standing': 'Explicit reviewed source-only successor; immutable archive/historical material remain unchanged'}
         self.report['source_cuts'] = {
             'oi': self.cut(self.repo, self.args.expected_oi_head),
             'ql': self.cut(self.ql, self.args.expected_ql_head),
             'central': self.cut(self.central, self.args.expected_central_head),
             'aikit': self.cut(self.aikit, self.args.expected_aikit_head)}
+        require(self.report['source_cuts']['ql']['tree'] == succession['current_source_tree'], 'Exact reviewed D30 source tree required')
         provenance = read_json(self.repo / 'desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json')
         require(provenance['revision'] == self.args.expected_ql_head, 'Copied adapter provenance must bind the actual owner cut')
         for name, checksum in provenance['files'].items():
@@ -632,6 +664,17 @@ class Replay:
         locks = {row['path']: row['sha256'] for row in t['source_locks']}
         require(len(locks) == len(t['source_locks']) and all(row['sha256'] == locks[row['path']] for row in ql_rows_before),
                 'Committed current source differs from independently frozen source predictions')
+        consumer_paths = [row['path'] for row in succession['consumer_sources']]
+        require(consumer_paths == ['crates/ql-mef/src/continuous/scene_field.rs', 'crates/ql-mef/src/continuous/host.rs',
+                                  'adapters/retained-field/instrument-session.mjs', 'crates/ql-mef/tests/scene_instrument.rs'],
+                'Exact four D30 consumer sources required separately from the unchanged constructor lock paths')
+        consumer_rows_before = self.source_rows(self.ql, self.args.expected_ql_head, consumer_paths)
+        for row in consumer_rows_before:
+            lock = next(source['current'] for source in succession['consumer_sources'] if source['path'] == row['path'])
+            require(row['sha256'] == lock['sha256'] and row['bytes'] == lock['bytes']
+                    and self.git(self.ql, 'rev-parse', self.args.expected_ql_head + ':' + row['path']) == lock['git_blob'],
+                    'Committed D30 consumer source differs from reviewed source succession: ' + row['path'])
+        self.report['source_succession_before_build'] = {'record_ref': succession_ref, 'consumer_sources': consumer_rows_before}
         toolchain, toolchain_resolution = [], []
         tools = {}
         rustup = Path(shutil.which('rustup')).resolve(strict=True)
@@ -692,6 +735,8 @@ class Replay:
         ql_rows = self.source_rows(self.ql, self.args.expected_ql_head, [row['path'] for row in t['source_locks']])
         self.cut(self.ql, self.args.expected_ql_head)
         require(ql_rows == ql_rows_before, 'Source changed during native owner build')
+        consumer_rows = self.source_rows(self.ql, self.args.expected_ql_head, consumer_paths)
+        require(consumer_rows == consumer_rows_before, 'D30 native host/client/test source changed during build')
         native_manifest = {'schema': 'epi.source-built-hosted-native-cut/v1', 'product': 'quaternal-logic',
                            'custody': 'source-built-hosted', 'source_root': str(self.ql), 'source_cut': self.args.expected_ql_head,
                            'tree': self.report['source_cuts']['ql']['tree'], 'source_dirty': False,
@@ -702,11 +747,15 @@ class Replay:
                                          'environment': {key: ql_env[key] for key in ('CARGO_TARGET_DIR', 'RUSTC', 'CC', 'CXX', 'PATH')},
                                          'shell_ref': file_ref(Path(shutil.which('sh')).resolve(strict=True))},
                            'toolchain': toolchain, 'toolchain_resolution': toolchain_resolution, 'toolchain_cwd': str(self.out),
-                           'all_five': binaries, 'source': ql_rows}
+                           'all_five': binaries, 'source': ql_rows,
+                           'source_succession': {'schema': 'epi.native-source-succession-build-custody/v1',
+                               'record_ref': succession_ref, 'consumer_sources': consumer_rows}}
         manifest_path = self.out / 'source-built-ql-cut.json'
         save(manifest_path, native_manifest)
         self.report['ql_native_cut'] = file_ref(manifest_path)
-        # Predictions are qualified from source/template/build before any native request.
+        # Source predictions were fixed before build; actual all-five output custody
+        # is now qualified before any native world request. Configured real-worker
+        # regression execution above remains a separate native test receipt.
         expectation = self.out / 'expectation-before-native.json'
         self.command('source-expectation', ['node', self.repo / 'desktop/cradle/tests/build-portable-expectation.mjs',
                      '--template', template, '--fixture-root', fixture, '--current-manifest', manifest_path, '--output', expectation], self.repo)
@@ -883,8 +932,9 @@ class Replay:
             'aikit': self.cut(self.aikit, self.args.expected_aikit_head),
             'aikit_image_unchanged': file_ref(aikit) == self.report['host_owners']['aikit'],
             'oi_source_unchanged': self.source_rows(self.repo, self.args.expected_oi_head, OI_SCOPE) == oi_sources,
-            'ql_source_unchanged': self.source_rows(self.ql, self.args.expected_ql_head, [row['path'] for row in ql_rows]) == ql_rows}
-        require(self.report['source_recheck']['oi_source_unchanged'] and self.report['source_recheck']['ql_source_unchanged'] and self.report['source_recheck']['aikit_image_unchanged'], 'Qualified source changed during native receiving')
+            'ql_source_unchanged': self.source_rows(self.ql, self.args.expected_ql_head, [row['path'] for row in ql_rows]) == ql_rows,
+            'ql_succession_consumers_unchanged': self.source_rows(self.ql, self.args.expected_ql_head, consumer_paths) == consumer_rows}
+        require(self.report['source_recheck']['oi_source_unchanged'] and self.report['source_recheck']['ql_source_unchanged'] and self.report['source_recheck']['ql_succession_consumers_unchanged'] and self.report['source_recheck']['aikit_image_unchanged'], 'Qualified source changed during native receiving')
         self.report['passed'] = True
         self.report['standing'] = 'Executed strict whole production and separate owned-kernel/fresh-browser entry in one source-built hosted Linux environment; managed installed Mac/H remain separate'
 
@@ -892,7 +942,7 @@ class Replay:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('repo', 'ql-source', 'central-source', 'aikit-source', 'expected-oi-head', 'expected-ql-head', 'expected-central-head', 'expected-aikit-head',
-                 'fixture-archive', 'fixture-sha256', 'uv', 'output'):
+                 'fixture-archive', 'fixture-sha256', 'source-expectation-template', 'uv', 'output'):
         parser.add_argument('--' + name, required=True)
     args = parser.parse_args()
     replay = Replay(args)

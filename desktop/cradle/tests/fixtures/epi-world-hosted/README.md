@@ -60,8 +60,25 @@ environment only when executed. It does not establish managed Mac delivery,
 hardware GPU, captured physical audio, listening, fresh model answers, H or
 Recognition. Complete M0–M5/deep journey recovery retains its existing standing.
 
+The archive's original `expectation-template.json` remains byte-exact at
+`98d9ed07dbfe9212f9eedff6583c894d074d89f3d96d08d9b07d82e35c89f845`, qualified
+to its Ec constructor source chain. The workflow explicitly selects the separate
+`expectation-template-d30-6a81fc44.json` and its reviewed
+`source-succession-d30-6a81fc44.json` for QL
+`6a81fc441e4dda477f4de3a7ebd59c368cb28f37`. This preserves all18 constructor
+lock paths; only the current field ReadingRef/hash and matching derivation hash
+change. The native host, canonical client and real-worker test source are
+qualified separately before build and again after receiving. No arbitrary
+hash/source cut or historical archive retag is admitted. The builder still
+requires its four explicit template/fixture/current-manifest/output arguments.
+
 The workflow invokes the helper with the current committed O:I checkout,
-QL `ec33764868b22e98cd6ebff8f6565097f67bdb03` from adapter provenance and
-Central `6bcfc1661cd0eccec1a4a691503ea401d411023a`. Any actual source,
-native numerical, identity, file-currentness, process-image or receiving
-disagreement remains a failed gate.
+that exact QL cut from copied-adapter provenance, and Central
+`6bcfc1661cd0eccec1a4a691503ea401d411023a`. The all-five current source build,
+configured real-worker tests, unchanged complete-world semantic/buffer gates,
+D30 live damping/Save/Return/reopen/restart and personal positive/live-zero
+receiving gates must actually execute. A reviewed template/source record is not
+an execution receipt. Any actual source, native numerical, identity,
+file-currentness, process-image or receiving disagreement remains a failed gate.
+
+The current6a81 receiving cut differs from previously reviewed47 only in the current K8 census receipt inventory digest. This separately frozen source succession binds the exact one-file/one-field Git transition, identical18 constructor and4 D30 consumer blobs, and the actual owner-produced hosted inventory/receipt. It does not retarget dated proofs or assert any new native/build/runtime/installed/H execution. The older47 proposal remains immutable evidence.

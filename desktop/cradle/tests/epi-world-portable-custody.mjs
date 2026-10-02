@@ -3,10 +3,14 @@
  * native binary and never opens the recorded original Darwin binary paths. */
 import assert from 'node:assert/strict';
 import {openSync,readSync,closeSync,readFileSync,statSync,realpathSync,existsSync} from 'node:fs';
-import {resolve,isAbsolute,sep,basename} from 'node:path';
+import {resolve,isAbsolute,sep,basename,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 export const APPROVED_TEMPLATE_SHA256='98d9ed07dbfe9212f9eedff6583c894d074d89f3d96d08d9b07d82e35c89f845';
+export const APPROVED_D30_TEMPLATE_SHA256='d16c3ee6f757cff878939c2c5cd768a8412c20ae6e43b59cfe87364b2dad3c60';
+const D30_SUCCESSION_REF={path:'source-succession-d30-6a81fc44.json',bytes:18393,sha256:'2c36eb34c388903d7d6dd97c3a36f2b399c164d0974680f09bfe9d0958fabd8f'};
+const D30_CONSUMER_PATHS=['crates/ql-mef/src/continuous/scene_field.rs','crates/ql-mef/src/continuous/host.rs','adapters/retained-field/instrument-session.mjs','crates/ql-mef/tests/scene_instrument.rs'];
+const D30_SOURCE_CUT='6a81fc441e4dda477f4de3a7ebd59c368cb28f37';
 const hex64=/^[0-9a-f]{64}$/,hex40=/^[0-9a-f]{40}$/;
 const names=['ql','ql-field-host','ql-field-worker','ql-focused-host','ql-sky'].sort();
 const toolNames=['rustc','cargo','cc','cxx','make','uv','python'].sort();
@@ -29,7 +33,35 @@ function pointed(value,pointer,label){
  assert.equal(typeof pointer,'string',label+': exact JSON pointer');assert.ok(pointer===''||pointer.startsWith('/'));if(pointer==='')return value;
  return pointer.slice(1).split('/').reduce((parent,part)=>{const key=part.replace(/~1/g,'/').replace(/~0/g,'~');assert.ok(parent&&Object.hasOwn(parent,key),label+': pointer exists');return parent[key];},value);
 }
-export function approvedTemplate(ref){assert.equal(ref.sha256,APPROVED_TEMPLATE_SHA256,'The reviewed immutable template must be named');const t=qualifiedJson(ref,'Reviewed template',1024*1024);assert.equal(t.schema,'epi.native-world-source-expectation-template/v3');assert.deepEqual(t.complete_world_keys,COMPLETE_WORLD_KEYS);assert.deepEqual(t.semantic_world_keys,SEMANTIC_WORLD_KEYS);return t;}
+export function approvedTemplate(ref){
+ assert.ok([APPROVED_TEMPLATE_SHA256,APPROVED_D30_TEMPLATE_SHA256].includes(ref.sha256),'One explicitly reviewed immutable template must be named');
+ const t=qualifiedJson(ref,'Reviewed template',1024*1024);assert.equal(t.schema,'epi.native-world-source-expectation-template/v3');assert.deepEqual(t.complete_world_keys,COMPLETE_WORLD_KEYS);assert.deepEqual(t.semantic_world_keys,SEMANTIC_WORLD_KEYS);
+ if(ref.sha256===APPROVED_D30_TEMPLATE_SHA256)assert.deepEqual(t.source_succession,D30_SUCCESSION_REF,'Exact reviewed D30 source succession');
+ else assert.equal(Object.hasOwn(t,'source_succession'),false,'Original template retains its original dependency chain');return t;
+}
+/** Source-only successor qualification; no reply supplies an expected value. */
+export function qualifyTemplateSuccession(e,t=approvedTemplate(e.template_ref)){
+ if(e.template_ref.sha256===APPROVED_TEMPLATE_SHA256){
+  for(const key of ['source_succession_ref','source_succession_prior_template_ref'])assert.equal(Object.hasOwn(e,key),false,'Original expectation cannot carry an unreviewed successor');return null;
+ }
+ assert.equal(e.template_ref.sha256,APPROVED_D30_TEMPLATE_SHA256);assert.deepEqual(t.source_succession,D30_SUCCESSION_REF);
+ const ref={...D30_SUCCESSION_REF,path:resolve(dirname(e.template_ref.path),D30_SUCCESSION_REF.path)};
+ under(dirname(e.template_ref.path),ref.path,'Reviewed source succession');assert.deepEqual(e.source_succession_ref,ref,'Exact adjacent source succession artifact');
+ const r=qualifiedJson(ref,'Reviewed source succession',1024*1024);assert.equal(r.schema,'epi.native-source-succession/v1');assert.equal(r.prior_source_cut,'ec33764868b22e98cd6ebff8f6565097f67bdb03');assert.equal(r.current_source_cut,D30_SOURCE_CUT);assert.equal(e.owner_cut,r.current_source_cut);assert.equal(r.current_source_tree,'b8fdc00fc958387901b1f466228d7fd373357a5d');
+ assert.deepEqual(r.prior_template,{path:'expectation-template.json',bytes:30779,sha256:APPROVED_TEMPLATE_SHA256});
+ const oldRef=e.source_succession_prior_template_ref;assert.equal(oldRef.bytes,r.prior_template.bytes);assert.equal(oldRef.sha256,APPROVED_TEMPLATE_SHA256);
+ const old=approvedTemplate(oldRef);const predicted=structuredClone(old),field=D30_CONSUMER_PATHS[0];
+ const prior=r.constructor_source_locks.prior,current=r.constructor_source_locks.current;
+ assert.deepEqual(prior.map(({path,sha256})=>({path,sha256})),old.source_locks);assert.deepEqual(current.map(({path,sha256})=>({path,sha256})),t.source_locks);
+ assert.deepEqual(current.filter((row,i)=>row.sha256!==prior[i].sha256).map(row=>row.path),[field],'Only the source-owned field implementation ReadingRef changes');
+ const fieldHash=current.find(row=>row.path===field).sha256;
+ predicted.expected_native_owner_sources.field.revision='sha256:'+fieldHash;predicted.source_locks.find(row=>row.path===field).sha256=fieldHash;
+ predicted.semantic_metadata_transition.derivation_sources.find(row=>row.path===field).sha256=fieldHash;predicted.source_succession=D30_SUCCESSION_REF;
+ assert.deepEqual(t,predicted,'Every historical, semantic, numerical, buffer, sky and ledger prediction remains exact; only three current source metadata leaves and explicit succession reference differ');
+ assert.deepEqual(r.consumer_sources.map(row=>row.path),D30_CONSUMER_PATHS,'Exact four D30 native owner/consumer/regression sources');
+ assert.equal(r.executed_native_or_browser,false);assert.equal(r.installed_acceptance,false);assert.equal(r.H,false);
+ return {record_ref:ref,prior_template_ref:oldRef,record:r};
+}
 function under(root,path,label){absolute(root,label+' root');absolute(path,label);const actualRoot=realpathSync(root),actual=realpathSync(path);assert.ok(actual===actualRoot||actual.startsWith(actualRoot+sep),label+': physical custody within root');return path;}
 export function resolveFixtureRef(ref,fixtureRoot){
  assert.ok(ref&&typeof ref.path==='string'&&!isAbsolute(ref.path),'Template fixture path must be relative');const path=resolve(fixtureRoot,ref.path);under(fixtureRoot,path,'Historical fixture');return{...ref,path};
@@ -44,6 +76,12 @@ export function assembleExpectation(templateRef,fixtureRoot,manifestRef){
  for(const key of Object.keys(e.historical_custody))if(key.endsWith('_ref'))e.historical_custody[key]=resolveFixtureRef(template.historical_custody[key],fixtureRoot);
  e.historical_custody.supporting_refs=template.historical_custody.supporting_refs.map(row=>({name:row.name,ref:resolveFixtureRef(row.ref,fixtureRoot)}));
  e.original_world_ref=e.historical_custody.original_world_ref;e.original_manifest_ref=e.historical_custody.manifest_ref;
+ if(templateRef.sha256===APPROVED_D30_TEMPLATE_SHA256){
+  e.source_succession_ref=resolveFixtureRef(template.source_succession,dirname(templateRef.path));
+  const succession=qualifiedJson(e.source_succession_ref,'Reviewed source succession',1024*1024);
+  e.source_succession_prior_template_ref=resolveFixtureRef(succession.prior_template,fixtureRoot);
+  qualifyTemplateSuccession(e,template);
+ }
  const ledger=manifest.source.find(s=>s.path==='fixtures/kernel/m-ledger-v1.json');assert.ok(ledger,'Actual current embedded ledger source');
  e.semantic_metadata_transition={...template.semantic_metadata_transition,original_ledger:resolveFixtureRef(template.semantic_metadata_transition.original_ledger,fixtureRoot),current_ledger:{path:ledger.physical_path,bytes:ledger.bytes,sha256:ledger.sha256,cut:manifest.source_cut}};
  return e;
@@ -133,6 +171,22 @@ function installerOutputCustody(m){
   const observed=before.outputs.find(x=>x.name===row.name);assert.equal(observed.path,row.path);assert.equal(observed.exists,false);assert.equal(observed.is_symlink,false);
  }
 }
+function currentSuccessionCustody(e,t,m){
+ const reviewed=qualifyTemplateSuccession(e,t);
+ if(!reviewed){assert.equal(Object.hasOwn(m,'source_succession'),false,'Original current-cut manifest cannot carry unreviewed source succession');return null;}
+ const r=reviewed.record,carried=m.source_succession;assert.equal(m.source_cut,r.current_source_cut);assert.equal(m.tree,r.current_source_tree);
+ assert.ok(carried,'D30 current manifest must qualify its host/client/real-worker test sources independently of the unchanged constructor path list');
+ assert.deepEqual(Object.keys(carried).sort(),['consumer_sources','record_ref','schema']);assert.equal(carried.schema,'epi.native-source-succession-build-custody/v1');assert.deepEqual(carried.record_ref,reviewed.record_ref);
+ assert.deepEqual(carried.consumer_sources.map(row=>row.path).sort(),D30_CONSUMER_PATHS.slice().sort());
+ const sources=carried.consumer_sources.map(row=>{
+  const lock=r.consumer_sources.find(source=>source.path===row.path).current;
+  assert.equal(row.cut,m.source_cut);assert.equal(row.working_bytes_equal_cut,true);assert.equal(row.sha256,lock.sha256);assert.equal(row.bytes,lock.bytes);
+  assert.equal(row.physical_path,resolve(m.source_root,row.path));under(m.source_root,row.physical_path,'Actual D30 consumer source');refFile({path:row.physical_path,bytes:row.bytes,sha256:row.sha256},'Actual D30 consumer source '+row.path);
+  assert.equal(git(m.source_root,['rev-parse',m.source_cut+':'+row.path]),lock.git_blob,row.path+': separately reviewed committed D30 blob');
+  assert.equal(git(m.source_root,['hash-object','--',row.physical_path]),lock.git_blob,row.path+': actual consumed D30 source bytes');return {...row};
+ });
+ return {record_ref:reviewed.record_ref,prior_template_ref:reviewed.prior_template_ref,source_cut:m.source_cut,tree:m.tree,sources,physical_consumer_source_reads:sources.length,standing:'Reviewed source succession plus actual build-source custody; native/whole receiving proof remains separate'};
+}
 function checkCurrent(e,t){
  const ref=e.current_custody?.manifest_ref;assert.equal(e.current_custody?.kind,'source-built-hosted');const m=qualifiedJson(ref,'Actual hosted source-built current manifest',4*1024*1024);
  assert.equal(m.schema,'epi.source-built-hosted-native-cut/v1');assert.equal(m.product,'quaternal-logic');assert.equal(m.custody,'source-built-hosted');assert.equal(m.source_cut,e.owner_cut);assert.match(m.source_cut,hex40);assert.match(m.tree,hex40);assert.equal(m.source_dirty,false);absolute(m.source_root,'Actual build source root');
@@ -145,7 +199,8 @@ function checkCurrent(e,t){
  const sources=m.source.map(row=>{const lock=t.source_locks.find(s=>s.path===row.path);assert.equal(row.cut,m.source_cut);assert.equal(row.working_bytes_equal_cut,true);assert.equal(row.sha256,lock.sha256,row.path+': source-derived expectation lock');assert.equal(row.physical_path,resolve(m.source_root,row.path));under(m.source_root,row.physical_path,'Actual current source');refFile({path:row.physical_path,bytes:row.bytes,sha256:row.sha256},'Actual current source '+row.path);assert.equal(git(m.source_root,['hash-object','--',row.physical_path]),git(m.source_root,['rev-parse',m.source_cut+':'+row.path]),row.path+': bytes are the committed cut');return{path:row.path,physical_path:row.physical_path,cut:row.cut,bytes:row.bytes,sha256:row.sha256,working_bytes_equal_cut:true};});
  const declared=sources.map(row=>({repository:m.source_root,...row}));assert.deepEqual(e.source_qualification,declared,'Current source qualifications derive only from the actual current manifest');
  const installerSource=sources.find(x=>x.path==='scripts/oi-source-install.sh');assert.equal(m.installer.script_ref.sha256,installerSource.sha256);assert.equal(m.installer.script_ref.bytes,installerSource.bytes);
- return{kind:'source-built-hosted',manifest:ref,source_cut:m.source_cut,tree:m.tree,source_root:m.source_root,all_five:allFive,sources,installer:m.installer,toolchain:m.toolchain,toolchain_resolution:m.toolchain_resolution,toolchain_cwd:m.toolchain_cwd,physical_current_companion_reads:5,physical_current_source_reads:sources.length};
+ const succession=currentSuccessionCustody(e,t,m);
+ return{kind:'source-built-hosted',manifest:ref,source_cut:m.source_cut,tree:m.tree,source_root:m.source_root,all_five:allFive,sources,installer:m.installer,toolchain:m.toolchain,toolchain_resolution:m.toolchain_resolution,toolchain_cwd:m.toolchain_cwd,physical_current_companion_reads:5,physical_current_source_reads:sources.length,...(succession?{source_succession:succession}:{})};
 }
 export function qualifyPortableNativeSourceExpectation(e,{originalWorldFile,currentCut}={}){
  assert.equal(e.schema,'epi.native-world-source-expectation/v3');assert.equal(e.owner_cut,currentCut);assert.match(e.owner_cut,hex40);const t=approvedTemplate(e.template_ref);const historical=qualifyHistoricalCustody(e,t);assert.equal(resolve(originalWorldFile),e.original_world_ref.path);assert.deepEqual(e.original_world_ref,e.historical_custody.original_world_ref);assert.deepEqual(e.original_manifest_ref,e.historical_custody.manifest_ref);

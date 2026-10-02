@@ -354,7 +354,7 @@ jobs:
           set -euo pipefail
           echo "oi=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           ql=$(jq -r .revision desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json)
-          test "$ql" = ec33764868b22e98cd6ebff8f6565097f67bdb03
+          test "$ql" = 6a81fc441e4dda477f4de3a7ebd59c368cb28f37
           echo "ql=$ql" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
@@ -408,6 +408,7 @@ jobs:
             --expected-aikit-head 64d4e1d12fd95a331db75e1f1df21f332aebab6f \
             --fixture-archive "$GITHUB_WORKSPACE/desktop/cradle/tests/fixtures/epi-world-hosted/controlled-native.tar.gz" \
             --fixture-sha256 b173b96c51bdf964e131c36da1cd171e97e077c340c4b6b36116c52f46093461 \
+            --source-expectation-template "$GITHUB_WORKSPACE/desktop/cradle/tests/fixtures/epi-world-hosted/expectation-template-d30-6a81fc44.json" \
             --uv "$(command -v uv)" \
             --output "$RUNNER_TEMP/epi-whole-hosted"
       - name: Retain same-environment requests, source/build custody, bodies and restart evidence

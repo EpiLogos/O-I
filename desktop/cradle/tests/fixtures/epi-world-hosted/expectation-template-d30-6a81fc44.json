@@ -1,0 +1,633 @@
+{
+  "original_owner_cut": "16f193162700655c9b616edce60704f051f5431e",
+  "expected_native_owner_sources": {
+    "constructor": {
+      "availability": "available",
+      "ref": "crates/ql-mef/src/scene.rs",
+      "revision": "sha256:bda0a8558135ac5fb864f60706f39148df883fcc35547348dc8254fb1b5da7e2"
+    },
+    "coupled": {
+      "availability": "available",
+      "ref": "crates/ql-mef/src/continuous/coupled.rs",
+      "revision": "sha256:569cca8fca3a008018547b9fa4566c613eccfb7e0e8d0f7f246beca5c2af1557"
+    },
+    "field": {
+      "availability": "available",
+      "ref": "crates/ql-mef/src/continuous/scene_field.rs",
+      "revision": "sha256:a980d17b276ffd0f8243c8d34c3df8185f52fd3e9008962dd582fd4a3f738ade"
+    }
+  },
+  "expected_original_native_owner_sources": {
+    "constructor": {
+      "availability": "available",
+      "ref": "crates/ql-mef/src/scene.rs",
+      "revision": "sha256:bda0a8558135ac5fb864f60706f39148df883fcc35547348dc8254fb1b5da7e2"
+    },
+    "coupled": {
+      "availability": "available",
+      "ref": "crates/ql-mef/src/continuous/coupled.rs",
+      "revision": "sha256:569cca8fca3a008018547b9fa4566c613eccfb7e0e8d0f7f246beca5c2af1557"
+    },
+    "field": {
+      "availability": "available",
+      "ref": "crates/ql-mef/src/continuous/scene_field.rs",
+      "revision": "sha256:0f8a7823a8af7bc5bbae739a267d482195604782f2421333c4c8c8cf6156418a"
+    }
+  },
+  "expected_retained_sky_admission": {
+    "schema": "ql.sky-admission/v1",
+    "purpose": "retained-occasion",
+    "snapshot_ref": "sha256:bcc1176dad2ffa37360a4c8695eb9b29e146b82188b26ed03db7678f1044c561",
+    "original_mode": "current",
+    "epoch_utc": "2026-10-01T03:21:06Z",
+    "receipt_utc": "2026-10-01T03:21:07.010526Z",
+    "fresh_current_attested": false,
+    "source_binding_qualification": {
+      "schema": "ql.sky-source-binding-qualification/v1",
+      "snapshot_ref": "sha256:bcc1176dad2ffa37360a4c8695eb9b29e146b82188b26ed03db7678f1044c561",
+      "legacy_descriptor_admitted": true,
+      "original_sun_role": "parent-not-chakra-mapped",
+      "current_sun_role": "solar-parent",
+      "provider_adapter_sha256": "e6d96d2ab5e4c539004ce84d7c7956404faea9752ce602bebc170441b457ab81",
+      "native_sun_route": {
+        "planet_id": "11a998cf5731a05a",
+        "planet_coordinate": "#2-5-0/1",
+        "chakra_id": "ec1ec94554bf1320",
+        "chakra_coordinate": "#2-5-0/1-7",
+        "chakra_index": 7,
+        "registry_revision": "82cd2a438fe82fdf3cd6a56383cc591b3beef53bd22b593922cd3fd6768f7de2",
+        "source_revision": "907c46bc8a65b47e12f14aa4d8b444263dc956a1a7b4b6d038e57223d6073288",
+        "relations": [
+          {
+            "class": "bimba-source",
+            "cross_m": false,
+            "from_id": "11a998cf5731a05a",
+            "from_ref": "#2-5-0/1",
+            "id": "e90c590da39a8471",
+            "orientation": "directed",
+            "record": 7213,
+            "relation_ref": "bimba:relation:710326725339389fb6905570",
+            "source_kind": "PLANETARY_RESONANCE",
+            "to_id": "ec1ec94554bf1320",
+            "to_ref": "#2-5-0/1-7"
+          }
+        ]
+      },
+      "fresh_current_attested": false,
+      "standing": "known legacy descriptor retained as historical provenance; current native Bimba relation governs reception"
+    },
+    "validation": "immutable-snapshot-and-current-native-source",
+    "validator_source": {
+      "source_ref": "providers/sky/kerykeion_snapshot.py",
+      "revision": "sha256:e57b14706d09df33999092932252538296f306f4e60fe9b7cecad75589a12d8e"
+    },
+    "standing": "retained dated occasion; no fresh-current attestation"
+  },
+  "expected_original_sky_admission": {
+    "schema": "ql.sky-admission/v1",
+    "purpose": "requested",
+    "snapshot_ref": "sha256:bcc1176dad2ffa37360a4c8695eb9b29e146b82188b26ed03db7678f1044c561",
+    "original_mode": "current",
+    "epoch_utc": "2026-10-01T03:21:06Z",
+    "receipt_utc": "2026-10-01T03:21:07.010526Z",
+    "fresh_current_attested": true,
+    "validation": "immutable-snapshot-and-current-native-source",
+    "validator_source": {
+      "source_ref": "providers/sky/kerykeion_snapshot.py",
+      "revision": "sha256:e6d96d2ab5e4c539004ce84d7c7956404faea9752ce602bebc170441b457ab81"
+    },
+    "standing": "current requested epoch validated within its freshness budget"
+  },
+  "expected_current_source_binding": {
+    "registry_revision": "82cd2a438fe82fdf3cd6a56383cc591b3beef53bd22b593922cd3fd6768f7de2",
+    "header": "vendor/epi-kernel/reference/include/m2.h",
+    "header_sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8",
+    "native_table": "M2_PLANET_LUT",
+    "scope": "#2-5",
+    "standing": "retained-symbolic-model-not-astronomical-measurement",
+    "sun_role": "solar-parent",
+    "non_sun_operators": 9,
+    "earth_body": {
+      "source_ref": "#2-5-0/1-0",
+      "role": "grounding-anchor",
+      "outside_planet_array": true,
+      "is_eighth_chakra": false
+    },
+    "receiving_chakras": 7,
+    "epogdoon": [
+      9,
+      8
+    ],
+    "transpersonal_native_ids": [
+      7,
+      8,
+      9
+    ],
+    "transpersonal_meaning": "source-preempted-not-invented"
+  },
+  "expected_exact_legacy_source_binding": {
+    "registry_revision": "82cd2a438fe82fdf3cd6a56383cc591b3beef53bd22b593922cd3fd6768f7de2",
+    "header": "vendor/epi-kernel/reference/include/m2.h",
+    "header_sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8",
+    "native_table": "M2_PLANET_LUT",
+    "scope": "#2-5",
+    "standing": "retained-symbolic-model-not-astronomical-measurement",
+    "sun_role": "parent-not-chakra-mapped",
+    "non_sun_operators": 9,
+    "earth_body": {
+      "source_ref": "#2-5-0/1-0",
+      "role": "grounding-anchor",
+      "outside_planet_array": true,
+      "is_eighth_chakra": false
+    },
+    "receiving_chakras": 7,
+    "epogdoon": [
+      9,
+      8
+    ],
+    "transpersonal_native_ids": [
+      7,
+      8,
+      9
+    ],
+    "transpersonal_meaning": "source-preempted-not-invented"
+  },
+  "complete_world_keys": [
+    "basis",
+    "binding",
+    "current_form",
+    "event",
+    "event_ref",
+    "instance_ref",
+    "native_owner_sources",
+    "native_readback",
+    "registers",
+    "scene",
+    "schema",
+    "sky",
+    "sky_admission",
+    "snapshot_ref",
+    "starting_recipe",
+    "subject_ref"
+  ],
+  "semantic_world_keys": [
+    "basis",
+    "binding",
+    "current_form",
+    "event",
+    "event_ref",
+    "instance_ref",
+    "native_readback",
+    "registers",
+    "scene",
+    "schema",
+    "sky",
+    "snapshot_ref",
+    "starting_recipe",
+    "subject_ref"
+  ],
+  "explicit_provenance_fields": [
+    "native_owner_sources",
+    "sky_admission"
+  ],
+  "exact_saved_occasion": {
+    "snapshot_ref": "sha256:bcc1176dad2ffa37360a4c8695eb9b29e146b82188b26ed03db7678f1044c561",
+    "epoch_utc": "2026-10-01T03:21:06Z",
+    "receipt_utc": "2026-10-01T03:21:07.010526Z",
+    "receipt_clock": "host-utc-clock",
+    "epoch_unix_ms": 1790824866000,
+    "receipt_unix_ms": 1790824867010
+  },
+  "immutable_sky_full_value_guard": "Complete deep equality to original sky and original signed provider snapshot qualification. No epoch/mode/provider/body/source/binding/digest mutation accepted.",
+  "legacy_constants": {
+    "LEGACY_SUN_ADAPTER_SHA256": "e6d96d2ab5e4c539004ce84d7c7956404faea9752ce602bebc170441b457ab81",
+    "LEGACY_SUN_REGISTRY_REVISION": "82cd2a438fe82fdf3cd6a56383cc591b3beef53bd22b593922cd3fd6768f7de2",
+    "LEGACY_SUN_HEADER_SHA256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8"
+  },
+  "full_source_qualification": {
+    "source_revision": "907c46bc8a65b47e12f14aa4d8b444263dc956a1a7b4b6d038e57223d6073288",
+    "nodes": 2141,
+    "qualified_directed_relations": 11810,
+    "live_artifact": {
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/live-bimba-map.json",
+      "sha256": "4fa8f0cdab976a2a52275511cf4381d7e2f5a83d8ee1c74a28acc7f92f071c97"
+    },
+    "source_relation": [
+      "M2-5-(0/1)",
+      "PLANETARY_RESONANCE",
+      "M2-5-(0/1)-7",
+      {
+        "c_1_relation_family": "correspondential",
+        "c_3_created_at": "2026-07-28T20:29:41.237Z",
+        "c_3_dataset_branch": "parashakti-deep",
+        "c_2_relation_type": "PLANETARY_RESONANCE",
+        "c_0_source_coordinate": "M2-5-(0/1)",
+        "c_0_target_coordinate": "M2-5-(0/1)-7"
+      }
+    ],
+    "Sun_UUID": "b968598e-2e8a-58f1-96b0-ca8d6aa0666e",
+    "Sahasrara_UUID": "fcd379d9-b890-5cbb-b8d2-77ae3adc287f",
+    "typed_ID_derivation": "first64bitsSHA256(domain+NUL+exact source spelling), independently checked against Git70 fixtures; producer native_m_registry v1 distinct from promoted K8 registry"
+  },
+  "required_buffer_guard": {
+    "keys": [
+      "slots_a",
+      "slots_b"
+    ],
+    "count_per_key": 62001,
+    "json_sha256_per_key": "649e0ccf25cc14fcff55cb2cce87de65bbe64a7b7711421f9c95290215e5a166",
+    "every_sample": "p -> p mod4096",
+    "qualification": "Both arrays exactly equal originals and saved counts/hashes; portable codec alone excludes these runtime arrays."
+  },
+  "signed_zero_policy": "Normalize only JSON -0 to0 comparison copies; every finite nonzero value/field/array member exact; original and current receipts unmodified.",
+  "required_execution_not_established": [
+    "postprepare full native Expression inspection equality",
+    "actual current compose/open/worker-source admission",
+    "actual torus and personal wave GPU consumer",
+    "complete two-clock Return/held departure",
+    "save/restart/Library/continuing journey",
+    "managed installed replay and hardware audio/human listening",
+    "H/Recognition"
+  ],
+  "schema": "epi.native-world-source-expectation-template/v3",
+  "standing": "Frozen source-derived expectation template; no future binaries, native execution or installed acceptance",
+  "expectation_generation_inputs": "Original24 retained actual native world + original portable custody + exact committed QL16/QL70 source/fixtures + authored K8 contract + retained live907source + managedgate/allfivebytes. Whole04 actual response is only a later verification target and supplies none of the expected output values.",
+  "historical_custody": {
+    "kind": "historical-independently-verified",
+    "manifest_ref": {
+      "path": "manifest_ref.json",
+      "bytes": 2694,
+      "sha256": "c5e99d57ea363ee08ff2abbc0f31c568ff8b3f7a11c0b77f80645c4d694adacb",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/joined-cut.json"
+    },
+    "build_receipt_ref": {
+      "path": "build_receipt_ref.json",
+      "bytes": 846,
+      "sha256": "1af75f46a519aacc7a7dadbd4e5cbb59039b3ec4dc90998ba81b65aa30a18268",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-five-source-build-receipt.json"
+    },
+    "native_qualification_ref": {
+      "path": "native_qualification_ref.json",
+      "bytes": 10308,
+      "sha256": "21732e438bb2c64a6981c5740ede628d4afadd787b8cd01309441eb3c1cff974",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/receipt.json"
+    },
+    "independent_source_expectation_ref": {
+      "path": "independent_source_expectation_ref.json",
+      "bytes": 21734,
+      "sha256": "b14a8ce5a81d9d802ad717cc6b2d7e59e94501d5e97844bbda73fa820ecb1a15",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/personal-proof/whole04-independent-source-review/whole04-source-qualified-expectation.json"
+    },
+    "independent_verifier_qualification_ref": {
+      "path": "independent_verifier_qualification_ref.json",
+      "bytes": 13676,
+      "sha256": "d7a7a5b23cdc93b2603ba73f04ee70848506504d2219c4a925456283ed3b93d3",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/personal-proof/whole04-independent-source-review/verifier-qualification.json"
+    },
+    "original_world_ref": {
+      "path": "original_world_ref.json",
+      "bytes": 7401998,
+      "sha256": "6d77b1284b6b3146fa5f6d1669426debad8d722bb507b7387759f4ae4fa9e7e6",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/current-material-native/ordinary-production-24/native-world-prepared-5.json"
+    },
+    "retained_snapshot_ref": {
+      "path": "original_world_ref.json",
+      "bytes": 7401998,
+      "sha256": "6d77b1284b6b3146fa5f6d1669426debad8d722bb507b7387759f4ae4fa9e7e6",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/current-material-native/ordinary-production-24/native-world-prepared-5.json",
+      "pointer": "/response/outcome/data/source/world/sky"
+    },
+    "sky_receipt_ref": {
+      "path": "original_world_ref.json",
+      "bytes": 7401998,
+      "sha256": "6d77b1284b6b3146fa5f6d1669426debad8d722bb507b7387759f4ae4fa9e7e6",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/current-material-native/ordinary-production-24/native-world-prepared-5.json",
+      "pointer": "/response/outcome/data/source/world/sky"
+    },
+    "sky_request_ref": {
+      "path": "original_world_ref.json",
+      "bytes": 7401998,
+      "sha256": "6d77b1284b6b3146fa5f6d1669426debad8d722bb507b7387759f4ae4fa9e7e6",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/current-material-native/ordinary-production-24/native-world-prepared-5.json",
+      "pointer": "/request/request/request"
+    },
+    "supporting_refs": [
+      {
+        "name": "build_log",
+        "ref": {
+          "path": "support-build_log.log",
+          "bytes": 8150,
+          "sha256": "45397cb55450f56ef44ac6eb50d3ea5fb5fb28d97b0eb953dc15dbf6b160e270",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-five-source-build.log"
+        }
+      },
+      {
+        "name": "independent_verifier_source",
+        "ref": {
+          "path": "support-independent_verifier_source.mjs",
+          "bytes": 12670,
+          "sha256": "9bf231bde92a24687641fbb9464206ca624ea65a31d058979869735397d36270",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/personal-proof/whole04-independent-source-review/qualify-retained-verifier.mjs"
+        }
+      },
+      {
+        "name": "version/stdout_path",
+        "ref": {
+          "path": "native-version-stdout_path.txt",
+          "bytes": 24,
+          "sha256": "4b4f5272edf8905b3613c53acdaf716b71f68f475a4659f85b340016315fb80f",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/version.txt"
+        }
+      },
+      {
+        "name": "version/stderr_path",
+        "ref": {
+          "path": "native-version-stderr_path.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/version.stderr"
+        }
+      },
+      {
+        "name": "capabilities/stdout_path",
+        "ref": {
+          "path": "native-capabilities-stdout_path.json",
+          "bytes": 2270,
+          "sha256": "210efddc776696c90087df0272298bb8d56bf1bad935c348adfd987a38849a99",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/capabilities.json"
+        }
+      },
+      {
+        "name": "capabilities/stderr_path",
+        "ref": {
+          "path": "native-capabilities-stderr_path.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/capabilities.stderr"
+        }
+      },
+      {
+        "name": "verify/stdout_path",
+        "ref": {
+          "path": "native-verify-stdout_path.json",
+          "bytes": 337,
+          "sha256": "8a0ed9a95a709c08078fd5b15a523e2effd145e92dd594d4e59f5d6322a60abe",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/verify.json"
+        }
+      },
+      {
+        "name": "verify/stderr_path",
+        "ref": {
+          "path": "native-verify-stderr_path.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/verify.stderr"
+        }
+      },
+      {
+        "name": "sky/stdout_path",
+        "ref": {
+          "path": "native-sky-stdout_path.json",
+          "bytes": 6483,
+          "sha256": "4148903d3dbf0fbbe20ea9b836bd0b10d99d6f4fe3c71c93bcc0d66e8fa00621",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/sky.json"
+        }
+      },
+      {
+        "name": "sky/stderr_path",
+        "ref": {
+          "path": "native-sky-stderr_path.stderr",
+          "bytes": 59,
+          "sha256": "dd7241fb9634d51d4b90a8782d9a26dd3fe2ada28ad873374b2d9b28b76827ef",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/sky.stderr"
+        }
+      },
+      {
+        "name": "scene-world/stdout_path",
+        "ref": {
+          "path": "native-scene-world-stdout_path.json",
+          "bytes": 749562,
+          "sha256": "3c90533198297e226d70e21053703a0e8f9abeb8af0e10d90b24fa1cc1f256ca",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/scene-world.json"
+        }
+      },
+      {
+        "name": "scene-world/stderr_path",
+        "ref": {
+          "path": "native-scene-world-stderr_path.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/scene-world.stderr"
+        }
+      },
+      {
+        "name": "ql-field-host/responses_path",
+        "ref": {
+          "path": "native-ql-field-host-responses_path.jsonl",
+          "bytes": 4790698,
+          "sha256": "1678773272ac81969d2368d8dff00ce3d5a9810b5e0ecbfd7779a8823ce21d89",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/ql-field-host-responses.jsonl"
+        }
+      },
+      {
+        "name": "ql-field-host/requests_path",
+        "ref": {
+          "path": "native-ql-field-host-requests_path.jsonl",
+          "bytes": 1683,
+          "sha256": "1e00a070cd000fe9f643dd09c196dca13a02aeca49bc69578ecef26568394ee0",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/ql-field-host-requests.jsonl"
+        }
+      },
+      {
+        "name": "ql-focused-host/responses_path",
+        "ref": {
+          "path": "native-ql-focused-host-responses_path.jsonl",
+          "bytes": 758003,
+          "sha256": "64c55fe66fa80c0be7d02a0f42353af69e7a3e4b880961c76c140da051464fd3",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/ql-focused-host-responses.jsonl"
+        }
+      },
+      {
+        "name": "ql-focused-host/requests_path",
+        "ref": {
+          "path": "native-ql-focused-host-requests_path.jsonl",
+          "bytes": 1775,
+          "sha256": "9f9967c4b1c0f3002f2d1105db46f4ce6aa4a0d175e0f857b55ced4a558c8998",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/ql-focused-host-requests.jsonl"
+        }
+      },
+      {
+        "name": "qualification-sky-request",
+        "ref": {
+          "path": "support-qualification-sky-request.json",
+          "bytes": 285,
+          "sha256": "fa40b2a63b4c6e9113e7a9a763bcddb4203f67572ffb7ea83f511546459b748e",
+          "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/qualification/sky-request.json"
+        }
+      }
+    ],
+    "no_current_original_binary_rehash": true
+  },
+  "source_locks": [
+    {
+      "path": "crates/ql-cli/src/nara_command.rs",
+      "sha256": "d225e4829f2f6bf15462f25af2e818a3bdec0b085d0c150f7d8829a37ad74f9e"
+    },
+    {
+      "path": "crates/ql-mef/src/continuous/coupled.rs",
+      "sha256": "569cca8fca3a008018547b9fa4566c613eccfb7e0e8d0f7f246beca5c2af1557"
+    },
+    {
+      "path": "crates/ql-mef/src/continuous/scene_field.rs",
+      "sha256": "a980d17b276ffd0f8243c8d34c3df8185f52fd3e9008962dd582fd4a3f738ade"
+    },
+    {
+      "path": "crates/ql-mef/src/m2.rs",
+      "sha256": "21782cd444ec1d56f4c80f08d16a2b464de8987cf948f8ca729a1e542071887f"
+    },
+    {
+      "path": "crates/ql-mef/src/m2_engine.rs",
+      "sha256": "b22c97f69fd2653f83404a39fdd63cdeff0ae1df4340386b1156a01c1a75e529"
+    },
+    {
+      "path": "crates/ql-mef/src/m_ledger.rs",
+      "sha256": "b022aef662a61de1ab87207bc160e038118c88fb5c2ddcecceae0ce7a4250b95"
+    },
+    {
+      "path": "crates/ql-mef/src/m_tree.rs",
+      "sha256": "c1b65a51bf675656f9b38a3fd66fa685b3fd9a20a696b765ac1aeee5960fb09a"
+    },
+    {
+      "path": "crates/ql-mef/src/scene.rs",
+      "sha256": "bda0a8558135ac5fb864f60706f39148df883fcc35547348dc8254fb1b5da7e2"
+    },
+    {
+      "path": "docs/kernel-rebuild/K8-SKY-CONTRACT.md",
+      "sha256": "febd6ffe8e0328853f79e67b73d5a8dc6e06ef6f2ac01533c0b57317f407ee5c"
+    },
+    {
+      "path": "fixtures/kernel/bimba-content-v1.json",
+      "sha256": "151a9af230c7fe5b50519e5dfb9c8b01f7d80b0b98765f78736d3d21d1b6320a"
+    },
+    {
+      "path": "fixtures/kernel/m-ledger-v1.json",
+      "sha256": "cea0ff2565dca9dff0c439614c431ebe0cd3b0814b923d2766fad685010fbfef"
+    },
+    {
+      "path": "fixtures/kernel/m-tree-v1.json",
+      "sha256": "2108875cd4c7bf1bc7c6ae2f8ecd9fad24a4de6392edac6083f0a69d0880f8fc"
+    },
+    {
+      "path": "fixtures/kernel/m2-retained-c-v1.json",
+      "sha256": "7d78cd7b64cb2d6d9af64ea7165f7b51c80535999a3e9326f114d45c642a8188"
+    },
+    {
+      "path": "providers/sky/kerykeion_snapshot.py",
+      "sha256": "e57b14706d09df33999092932252538296f306f4e60fe9b7cecad75589a12d8e"
+    },
+    {
+      "path": "providers/sky/requirements.txt",
+      "sha256": "36390dc8e2bfb16b6bb91168bda5b6cfd2676382754cf881b4754ba98257e56a"
+    },
+    {
+      "path": "scripts/generate-m-tree.py",
+      "sha256": "2a1047516cf75325df57f38ea18e641b0764de9311e877f7980d308a5c34fcd2"
+    },
+    {
+      "path": "scripts/oi-source-install.sh",
+      "sha256": "8175608b6f7e2b80953ac994d66318fd2fb3e8b078b48323c1e2cd7eec025ca8"
+    },
+    {
+      "path": "vendor/epi-kernel/reference/include/m2.h",
+      "sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8"
+    }
+  ],
+  "semantic_metadata_transition": {
+    "schema": "epi.native-world-m2-ledger-transition/v1",
+    "paths": [
+      "/basis/m2/ledger_revision",
+      "/binding/native_basis/m2/ledger_revision"
+    ],
+    "original_value": "0d85f80b36b039e03d3b9defeb408e8ba1076c4d68ed0b70a17f96db7161f58c",
+    "current_value": "daecbea848506fe5c5ec245c72cb3fc80122c54234e88e0d9b87b2e7e15a05a6",
+    "original_ledger": {
+      "path": "original_ledger.json",
+      "bytes": 4266927,
+      "sha256": "a67cde574443e3f7acf61be9eab2354c321a979fdb26417f276ce1cd7b71ab58",
+      "historical_recorded_path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/branch-review/m4-binding-correction/before/m-ledger-v1.json",
+      "cut": "70cefd6d9b427fbadd6ed2f496aa1b56d0cd0209"
+    },
+    "current_ledger": {
+      "source_path": "fixtures/kernel/m-ledger-v1.json",
+      "sha256": "cea0ff2565dca9dff0c439614c431ebe0cd3b0814b923d2766fad685010fbfef",
+      "bytes": 4266927
+    },
+    "derivation_sources": [
+      {
+        "path": "fixtures/kernel/m-ledger-v1.json",
+        "sha256": "cea0ff2565dca9dff0c439614c431ebe0cd3b0814b923d2766fad685010fbfef"
+      },
+      {
+        "path": "crates/ql-mef/src/m_ledger.rs",
+        "sha256": "b022aef662a61de1ab87207bc160e038118c88fb5c2ddcecceae0ce7a4250b95"
+      },
+      {
+        "path": "crates/ql-mef/src/m2_engine.rs",
+        "sha256": "b22c97f69fd2653f83404a39fdd63cdeff0ae1df4340386b1156a01c1a75e529"
+      },
+      {
+        "path": "crates/ql-mef/src/scene.rs",
+        "sha256": "bda0a8558135ac5fb864f60706f39148df883fcc35547348dc8254fb1b5da7e2"
+      },
+      {
+        "path": "crates/ql-mef/src/continuous/coupled.rs",
+        "sha256": "569cca8fca3a008018547b9fa4566c613eccfb7e0e8d0f7f246beca5c2af1557"
+      },
+      {
+        "path": "crates/ql-mef/src/continuous/scene_field.rs",
+        "sha256": "a980d17b276ffd0f8243c8d34c3df8185f52fd3e9008962dd582fd4a3f738ade"
+      }
+    ]
+  },
+  "original_all_five": [
+    {
+      "role": "ql",
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/ql-820bc596dc87a3091081a6ee15294195e1a83c565743f41c5c1e2284d039e1f5",
+      "sha256": "820bc596dc87a3091081a6ee15294195e1a83c565743f41c5c1e2284d039e1f5",
+      "bytes": 80235792
+    },
+    {
+      "role": "ql-field-host",
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/ql-field-host-506cffd7404bdcdd8d856717510c1506ba1e1c519d31bd8258e24d1c9db0db6c",
+      "sha256": "506cffd7404bdcdd8d856717510c1506ba1e1c519d31bd8258e24d1c9db0db6c",
+      "bytes": 70201808
+    },
+    {
+      "role": "ql-focused-host",
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/ql-focused-host-d322c0a1c56112b36640808d9bc20aa20cea43a8333614bf6584f2043855d9ba",
+      "sha256": "d322c0a1c56112b36640808d9bc20aa20cea43a8333614bf6584f2043855d9ba",
+      "bytes": 30284320
+    },
+    {
+      "role": "ql-field-worker",
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/ql-field-worker-fddda1504eb8a2e449d7766031081a7c991daa8830e456b4327228b631177009",
+      "sha256": "fddda1504eb8a2e449d7766031081a7c991daa8830e456b4327228b631177009",
+      "bytes": 3284816
+    },
+    {
+      "role": "ql-sky",
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/retained-occasion/joined-cut-16f193162700655c9b616edce60704f051f5431e/ql-sky-137acb7fcc8bc9607ba2a0f2c81cb81c93a18059a45b93eb1c71651cc7a35c88",
+      "sha256": "137acb7fcc8bc9607ba2a0f2c81cb81c93a18059a45b93eb1c71651cc7a35c88",
+      "bytes": 31939
+    }
+  ],
+  "historical_portable_basis": {
+    "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/whole-replay-04/runtime-e254-29d5296a-ql70-reviewed-profile/01-person-a-cosmic-at-rest.json",
+    "sha256": "d9289d33e83e15f0ddb5543cf3db16bd8a979cc8b17a3f3eea70d7fc14edb281"
+  },
+  "source_succession": {
+    "path": "source-succession-d30-6a81fc44.json",
+    "bytes": 18393,
+    "sha256": "2c36eb34c388903d7d6dd97c3a36f2b399c164d0974680f09bfe9d0958fabd8f"
+  }
+}
