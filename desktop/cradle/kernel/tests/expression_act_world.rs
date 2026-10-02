@@ -384,6 +384,20 @@ fn full_native_act_register_validates_fresh_performance_before_archiving_another
 #[test]
 fn full_native_register_aggregate_refusal_preserves_every_completed_concern() {
     let home = Home::new(); let mut k = kernel(); k.attach_act_store(&home.0).unwrap(); open(&mut k);
+    // Qualify all248 small concerns through the real owner before the eight
+    // complete two-Edition histories. The final register/budget and every
+    // below refusal/file assertion are unchanged. This avoids remeasuring all
+    // retained full histories during each small concern setup operation.
+    let concern_target = "expression:controlled-admission-small-concerns";
+    expression(&mut k, json!({"operation":"create","expression_ref":concern_target,
+        "actor":"person:controlled-world-a","title":"Completed controlled concerns"})).unwrap();
+    for index in 0..248 {
+        let reference = format!("act:controlled-admission-small-{index:03}");
+        world(&mut k, json!({"operation":"act_open","act_ref":reference,"expression_ref":concern_target,
+            "mode":"expressions","actor":"person:controlled-world-a"})).unwrap();
+        assert_eq!(world(&mut k, json!({"operation":"act_complete","act_ref":reference,
+            "actor":"person:controlled-world-a"})).unwrap()["state"], "act_completed");
+    }
     // Eight actual native held concerns consume most of64MiB with two complete
     // retained world Editions each, just as the existing native body gate.
     // Neither records nor resident Acts are fabricated to reach the boundary.
@@ -400,16 +414,6 @@ fn full_native_register_aggregate_refusal_preserves_every_completed_concern() {
             world(&mut k, json!({"operation":"act_interrupt","act_ref":reference,
                 "actor":"person:controlled-world-a"})).unwrap();
         }
-    }
-    let concern_target = "expression:controlled-admission-small-concerns";
-    expression(&mut k, json!({"operation":"create","expression_ref":concern_target,
-        "actor":"person:controlled-world-a","title":"Completed controlled concerns"})).unwrap();
-    for index in 0..248 {
-        let reference = format!("act:controlled-admission-small-{index:03}");
-        world(&mut k, json!({"operation":"act_open","act_ref":reference,"expression_ref":concern_target,
-            "mode":"expressions","actor":"person:controlled-world-a"})).unwrap();
-        assert_eq!(world(&mut k, json!({"operation":"act_complete","act_ref":reference,
-            "actor":"person:controlled-world-a"})).unwrap()["state"], "act_completed");
     }
     let before = document(&mut k); let register = world(&mut k, json!({"operation":"act_list"})).unwrap();
     assert_eq!(register["acts"].as_array().unwrap().len(), 256);
