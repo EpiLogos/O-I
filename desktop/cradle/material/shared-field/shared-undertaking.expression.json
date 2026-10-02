@@ -258,7 +258,7 @@
       "revision": "central.content-fnv1a64/v1:97921:55791e5fa20ec7a7"
     }
   },
-  "revision": 5,
+  "revision": 6,
   "scenes": [
     {
       "body": null,
@@ -2645,9 +2645,10 @@
               "size": 23,
               "title": "A proposal is returning",
               "visible": true,
-              "width": 280,
-              "x": 0.055,
-              "y": 0.855
+              "width": 800,
+              "x": 0.23,
+              "y": 0.2,
+              "bodySize": 14
             },
             {
               "align": "left",
