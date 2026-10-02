@@ -237,6 +237,26 @@ jobs:
           OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
           WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
         run: node tests/techne-same-node-gate.mjs
+      - name: Real late boot reply after saved-file acknowledgement
+        if: always()
+        working-directory: desktop/cradle
+        env:
+          OI_BIN: ${{ runner.temp }}/native-bin/oi
+          OI_AIKIT_BIN: ${{ runner.temp }}/native-bin/aikit
+          OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
+          WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
+          TECHNE_BOOT_RECOVERY_RACE: '1'
+        run: node tests/techne-same-node-gate.mjs
+      - name: Real boot reply before withheld saved-file acknowledgement
+        if: always()
+        working-directory: desktop/cradle
+        env:
+          OI_BIN: ${{ runner.temp }}/native-bin/oi
+          OI_AIKIT_BIN: ${{ runner.temp }}/native-bin/aikit
+          OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
+          WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
+          TECHNE_BOOT_RECOVERY_RACE: before-file-ack
+        run: node tests/techne-same-node-gate.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -246,5 +266,7 @@ jobs:
             desktop/cradle/tests/artifacts/techne-native-composition
             desktop/cradle/tests/artifacts/techne-construction-join
             desktop/cradle/tests/artifacts/techne-same-node-gate
+            desktop/cradle/tests/artifacts/techne-same-node-boot-race
+            desktop/cradle/tests/artifacts/techne-same-node-boot-early-race
           retention-days: 7
           if-no-files-found: error

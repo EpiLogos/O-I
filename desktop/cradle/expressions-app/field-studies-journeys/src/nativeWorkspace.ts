@@ -69,15 +69,17 @@ export function captureNativeAdoption(host:Pick<NativeWorkspaceHost,'snapshot'|'
  * open captured concurrently (e.g. a click landing mid-boot) must not be
  * refused by boot's own bookkeeping — an untouched boot canvas is not
  * authored work (see `awaitingNativeBoot`/`shouldRetainDraft` in app.ts).
- * Exported standalone so this sequencing is covered by a plain unit test. */
-export function isGenuineWorkspaceSwitch(state:{booted:boolean}):boolean{
- const first=!state.booted;state.booted=true;return !first;
+ * The explicit initialising argument distinguishes boot from a first ordinary
+ * switch when boot was already superseded. The absent argument retains the
+ * first-call classifier used by existing standalone source checks. */
+export function isGenuineWorkspaceSwitch(state:{booted:boolean},initialising?:boolean):boolean{
+ const first=!state.booted;state.booted=true;return initialising===undefined?!first:!initialising;
 }
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const scope=new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
  const work=new NativeWorking({expression:nativeExpressionRequest,file:nativeFileRequest,
   checkpoint:(id,value)=>writeWorkingCheckpoint(id,value,scope),mint:()=>`expression:authored-${crypto.randomUUID()}`});
- let busy=false,notice='',lastFailure=false,restoreGeneration=0;const bootState={booted:false};
+ let busy=false,notice='',lastFailure=false,restoreGeneration=0,intentGeneration=0;const bootState={booted:false};
  let ownerIdle:Promise<void>=Promise.resolve();
  let queuedMutations=0;
  const status=(text:string)=>{notice=text;update();};
@@ -91,11 +93,11 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    file:state?.file?{path:state.file.location.path,revision:state.file.revision,document_revision:state.file.document_revision}:null,
    page:binding?{page:binding.page,count:binding.page_count,shown:binding.occurrences.length,total:binding.member_refs.length,hidden:binding.hidden_refs.length}:null});
  };
- const run=async(task:()=>Promise<void>):Promise<boolean>=>{
+ const run=async(task:()=>Promise<void>,reportCurrent:()=>boolean=()=>true):Promise<boolean>=>{
   if(busy)return false;busy=true;
   let releaseOwner!:()=>void;ownerIdle=new Promise<void>(resolve=>{releaseOwner=resolve;});
   lastFailure=false;update();status('Reading or saving through the native owner…');
-  try{await task();return true;}catch(error){lastFailure=true;status(error instanceof Error?error.message:String(error));host.toast(notice,7000);return false;}
+  try{await task();return true;}catch(error){if(reportCurrent()){lastFailure=true;status(error instanceof Error?error.message:String(error));host.toast(notice,7000);}return false;}
   finally{busy=false;releaseOwner();update();selections.resume();}
  };
  const mutate=async(task:()=>Promise<void>):Promise<boolean>=>{
@@ -216,6 +218,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  });
  const requestOpen=(reference:string)=>{
   if(!reference.startsWith('expression:')){status('Choose a native Expression reference');return Promise.resolve(false);}
+  intentGeneration++; // Explicit opening wins over boot before any owner reply.
   return opens.submit(reference,captureNativeAdoption(host,()=>restoreGeneration));
  };
  const loadFile=async(path:string,observed?:NativeFileOpenBasis)=>{
@@ -283,9 +286,15 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   }
   status(result);
  });
+ const beginSwitch=()=>{
+  intentGeneration++;opens.cancel();restoreGeneration++;selections.cancel();
+  return {generation:restoreGeneration,intent:intentGeneration};
+ };
  return {
+  /** Invalidate old work synchronously, before installing a chosen draft. */
+  beginSwitch,
   /** Retry the last native open that failed (e.g. a revision conflict). */
-  retryOpen:()=>opens.retry(),
+  retryOpen:()=>{intentGeneration++;return opens.retry();},
   /** Inspect and settle an interrupted native operation. */
   resolvePending,
   /** Re-perform an interrupted file save with its retained identity. */
@@ -301,7 +310,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   status:()=>update(),
   open:requestOpen,
   cancelOpen:()=>{opens.cancel();update();},
-  openFile:(path:string,observed?:NativeFileOpenBasis)=>run(()=>loadFile(path,observed)),
+  openFile:(path:string,observed?:NativeFileOpenBasis)=>{intentGeneration++;return run(()=>loadFile(path,observed));},
+  intentGeneration:()=>intentGeneration,
   /** Follow the same Expression to a newer owner revision when the draft is
    * clean. Resolves false (draft kept) when there is local work to reconcile. */
   advance:async():Promise<boolean>=>{
@@ -319,22 +329,27 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    if(!nativeRef)return Promise.resolve('invalidated' as const);
    return selections.submit({generation:restoreGeneration,nativeRef,sceneId,entityId,bindingRef});
   },
-  async changed(journey:Journey){
-   if(isGenuineWorkspaceSwitch(bootState)){opens.cancel();restoreGeneration++;selections.cancel();}
-   const generation=restoreGeneration,current=captureNativeAdoption(host,()=>restoreGeneration);work.detach();host.correspondence({},null);
+  async changed(journey:Journey,bootCurrent?:()=>boolean,switchBasis?:{generation:number;intent:number}):Promise<number|undefined>{
+   const switching=isGenuineWorkspaceSwitch(bootState,!!bootCurrent);
+   if(!switching&&(bootCurrent?.()!==true||intentGeneration!==0||busy||work.state?.view||opens.reference))return;
+   if(switching){const basis=switchBasis??beginSwitch();if(basis.generation!==restoreGeneration||basis.intent!==intentGeneration)return;}
+   const generation=restoreGeneration,intent=intentGeneration,captured=captureNativeAdoption(host,()=>restoreGeneration),current=()=>captured()&&intentGeneration===intent&&(!bootCurrent||bootCurrent());
+   if(!current())return;work.detach();host.correspondence({},null);
    try{
     const record=await readWorkingCheckpoint(journey.id,scope) as import('./nativeWorking.js').NativeWorkingRecord|undefined;
     if(!current())return;
     if(record?.view){
      while(busy)await ownerIdle;if(!current())return;
-     await run(async()=>{
+     const reopened=await run(async()=>{
       const view=await work.reopenCheckpoint(record,journey,current);requireAdoption(current);
       restoreGeneration++;selections.cancel();host.load(view,true);markLoaded();readThrough=null;
       status('Reopened the acknowledged native world; local edits and interrupted operations were retained.');update();
-     });
+     },current);
+     if(!reopened)return;
     }else{if(record)work.restore(record,journey);update();}
+    return host.version();
    }
-   catch(error){if(generation===restoreGeneration){lastFailure=true;status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
+   catch(error){if(generation===restoreGeneration&&current()){lastFailure=true;status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },
   inspect(){const state=work.state;return {native_ref:state?.view?.document.expression_ref,revision:state?.view?.document.revision,file:state?.file,pending:state?.pending?.kind,notice,failed:lastFailure,busy,notes:state?.view?.notes??[],bindings:state?.view?.bindings};},
   idle:async()=>{while(busy)await ownerIdle;},
@@ -399,7 +414,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    if(!succeeded)throw Error(notice||'The native blueprint was not acknowledged');
   },
   /** Stand on a kernel Expression (host open-expression, boot deep link). */
-  follow:async(reference:string):Promise<boolean>=>{while(busy)await ownerIdle;return run(()=>followOpen(reference));},
+  follow:async(reference:string):Promise<boolean>=>{intentGeneration++;while(busy)await ownerIdle;return run(()=>followOpen(reference));},
   /** Re-read a followed Expression. Clean: adopt the kernel's newer revision
    * (never commits). Edited: keep the edits unsaved and disclose the newer
    * revision. Not open: follow it. */

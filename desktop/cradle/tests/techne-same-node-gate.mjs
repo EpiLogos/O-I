@@ -21,7 +21,10 @@ import react from '@vitejs/plugin-react';
 import {chromium} from 'playwright';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const out = resolve(root, 'tests/artifacts/techne-same-node-gate');
+const bootRaceMode=process.env.TECHNE_BOOT_RECOVERY_RACE??'';
+assert.ok(['','1','before-file-ack'].includes(bootRaceMode),'Unknown boot race aperture');
+const bootRace=bootRaceMode!=='';const earlyBootRace=bootRaceMode==='before-file-ack';
+const out=resolve(root,earlyBootRace?'tests/artifacts/techne-same-node-boot-early-race':bootRace?'tests/artifacts/techne-same-node-boot-race':'tests/artifacts/techne-same-node-gate');
 mkdirSync(out, {recursive: true});
 const bins = Object.fromEntries(['OI_BIN', 'OI_AIKIT_BIN', 'OI_CENTRAL_CTRL_BIN', 'WIKI_KERNEL_BIN'].map(key => {assert.ok(process.env[key], `${key} is required`); return [key, resolve(process.env[key])];}));
 const ground = realpathSync(mkdtempSync(resolve(tmpdir(), 'techne-gate-'))), project = resolve(ground, 'Work/Notes');
@@ -57,8 +60,8 @@ function savedFrame(title) {return JSON.parse(readFileSync(wikiPath, 'utf8')).ob
 function projectedRef(frameRef) {return `expression:knowledge-${createHash('sha256').update(`constellation:${frameRef}`).digest('hex').slice(0, 32)}`;}
 async function frameOf(host) {return page.locator(`[data-host="${host}"] .pcd-host-frame`).elementHandle().then(el => el.contentFrame());}
 async function ready(f) {await f.waitForFunction(() => window.__FIELD_STUDIES__ && window.__OI_KERNEL_EXPRESSIONS__?.kernelExpressionsAvailable());}
-async function gotoMode(mode) {
-  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/techne-construction-join.html?bridge=${encodeURIComponent(bridgeUrl)}${mode === 'expressions' ? '&mode=expressions' : ''}`);
+async function gotoMode(mode, singleRecoveryHost = false) {
+  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/techne-construction-join.html?bridge=${encodeURIComponent(bridgeUrl)}${mode === 'expressions' ? '&mode=expressions' : ''}${singleRecoveryHost ? '&single-recovery-host=1' : ''}`);
   await page.locator('.wiki-prose h1').waitFor();
   await page.locator('[data-host="presented"] .pcd-host-frame').waitFor();
   frame = await frameOf('presented');
@@ -100,6 +103,7 @@ async function openLiveThenSummon() {
   await drawer().getByRole('button', {name: 'Edit glyphs, text, media and motion', exact: true}).click();
 }
 
+let releaseBootReply,heldBootReply,heldBootReady,heldBootDelivery,releaseFileReply,heldFileReply,heldFileReady,heldFileDelivery;
 const probe = {};
 const expressionEdits = [];
 try {
@@ -323,16 +327,84 @@ try {
   await frame.waitForFunction(() => /Saved and read back/.test(document.getElementById('native-status')?.textContent ?? '') || /Saved and read back/.test(document.getElementById('toast')?.textContent ?? ''), null, {timeout: 60000});
   await frame.locator('#library-page [data-action="close-library"]').first().click();
   const savedPath = resolve(project, 'gate.expression.json');
-  const savedFile = JSON.parse(readFileSync(savedPath, 'utf8'));
+  const savedFileBytes=readFileSync(savedPath),savedFile=JSON.parse(savedFileBytes.toString('utf8'));
+  const savedFileBasis=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking().file);
+  const readSavedBasis=async stage=>{
+    assert.ok(savedFileBasis?.location&&savedFileBasis?.revision,'The saved file has an independently acknowledged native CAS basis');
+    const physical=readFileSync(savedPath);assert.deepEqual(physical,savedFileBytes,stage+': actual saved file bytes must remain unchanged');
+    const request={op:'expression',request:{operation:'inspect_file',location:savedFileBasis.location,expected_file_revision:savedFileBasis.revision}};
+    const actual=await op(request);assert.equal(actual.result,'expression');assert.equal(actual.data.state,'ready');
+    assert.deepEqual(actual.data.document,savedFile,stage+': native file reader restores the entire original saved document');
+    assert.deepEqual(actual.data.file,{location:savedFileBasis.location,revision:savedFileBasis.revision});
+    (probe.savedFileReadbacks??=[]).push({stage,request,actual,physical_bytes:physical.length,physical_sha256:createHash('sha256').update(physical).digest('hex')});
+    return actual.data.document;
+  };
   check(savedFile.expression_ref === expectedRef && !!savedFile.entities[nodeA], 'The native Expression file holds the same Expression and occurrence identities');
   const beforeRestart = await kernelDoc();
+  if(bootRace){assert.deepEqual(beforeRestart,savedFile,'The complete live document after saving agrees with the independently retained saved file');writeFileSync(resolve(out,'acknowledged-saved-expression-file.raw.json'),savedFileBytes);await readSavedBasis('acknowledged-before-restart');}
   bridge.kill('SIGTERM');
   await new Promise(r => setTimeout(r, 500));
   await startBridge();
-  await gotoMode('techne');
-  await frame.evaluate(path => window.__FIELD_STUDIES__.openNativeFile(path), 'Work/Notes/gate.expression.json');
+  if (bootRace) {
+    let selected = false,fileSelected=false,readyHeld,delivered,refuseHeld,refuseDelivery,readyFile,deliveredFile,refuseFile,refuseFileDelivery;
+    heldBootReady = new Promise((resolve,reject) => {readyHeld = resolve;refuseHeld = reject;});
+    heldBootDelivery = new Promise((resolve,reject) => {delivered = resolve;refuseDelivery = reject;});
+    // A relay/owner refusal must fail this gate, never leave a silent hold.
+    void heldBootReady.catch(()=>{});void heldBootDelivery.catch(()=>{});
+    const released = new Promise(resolve => {releaseBootReply = resolve;});
+    const fileReleased=new Promise(resolve=>{releaseFileReply=resolve;});
+    heldFileReady=new Promise((resolve,reject)=>{readyFile=resolve;refuseFile=reject;});
+    heldFileDelivery=new Promise((resolve,reject)=>{deliveredFile=resolve;refuseFileDelivery=reject;});
+    void heldFileReady.catch(()=>{});void heldFileDelivery.catch(()=>{});
+    await page.route('**/op', async route => {
+     try{
+      const request=route.request(),body=request.method()==='POST'?request.postDataJSON():null;
+      if (!selected && body?.op==='expression_recovery' && body.request?.operation==='read' && body.request.kind==='draft' && body.request.scope==='techne' && body.request.id==='source-twelve-faces') {
+        selected=true;
+        const response=await route.fetch(),raw=await response.body();
+        assert.equal(response.status(),200);const actual=JSON.parse(raw.toString('utf8'));
+        assert.equal(actual.ok,true);assert.equal(actual.outcome?.result,'expression_recovery');assert.equal(actual.outcome.data.state,'ready');assert.equal(actual.outcome.data.record?.id,'source-twelve-faces');
+        const artifact='held-real-boot-recovery-response.raw.json';writeFileSync(resolve(out,artifact),raw);
+        heldBootReply={request:body,http_status:response.status(),native_record:actual.outcome.data.record,raw_response:{artifact,bytes:raw.length,sha256:createHash('sha256').update(raw).digest('hex')},scope:'Exactly one real native reply through the ordinary production HTTP relay; only the presented production host is mounted in this restart aperture'};
+        readyHeld();await released;await route.fulfill({response,body:raw});heldBootReply.delivered_sha256=createHash('sha256').update(raw).digest('hex');delivered();
+      }else if(earlyBootRace&&!fileSelected&&body?.op==='expression'&&body.request?.operation==='open_file'&&body.request.location?.path==='Work/Notes/gate.expression.json'){
+        fileSelected=true;assert.deepEqual(body.request.location,savedFileBasis.location);assert.equal(body.request.expected_file_revision,savedFileBasis.revision);
+        const response=await route.fetch(),raw=await response.body();assert.equal(response.status(),200);const actual=JSON.parse(raw.toString('utf8'));
+        assert.equal(actual.ok,true);assert.equal(actual.outcome?.result,'expression');assert.equal(actual.outcome.data.state,'ready');
+        assert.deepEqual(actual.outcome.data.document,savedFile);assert.deepEqual(actual.outcome.data.file,{location:savedFileBasis.location,revision:savedFileBasis.revision});
+        const artifact='held-real-file-opening-response.raw.json';writeFileSync(resolve(out,artifact),raw);
+        heldFileReply={request:body,http_status:response.status(),raw_response:{artifact,bytes:raw.length,sha256:createHash('sha256').update(raw).digest('hex')}};
+        readyFile();await fileReleased;await route.fulfill({response,body:raw});heldFileReply.delivered_sha256=createHash('sha256').update(raw).digest('hex');deliveredFile();
+      }else await route.continue();
+     }catch(error){refuseHeld(error);refuseDelivery(error);refuseFile(error);refuseFileDelivery(error);await route.abort('failed').catch(()=>{});}
+    });
+  }
+  await gotoMode('techne',bootRace);
+  if(bootRace){
+    check(await page.locator('[data-host="concealed"]').count()===0,'The controlled held-reply restart has exactly one actual production receiver; original multi-host replay remains separate');
+    await Promise.race([heldBootReady,frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady()).then(()=>{throw new Error('Actual boot completed without the exact controlled source-twelve-faces recovery reply to hold.');})]);
+  }
+  const initialOpening=bootRace?await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState()})):null;
+  const opening=frame.evaluate(path=>window.__FIELD_STUDIES__.openNativeFile(path),'Work/Notes/gate.expression.json');
+  if(earlyBootRace){
+    await Promise.race([heldFileReady,opening.then(()=>{throw Error('File opening completed without the exact actual native response being held');})]);
+    const beforeAcknowledgement=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState()}));
+    assert.equal(beforeAcknowledgement.native.native_ref,initialOpening.native.native_ref,'The actual file acknowledgement is still withheld');
+    releaseBootReply();await heldBootDelivery;await frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady());
+    const afterEarlyBoot=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState()}));
+    assert.deepEqual(afterEarlyBoot.document,initialOpening.document,'Explicit file intent fences the real old boot reply before the file acknowledgement');
+    assert.equal(afterEarlyBoot.native.native_ref,initialOpening.native.native_ref);assert.equal(afterEarlyBoot.native.failed,false);
+    for(const key of ['sceneIndex','selected','camera','sceneElapsed','simTime'])assert.deepEqual(afterEarlyBoot.state[key],initialOpening.state[key],key+': superseded boot cannot restore an old position before file acknowledgement');
+    const recoveryEarly=await op(heldBootReply.request);assert.deepEqual(recoveryEarly.data.record,heldBootReply.native_record,'Early boot completion cannot author or overwrite the untouched canvas recovery');
+    await readSavedBasis('before-held-file-acknowledgement');
+    probe.earlyBoot={initialOpening,beforeAcknowledgement,afterEarlyBoot,recoveryEarly,heldFileReply};
+    releaseFileReply();await heldFileDelivery;
+  }
+  const actualOpen=await opening;
+  check(actualOpen===true,'The ordinary file-opening API acknowledges the exact native saved-file adoption');
   await frame.waitForFunction(ref => window.__FIELD_STUDIES__.nativeWorking()?.native_ref === ref, expectedRef, {timeout: 60000});
   const reopened = await kernelDoc();
+  if(bootRace){assert.deepEqual(reopened,savedFile,'Reopening must preserve every field of the original independently acknowledged saved native document');await readSavedBasis('after-file-adoption');if(earlyBootRace)assert.equal(heldFileReply.delivered_sha256,heldFileReply.raw_response.sha256);}
   probe.reopen = {a: reopened.entities[nodeA] === undefined ? null : true, relations: Object.keys(reopened.relations).length};
   check(JSON.stringify(workingEntity(reopened, viewA)) === JSON.stringify(workingEntity(beforeRestart, viewA)) && JSON.stringify(workingEntity(reopened, selectedB)) === JSON.stringify(workingEntity(beforeRestart, selectedB)) && reopened.entities[nodeA]?.subject?.subject_ref === 'source:a', 'After restart the reopened Expression carries A’s edits and B unchanged, under the same identities');
   check(!!Object.values(reopened.relations).find(r => r.relation?.ref === recorded[0].ref) && !!reopened.relations[presentationRef], 'After restart both the typed relationship and the presentation connection are present and distinct');
@@ -341,6 +413,29 @@ try {
   check(reopenedA && reopenedA.force.strength !== 0 && reopenedA.tint.toLowerCase() === '#3366cc' && reopenedA.sequence.steps.length >= 2, 'The reopened field renders A with its edited force, material and object states');
   const register = JSON.parse(readFileSync(wikiPath, 'utf8'));
   check(register.objects.some(o => o.ref === recorded[0].ref), 'Independent readback: the native Wiki register (source of truth) still holds the typed relationship after restart');
+  if(bootRace){
+    const recoveryBeforeDelivery=await op(heldBootReply.request);
+    assert.equal(recoveryBeforeDelivery.result,'expression_recovery');assert.equal(recoveryBeforeDelivery.data.state,'ready');
+    assert.deepEqual(recoveryBeforeDelivery.data.record,heldBootReply.native_record,'Opening the native file must preserve the complete prior recovery record and revision');
+    const before=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState(),timeOrigin:performance.timeOrigin,url:location.href}));
+    releaseBootReply();await frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady());await heldBootDelivery;
+    const after=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState(),timeOrigin:performance.timeOrigin,url:location.href}));
+    const nativeAfter=await kernelDoc(),recoveryAfterDelivery=await op(heldBootReply.request);
+    assert.equal(recoveryAfterDelivery.result,'expression_recovery');assert.equal(recoveryAfterDelivery.data.state,'ready');
+    assert.deepEqual(recoveryAfterDelivery.data.record,heldBootReply.native_record,'Delivering the late read must preserve its complete durable recovery record and revision');
+    assert.deepEqual(after.document,before.document,'A real late boot reply cannot replace any rendered document field');
+    assert.deepEqual(nativeAfter,savedFile,'A real boot reply cannot rewrite the independently acknowledged complete saved native document');
+    await readSavedBasis('after-boot-and-file-acknowledgements');
+    assert.equal(after.native.native_ref,expectedRef);
+    for(const key of ['native_ref','revision','file','pending','notes','bindings'])assert.deepEqual(after.native[key],before.native[key],key+': late recovery cannot detach or replace the acknowledged native basis');
+    assert.equal(after.native.busy,false);assert.equal(after.native.failed,false);
+    assert.equal(after.timeOrigin,before.timeOrigin);assert.equal(after.url,before.url);
+    for(const key of ['sceneIndex','selected','camera','sceneElapsed','simTime'])assert.deepEqual(after.state[key],before.state[key],key+': actual late boot response does not replace current position');
+    assert.equal(heldBootReply.delivered_sha256,heldBootReply.raw_response.sha256,'The held actual owner bytes were delivered unchanged');
+    probe.heldBootReply={...heldBootReply,recoveryBeforeDelivery,recoveryAfterDelivery,before,after};
+    check(true,'The selected real boot/file response ordering preserves the full native/rendered document, saved-file bytes/CAS basis, scene, subject and camera');
+    await page.unroute('**/op');
+  }
   await page.screenshot({path: resolve(out, '05-reopened.png')});
 
   // ——— Same member through M3′ Journey and an independent Library readback ———
@@ -348,6 +443,16 @@ try {
   await frame.locator('#timeline-panel:not([hidden])').waitFor();
   const journey = await frame.evaluate(id => {const d = window.__FIELD_STUDIES__.getDocument(), st = window.__FIELD_STUDIES__.getState(); const sc = d.scenes[st.sceneIndex]; const e = sc?.entities.find(v => v.id === id); return {strip: document.querySelectorAll('#timeline-panel .scene-strip [data-action]').length, scene: sc?.name, force: e?.force.strength, tint: e?.tint, steps: e?.sequence.steps.length, doc: d.id};}, viewA);
   probe.journey = journey;
+  if(bootRace){
+    const current=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState()}));
+    assert.deepEqual(current.document,probe.heldBootReply.after.document,'Journey consumes the complete same rendered document after the real late reply');
+    assert.deepEqual(await kernelDoc(),savedFile,'Journey consumes the complete original saved native document after the real reply ordering');
+    await readSavedBasis('after-Journey');
+    for(const key of ['native_ref','revision','file','pending','notes','bindings'])assert.deepEqual(current.native[key],probe.heldBootReply.after.native[key],key+': Journey keeps the acknowledged native basis');
+    for(const key of ['sceneIndex','selected','camera','sceneElapsed','simTime'])assert.deepEqual(current.state[key],probe.heldBootReply.after.state[key],key+': Journey keeps the same current position');
+    probe.heldBootReply.journey=current;
+    check(true,'Journey continues the exact native and rendered document, selected occurrence, attached file and current position after actual late boot delivery');
+  }
   check(journey.strip > 0 && journey.force === reopenedA.force.strength && journey.tint === reopenedA.tint && journey.steps === reopenedA.sequence.steps.length, 'M3′ Journey shows the same Scene with the same member, material and object states');
   await frame.evaluate(() => document.querySelector('[data-action="library"]').click());
   await frame.locator('#library-page:not([hidden])').waitFor();
@@ -360,6 +465,39 @@ try {
   await frame.locator('#library-page').waitFor({state: 'hidden'});
   check(await frame.evaluate(ref => window.__FIELD_STUDIES__.nativeWorking()?.native_ref === ref, expectedRef), 'Closing the Library returns to the same open native work');
   check(errors.length === 0, `No uncaught application errors (${errors.join('; ')})`);
+  if(bootRace){
+    // A real ordinary Library draft switch must restore its own acknowledged
+    // checkpoint AFTER that target document and initial position are installed.
+    const target=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking()}));
+    const targetRequest={op:'expression_recovery',request:{operation:'read',scope:'techne',kind:'checkpoint',id:target.document.id}};
+    const targetCheckpoint=await op(targetRequest);assert.equal(targetCheckpoint.result,'expression_recovery');assert.equal(targetCheckpoint.data.state,'ready');
+    assert.equal(targetCheckpoint.data.record?.value?.draft_id,target.document.id);
+    assert.deepEqual(targetCheckpoint.data.record.value.view.document,savedFile,'The ordinary target checkpoint is the exact previously acknowledged saved native document');
+    assert.deepEqual(targetCheckpoint.data.record.value.file,target.native.file);
+    await frame.evaluate(()=>document.querySelector('[data-action="library"]').click());await frame.locator('#library-page:not([hidden])').waitFor();
+    await frame.getByRole('button',{name:'New expression',exact:true}).click();
+    await frame.waitForFunction(id=>window.__FIELD_STUDIES__.getDocument().id!==id&&window.__FIELD_STUDIES__.nativeWorking()?.native_ref===undefined,target.document.id);
+    const departingTarget=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking()}));
+    await frame.evaluate(()=>document.querySelector('[data-action="library"]').click());await frame.locator('#library-page:not([hidden])').waitFor();
+    const targetCard=frame.locator('#library-page [data-action="load-saved"][data-id='+JSON.stringify(target.document.id)+']');
+    assert.equal(await targetCard.count(),1,'The exact target draft has one ordinary Library card');await targetCard.click();
+    await frame.waitForFunction(basis=>{const api=window.__FIELD_STUDIES__,w=api.nativeWorking();return api.getDocument().id===basis.id&&w?.native_ref===basis.ref&&w.file?.revision===basis.fileRevision&&!w.busy&&!w.failed&&!w.pending;},{id:target.document.id,ref:expectedRef,fileRevision:savedFileBasis.revision});
+    const returnedTarget=await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState()}));
+    assert.deepEqual(returnedTarget.document,target.document,'Ordinary target draft continuation restores every rendered document field');
+    assert.deepEqual(await kernelDoc(),savedFile,'Ordinary target draft continuation restores every saved native document field');
+    assert.equal(returnedTarget.native.native_ref,expectedRef);assert.deepEqual(returnedTarget.native.file,target.native.file);
+    assert.deepEqual(returnedTarget.native.bindings,targetCheckpoint.data.record.value.view.bindings);
+    await readSavedBasis('after-ordinary-target-checkpoint-switch');
+    probe.ordinaryTargetSwitch={target,targetRequest,targetCheckpoint,departingTarget,returnedTarget};
+    check(true,'An ordinary Library switch installs its target first, then restores the exact target checkpoint/native file/body without a stale version refusal');
+    const exited=new Promise(resolve=>bridge.once('exit',resolve));bridge.kill('SIGTERM');await exited;await startBridge();
+    const recoveryAfterRestart=await op(heldBootReply.request);
+    await readSavedBasis('after-separate-owner-restart');
+    assert.equal(recoveryAfterRestart.result,'expression_recovery');assert.equal(recoveryAfterRestart.data.state,'ready');
+    assert.deepEqual(recoveryAfterRestart.data.record,heldBootReply.native_record,'A separate restarted native owner must still read the same complete recovery record and revision');
+    probe.heldBootReply.recoveryAfterRestart=recoveryAfterRestart;
+    check(true,'The untouched original recovery record remains available through the actual native recovery reader after a separate kernel restart');
+  }
   receipt.passed = true;
 } catch (error) {
   receipt.failure = String(error);
@@ -367,7 +505,8 @@ try {
   if (page) await page.screenshot({path: resolve(out, 'failure.png')}).catch(() => {});
   throw error;
 } finally {
-  receipt.errors = errors; receipt.probe = probe; receipt.expressionEdits = expressionEdits;
+  releaseBootReply?.();releaseFileReply?.();
+  receipt.errors = errors; receipt.probe = probe; receipt.boot_reply_race = {requested:bootRace,mode:bootRaceMode,held:heldBootReply??null,held_file:heldFileReply??null,original_uninstrumented_multi_host_replay_required:bootRace}; receipt.expressionEdits = expressionEdits;
   writeFileSync(resolve(out, 'receipt.json'), JSON.stringify(receipt, null, 2) + '\n');
   writeFileSync(resolve(out, 'kernel.log'), logs.join(''));
   if (browser) await browser.close();

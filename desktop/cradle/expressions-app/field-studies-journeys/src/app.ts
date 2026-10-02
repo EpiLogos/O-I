@@ -482,6 +482,9 @@ const canvasHome=document.createElement('div');canvasHome.className='canvas-home
 // A blank boot frame is not a new chosen work. Retain the host's native
 // reference until recovery succeeds or the user explicitly opens a draft.
 let awaitingNativeBoot=startsWithNativeReference;
+// An untouched startup canvas is unsubmitted until qualified recovery or
+// native adoption. Superseding boot alone does not author that canvas.
+let startupRecoveryPending=!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression;
 let researchInstruments:ReturnType<typeof installResearchInstruments>|undefined;
 // A deliberate peek at the live field while a research instrument stays mounted
 // and active: the engine renders only while the person is looking at it.
@@ -491,17 +494,19 @@ let journeyNavigation=0;
 async function loadJourney(j:Journey){
  nativeWorkspace?.cancelOpen();
  if(propertyTake)finishPropertyTake();
+ const retainPrevious=!startupRecoveryPending||store.revision!==0||journeyNavigation!==0;
+ const switchBasis=nativeWorkspace?.beginSwitch(); // Invalidate the chosen switch before its departing backup awaits.
  const generation=++journeyNavigation,version=store.revision,previous=clone(store.document);
  // A navigation may only replace the canvas after its actual departing work
  // has an acknowledged backup. A returning save never replaces newer edits.
- if(!deletedLibraryIds.has(previous.id))await writeDraft(previous);
- if(generation!==journeyNavigation||version!==store.revision)throw new Error('The open request was superseded by newer work. Your current Expression was retained.');
- applyJourney(j);
+ if(retainPrevious&&!deletedLibraryIds.has(previous.id))await writeDraft(previous);
+ if(generation!==journeyNavigation||version!==store.revision||switchBasis&&nativeWorkspace?.intentGeneration()!==switchBasis.intent)throw new Error('The open request was superseded by newer work. Your current Expression was retained.');
+ applyJourney(j,false,switchBasis);
  // A successful explicit open is the person's entry into the instrument.
  // Keep the gate and departing work intact if backup or navigation fails.
  closeEntryGate();
 }
-function applyJourney(j:Journey,native=false){engine?.releasePrivateSound?.();journeyNavigation++;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
+function applyJourney(j:Journey,native=false,switchBasis?:{generation:number;intent:number}){const preparedSwitch=native?undefined:switchBasis??nativeWorkspace?.beginSwitch();engine?.releasePrivateSound?.();journeyNavigation++;if(!native)awaitingNativeBoot=false;if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();if(!native)void nativeWorkspace?.changed(store.document,undefined,preparedSwitch);}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
  if(captureOpen){inspectorOpen=false;contextKind='';timelineOpen=false;beltPickerOpen=false;shapePickerOpen=false;}renderAll();}
 function renderImageSuite(){readCapture();if(!selectedEntity()){const e=scene().entities.find(e=>e.kind==='formation');if(e)selected=[e.id];} $('capture-panel').innerHTML=`<header><h3>Image suite</h3>${ib('capture-options','close','Close image suite')}</header>${imageSuiteHTML(scene(),selected[0],stepIndex)}<details class="image-output"><summary>Capture output settings</summary><div class="two-col"><label class="control"><span>Output size</span><select id="capture-width"><option value="1280">1280</option><option value="1440">1440</option><option value="1920">1920</option><option value="3840">3840 · PNG</option></select></label><label class="control"><span>Frame</span><select id="capture-aspect"><option value="stage">Current stage</option><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="9:16">9:16</option></select></label></div><label class="toggle-row"><span>Include page text</span><input id="capture-text" type="checkbox" ${captureSettings.includeText?'checked':''}><i></i></label><label class="toggle-row"><span>Transparent PNG</span><input id="capture-transparent" type="checkbox" ${captureSettings.transparent?'checked':''}><i></i></label><p class="control-note">Clean artwork only. Aspect changes centre-crop the current view. Silent live video requests 30 fps; 2-minute / 128 MB limit.</p></details>`;
@@ -1042,14 +1047,14 @@ window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({s
  // the targets already presented. No native request, clock or target write.
  probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
 function applyNativeView(view:KernelConversion,preservePosition=false){
- awaitingNativeBoot=false;
+ awaitingNativeBoot=false;startupRecoveryPending=false;
  epiWorld=readEpiWorldRecord(view.document as unknown as ExpressionDocument);
  // An opened native Expression is what the frame stands on: the entry gate
  // closes and (unless the caller keeps its position) the engine presents the
  // document's current Scene.
  const presented=presentAdoption(view);closeEntryGate();
  const oldScene=scene().id,oldCamera={...camera},oldTime=sceneElapsed,oldSelection=[...selected],oldPlaying=journeyPlaying;
- if(!preservePosition)applyJourney(view.journey,true);else {store.replace(initialiseSceneSaves(initialiseBelts(view.journey)));}
+ if(!preservePosition)applyJourney(view.journey,true);else {store.replace(initialiseSceneSaves(initialiseBelts(view.journey)));store.document.updatedAt=view.journey.updatedAt;}
  const desired=preservePosition?oldScene:presented.sceneId;
  sceneIndex=Math.max(0,store.document.scenes.findIndex(s=>s.id===desired));
  if(preservePosition){camera=oldCamera;sceneElapsed=oldTime;selected=oldSelection.filter(id=>scene().entities.some(e=>e.id===id));journeyPlaying=oldPlaying;}
@@ -1115,7 +1120,7 @@ const mastheadCentre=document.createElement('div');mastheadCentre.className='mas
 const workspaceCluster=masthead.querySelector('.workspace-cluster')!;workspaceCluster.replaceWith(mastheadCentre);
 const lensStudio=installLensStudio({activate:activateInstrument},mastheadCentre);
 mastheadCentre.append(workspaceCluster);
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!(startupRecoveryPending&&store.revision===0&&journeyNavigation===0)&&(!awaitingNativeBoot||store.revision!==0),snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 // Acts & reusable material (EXPRESSION-ACT-MATERIAL-V1): roles on this Scene's
 // objects/text, save-as-reusable, the material register and act playback,
 // beside the saved-scene playback.
@@ -1509,21 +1514,53 @@ function openNativeFileDialog(){
  dialog.showModal();
 }
 async function startWorkspace(){
+ // Recovery is a boot offer, not a later navigation. Qualify the exact
+ // showing draft, view position and explicit native intent across every await.
+ const position=()=>JSON.stringify({sceneIndex,selected,stepIndex,sceneElapsed,simTime,scenePlaying,journeyPlaying,fieldPaused,camera});
+ let version=store.revision,id=store.document.id,navigation=journeyNavigation,intent=nativeWorkspace?.intentGeneration()??0,viewPosition=position();
+ const current=()=>store.revision===version&&store.document.id===id&&journeyNavigation===navigation&&(nativeWorkspace?.intentGeneration()??0)===intent&&position()===viewPosition;
+ const recapture=()=>{version=store.revision;id=store.document.id;navigation=journeyNavigation;intent=nativeWorkspace?.intentGeneration()??0;viewPosition=position();};
  let recovered:SessionState|undefined;
  let showEntry=false;
- if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){try{for(const draft of await readDrafts())sessionExpressions.set(draft.id,draft);const id=localStorage.getItem('oi.field-studies.last'),draft=id?await readDraft(id):undefined;if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
- if(recovered&&!qs.has('scene')){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
+ if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){
+  try{
+   const drafts=await readDrafts();
+   if(current()){
+    for(const draft of drafts)sessionExpressions.set(draft.id,draft);
+    const last=localStorage.getItem('oi.field-studies.last'),draft=last?await readDraft(last):undefined;
+    if(current()){
+     if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}
+     recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;
+     recapture(); // Only this synchronous, qualified boot adoption advances its basis.
+    }
+   }
+  }catch(e){console.warn('Draft recovery unavailable',e);if(current())showEntry=!startsInTechne;}
+ }
+ if(current())startupRecoveryPending=false; // A superseded read cannot author an untouched initial canvas.
+ if(current()){
+  if(recovered&&!qs.has('scene')){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
+  recapture();
+ }
  document.body.classList.toggle('oi-host-techne',hostMode==='techne');renderRail();
- if(!qsExpression?.startsWith('expression:'))await nativeWorkspace?.changed(store.document);
- resize();engine.render(frameData(0));if(recovered?.transport)engine.restoreTransport?.(recovered.transport);
- trackPreview=!!scene().propertyTracks?.length;resize();renderAll();if(location.hash.startsWith('#library'))openLibrary(location.hash.includes('about')?'about':'collection',false);rafId=requestAnimationFrame(tick);
-if(startupError)toast(startupError,7000);else if(workspaceStorageError)toast('Saved toolbelt could not be read. Starter controls are available for this session.',7000);
-if(fieldPaused&&!recovered&&!qs.has('still'))toast('A still field, following your reduced-motion preference. Play a scene, or lift “Pause physics” in the studio, to set it in motion.',6000);
-if(qs.has('edit'))edit(true,(['scene','objects','field','motion'].includes(qs.get('edit')!)?qs.get('edit'):'scene')as InspectorContext['tab']);
-if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies.last'),store.document.name);
-
-if(qsExpression?.startsWith('expression:')){const open=()=>void nativeWorkspace?.follow(qsExpression);if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
-setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)void flushDraft();},1000);}
+ if(current()&&!qsExpression?.startsWith('expression:')){
+  const ownedVersion=await nativeWorkspace?.changed(store.document,current);
+  // The initial checkpoint may replace the same draft through host.load.
+  // Rebase only that acknowledged version, with intent/navigation/position
+  // unchanged. An explicit opening or a newer local view always wins.
+  if(ownedVersion!==undefined&&store.revision===ownedVersion&&store.document.id===id&&journeyNavigation===navigation&&(nativeWorkspace?.intentGeneration()??0)===intent&&position()===viewPosition)recapture();
+ }
+ resize();engine.render(frameData(0));if(current()&&recovered?.transport)engine.restoreTransport?.(recovered.transport);
+ if(current())trackPreview=!!scene().propertyTracks?.length;
+ resize();renderAll();if(location.hash.startsWith('#library'))openLibrary(location.hash.includes('about')?'about':'collection',false);rafId=requestAnimationFrame(tick);
+ if(startupError)toast(startupError,7000);else if(workspaceStorageError)toast('Saved toolbelt could not be read. Starter controls are available for this session.',7000);
+ if(current()){
+  if(fieldPaused&&!recovered&&!qs.has('still'))toast('A still field, following your reduced-motion preference. Play a scene, or lift “Pause physics” in the studio, to set it in motion.',6000);
+  if(qs.has('edit'))edit(true,(['scene','objects','field','motion'].includes(qs.get('edit')!)?qs.get('edit'):'scene')as InspectorContext['tab']);
+  if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies.last'),store.document.name);
+  if(qsExpression?.startsWith('expression:')){const open=()=>{if(current())void nativeWorkspace?.follow(qsExpression);};if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
+ }
+ setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)void flushDraft();},1000);
+}
 function openEntryGate(hasContinue:boolean,continueLabel?:string){
  if(worldLens==='epi-logos'||nativeWorkspace?.nativeView())return; // Epi entry is its personal-world entrance; an opened native Expression already supplies its subject.
  const gate=$('entry-gate');gate.hidden=false;gate.innerHTML=entryGateHTML({hasContinue,continueLabel:continueLabel?`Continue “${continueLabel}”`:undefined,hasNative:kernelExpressionsAvailable()});
@@ -1532,4 +1569,7 @@ function closeEntryGate(){const gate=$('entry-gate');gate.hidden=true;gate.inner
 window.addEventListener('physis-quality',(ev=>{const s=(ev as CustomEvent).detail??{};if(Number(s.fps)>0)physisFpsCap=Number(s.fps);if(Number(s.pixelRatio)>0){physisPixelRatio=Number(s.pixelRatio);if(physisPixelRatio!==physisRatioApplied){physisRatioApplied=physisPixelRatio;resize();}}if(Number(s.particleLimit)>0)physisParticleCap=Number(s.particleLimit);needsFrame=true;}) as EventListener);
 function desktopSource():DesktopScene{return {expression:clone(store.document),sceneIndex,camera:{...camera},viewport:{width,height},name:scene().name+' · '+store.document.name};}
 installPhysis(desktopSource,async source=>{await loadJourney(validateJourney(source.expression));await setScene(source.sceneIndex??0);camera={...defaultCamera(),...source.camera};if(source.viewport){camera.panX*=width/source.viewport.width;camera.panY*=height/source.viewport.height;}overlayDirty=true;needsFrame=true;renderAll();},toast);
-void startWorkspace();
+const workspaceStarted=startWorkspace();
+// Read-only acceptance barrier over actual boot, not a delay or a native reply.
+Object.assign(window.__FIELD_STUDIES__,{workspaceReady:()=>workspaceStarted});
+void workspaceStarted;
