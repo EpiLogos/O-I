@@ -25,7 +25,7 @@
 //! - The kernel records nothing and emits nothing: the commission is an
 //!   owner write; the receipts live in Central's file history.
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 
 use crate::files::Location;
 use crate::flow::{CentralClient, OwnerCallError, CRADLE_ACTOR, CRADLE_ACTOR_KIND};
@@ -58,9 +58,12 @@ pub enum CommissionOutcome {
     },
     /// The owner answered, and the answer was no — the owner's own message,
     /// carried verbatim.
-    OwnerRefused { path: String, message: String },
+    OwnerRefused { path: String, message: String, native: Option<Value> },
     /// The owner executable could not be launched. Absence, not an error.
     OwnerUnavailable { path: String, detail: String },
+    OwnerFailed { path: String, detail: String, child_pid: Option<u32>, cleanup: Option<String> },
+    /// The original composed input survives loss of the native CAS receipt.
+    OwnerOutcomeUnknown { path: String, detail: String, child_pid: Option<u32>, cleanup: Option<String>, native: Option<Value>, owner_input: Value },
 }
 
 /// Commission one composed flow instance through the owner CAS.
@@ -100,20 +103,38 @@ pub fn commission(
     if let Some(session) = agent_session_ref {
         input["agent_session_ref"] = json!(session);
     }
-    match client.run(COMMISSION_WRITE_ACTION, input) {
-        Ok(data) => match data["outcome"].as_str() {
+    let result = client.run(COMMISSION_WRITE_ACTION, input.clone());
+    let data = match result {
+        Ok(data) => data,
+        Err(OwnerCallError::Unavailable { detail }) => return Ok(CommissionOutcome::OwnerUnavailable { path, detail }),
+        Err(OwnerCallError::Refused { message, native }) => return Ok(CommissionOutcome::OwnerRefused { path, message, native }),
+        Err(OwnerCallError::Malformed { detail }) => return Ok(CommissionOutcome::OwnerFailed { path, detail, child_pid: None, cleanup: None }),
+        Err(OwnerCallError::TransportFailed { detail, child_pid, cleanup }) => return Ok(CommissionOutcome::OwnerFailed { path, detail, child_pid, cleanup }),
+        Err(OwnerCallError::OutcomeUnknown { detail, child_pid, cleanup, native }) => return Ok(CommissionOutcome::OwnerOutcomeUnknown { path, detail, child_pid, cleanup, native, owner_input: input }),
+    };
+    let uncertain = |detail: String| CommissionOutcome::OwnerOutcomeUnknown {
+        path: path.clone(), detail, child_pid: None, cleanup: None,
+        native: Some(data.clone()), owner_input: input.clone(),
+    };
+    if data["schema"] != "central.file-mutation/v1" || data["location"] != json!(location) {
+        return Ok(uncertain("Central returned a redirected or unsupported commission receipt".into()));
+    }
+    match data["outcome"].as_str() {
             Some("written") | Some("created") | Some("unchanged") => {
+                let Some(revision) = data["revision"].as_str().filter(|r| !r.is_empty()) else {
+                    return Ok(uncertain("Central commission receipt has no native revision".into()));
+                };
                 Ok(CommissionOutcome::Commissioned {
                     path,
                     previous_revision: data["previous_revision"]
                         .as_str()
                         .unwrap_or(expected_revision)
                         .to_owned(),
-                    revision: data["revision"].as_str().unwrap_or_default().to_owned(),
+                    revision: revision.to_owned(),
                     agent_session_ref: agent_session_ref.map(str::to_owned),
                 })
             }
-            Some("conflict") => Ok(CommissionOutcome::Conflict {
+            Some("conflict") if data["expected_revision"] == expected_revision && data["current"]["revision"].as_str().is_some_and(|r| !r.is_empty()) => Ok(CommissionOutcome::Conflict {
                 path,
                 expected: data["expected_revision"]
                     .as_str()
@@ -124,17 +145,6 @@ pub fn commission(
                     .unwrap_or_default()
                     .to_owned(),
             }),
-            other => Ok(CommissionOutcome::OwnerRefused {
-                path,
-                message: format!("Central returned an unsupported commission outcome {other:?}"),
-            }),
-        },
-        Err(OwnerCallError::Unavailable { detail }) => {
-            Ok(CommissionOutcome::OwnerUnavailable { path, detail })
-        }
-        Err(refusal) => Ok(CommissionOutcome::OwnerRefused {
-            path,
-            message: refusal.detail().to_owned(),
-        }),
+            other => Ok(uncertain(format!("Central returned an unsupported commission outcome {other:?}"))),
     }
 }

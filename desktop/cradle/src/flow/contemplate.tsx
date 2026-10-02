@@ -46,7 +46,7 @@ export function FlowCognition({project,flowRef}:{project:string|null;flowRef:str
   try{setExecution(await contemplateFlow(kernel.transport,project,flowRef,thought));}catch(reason){setError(String(reason));}finally{setBusy("");}};
  const readChanged=async()=>{if(!thought)return;setBusy("changed");setError(undefined);
   try{setChanged(await changedSince(kernel.transport,project,thought));}catch(reason){setError(String(reason));}finally{setBusy("");}};
- const overall=!disclosure?"idle":execution?"executed":disclosure.state==="invoked"?"disclosed":"refused";
+ const overall=!disclosure?"idle":execution?(execution.state==="invoked"?"returned":execution.state):disclosure.state==="invoked"?"disclosed":"refused";
  return <div className="flow-cognition" data-contemplate-state={overall}>
   <details>
    <summary>Contemplate · what changed</summary>
@@ -74,15 +74,23 @@ export function FlowCognition({project,flowRef}:{project:string|null;flowRef:str
 function Verbatim({label,data}:{label:string;data:unknown}){
  return <div className="flow-cognition-answer"><p className="flow-cognition-label">{label}</p><pre data-owner-payload="true">{JSON.stringify(data,null,2)}</pre></div>;
 }
+function dispatchFailureDetail(answer:Exclude<ActionDispatch,{state:"invoked"}>){
+ return answer.state==="owner_refused"?answer.message:answer.state==="unknown_owner"?answer.action:answer.state==="unsupported_action"?`${answer.owner}: ${answer.detail}`:answer.detail;
+}
+function DispatchFailure({answer}:{answer:Exclude<ActionDispatch,{state:"invoked"}>}){
+ return <div className="flow-cognition-answer" role="alert" data-owner-state={answer.state}>
+  <p>{dispatchFailureDetail(answer)}</p>
+  {answer.state==="owner_outcome_unknown"&&<p>Contemplate may have taken effect. The Flow and original records are retained; inspect the native owner records before invoking it again.</p>}
+  <details><summary>Inspect the exact owner outcome</summary><pre>{JSON.stringify(answer,null,2)}</pre></details>
+ </div>;
+}
 function PreflightAnswer({answer}:{answer:ActionDispatch}){
  if(answer.state==="invoked")return <Verbatim label="The owner's preflight — exactly what Contemplate will read and touch:" data={answer.data}/>;
- const detail=answer.state==="owner_refused"?answer.message:answer.state==="owner_unavailable"?answer.detail:answer.state==="malformed_ref"?answer.detail:answer.state==="unsupported_action"?`${answer.owner}: ${answer.detail}`:answer.action;
- return <div className="flow-cognition-answer" role="alert"><p className="flow-cognition-label">The owner answered, and Contemplate cannot proceed here:</p><p className="flow-origin" data-owner-refusal="true">{detail}</p><p className="flow-cognition-law">Contemplate resolves the Flow&apos;s knowledge node through the owner&apos;s store; on grounds whose store does not hold it, this refusal is the honest answer — nothing was read and nothing executed.</p></div>;
+ return <DispatchFailure answer={answer}/>;
 }
 function ExecutionAnswer({answer}:{answer:ActionDispatch}){
  if(answer.state==="invoked")return <Verbatim label="The owner's Contemplate reading:" data={answer.data}/>;
- const detail=answer.state==="owner_refused"?answer.message:answer.state==="owner_unavailable"?answer.detail:answer.state==="malformed_ref"?answer.detail:answer.state==="unsupported_action"?`${answer.owner}: ${answer.detail}`:answer.action;
- return <div className="flow-cognition-answer" role="alert"><p className="flow-cognition-label">The owner answered the explicit execution:</p><p className="flow-origin" data-owner-refusal="true">{detail}</p></div>;
+ return <DispatchFailure answer={answer}/>;
 }
 function ChangedReading({reading}:{reading:ChangedSinceReading}){
  return <div className="flow-changed-reading">
@@ -90,6 +98,6 @@ function ChangedReading({reading}:{reading:ChangedSinceReading}){
   <p className="flow-cognition-label">Owner read ({reading.aikit.state})</p>
   {reading.aikit.state==="invoked"
     ?<Verbatim label="Changed sources · affected knowledge · unresolved — each with its provenance:" data={reading.aikit.receipt}/>
-    :<p className="flow-origin" data-owner-refusal="true">{reading.aikit.state==="owner_refused"?reading.aikit.message:reading.aikit.detail}</p>}
+    :<div><p className="flow-origin" data-owner-state={reading.aikit.state}>{reading.aikit.state==="owner_refused"?reading.aikit.message:reading.aikit.detail}</p><details><summary>Inspect the owner reading failure</summary><pre>{JSON.stringify(reading.aikit,null,2)}</pre></details></div>}
  </div>;
 }

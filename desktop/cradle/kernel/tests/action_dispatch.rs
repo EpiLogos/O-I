@@ -530,6 +530,7 @@ fn owner_refusal_and_unavailable_are_explicit_verbatim_states() {
         ActionDispatch::OwnerRefused {
             owner_operation,
             message,
+            ..
         } => {
             assert_eq!(owner_operation, "aikit knowledge open");
             assert!(
@@ -547,6 +548,7 @@ fn owner_refusal_and_unavailable_are_explicit_verbatim_states() {
         ActionDispatch::OwnerRefused {
             owner_operation,
             message,
+            ..
         } => {
             assert_eq!(owner_operation, "projectcentral.wiki.absent");
             assert!(
@@ -642,6 +644,7 @@ fn wire_shape_is_stable_for_the_typed_consumer() {
         ActionDispatch::OwnerRefused {
             owner_operation: "o".into(),
             message: "m".into(),
+            native: None,
         },
         ActionDispatch::OwnerUnavailable {
             owner_operation: "o".into(),

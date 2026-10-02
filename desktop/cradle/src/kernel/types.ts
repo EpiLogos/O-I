@@ -109,12 +109,16 @@ export interface ChangedSinceReading {
   thought_ref: string;
   horizon:
     | { state: "available"; owner_operation: string; provider: string; cursor: number; adapted: Record<string, unknown> }
-    | { state: "owner_refused"; owner_operation: string; message: string }
-    | { state: "owner_unavailable"; owner_operation: string; detail: string };
+    | { state: "owner_refused"; owner_operation: string; message: string; native?: unknown }
+    | { state: "owner_unavailable"; owner_operation: string; detail: string }
+    | { state: "owner_failed"; owner_operation: string; detail: string; child_pid?: number|null; cleanup?: string|null }
+    | { state: "owner_outcome_unknown"; owner_operation: string; detail: string; child_pid?: number|null; cleanup?: string|null; native?: unknown };
   aikit:
     | { state: "invoked"; owner_operation: string; receipt: Record<string, unknown> }
-    | { state: "owner_refused"; owner_operation: string; message: string }
-    | { state: "owner_unavailable"; owner_operation: string; detail: string };
+    | { state: "owner_refused"; owner_operation: string; message: string; native?: unknown }
+    | { state: "owner_unavailable"; owner_operation: string; detail: string }
+    | { state: "owner_failed"; owner_operation: string; detail: string; child_pid?: number|null; cleanup?: string|null }
+    | { state: "owner_outcome_unknown"; owner_operation: string; detail: string; child_pid?: number|null; cleanup?: string|null; native?: unknown };
 }
 /** U4.1/U4.2 selection commission outcome (`commission.rs`): an owner
  * revision, a structured CAS conflict (both revisions observed), or the
@@ -122,8 +126,10 @@ export interface ChangedSinceReading {
 export type CommissionOutcome =
   | { state: "commissioned"; path: string; previous_revision: string; revision: string; agent_session_ref: string | null }
   | { state: "conflict"; path: string; expected: string; current: string }
-  | { state: "owner_refused"; path: string; message: string }
-  | { state: "owner_unavailable"; path: string; detail: string };
+  | { state: "owner_refused"; path: string; message: string; native?: unknown }
+  | { state: "owner_unavailable"; path: string; detail: string }
+  | { state: "owner_failed"; path: string; detail: string; child_pid?: number|null; cleanup?: string|null }
+  | { state: "owner_outcome_unknown"; path: string; detail: string; child_pid?: number|null; cleanup?: string|null; native?: unknown; owner_input: unknown };
 
 // ---------------------------------------------------------------------------
 // Configuration-plane wire shapes (#299 C6 live leg). These alias the C0
@@ -487,8 +493,10 @@ export type KernelOpResult =
             expected: string;
             current: string;
           }
-        | { kind: "owner-refused"; source_ref: SourceRef; message: string }
-        | { kind: "unavailable"; source_ref: SourceRef; detail: string };
+        | { kind: "owner-refused"; source_ref: SourceRef; message: string; native?: unknown }
+        | { kind: "unavailable"; source_ref: SourceRef; detail: string }
+        | { kind: "failed"; source_ref: SourceRef; detail: string }
+        | { kind: "outcome-unknown"; source_ref: SourceRef; detail: string; child_pid?: number|null; cleanup?: string|null; native?: unknown };
     }
   | { result: "source_reread"; buffer: SourceBufferState }
   | { result: "surface_opened"; snapshot: KernelSnapshotState }
@@ -570,8 +578,18 @@ export type ActionDispatch =
   | { state: "unsupported_action"; owner: string; detail: string }
   | { state: "malformed_ref"; detail: string }
   | { state: "unknown_owner"; action: string }
-  | { state: "owner_refused"; owner_operation: string; message: string }
-  | { state: "owner_unavailable"; owner_operation: string; detail: string };
+  | { state: "owner_refused"; owner_operation: string; message: string; native?: unknown }
+  | { state: "owner_unavailable"; owner_operation: string; detail: string }
+    | { state: "owner_failed"; owner_operation: string; detail: string; child_pid?: number|null; cleanup?: string|null }
+    | { state: "owner_outcome_unknown"; owner_operation: string; detail: string; child_pid?: number|null; cleanup?: string|null; native?: unknown };
+
+/** Native adapter failure preserves the original owner invocation and error;
+ * it confers neither completion nor a new semantic operation identity. */
+export interface NativeCallFailure {
+  schema: "oi.native-call-failure/v1";
+  owner_operation: string;
+  failure: {kind: "outcome_unknown"|"transport_failed"|"unavailable"|"malformed"|"refused"; detail?: string; message?: string; child_pid?: number|null; cleanup?: string|null; native?: unknown};
+}
 
 export interface KnowledgeAddress { kind: "wiki" | "source" | "project-map"; value: string }
 export type KnowledgeRequest = {action:"resolve";query:string} | { action: "search"; query: string } | { action: "history" | "status" } | { action: "read" | "relations" | "explain" | "use"; address: KnowledgeAddress };

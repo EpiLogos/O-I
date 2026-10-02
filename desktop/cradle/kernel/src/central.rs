@@ -1,7 +1,7 @@
 //! Central owns root/project, civil time, source, document and Return semantics.
 //! This finite desktop adapter joins owner results; it never traverses files,
 //! invents a SourceRef, starts an Agent, or rewrites temporal identity.
-use crate::{files, flow::CentralClient};
+use crate::{files, flow::{CentralClient, Effect}};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -35,7 +35,7 @@ pub enum Request {
 }
 
 fn reading(client: &CentralClient, project: Option<&str>, action: &str, schema: &str) -> Value {
-    match client.run_envelope(action, json!({"project":project})) {
+    match client.run_envelope_read(action, json!({"project":project})) {
         Ok(envelope) if envelope["ok"] == true => {
             if envelope["data"]["schema"] != schema
                 || envelope["data"]["automatic_agent_or_model_invocation"] == true
@@ -51,10 +51,10 @@ fn reading(client: &CentralClient, project: Option<&str>, action: &str, schema: 
                 Some("stale_basis_or_identity_conflict") => "stale",
                 _ => "failed",
             };
-            json!({"state":state,"action":action,"error":envelope["error"],"native_status":envelope["status"]})
+            json!({"state":state,"action":action,"error":envelope["error"],"native_status":envelope["status"],"native":envelope})
         }
         Err(error) => {
-            json!({"state":if matches!(error,crate::OwnerCallError::Unavailable{..}){"unavailable"}else{"failed"},"action":action,"error":{"message":error.to_string()}})
+            json!({"state":if matches!(error,crate::OwnerCallError::Unavailable{..}){"unavailable"}else{"failed"},"action":action,"error":{"message":error.to_string()},"failure":error})
         }
     }
 }
@@ -65,7 +65,7 @@ pub fn day(
     day_ref: Option<&str>,
 ) -> Result<Value, String> {
     let value = client
-        .run(
+        .run_read(
             "central.day.read",
             json!({"project":project,"day_ref":day_ref}),
         )
@@ -81,7 +81,7 @@ pub fn day(
         }
     } else {
         let time = client
-            .run("central.time.policy", json!({"project":project}))
+            .run_read("central.time.policy", json!({"project":project}))
             .map_err(|e| e.to_string())?;
         if value["temporal"]["civil_date"] != time["civil_date"] {
             return Err("The native today pointer is stale; explicitly ensure the current Day under the native time policy".into());
@@ -112,10 +112,14 @@ pub fn source_location(
 ) -> Result<files::Location, String> {
     let source = client
         .source_read(project, reference)
-        .map_err(|e| e.to_string())?;
+        .map_err(|error| {
+            let mut failure = crate::knowledge::failure_reading("projectcentral.source.read", error);
+            failure["owner_input"] = json!({ "project": project, "source_ref": reference });
+            failure.to_string()
+        })?;
     let path = if let Some(project) = project {
         let world = client
-            .run("central.world", json!({"project":null}))
+            .run_read("central.world", json!({"project":null}))
             .map_err(|e| e.to_string())?;
         let path = world["work"]["projects"]
             .as_array()
@@ -171,6 +175,34 @@ fn form_payload(content: &str) -> Result<Value, String> {
     Ok(payload)
 }
 
+fn owner_operation(client: &CentralClient, action: &str, input: Value, effect: Effect) -> Result<Value, String> {
+    let result = match effect {
+        Effect::ReadOnly => client.run_read(action, input.clone()),
+        Effect::MayMutate => client.run(action, input.clone()),
+    }.and_then(|data| {
+        // These are the two closed mutations this adapter actually issues,
+        // with receipt shapes defined by Central's temporal/documents owners.
+        let expected = match action {
+            "central.day.ensure" => Some("central.day-reading/v1"),
+            "central.document.create" => Some("central.document-reading/v1"),
+            _ => None,
+        };
+        if expected.is_some_and(|schema| data["schema"] != schema)
+            || (expected.is_some() && data["automatic_agent_or_model_invocation"] != false)
+            || (action == "central.document.create" && (data["document_id"] != input["document_id"] || data["document"]["day_ref"] != input["day_ref"])) {
+            return Err(Effect::MayMutate.lost_response("Central returned an unsupported or redirected mutation receipt".into(), None, None, Some(data)));
+        }
+        Ok(data)
+    });
+    Ok(result.unwrap_or_else(|error| {
+        let mut failure = crate::knowledge::failure_reading(action, error);
+        // The native invocation is retained; no replacement operation identity
+        // is minted when the owner may have acted without a delivered receipt.
+        failure["owner_input"] = input;
+        failure
+    }))
+}
+
 pub fn operate(
     client: &CentralClient,
     project: Option<&str>,
@@ -199,8 +231,8 @@ pub fn operate(
             let location=source_location(client,project,reference)?;
             Ok(json!({"schema":"oi.central-day-open/v1","project":project,"day":value,"location":location}))
         }
-        Request::AgentSet{agent_set_ref} => client.run("central.agent-set.read",json!({"scope":"root","ref":agent_set_ref})).map_err(|e|e.to_string()),
-        Request::EnsureDay{expected_time_policy_revision} => client.run("central.day.ensure",json!({"project":project,"expected_time_policy_revision":expected_time_policy_revision})).map_err(|e|e.to_string()),
+        Request::AgentSet{agent_set_ref} => owner_operation(client,"central.agent-set.read",json!({"scope":"root","ref":agent_set_ref}),Effect::ReadOnly),
+        Request::EnsureDay{expected_time_policy_revision} => owner_operation(client,"central.day.ensure",json!({"project":project,"expected_time_policy_revision":expected_time_policy_revision}),Effect::MayMutate),
         Request::InitialiseDay{day_ref,document_id,expected_revision,expected_policy_revision,form,expected_form_revision} => {
             let original=files::read(client,form)?;
             if original.revision!=*expected_form_revision {return Err("Selected original form changed; review its new revision before initialising".into());}
@@ -213,8 +245,8 @@ pub fn operate(
             for key in payload.as_object().ok_or("Original payload must be an object")?.keys() {
                 fields.push(json!({"id":format!("original:{key}"),"label":format!("Original {key}"),"template_pointer":format!("/{}",key.replace('~',"~0").replace('/',"~1"))}));
             }
-            let time=client.run("central.time.policy",json!({"project":project})).map_err(|e|e.to_string())?;
-            let day=client.run("central.day.read",json!({"project":project,"day_ref":day_ref})).map_err(|e|e.to_string())?;
+            let time=client.run_read("central.time.policy",json!({"project":project})).map_err(|e|e.to_string())?;
+            let day=client.run_read("central.day.read",json!({"project":project,"day_ref":day_ref})).map_err(|e|e.to_string())?;
             if day["temporal"]["civil_date"]!=time["civil_date"] { return Err("Day changed before initialisation; review the current native Day".into()); }
             if let Some(meta)=payload.get_mut("meta").and_then(Value::as_object_mut) {
                 // Native date/time, not the browser clock. Supplied non-empty
@@ -226,8 +258,8 @@ pub fn operate(
                 if meta.get("uuid").is_none_or(Value::is_null) {meta.insert("uuid".into(),json!(document_id));}
             }
             payload["_oi_form_source"]=json!({"schema":"oi.original-day-form/v1","location":form,"revision":expected_form_revision});
-            client.run("central.document.create",json!({"project":project,"kind":"day","day_ref":day_ref,"document_id":document_id,
-                "expected_revision":expected_revision,"expected_policy_revision":expected_policy_revision,"template_payload":payload,"fields":fields})).map_err(|e|e.to_string())
+            owner_operation(client,"central.document.create",json!({"project":project,"kind":"day","day_ref":day_ref,"document_id":document_id,
+                "expected_revision":expected_revision,"expected_policy_revision":expected_policy_revision,"template_payload":payload,"fields":fields}),Effect::MayMutate)
         }
     }
 }

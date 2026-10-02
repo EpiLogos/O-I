@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {IconTabStrip} from "../../workspace/primitives/IconTabStrip";
-import {routine, routineList, object, actionMessage, nextOccurrenceTimes, type RoutineList, type RoutineDetail, type MethodRow, type Invocation} from "./client";
+import {routine, routineList, object, actionMessage, nextOccurrenceTimes, NativeRoutineFailure, type RoutineList, type RoutineDetail, type MethodRow, type Invocation} from "./client";
 import {RawDisclosure} from "../../shared/contributionPresentation";
 // @ts-ignore -- owner-supplied names over retained exact identities.
 import {subjectLabel} from "../../../../../shared-field/presentation-text.mjs";
@@ -33,6 +33,7 @@ export function Automations({project}: {project?: string}) {
   const [error, setError] = useState<string>();
   const [detailError, setDetailError] = useState<string>();
   const [returned, setReturned] = useState<string>();
+  const [nativeFailure, setNativeFailure] = useState<NativeRoutineFailure>();
   const [busy, setBusy] = useState(false);
   const [revision, setRevision] = useState(0);
   useEffect(() => {
@@ -67,9 +68,9 @@ export function Automations({project}: {project?: string}) {
   }, [selected, project, transport, revision]);
   async function act(action: "disable" | "run_now") {
     if (!selected || busy) return;
-    setBusy(true); setReturned(undefined); setDetailError(undefined);
+    setBusy(true); setReturned(undefined); setDetailError(undefined); setNativeFailure(undefined);
     try {setReturned(actionMessage(await routine(transport, project, {action, routine_ref: selected}))); setRevision(value => value + 1);}
-    catch (failure) {setDetailError(message(failure));}
+    catch (failure) {setDetailError(message(failure));setNativeFailure(failure instanceof NativeRoutineFailure?failure:undefined);}
     finally {setBusy(false);}
   }
   return <section className="automations-surface" aria-label="Automations">
@@ -92,7 +93,7 @@ export function Automations({project}: {project?: string}) {
           <div className="automations-actions"><button disabled={busy || detail.state !== "enabled"} onClick={() => void act("run_now")}>Run now</button><button disabled={busy || detail.state === "disabled"} onClick={() => void act("disable")}>Disable</button></div>
           <details><summary>Proof and authority</summary><p>Method: {detail.method}</p><p>Proven revision: {detail.method_revision}</p><p>Proof: {detail.proof?.proof_ref ?? "Unavailable"}</p><p>{detail.proof?.verification_refs?.length ?? 0} verification references.</p><p>Authority: {detail.authority?.granted ? "Granted on the stored owner receipt" : "Not granted"}{detail.authority?.unattended ? " · unattended" : ""}.</p></details>
         </>}
-        {detailError && <p role="alert">{detailError}</p>}{returned && <p role="status">{returned}</p>}
+        {detailError && <p role="alert">{detailError}</p>}{returned && <p role="status">{returned}</p>}{nativeFailure&&<div data-routine-outcome={nativeFailure.reading.failure.kind}><p>The original Routine operation is retained. Read that Routine and inspect its invocation history to reconcile this result.</p><RawDisclosure value={nativeFailure.reading} label="Inspect the original Routine operation and owner failure"/></div>}
       </section></div>}
       {view === "methods" && <><h2>Methods</h2><p>A routine needs a successful Method run, explicit verification, and authority for its actions. Creating or enabling one here is awaiting a native verified-proof selection path.</p>{!methods && !error && <p role="status">Reading Methods…</p>}{methods?.length === 0 && <p>No Methods are available in this context.</p>}<ul className="automations-list">{methods?.map(row => <MethodMaterial key={row.id} row={row}/>)}</ul></>}
       {view === "history" && <><h2>Invocation history</h2><p>{selected ? `Showing ${reading?.routines.find(row => row.routine === selected)?.name ?? "the selected routine"}.` : "Showing all routines."} {selected && <button onClick={() => setSelected(undefined)}>All routines</button>}</p>{!history && !error && <p role="status">Reading invocations…</p>}{history?.filter(row => !selected || row.routine_ref === selected).length === 0 && <p>No admitted invocations.</p>}<ul className="automations-list">{history?.filter(row => !selected || row.routine_ref === selected).map(row => <li key={row.invocation_ref}><strong>{reading?.routines.find(routine => routine.routine === row.routine_ref)?.name ?? "Routine invocation"}</strong><span>{row.trigger_observed_at}</span><p>{actionMessage({outcome: row.outcome})}</p><details><summary>Native references and deliveries</summary><p>{row.routine_ref}</p><p>{row.invocation_ref}</p><p>{row.method_ref}</p>{row.provider_deliveries?.map(delivery => <p key={delivery.delivery_ref}>{delivery.provider}: {delivery.delivery_ref}</p>)}</details></li>)}</ul></>}

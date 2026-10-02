@@ -412,6 +412,7 @@ fn owner_refusal_and_unavailable_pass_through_verbatim() {
     let ActionDispatch::OwnerRefused {
         owner_operation,
         message,
+        ..
     } = &dispatch
     else {
         panic!("an unresolvable Flow must carry the owner's refusal, got {dispatch:?}")

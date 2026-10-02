@@ -27,20 +27,14 @@ struct Input {
     sources: Vec<Basis>,
 }
 fn refuse(operation: &str, message: impl Into<String>) -> ActionDispatch {
-    ActionDispatch::OwnerRefused {
+    ActionDispatch::OwnerFailed {
         owner_operation: operation.into(),
-        message: message.into(),
+        detail: message.into(),
+        child_pid: None, cleanup: None,
     }
 }
 fn owner_error(operation: &str, error: knowledge::CallError) -> ActionDispatch {
-    match error {
-        knowledge::CallError::Unavailable { detail } => ActionDispatch::OwnerUnavailable {
-            owner_operation: operation.into(),
-            detail,
-        },
-        knowledge::CallError::Refused { message } => refuse(operation, message),
-        knowledge::CallError::Malformed { detail } => refuse(operation, detail),
-    }
+    ActionDispatch::owner_error(operation, error)
 }
 fn relative(path: &str) -> bool {
     !path.is_empty()
@@ -200,16 +194,17 @@ pub fn invoke(
     if let Err(e) = request_valid(&invocation.target_ref, &input) {
         return refuse(operation, e);
     }
-    let wiki = match client.run(
-        if project.is_some() {
+    let wiki_action = if project.is_some() {
             "projectcentral.wiki.read"
         } else {
             "central.wiki.read"
-        },
+        };
+    let wiki = match client.run_read(
+        wiki_action,
         json!({"project":project}),
     ) {
         Ok(wiki) => wiki,
-        Err(e) => return refuse(operation, e.to_string()),
+        Err(e) => return ActionDispatch::owner_error(wiki_action, e),
     };
     if wiki["schema"] != "central.wiki-reading/v1"
         || wiki["automatic_agent_or_model_invocation"] != false
@@ -270,10 +265,11 @@ pub fn invoke(
             &saved["frame_ref"]
         }) != &invocation.target_ref
     {
-        return refuse(
-            operation,
-            "The Wiki owner did not confirm native persistence",
-        );
+        return ActionDispatch::OwnerOutcomeUnknown {
+            owner_operation: operation.into(),
+            detail: "The Wiki owner did not return a compatible native persistence receipt; inspect the original operation before retry".into(),
+            child_pid: None, cleanup: None, native: Some(saved),
+        };
     }
     // Once the native write is acknowledged, failed readback is a read problem,
     // never an instruction to replay the write. Keep its real receipt intact.

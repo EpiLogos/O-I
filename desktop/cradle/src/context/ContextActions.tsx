@@ -142,7 +142,7 @@ export function ContextActions({bindings,accompanying}:{bindings:Record<string,S
  * this component never claims human recognition. */
 export function RememberReceipt({outcome}:{outcome:ActionDispatch}){
  if(outcome.state!=="invoked"){
-  const reason=outcome.state==="owner_refused"?"The owner refused to remember this selection.":outcome.state==="owner_unavailable"?"The owner is unavailable to remember this selection.":outcome.state==="malformed_ref"?"The selected source address is invalid.":"Remembering this selection is unavailable.";
+  const reason=outcome.state==="owner_refused"?"The owner refused to remember this selection.":outcome.state==="owner_unavailable"?"The owner is unavailable to remember this selection.":outcome.state==="malformed_ref"?"The selected source address is invalid.":outcome.state==="owner_outcome_unknown"?`${outcome.detail} The selection is retained. Inspect the native Remember records before invoking this operation again.`:outcome.state==="owner_failed"?outcome.detail:"Remembering this selection is unavailable.";
   return <div className="context-remembered" data-remembered-state={outcome.state}><p role="alert">{reason}</p><RawDisclosure value={outcome} label="Inspect the owner response"/></div>;}
  const proposal=(outcome.data??{}) as Partial<RememberedNoteProposal>;
  const note=proposal.note;

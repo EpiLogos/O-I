@@ -77,7 +77,7 @@ fn valid(location: &Location) -> bool {
 /// Decode native path identity only through Central's owning resolver.
 pub fn resolve(client: &CentralClient, reference: &str) -> Result<Location, String> {
     let value = client
-        .run(
+        .run_read(
             "central.files.resolve",
             json!({"ref":reference,"project":null}),
         )
@@ -97,7 +97,7 @@ pub fn resolve(client: &CentralClient, reference: &str) -> Result<Location, Stri
 pub fn list(client: &CentralClient, path: &str) -> Result<Directory, String> {
     let reading: Directory = serde_json::from_value(
         client
-            .run("central.files.list", json!({"path":path}))
+            .run_read("central.files.list", json!({"path":path}))
             .map_err(|e| e.to_string())?,
     )
     .map_err(|e| e.to_string())?;
@@ -115,7 +115,7 @@ pub fn list(client: &CentralClient, path: &str) -> Result<Directory, String> {
 }
 pub fn read(client: &CentralClient, location: &Location) -> Result<Reading, String> {
     let value = client
-        .run("central.files.read", json!({"location":location}))
+        .run_read("central.files.read", json!({"location":location}))
         .map_err(|e| e.to_string())?;
     validate_reading(location, value)
 }
@@ -146,7 +146,7 @@ pub fn read_bytes(client: &CentralClient, location: &Location) -> Result<BytesRe
     }
     let reading: Reading = serde_json::from_value(
         client
-            .run(
+            .run_read(
                 "central.files.read",
                 json!({"location":location, "encoding":"base64"}),
             )
@@ -316,22 +316,40 @@ pub fn operate(
         input["actor"] = json!("oi-desktop-user");
         input["actor_kind"] = json!("human");
     }
-    let result = client
-        .run(action, input)
-        .map_err(|error| error.to_string())?;
+    let effect = if matches!(request, Request::History { .. } | Request::RecoveryPreview { .. }) {
+        crate::flow::Effect::ReadOnly
+    } else {
+        crate::flow::Effect::MayMutate
+    };
+    let result = if effect == crate::flow::Effect::ReadOnly {
+        // Native descriptors declare these operations ReadOnly, including
+        // owner-side journal reconciliation; write/restore remain mutating.
+        client.run_read(action, input.clone())
+    } else {
+        client.run(action, input.clone())
+    };
+    let failed = |error| {
+        let mut failure = crate::knowledge::failure_reading(action, error);
+        failure["owner_input"] = input.clone();
+        failure
+    };
+    let result = match result {
+        Ok(result) => result,
+        Err(error) => return Ok(failed(error)),
+    };
     let schema = match request {
         Request::Write { .. } | Request::Restore { .. } => "central.file-mutation/v1",
         Request::History { .. } => "central.file-history/v1",
         Request::RecoveryPreview { .. } => "central.file-recovery-preview/v1",
     };
     if result["schema"] != schema || result["location"] != json!(location) {
-        return Err("Central returned a redirected or unsupported file operation".into());
+        return Ok(failed(effect.lost_response("Central returned a redirected or unsupported file operation".into(), None, None, Some(result))));
     }
     if matches!(request, Request::Write { .. } | Request::Restore { .. })
         && !["created", "written", "unchanged", "conflict"]
             .contains(&result["outcome"].as_str().unwrap_or(""))
     {
-        return Err("Central returned an unsupported mutation outcome".into());
+        return Ok(failed(effect.lost_response("Central returned an unsupported mutation outcome".into(), None, None, Some(result))));
     }
     Ok(result)
 }

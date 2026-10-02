@@ -172,7 +172,9 @@ export function KernelProvider(props: { children: ReactNode }) {
           let reason = call.error;
           if (call.outcome?.result === "source_save_failed") {
             const failure = call.outcome.failure;
-            reason = failure.kind === "owner-refused" ? failure.message : failure.kind === "unavailable" ? failure.detail : undefined;
+            reason = failure.kind === "owner-refused" ? failure.message
+              : failure.kind === "outcome-unknown" ? `${failure.detail} The proposal remains dirty. Read the native source and reconcile the original write before any retry.`
+              : failure.kind === "revision-conflict" ? undefined : failure.detail;
           }
           setSourceErrors(held => {
             const next = { ...held };

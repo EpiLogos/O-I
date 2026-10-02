@@ -1,5 +1,7 @@
 import {kernelOp} from "../../kernel/bridge";
 import type {KernelTransportStatus} from "../../kernel/types";
+import {throwNativeFailure} from "../../kernel/nativeFailure";
+export {NativeOwnerFailure as NativeRoutineFailure} from "../../kernel/nativeFailure";
 
 export type RoutineRequest = {action: "list" | "methods" | "history"} | {action: "show" | "disable" | "run_now"; routine_ref: string};
 export interface RoutineSummary {
@@ -54,5 +56,7 @@ export function nextOccurrenceTimes(value: unknown): string[] {
 export async function routine(transport: KernelTransportStatus, project: string | undefined, request: RoutineRequest): Promise<unknown> {
   const result = await kernelOp(transport, {op: "routine", project, request});
   if (result.error || result.outcome?.result !== "routine") throw new Error(result.error ?? "AIKit did not return this Routine operation.");
-  return result.outcome.data;
+  const value=result.outcome.data;
+  throwNativeFailure(value);
+  return value;
 }

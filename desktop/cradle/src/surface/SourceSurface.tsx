@@ -24,6 +24,8 @@ import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
 import {EditorFrame} from "../editor/EditorChrome";
 import {sourceBreadcrumb,nativeDaySource,sourceSaveLabel} from "../central/sourceContext";
+import {NativeOwnerFailure,nativeFailureReading} from "../kernel/nativeFailure";
+import {RawDisclosure} from "../shared/contributionPresentation";
 
 export interface SourceSurfaceProps {
   binding: SurfaceBinding;
@@ -40,6 +42,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const kernel = useKernel();
   const buffer = kernel.snapshot.buffers[binding.ref ?? ""];
   const error = kernel.sourceErrors[binding.ref ?? ""];
+  const nativeFailure = nativeFailureReading(error);
   const [historyOpen, setHistoryOpen] = useState(false);
   // Declared with the other hooks, BEFORE any early return: a restored
   // surface can mount while its buffer has not arrived yet, and hook counts
@@ -157,7 +160,8 @@ export function SourceSurface(props: SourceSurfaceProps) {
   if (!buffer) {
     return (
       <div className="source-editor" data-kind="source" data-ref={binding.ref}>
-        <p className="source-note source-note-muted" role="status">{error ?? `Opening ${binding.title}…`}</p>
+        <p className="source-note source-note-muted" role="status">{nativeFailure ? new NativeOwnerFailure(nativeFailure).message : error ?? `Opening ${binding.title}…`}</p>
+        {nativeFailure && <RawDisclosure value={nativeFailure} label="Inspect the native source reading failure"/>}
       </div>
     );
   }
@@ -195,7 +199,8 @@ export function SourceSurface(props: SourceSurfaceProps) {
       data={{kind:"source",ref:binding.ref,dirty:buffer.dirty,conflicted:saveFailed}}
     >
       {draftError && <p role="alert">{draftError}</p>}
-      {error && <p className="source-note" role="alert">{error}</p>}
+      {error && <p className="source-note" role="alert">{nativeFailure ? new NativeOwnerFailure(nativeFailure).message : error}</p>}
+      {nativeFailure && <RawDisclosure value={nativeFailure} label="Inspect the native source reading failure"/>}
       {dayDocument&&<div hidden={!dieView} style={{height:"100%",minHeight:0}}><DayDieFace payload={dayDocument.template_payload} revision={buffer.base_revision} sourceRef={binding.ref} documentId={dayDocument.document_id??""} fields={dayDocument.fields??[]} project={dayProject}/></div>}
       {documentView&&<div hidden={view!=="rendered"} style={{height:"100%",minHeight:0}}><SourceDocumentHost binding={binding} text={text} bufferDirty={buffer.dirty} conflicted={saveFailed} onComposeSave={async composed=>{
           // The page save is one ordered act: surface bookkeeping, the

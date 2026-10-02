@@ -83,6 +83,7 @@ mod nara_voice_transport;
 pub mod nara_world_readiness;
 pub mod native_expression;
 pub mod native_owner_transport;
+pub mod native_process;
 pub mod owner_read;
 pub mod presentation;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
@@ -3822,6 +3823,14 @@ impl Kernel {
                     value
                 } else {
                     let value = knowledge::call(&cwd, &request)?;
+                    // Transport failures are not native readings. They must
+                    // neither become cached truth nor establish resource identity.
+                    if value["schema"] == "oi.native-call-failure/v1" {
+                        return Ok(KernelOpOutcome {
+                            receipts: Vec::new(),
+                            result: KernelOpResult::Knowledge { data: value },
+                        });
+                    }
                     if cacheable {
                         self.reads.put(key, value.clone());
                     }
@@ -4717,17 +4726,29 @@ impl Kernel {
                 // stays as it is (dirty), the canonical content is kept
                 // re-readable in the conflict record.
                 let failure = match &error {
+                    OwnerCallError::OutcomeUnknown { detail, child_pid, cleanup, native } => {
+                        // Receipt loss takes precedence over revision heuristics.
+                        // Reading current bytes never establishes our own effect.
+                        if let Some(buffer) = self.buffers.get_mut(source_ref) { buffer.dirty = true; }
+                        SourceWriteFailure::OutcomeUnknown {
+                            source_ref: source_ref.to_owned(), detail: detail.clone(),
+                            child_pid: *child_pid, cleanup: cleanup.clone(), native: native.clone(),
+                        }
+                    },
+                    OwnerCallError::TransportFailed { detail, .. } | OwnerCallError::Malformed { detail } => SourceWriteFailure::Failed {
+                        source_ref: source_ref.to_owned(), detail: detail.clone(),
+                    },
                     OwnerCallError::Unavailable { detail } => SourceWriteFailure::Unavailable {
                         source_ref: source_ref.to_owned(),
                         detail: detail.clone(),
                     },
-                    OwnerCallError::Refused { .. } | OwnerCallError::Malformed { .. } => {
+                    OwnerCallError::Refused { native, .. } => {
                         match self.client.current_reading(project, source_ref) {
                             Ok(current) => {
                                 if current.revision.revision == expected {
                                     SourceWriteFailure::OwnerRefused {
                                         source_ref: source_ref.to_owned(),
-                                        message: error.to_string(),
+                                        message: error.to_string(), native: native.clone(),
                                     }
                                 } else {
                                     let failure = SourceWriteFailure::RevisionConflict {
@@ -4751,7 +4772,7 @@ impl Kernel {
                             // original refusal honestly; no state changed.
                             Err(_) => SourceWriteFailure::OwnerRefused {
                                 source_ref: source_ref.to_owned(),
-                                message: error.to_string(),
+                                message: error.to_string(), native: native.clone(),
                             },
                         }
                     }
@@ -4938,7 +4959,11 @@ impl Kernel {
     fn owner_read(&self, project: Option<&str>, source_ref: &str) -> Result<SourceReading, String> {
         self.client
             .source_read(project, source_ref)
-            .map_err(|error| error.to_string())
+            .map_err(|error| {
+                let mut failure = knowledge::failure_reading("projectcentral.source.read", error);
+                failure["owner_input"] = serde_json::json!({ "project": project, "source_ref": source_ref });
+                failure.to_string()
+            })
     }
 
     // -----------------------------------------------------------------------
