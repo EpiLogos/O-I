@@ -45,7 +45,9 @@ impl NativePerformanceSourceAsset {
         self.context.private
     }
     pub fn requires_private_disclosure(&self) -> bool {
-        self.context.private || self.native_bundle["source_context"]["availability"] != "available"
+        self.context.private
+            || self.native_bundle["source_context"]["availability"] != "available"
+            || self.validate_source_payload().is_err()
     }
     pub fn reading(&self) -> Result<ReadingRef, String> {
         self.validate()?;
@@ -110,7 +112,13 @@ impl NativePerformanceSourceAsset {
             || ["personal_nine_force_routes", "sky_ten_source_forcing"]
                 .iter()
                 .any(|name| {
-                    !roles[*name]["available"].is_boolean() || !roles[*name]["reason"].is_string()
+                    let role = &roles[*name];
+                    !role.as_object().is_some_and(|o| o.contains_key("reason"))
+                        || match role["available"].as_bool() {
+                            Some(true) => !role["reason"].is_null() && !role["reason"].is_string(),
+                            Some(false) => role["reason"].as_str().is_none_or(str::is_empty),
+                            None => true,
+                        }
                 })
             || bundle["configuration"]["sparse_condition"].is_null()
                 != bundle["source_key_preparation"].is_null()
@@ -180,6 +188,7 @@ impl NativePerformanceSourceAsset {
     /// original receipts, binds their exact bytes, occasion and current refs.
     pub fn require_source_context(&self, basis: &PerformanceBasis) -> Result<(), String> {
         self.validate_basis(basis)?;
+        self.validate_source_payload()?;
         let witness = &self.native_bundle["source_context"];
         if witness["schema"] != "ql.retained-performance-source-context/v1"
             || witness["availability"] != "available"
@@ -240,6 +249,137 @@ impl NativePerformanceSourceAsset {
             {
                 return Err("source owner classification currentness unavailable".into());
             }
+        }
+        Ok(())
+    }
+    // This checks retained integrity and disclosure completeness only. A full
+    // independent native owner/lease replay remains mandatory before playback.
+    fn validate_source_payload(&self) -> Result<(), String> {
+        let bundle = self
+            .native_bundle
+            .as_object()
+            .ok_or("native source bundle absent")?;
+        let known = [
+            "schema",
+            "original_native_input",
+            "physical_consumer_projection",
+            "native_basis",
+            "source_form_recipe",
+            "source_geometry_reading",
+            "source_key_preparation",
+            "configuration",
+            "source_context",
+            "consumer_roles",
+            "receiving_source_inputs",
+            "receiving_definition",
+            "current_receiving",
+        ];
+        if bundle.keys().any(|key| !known.contains(&key.as_str())) {
+            return Err(
+                "native source payload classification unavailable for additional retained fields"
+                    .into(),
+            );
+        }
+        let names = [
+            "receiving_source_inputs",
+            "receiving_definition",
+            "current_receiving",
+        ];
+        if names.iter().all(|name| !bundle.contains_key(*name)) {
+            return Ok(()); // Complete original Reference/World asset contract.
+        }
+        if names
+            .iter()
+            .any(|name| !bundle.get(*name).is_some_and(Value::is_object))
+        {
+            return Err(
+                "complete native receiving source payload classification unavailable".into(),
+            );
+        }
+        let current = &bundle["current_receiving"];
+        let inputs = &bundle["receiving_source_inputs"];
+        let witness = &current["source_payload_context"];
+        let admission = &current["native_admission"];
+        let exact_keys = |value: &Value, names: &[&str]| {
+            value.as_object().is_some_and(|object| {
+                object.len() == names.len() && names.iter().all(|name| object.contains_key(*name))
+            })
+        };
+        if !exact_keys(
+            current,
+            &[
+                "schema",
+                "source_inputs",
+                "source_context",
+                "source_payload_context",
+                "receiving_definition",
+                "native_admission",
+            ],
+        ) || !exact_keys(
+            inputs,
+            &[
+                "schema",
+                "constructor",
+                "world_request",
+                "identity_profile",
+                "natal",
+                "sky",
+                "original_occasion",
+                "calibration",
+                "return_context",
+            ],
+        ) || current["schema"] != "ql.current-performance-receiving/v1"
+            || inputs["schema"] != "ql.native-performance-receiving-source-inputs/v1"
+            || witness["schema"] != "ql.native-receiving-source-payload-context/v1"
+            || current["source_inputs"] != *inputs
+            || current["source_context"] != bundle["source_context"]
+            || current["receiving_definition"] != bundle["receiving_definition"]
+            || admission["schema"] != "ql.performance-receiving-admission/v1"
+            || admission["receiving_definition"] != bundle["receiving_definition"]
+            || admission["native_basis"] != bundle["native_basis"]
+            || witness["private"].as_bool() != Some(self.context.private)
+            || !admission["native_preparation"].is_object()
+        {
+            return Err("native receiving source payload/context/admission lost or changed".into());
+        }
+        for (name, value) in [
+            ("source_inputs_sha256", inputs),
+            ("source_context_sha256", &current["source_context"]),
+            ("native_admission_sha256", admission),
+        ] {
+            let actual = format!(
+                "sha256:{:x}",
+                Sha256::digest(serde_json::to_vec(value).map_err(|e| e.to_string())?)
+            );
+            if witness[name] != actual {
+                return Err("native receiving complete payload binding differs".into());
+            }
+        }
+        let owner: ReadingRef =
+            serde_json::from_value(witness["owner"].clone()).map_err(|e| e.to_string())?;
+        if owner.availability != Availability::Available
+            || owner.r#ref != "crates/ql-mef/src/continuous/performance_receiving.rs"
+            || !owner.revision.strip_prefix("sha256:").is_some_and(|v| {
+                v.len() == 64
+                    && v.bytes()
+                        .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+            })
+            || witness["standing"].as_str().is_none_or(str::is_empty)
+        {
+            return Err("native receiving source payload owner unavailable".into());
+        }
+        if self.context.kind == crate::expression_performance::ContextKind::World
+            && [
+                "identity_profile",
+                "natal",
+                "sky",
+                "original_occasion",
+                "calibration",
+            ]
+            .iter()
+            .any(|key| !inputs[*key].is_null())
+        {
+            return Err("neutral World cannot disclose protected native receiving inputs".into());
         }
         Ok(())
     }

@@ -7,6 +7,7 @@ use oi_cradle_kernel::expression_performance_source_asset::NativePerformanceSour
 use oi_cradle_kernel::expression_performance_storage::ActPerformanceCustody;
 use oi_cradle_kernel::{expression::Document, expression_file, Kernel};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 
 fn fixture() -> Value {
     let path=std::env::var("QL_RETAINED_SOURCE_PERFORMANCE_FIXTURE")
@@ -407,7 +408,10 @@ fn rehashed_omitted_native_defaults_and_alias_amplification_refuse_before_expans
         .unwrap()
         .remove("body")
         .is_some());
-    literal.r#ref = expression_file::digest(&serde_json::to_vec(&literal.value).unwrap());
+    literal.r#ref = format!(
+        "sha256:{:x}",
+        Sha256::digest(serde_json::to_vec(&literal.value).unwrap())
+    );
     stored.documents[0].scenes[0].scene_part = literal.r#ref.clone();
     assert!(ActPerformanceCustody::read(stored)
         .unwrap_err()
@@ -682,5 +686,120 @@ fn genuine_protected_original_occasion_in_any_native_asset_sidecar_cannot_enter_
     }
     world.native_sources[0]
         .require_source_context(&world.bases[0])
+        .unwrap();
+}
+
+#[test]
+fn native_original_public_classification_does_not_cover_added_unclassified_source_payload() {
+    let (world, actual) = prepared();
+    world.native_sources[0]
+        .require_source_context(&world.bases[0])
+        .unwrap();
+    assert!(!world.native_sources[0].requires_private_disclosure());
+    for (key, payload) in [
+        (
+            "unclassified_sidecar",
+            actual["source_assets"]["original_native_input"].clone(),
+        ),
+        (
+            "receiving_source_inputs",
+            actual["source_assets"]["original_native_input"].clone(),
+        ),
+        (
+            "current_receiving",
+            actual["source_assets"]["native_basis"].clone(),
+        ),
+        (
+            "receiving_definition",
+            actual["source_assets"]["source_geometry_reading"].clone(),
+        ),
+    ] {
+        // Genuine existing native operands, deliberately disconnected from a
+        // complete receiving-owner snapshot. Original public witness unchanged.
+        let mut incomplete = actual["source_assets"].clone();
+        incomplete[key] = payload;
+        let asset =
+            NativePerformanceSourceAsset::from_native(&world.bases[0], incomplete.clone()).unwrap();
+        assert!(
+            asset.requires_private_disclosure(),
+            "additional source data {key}"
+        );
+        assert!(
+            asset.require_source_context(&world.bases[0]).is_err(),
+            "unclassified source data {key}"
+        );
+        assert!(asset
+            .verify_native_replay(&world.bases[0], &incomplete)
+            .is_err());
+        let mut retained = world.clone();
+        retained.native_sources = vec![asset];
+        retained = retained.seal().unwrap();
+        let catalog = PerformancePartCatalog::default()
+            .appended(&retained)
+            .unwrap();
+        assert!(catalog.requires_private_disclosure());
+        let reopened = PerformancePartCatalog::read(catalog.snapshot())
+            .unwrap()
+            .restore(0)
+            .unwrap();
+        assert_eq!(reopened, retained);
+        assert_eq!(reopened.native_sources[0].native_bundle(), &incomplete);
+    }
+    world.native_sources[0]
+        .verify_native_replay(&world.bases[0], &actual["source_assets"])
+        .unwrap();
+}
+
+#[test]
+fn native_consumer_role_nullable_reason_is_retained_without_inventing_route_admission() {
+    let (world, actual) = prepared();
+    let original = &actual["source_assets"];
+    let mut successor_shape = original.clone();
+    successor_shape["consumer_roles"]["personal_nine_force_routes"]["available"] = json!(true);
+    successor_shape["consumer_roles"]["personal_nine_force_routes"]["reason"] = Value::Null;
+    // Match the frozen native Control's available readback type. This changed
+    // metadata is deliberately NOT a genuine route admission: actual full
+    // source-owner replay must refuse it against the original producer output.
+    let retained =
+        NativePerformanceSourceAsset::from_native(&world.bases[0], successor_shape.clone())
+            .unwrap();
+    assert_eq!(retained.native_bundle(), &successor_shape);
+    assert!(retained
+        .verify_native_replay(&world.bases[0], original)
+        .is_err());
+    let mut work = world.clone();
+    work.native_sources = vec![retained];
+    let work = work.seal().unwrap();
+    let catalog = PerformancePartCatalog::default().appended(&work).unwrap();
+    assert_eq!(
+        PerformancePartCatalog::read(catalog.snapshot())
+            .unwrap()
+            .restore(0)
+            .unwrap(),
+        work
+    );
+    for name in ["personal_nine_force_routes", "sky_ten_source_forcing"] {
+        for reason in [Value::Null, json!(""), json!(false)] {
+            let mut missing = original.clone();
+            missing["consumer_roles"][name]["reason"] = reason;
+            assert!(
+                NativePerformanceSourceAsset::from_native(&world.bases[0], missing).is_err(),
+                "unavailable native role {name} requires explicit reason"
+            );
+        }
+    }
+    assert!(
+        successor_shape["consumer_roles"]["personal_nine_force_routes"]
+            .as_object_mut()
+            .unwrap()
+            .remove("reason")
+            .is_some()
+    );
+    assert!(
+        NativePerformanceSourceAsset::from_native(&world.bases[0], successor_shape).is_err(),
+        "available native readback still requires explicit reason field"
+    );
+    world.native_sources[0]
+        .verify_native_replay(&world.bases[0], original)
         .unwrap();
 }
