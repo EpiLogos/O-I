@@ -1,6 +1,6 @@
-// Resource coherence: the shared file broker (src/files/resources.ts) and the
-// listing store's generations (src/files/listingStore.ts), driven against a
-// real mock owner over HTTP — the same wire the bridge transport speaks
+// Controlled HTTP protocol tests for the shared file broker and listing
+// generations. They exercise production receiving guards, not native Central
+// storage or native owner acceptance. Actual owner replay has its own gate.
 // (src/kernel/bridge.ts kernelOp: POST /op with a typed KernelOp).
 // Run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/resource-coherence.test.mjs
 import test from 'node:test';
@@ -171,18 +171,23 @@ test('invalidation while a read is in flight drops its result; the next acquire 
     const loc = location('oi:test/stale.md', 'stale.md');
     const before = resourceStats();
     const first = acquireFileReading(owner.transport, loc);
+    const joined = acquireFileReading(owner.transport, loc);
+    // Attach refusal handlers before releasing the controlled reply. Both
+    // callers must receive the qualified acquisition, never the raw read.
+    const refusedFirst = assert.rejects(first, /superseded; re-read its current basis/);
+    const refusedJoined = assert.rejects(joined, /superseded; re-read its current basis/);
     await owner.waitForCount(1);
     invalidateFile(loc);
     assert.equal(resourceStats().invalidations, before.invalidations + 1);
     owner.drain();
-    const staleReading = await first;
+    await Promise.all([refusedFirst, refusedJoined]);
     assert.equal(peekFileReading(loc), undefined, 'the late result was not published as ready');
     assert.equal(peekFileState(loc)?.status, 'loading', 'the entry tombstones for the next read');
     assert.equal(resourceStats().stale_dropped, before.stale_dropped + 1, 'the guard counted the drop');
     owner.resume();
     const second = await acquireFileReading(owner.transport, loc);
     assert.equal(owner.requests.length, 2, 'the next acquire started a real new read');
-    assert.notEqual(second.revision, staleReading.revision);
+    assert.equal(second.content, 'content 2', 'the accepted content belongs to the next controlled owner read');
     assert.equal(peekFileReading(loc)?.revision, second.revision);
   } finally { await owner.close(); }
 });

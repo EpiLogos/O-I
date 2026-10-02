@@ -1,3 +1,5 @@
+// Controlled save/readback protocol tests, not native file/storage acceptance.
+// Exact native owner receiving and codec gates remain separate requirements.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ExpressionOperationFailure} from '../src/knowledge/expressionOutcome.ts';
@@ -49,8 +51,14 @@ test('a successful receipt must agree with the independently read destination',a
  const original=globalThis.fetch;let writes=0;
  globalThis.fetch=async(_url,options)=>{
   const op=JSON.parse(options.body);
-  const outcome=op.op==='file_read'?{result:'file_read',reading:{location,revision:'file:changed-again',content:JSON.stringify(document)}}:
-   {result:'expression',data:op.request.operation==='inspect'?{state:'read',document}:(writes++,success)};
+  let outcome;
+  if(op.op==='file_read')outcome={result:'file_read',reading:{location,revision:'file:changed-again',content:JSON.stringify(document)}};
+  else if(op.op==='expression'&&op.request.operation==='inspect')outcome={result:'expression',data:{state:'read',document}};
+  else if(op.op==='expression'&&op.request.operation==='save'){writes++;outcome={result:'expression',data:success};}
+  else if(op.op==='expression'&&op.request.operation==='inspect_file'){
+   assert.deepEqual(op.request.location,location);assert.equal(op.request.expected_file_revision,'file:changed-again');
+   outcome={result:'expression',data:{state:'ready',document,file:{location,revision:'file:changed-again'}}};
+  }else throw Error('Unexpected save/readback operation '+JSON.stringify(op));
   return {json:async()=>({ok:true,outcome})};
  };
  try{

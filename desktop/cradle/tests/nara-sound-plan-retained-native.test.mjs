@@ -13,6 +13,9 @@ import {createHash} from 'node:crypto';
 import ts from '../expressions-app/node_modules/typescript/lib/typescript.js';
 
 const configPath=process.env.OI_NARA_SOUND_PLAN_CONFIG;
+if(configPath===undefined){
+ test('retained native sound semantics require explicit controlled native inputs',{skip:'Set OI_NARA_SOUND_PLAN_CONFIG to the absolute actual controlled receipt/document configuration; this skip is not native sound acceptance'},()=>{});
+}else{
 assert.ok(configPath&&isAbsolute(configPath),'An explicit actual controlled native input configuration is required');
 const config=JSON.parse(await readFile(configPath,'utf8'));
 for(const key of ['native_receipt_file','native_document_file','receipt_file'])assert.ok(isAbsolute(config[key]??''),key);
@@ -107,3 +110,4 @@ test.after(async()=>{
  await writeFile(config.receipt_file,JSON.stringify({schema:'oi.nara-sound-retained-native-semantics/v1',passed:checks.length===3,checks,sources,inputs:{native_receipt:{path:config.native_receipt_file,sha256:digest(nativeBytes)},native_document:{path:config.native_document_file,sha256:digest(documentBytes)}},resource:{measured_rss_bytes:rss},standing:'Pure production adapter semantics over retained controlled native contributions and an independently source-qualified saved scene. These inputs do not form a live current-person/occasion/DSP chain. No native process, provider, browser, AudioContext, app build, installation, playback or listening proof.'},null,2)+'\n');
  await rm(temp,{recursive:true,force:true});
 });
+}
