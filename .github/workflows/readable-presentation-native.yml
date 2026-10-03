@@ -123,6 +123,29 @@ jobs:
             2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/design-system-dependencies.log"
           npm --prefix desktop/cradle run build \
             2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/frontend-build.log"
+      - name: Exercise native Explore constellation interaction and view continuation
+        working-directory: desktop/cradle
+        shell: bash
+        env:
+          TMPDIR: ${{ runner.temp }}/readable-native-work
+          OI_TEST_RUN_DIR: ${{ runner.temp }}/readable-native-work
+          AIKIT_HOME: ${{ runner.temp }}/readable-native-work/aikit-home
+          OI_HOME: ${{ runner.temp }}/readable-native-work/oi-home
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium webkit
+          walk_failures=0
+          for walk_engine in chromium webkit; do
+            evidence="$RUNNER_TEMP/readable-native-evidence/explore-$walk_engine"
+            mkdir -p "$evidence"
+            if WALK_ENGINE="$walk_engine" node walk/run.mjs explore-sf2 knowledge 2>&1 | tee "$evidence/walk.log"; then
+              :
+            else
+              walk_failures=$((walk_failures + 1))
+            fi
+            if [ -d walk/artifacts ]; then cp -a walk/artifacts/. "$evidence/"; fi
+          done
+          test "$walk_failures" -eq 0
       - name: Prove native source, library, context and account readability
         working-directory: desktop/cradle
         shell: bash
