@@ -501,8 +501,92 @@ fn materialize(mut view: RetainedAct<'_>, available: usize) -> Result<Act, Strin
         crate::expression_act_store::MAX_RECORD_BYTES as usize,
     )?;
     view.updated = updated;
-    let encoded = serde_json::to_vec(&view).map_err(|e| e.to_string())?;
-    let act: Act = serde_json::from_slice(&encoded).map_err(|e| e.to_string())?;
+    // This view contains already-native, privately qualified immutable custody.
+    // Materialize only passage metadata; serializing/reimporting the entire
+    // custody would discard its private page qualification and re-run every
+    // historical page's canonical codec. External decode remains independent.
+    let sequence = view
+        .act
+        .sequence
+        .iter()
+        .chain(view.append)
+        .map(|passage| {
+            let value = serde_json::to_value(RetainedPassage {
+                passage,
+                handle: view.handles.get(&passage.index),
+            })
+            .map_err(|e| e.to_string())?;
+            serde_json::from_value(value).map_err(|e| e.to_string())
+        })
+        .collect::<Result<Vec<Passage>, String>>()?;
+    // Exhaustive ownership keeps the public Act fields in parity with the
+    // same borrowed serializer that supplied both pre-allocation budgets.
+    let Act {
+        act_ref,
+        expression_ref,
+        summary: _,
+        actor: _,
+        activity_ref,
+        phase,
+        basis_revision: _,
+        revision: _,
+        mode,
+        cast,
+        subject_ref,
+        instrument_ref,
+        material,
+        bindings,
+        selection,
+        position,
+        sequence: _,
+        material_contract: _,
+        performance_custody: _,
+        continuations,
+        return_ref,
+        result,
+        role_entities,
+        updated_at_unix_ms: _,
+        archived,
+    } = view.act;
+    let act = Act {
+        act_ref: act_ref.clone(),
+        expression_ref: expression_ref.clone(),
+        summary: view.summary.to_owned(),
+        actor: view.actor.to_owned(),
+        activity_ref: view
+            .activity
+            .map(str::to_owned)
+            .or_else(|| activity_ref.clone()),
+        phase: if view.append.is_some() {
+            ActPhase::Running
+        } else {
+            *phase
+        },
+        basis_revision: view.basis,
+        revision: view.revision,
+        mode: *mode,
+        cast: cast.clone(),
+        subject_ref: subject_ref.clone(),
+        instrument_ref: instrument_ref.clone(),
+        material: material.clone(),
+        bindings: bindings.clone(),
+        selection: selection.clone(),
+        position: view.append.map(|p| p.index).or(*position),
+        sequence,
+        material_contract: Some(MATERIAL_SCHEMA.into()),
+        performance_custody: None,
+        continuations: continuations.clone(),
+        return_ref: return_ref.clone(),
+        result: result.clone(),
+        role_entities: role_entities.clone(),
+        updated_at_unix_ms: updated,
+        archived: *archived,
+    };
+    // Retain the original typed metadata/numeric/default refusal semantics,
+    // without treating this native custody as a newly imported wire record.
+    let metadata = serde_json::to_vec(&act).map_err(|e| e.to_string())?;
+    let mut act: Act = serde_json::from_slice(&metadata).map_err(|e| e.to_string())?;
+    act.performance_custody = Some(view.custody.clone());
     validate(&act)?;
     Ok(act)
 }

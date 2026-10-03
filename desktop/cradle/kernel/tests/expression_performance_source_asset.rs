@@ -270,7 +270,10 @@ fn source_loss_drift_wrong_instance_and_version_downgrade_refuse_lossless_replay
 fn source_work() -> (Performance, Value) {
     let (mut full, actual) = prepared();
     let preparation = &actual["native_preparation"];
-    assert_eq!(preparation["determination"], full.bases[0].audio_determination);
+    assert_eq!(
+        preparation["determination"],
+        full.bases[0].audio_determination
+    );
     let note: oi_cradle_kernel::expression_performance_management::NativeNoteTarget =
         serde_json::from_value(preparation["notes"][0].clone()).unwrap();
     let basis = &full.bases[0];

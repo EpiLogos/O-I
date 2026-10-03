@@ -16,14 +16,26 @@ pub const SCHEMA: &str = "oi.expression-performance-source-asset/v1";
 /// payload, while admitting no other use of that key through file/Act custody.
 pub(crate) fn native_constructor_metadata(object: &serde_json::Map<String, Value>) -> bool {
     const KEYS: [&str; 9] = [
-        "schema", "constructor", "world_request", "identity_profile", "natal",
-        "sky", "original_occasion", "calibration", "return_context",
+        "schema",
+        "constructor",
+        "world_request",
+        "identity_profile",
+        "natal",
+        "sky",
+        "original_occasion",
+        "calibration",
+        "return_context",
     ];
     object.len() == KEYS.len()
         && KEYS.iter().all(|key| object.contains_key(*key))
         && object["schema"] == "ql.native-performance-receiving-source-inputs/v1"
         && object["constructor"].as_str().is_some_and(|tag| {
-            ["native-world", "native-protected", "explicit-reference-world"].contains(&tag)
+            [
+                "native-world",
+                "native-protected",
+                "explicit-reference-world",
+            ]
+            .contains(&tag)
         })
 }
 

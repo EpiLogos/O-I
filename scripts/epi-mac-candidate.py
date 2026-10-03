@@ -153,10 +153,17 @@ def main():
         instrument_manifest = 'experiments/ql-runtime/native-owner-instrument/Cargo.toml'
         run(['cargo', 'test', '--locked', '--manifest-path', instrument_manifest], act, instrument_env)
         run(['cargo', 'build', '--locked', '--release', '--manifest-path', instrument_manifest], act, instrument_env)
+        # Construct the existing Prime launcher and native research parent from
+        # the same archived Actuation source in this sequential owned build slot.
+        parent_build_logs = {}
+        for package, executable in (('actuation-cli', 'actuation-epi-prime'),
+                                    ('actuation-research', 'actuation-research')):
+            run(['cargo', 'build', '--locked', '--release', '-p', package, '--bin', executable], act, instrument_env)
+            parent_build_logs[executable] = receipt['commands'][-1]['log']
         builds['actuation-instrument'] = Path(instrument_env['CARGO_TARGET_DIR']) / 'release'
         for name, names in (('oi', ('oi',)), ('central', ('ctrl',)),
                             ('quaternal-logic', ('ql', 'ql-field-host', 'ql-focused-host', 'ql-field-worker', 'ql-sky')),
-                            ('actuation-instrument', ('actuation-ql-owner-instrument',))):
+                            ('actuation-instrument', ('actuation-ql-owner-instrument', 'actuation-epi-prime', 'actuation-research'))):
             destination = native / name
             destination.mkdir(parents=True)
             for executable in names:
@@ -168,6 +175,12 @@ def main():
                 description = subprocess.check_output(['/usr/bin/file', '-b', str(target)], text=True).strip()
                 row = {'sha256': digest(target), 'source_revision': receipt['sources'][name]['revision'],
                        'bytes': target.stat().st_size, 'mode': stat.S_IMODE(target.stat().st_mode), 'file_description': description}
+                if name == 'actuation-instrument' and executable in parent_build_logs:
+                    if source.stat().st_size != row['bytes'] or digest(source) != row['sha256']:
+                        raise RuntimeError('Copied native parent differs from its actual build output: ' + executable)
+                    row['build_output'] = str(source)
+                    row['build_command_log'] = parent_build_logs[executable]
+                    row['source_tree'] = receipt['sources'][name]['tree']
                 if executable == 'ql-sky':
                     if not target.read_bytes().startswith(b'#!/bin/sh\n'):
                         raise RuntimeError('ql-sky is not the canonical generated provider script')

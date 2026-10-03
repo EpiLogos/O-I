@@ -5,6 +5,8 @@
  * answer gate. Each case runs against its own independently acknowledged native
  * file admission; refused/pending cases must never be reused as a clean case. */
 import assert from 'node:assert/strict';
+import {writeFileSync} from 'node:fs';
+import {createEpiFirstRestReceivingGate} from './epi-first-rest-receiving.mjs';
 import {readFile,writeFile,mkdir,readdir,stat,realpath,lstat,open} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {resolve} from 'node:path';
@@ -22,7 +24,9 @@ if(selectionOnly){
  assert.ok(cfg.world.endsWith('/world')&&allowed.some(root=>cfg.world.startsWith(root+'/')),'Hosted selection requires the actual owned temporary world');
 }else assert.ok(cfg.world.endsWith('/world')&&cfg.world.includes('/T/'),'This refusal gate requires the already qualified controlled T world');
 assert.equal(resolve(cfg.output),cfg.output);assert.ok(cfg.output.startsWith(resolve(cfg.world,'..')+'/')&&!cfg.output.startsWith(cfg.world+'/'));
-assert.ok(['positive','native-refusal','native-changed','local-changed'].includes(cfg.selection_case));
+const navigationCases=['navigation-choose-positive','navigation-return-positive','navigation-native-refusal','navigation-local-changed'];
+const navigationCase=navigationCases.includes(cfg.selection_case);
+assert.ok(['positive','native-refusal','native-changed','local-changed','required-cosmic-body-disabled',...navigationCases].includes(cfg.selection_case));
 assert.ok(!('answer' in cfg)&&!('expected_answer' in cfg)&&!('provider' in cfg));
 const qstat=await stat(cfg.qualification);assert.ok(qstat.isFile()&&qstat.size<=2*1024*1024);
 const qbytes=await readFile(cfg.qualification);assert.equal(hash(qbytes),cfg.qualification_sha256);
@@ -45,7 +49,19 @@ await mkdir(cfg.output,{recursive:true});assert.equal((await readdir(cfg.output)
 const report={schema:'oi.epi-selected-conversation-native-gate/v1',passed:false,selection_case:cfg.selection_case,qualification:{path:cfg.qualification,sha256:cfg.qualification_sha256},checks:[],native:[],requests:[],limitations:['Actual controlled production hook and native HTTP receiving boundary; no provider/model question is sent','A positive selection gate does not qualify full source content, fresh answer, Keep/save/restart or installed/hardware/H','Superseded/invalidated queue outcomes remain separately required actual queue/lifetime cases; this driver does not manufacture these outcomes']};
 let browser,page,frame,releaseHeld,captureDOM;
 async function responseBytes(response,cap=64*1024*1024){assert.ok(response.ok,'Actual HTTP '+response.status);const reader=response.body.getReader(),parts=[];let size=0;try{for(;;){const r=await reader.read();if(r.done)break;size+=r.value.byteLength;if(size>cap)throw Error('Actual native reply exceeds its receiving bound');parts.push(Buffer.from(r.value));}}catch(e){await reader.cancel();throw e;}finally{reader.releaseLock();}return Buffer.concat(parts);}
-async function native(request){const body=JSON.stringify({op:'expression',request});const bytes=await responseBytes(await fetch(cfg.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body}));const value=JSON.parse(bytes);report.native.push({request,response_bytes:bytes.length,response_sha256:hash(bytes),state:value.outcome?.data?.state,error:value.error??null});assert.equal(value.ok,true,JSON.stringify(value));assert.equal(value.outcome.result,'expression');return value.outcome.data;}
+async function native(request){
+ const body=JSON.stringify({op:'expression',request});const bytes=await responseBytes(await fetch(cfg.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body}));const value=JSON.parse(bytes);
+ let evidence={request,response_bytes:bytes.length,response_sha256:hash(bytes),state:value.outcome?.data?.state,error:value.error??null};
+ if(cfg.selection_case==='required-cosmic-body-disabled'&&request.operation==='edit'){
+  // Full actual owner operands/bytes stay reachable as artifacts. Only their
+  // refs enter the unchanged bounded2MiB summary-receipt consumer aperture.
+  assert.ok(Buffer.byteLength(body)<=64*1024*1024);const ordinal=report.native.length,request_file=`body-native-edit-${ordinal}.request.json`,response_file=`body-native-edit-${ordinal}.response.json`;
+  await writeFile(resolve(cfg.output,request_file),body);await writeFile(resolve(cfg.output,response_file),bytes);
+  evidence={request:{operation:request.operation,expression_ref:request.expression_ref,expected_revision:request.expected_revision,actor:request.actor,changes:request.changes.map(change=>({change:change.change,scene_ref:change.scene_ref}))},
+   full_request_ref:{path:request_file,bytes:Buffer.byteLength(body),sha256:hash(body)},full_response_ref:{path:response_file,bytes:bytes.length,sha256:hash(bytes)},state:value.outcome?.data?.state,error:value.error??null};
+ }
+ report.native.push(evidence);assert.equal(value.ok,true,JSON.stringify(value));assert.equal(value.outcome.result,'expression');return value.outcome.data;
+}
 async function inspect(){const v=await native({operation:'inspect',expression_ref:cfg.expression_ref});assert.ok(v.document);return v;}
 // This mode qualifies actual source-built receiving, not a body/provider offer.
 async function qualifiedFile(ref,label,cap=1024*1024*1024){
@@ -117,7 +133,7 @@ async function qualifyHostedDurable(label){
  assert.equal(decoded.state,'ready');assert.deepEqual(decoded.file,expected.file);assert.deepEqual(decoded.document,expected.document,label+': every durable body/property/source/history remains exact');
  const bytes=await responseBytes(await fetch(cfg.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'file_read',location:expected.file.location})}),24*1024*1024);
  const result=JSON.parse(bytes);assert.equal(result.ok,true);assert.equal(result.outcome.result,'file_read');const reading=result.outcome.reading;
- assert.deepEqual({location:reading.location,revision:reading.revision},expected.file);assert.equal(Buffer.byteLength(reading.content),expected.content_bytes);assert.equal(hash(reading.content),expected.content_sha256);
+ assert.deepEqual({location:reading.location,revision:reading.revision},{location:expected.file.location,revision:expected.file.revision});assert.equal(Buffer.byteLength(reading.content),expected.content_bytes);assert.equal(hash(reading.content),expected.content_sha256);
  const physical=resolve(cfg.world,expected.file.location.path);assert.ok(physical.startsWith(cfg.world+'/'));assert.ok(expected.file.location.path.split('/').every(part=>part!=='.'&&part!=='..'));
  await qualifiedFile({path:physical,bytes:expected.content_bytes,sha256:expected.content_sha256},label+': durable actual file',24*1024*1024);
  (report.durable_conservation??=[]).push({label,file:expected.file,document_revision:expected.document.revision,content_sha256:expected.content_sha256,actual_native_file_reply_sha256:hash(bytes)});
@@ -154,6 +170,242 @@ try{
  const instrument=frame.getByRole('region',{name:'Nara Expression instrument'});assert.equal(await instrument.isVisible(),false,'Conversation must start closed');
  const choose=async ref=>{await frame.locator('[data-epi-body]').selectOption(ref);return waitCurrent(ref);};
  const local=async ref=>{const work=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());const entry=Object.entries(work.bindings).find(([,b])=>b.scene_ref===sceneRef);assert.ok(entry);const occurrence=entry[1].occurrences.find(o=>o.entity_ref===ref);assert.ok(occurrence);await frame.evaluate(id=>window.__FIELD_STUDIES__.selectEntity(id),occurrence.view_entity_id);};
+ if(cfg.selection_case==='required-cosmic-body-disabled'){
+ assert.equal(selectionOnly,true,'The counterproof requires actual isolated source-built process/file/module custody');
+ const cosmicRef=carrier.receiving.scene_ref,cosmic=document.scenes.find(s=>s.scene_ref===cosmicRef),earth=cfg.expression_ref+':entity:world-earth';
+ assert.ok(cosmic&&cosmic.entity_refs.length===32&&cosmic.entity_refs.includes(earth));
+ assert.equal(document.entities[earth].subject.subject_ref,'ql:m-coordinate:bimba:M2-5-0/1-0');
+ const required=[...cosmic.entity_refs],otherBodies=required.filter(ref=>ref!==earth),maskRoles=['degree','governor','decan','codon','skin','aperture'];
+ assert.equal(otherBodies.length,31);
+ const actualImage=async(label,reading)=>{
+  const bytes=JSON.stringify(reading,null,2)+'\n';assert.ok(Buffer.byteLength(bytes)<=64*1024*1024,'Actual controlled body readback must fit its retained aperture');
+  const file=label+'.json';await writeFile(resolve(cfg.output,file),bytes);
+  const png=await page.screenshot({path:resolve(cfg.output,label+'.png')});
+  return{readback:{path:resolve(cfg.output,file),bytes:Buffer.byteLength(bytes),sha256:hash(bytes)},image:{path:resolve(cfg.output,label+'.png'),bytes:png.length,sha256:hash(png)},
+   expression_ref:reading.working.native_ref,revision:reading.working.revision,scene_ref:reading.document.scenes[reading.state.sceneIndex].id,
+   source_cut:q.source_cuts.oi.cut,loaded_application:q.frontend.application,loaded_receiver:q.frontend.host,
+   actual_native_document_sha256:hash(JSON.stringify(reading.native_document)),standing:'Same browser/native current readback and screenshot; pixels do not prove shape/readability'};
+ };
+ const readActual=async()=>{
+  const reading=await frame.evaluate(()=>{const f=window.__FIELD_STUDIES__;return{state:f.getState(),working:f.nativeWorking(),record:f.epiWorld(),current:f.epiCurrent(),native:f.native(),document:f.getDocument(),rendered:f.inspect(true),telemetry:f.telemetry()};});
+  const current=await inspect();reading.native_document=current.document;
+  assert.equal(reading.working.native_ref,cfg.expression_ref);assert.equal(reading.working.revision,current.document.revision);
+  assert.equal(reading.document.scenes[reading.state.sceneIndex].id,cosmicRef);assert.equal(current.document.selection.scene_ref,cosmicRef);
+  assert.deepEqual(reading.record,carrier,'Disable/restore cannot rebind the native world, source, clocks, person, occasion or profile');
+  assert.equal(reading.state.fieldPaused,true);assert.equal(reading.state.simTime,0);assert.equal(reading.rendered.simTime,0);assert.equal(reading.rendered.steps,0);
+  return reading;
+ };
+ const awaitActualPartition=async(disabled,revision)=>frame.waitForFunction(basis=>{
+  const f=window.__FIELD_STUDIES__,journey=f?.getDocument(),state=f?.getState(),work=f?.nativeWorking(),reading=f?.inspect(),telemetry=f?.telemetry();
+  const scene=journey?.scenes[state.sceneIndex],earth=scene?.entities.find(e=>e.id===basis.earth);
+  if(work?.native_ref!==basis.expression_ref||work.revision!==basis.revision||work.busy||work.pending||work.failed||scene?.id!==basis.cosmic||scene.entities.length!==32||earth?.enabled!==!basis.disabled)return false;
+  const parts=reading?.partitions??[],expected=basis.disabled?basis.others:basis.required;
+  if(parts.length!==expected.length||!expected.every(ref=>parts.some(p=>p.entityId===ref&&p.end>p.start))||basis.disabled&&parts.some(p=>p.entityId===basis.earth))return false;
+  const statuses=telemetry?.sourceStatus??{};
+  return basis.masks.every(role=>{const entries=Object.entries(statuses).filter(([key])=>{try{return JSON.parse(key)[0]===basis.expression_ref+':entity:world-register-'+role;}catch{return false;}});return entries.length===1&&typeof entries[0][1]==='string'&&entries[0][1].includes('source active');});
+ },{expression_ref:cfg.expression_ref,cosmic:cosmicRef,earth,required,others:otherBodies,disabled,revision,masks:maskRoles},{timeout:30000});
+ const exactMaterialOnly=(before,after,presentation)=>{
+  const expected=structuredClone(before);expected.revision=before.revision+1;
+  const changed=expected.scenes.find(scene=>scene.scene_ref===cosmicRef);changed.revision=expected.revision;changed.presentation=structuredClone(presentation);
+  assert.deepEqual(after,expected,'Only exact cosmic Earth live/saved enabled bit and lawful native document/scene revision may change');
+ };
+ const controls=async()=>{
+  const reading=await frame.evaluate(()=>({scenes:Array.from(document.querySelectorAll('[data-epi-scene]')).map(e=>({ref:e.dataset.epiScene,text:e.textContent,current:e.getAttribute('aria-current')})),
+   actions:Array.from(document.querySelectorAll('[data-epi]')).map(e=>({action:e.dataset.epi,text:e.textContent})),
+   body_refs:Array.from(document.querySelector('[data-epi-body]')?.options??[]).map(e=>e.value).filter(Boolean),axis_controls:document.querySelectorAll('[data-epi-axis-controls]').length}));
+  assert.equal(reading.scenes.length,3);assert.deepEqual(reading.body_refs,required);assert.equal(reading.axis_controls,1);
+  for(const action of ['source','ask','step','reset','save','set-damping','set-axis'])assert.ok(reading.actions.some(row=>row.action===action),'Ordinary '+action+' remains present while the body is disabled');
+  return reading;
+ };
+ const artifacts=[];
+ const receiving=createEpiFirstRestReceivingGate({check:(value,label)=>{assert.ok(value,label);report.checks.push(label);},sha:hash,
+  artifact:(name,value)=>{const bytes=JSON.stringify(value,null,2)+'\n';assert.ok(Buffer.byteLength(bytes)<=4*1024*1024);writeFileSync(resolve(cfg.output,name),bytes);artifacts.push({path:name,bytes:Buffer.byteLength(bytes),sha256:hash(bytes)});}});
+ const requestStart=report.requests.length;
+ await frame.locator('[data-epi-scene='+JSON.stringify(cosmicRef)+']').click();
+ await frame.waitForFunction(ref=>{const f=window.__FIELD_STUDIES__,w=f?.nativeWorking(),d=f?.getDocument();return !w?.busy&&!w?.pending&&!w?.failed&&d.scenes[f.getState().sceneIndex].id===ref;},cosmicRef,{timeout:30000});
+ const focused=await inspect();exactFocusOnly(document,focused.document,cosmicRef,null);
+ await awaitActualPartition(false,focused.document.revision);
+ const opening=await readActual(),openingControls=await controls();receiving.requirePartitions(opening,required,'Required-body original first rest');receiving.requireInitialRestTargets(opening,required,'Required-body original first rest');
+ const openingEvidence=await actualImage('required-body-before-native-disable',opening),originalPresentation=structuredClone(focused.document.scenes.find(scene=>scene.scene_ref===cosmicRef).presentation);
+ const disabledPresentation=structuredClone(originalPresentation);
+ for(const material of [disabledPresentation.scene,disabledPresentation.saved].filter(Boolean)){
+  const rows=material.entities.filter(e=>e.id===earth);assert.equal(rows.length,1);assert.equal(rows[0].enabled,true);rows[0].enabled=false;
+ }
+ const disabled=await native({operation:'edit',expression_ref:cfg.expression_ref,expected_revision:focused.document.revision,actor:'human:controlled-required-body-counterproof',changes:[{change:'scene_material_set',scene_ref:cosmicRef,presentation:disabledPresentation}]});
+ assert.equal(disabled.state,'ready');assert.ok(disabled.document);exactMaterialOnly(focused.document,disabled.document,disabledPresentation);
+ // The frame-local openNative(ref) intentionally retains an already open
+ // draft. Use the ordinary parent's existing ref-only open-expression contract
+ // so nativeWorkspace.follow actually inspects and adopts this owner revision.
+ await page.evaluate(ref=>{const frame=document.querySelector('#world');if(!frame?.contentWindow)throw Error('The qualified actual parent frame is absent');frame.contentWindow.postMessage({v:1,kind:'host-command',command:'open-expression',ref},'*');},cfg.expression_ref);
+ (report.body_ordinary_reopen_commands??=[]).push({command:'open-expression',ref:cfg.expression_ref,expected_native_revision:disabled.document.revision,source_contract:'src/expressions/hostedApp.ts::postOpenExpression → app.ts::openHostExpression → nativeWorkspace.follow',payload_contains_only_reference:true});
+ await awaitActualPartition(true,disabled.document.revision);
+ const absent=await readActual(),absentControls=await controls();assert.deepEqual(absent.native_document,disabled.document);assert.deepEqual(absentControls,openingControls,'Controls, body choices and exact Scene routes must remain present');
+ const expectedFailure='Required-body disabled first rest: actual renderer partition for '+earth;
+ let partitionFailure;try{receiving.requirePartitions(absent,required,'Required-body disabled first rest');}catch(error){partitionFailure=String(error);assert.equal(error.message,expectedFailure);}assert.ok(partitionFailure,'The unchanged complete32 world gate must refuse the disabled actual Earth body');
+ let targetFailure;try{receiving.requireInitialRestTargets(absent,required,'Required-body disabled first rest');}catch(error){assert.equal(error.code,'ERR_ASSERTION');assert.match(error.message,/p\s*&&\s*p\.end\s*>\s*p\.start/,'Failure must be the unchanged actual required partition assertion, not an unrelated receiving precondition');targetFailure=String(error);}assert.ok(targetFailure,'The unchanged full32 actual first-rest target gate must also refuse this body omission');
+ assert.equal(absent.rendered.partitions.length,31);assert.ok(!absent.rendered.partitions.some(row=>row.entityId===earth));for(const ref of otherBodies)assert.ok(absent.rendered.partitions.some(row=>row.entityId===ref&&row.end>row.start));
+ const disabledEvidence=await actualImage('required-body-disabled-native-and-actual-renderer',absent);
+ const restore=await native({operation:'edit',expression_ref:cfg.expression_ref,expected_revision:disabled.document.revision,actor:'human:controlled-required-body-restore',changes:[{change:'scene_material_set',scene_ref:cosmicRef,presentation:originalPresentation}]});
+ assert.equal(restore.state,'ready');assert.ok(restore.document);exactMaterialOnly(disabled.document,restore.document,originalPresentation);
+ const exactRestored=structuredClone(focused.document);exactRestored.revision=restore.document.revision;exactRestored.scenes.find(scene=>scene.scene_ref===cosmicRef).revision=restore.document.revision;assert.deepEqual(restore.document,exactRestored,'Native restoration returns the exact original full world except lawful revision history');
+ await page.evaluate(ref=>{const frame=document.querySelector('#world');if(!frame?.contentWindow)throw Error('The qualified actual parent frame is absent');frame.contentWindow.postMessage({v:1,kind:'host-command',command:'open-expression',ref},'*');},cfg.expression_ref);
+ report.body_ordinary_reopen_commands.push({command:'open-expression',ref:cfg.expression_ref,expected_native_revision:restore.document.revision,source_contract:'src/expressions/hostedApp.ts::postOpenExpression → app.ts::openHostExpression → nativeWorkspace.follow',payload_contains_only_reference:true});
+ await awaitActualPartition(false,restore.document.revision);
+ const restored=await readActual();assert.deepEqual(restored.native_document,restore.document);assert.deepEqual(await controls(),openingControls);
+ receiving.requirePartitions(restored,required,'Required-body restored original first rest');receiving.requireInitialRestTargets(restored,required,'Required-body restored original first rest');
+ const restoredEvidence=await actualImage('required-body-native-restored-ordinary-load',restored);
+ assert.equal(await instrument.isVisible(),false);assert.ok(!report.requests.slice(requestStart).some(v=>(v.op==='encounter'&&['prompt','draft'].includes(v.action))||['send','epii_delegate'].includes(v.operation)));
+ report.required_body_counterproof={passed:true,entity_ref:earth,native_subject_ref:document.entities[earth].subject.subject_ref,
+  mutation:'Only current/saved cosmic material Earth.enabled true→false via actual native CAS; no semantic entity/source/profile/control deletion',
+  retained_authored_clock_basis:carrier.native_readback??carrier.world.native_readback,opening:openingEvidence,disabled:disabledEvidence,restored:restoredEvidence,
+  partition_gate_expected_failure:expectedFailure,actual_partition_failure:partitionFailure,actual_target_failure:targetFailure,
+  unchanged_original_receiving_predicates:true,other_actual_partitions:31,original_required_partitions:32,artifacts,
+  durable:'The existing before/after native inspect_file/file_read/physical-byte full Document gates remain mandatory',
+  scope:'Actual source-built native/browser original-gate counterproof and restored receiving; product refusal, shape/readability, personal causal, installed and H unclaimed'};
+ }else if(navigationCase){
+ const requestStart=report.requests.length;
+ // These are ordinary navigation cases over the same real owner and full
+ // independently acknowledged file. No selection result is substituted.
+ await local(target);
+ const beforeJourney=await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument());
+ const before=await inspect();assert.deepEqual(before.document,document);
+ const localFocus=async()=>frame.evaluate(()=>{
+  const f=window.__FIELD_STUDIES__,state=f.getState(),journey=f.getDocument(),work=f.nativeWorking();
+  const sceneId=journey.scenes[state.sceneIndex].id,binding=work.bindings[sceneId];
+  return {scene_id:sceneId,scene_ref:binding?.scene_ref??null,view_ids:state.selected,
+   entity_refs:state.selected.map(id=>binding?.occurrences.find(o=>o.view_entity_id===id)?.entity_ref??null),
+   revision:work.revision,pending:work.pending,busy:work.busy};
+ });
+ const requireLocal=async entityRef=>{const focus=await localFocus();assert.equal(focus.scene_ref,sceneRef);assert.deepEqual(focus.entity_refs,[entityRef]);assert.equal(focus.view_ids.length,1);return focus;};
+ await requireLocal(target);
+ captureDOM=async label=>{
+  const value=await frame.evaluate(()=>{
+   const bar=document.querySelector('.epi-world-entrance'),alert=bar?.querySelector('[role="alert"]'),choose=bar?.querySelector('[data-epi-body]');
+   const work=window.__FIELD_STUDIES__?.nativeWorking();
+   return {alert_text:alert?.textContent??null,alert_visible:!!alert&&alert.getClientRects().length>0&&getComputedStyle(alert).visibility!=='hidden'&&getComputedStyle(alert).display!=='none',
+    choose_disabled:choose?.disabled??null,choose_value:choose?.value??null,source_open:!!document.querySelector('.epi-source-dialog')?.open,
+    native_working:{native_ref:work?.native_ref,revision:work?.revision,pending:work?.pending,busy:work?.busy,failed:work?.failed,notice:work?.notice}};
+  });
+  const bytes=JSON.stringify(value,null,2)+'\n';assert.ok(Buffer.byteLength(bytes)<=64*1024);const file=label+'.dom.json';await writeFile(resolve(cfg.output,file),bytes);
+  return {...value,file,bytes:Buffer.byteLength(bytes),sha256:hash(bytes)};
+ };
+ const errorText={
+  'navigation-native-refusal':'The native owner did not accept this navigation. Inspect the retained operation, then choose the body again.',
+  'navigation-local-changed':'The selected Scene, body, person or occasion changed before navigation completed. Choose the body again.',
+ }[cfg.selection_case];
+ const requireTerminal=async(message,entityRef)=>{
+  await frame.waitForFunction(({message,entityRef})=>{
+   const f=window.__FIELD_STUDIES__,bar=document.querySelector('.epi-world-entrance'),alert=bar?.querySelector('[role="alert"]'),choose=bar?.querySelector('[data-epi-body]');
+   const state=f.getState(),journey=f.getDocument(),work=f.nativeWorking(),binding=work.bindings[journey.scenes[state.sceneIndex].id];
+   const local=state.selected.map(id=>binding?.occurrences.find(o=>o.view_entity_id===id)?.entity_ref??null);
+   return work.busy===false&&!!choose&&!choose.disabled&&local.length===1&&local[0]===entityRef
+    &&(message?!!alert&&alert.textContent===message&&alert.getClientRects().length>0&&getComputedStyle(alert).visibility!=='hidden'&&getComputedStyle(alert).display!=='none':!alert);
+  },{message,entityRef},{timeout:30000});
+  await requireLocal(entityRef);assert.equal(await instrument.isVisible(),false,'Navigation must not open a conversation');
+ };
+ const openActualSource=async()=>{
+  const at=report.requests.length;await frame.locator('[data-epi="source"]').click();
+  await frame.waitForFunction(()=>{
+   const dialog=document.querySelector('.epi-source-dialog');return !!dialog?.open&&dialog.textContent.includes('dcb274c1-fbbc-5914-b27d-dea979c78558')
+    &&dialog.textContent.includes('M4.4.4.4')&&dialog.querySelectorAll('dl dt').length===64
+    &&dialog.textContent.includes('Typed relations · 23')
+    &&dialog.textContent.includes('907c46bc8a65b47e12f14aa4d8b444263dc956a1a7b4b6d038e57223d6073288')
+    &&!document.querySelector('[data-epi="source"]').disabled;
+  },null,{timeout:30000});
+  assert.ok(report.requests.slice(at).some(row=>row.operation==='source'),'Ordinary disclosure must actually request the selected source');
+  report.navigation_source_disclosure={coordinate:'M4.4.4.4',uuid:'dcb274c1-fbbc-5914-b27d-dea979c78558',properties:64,incident_relations:23,
+   source_revision:'907c46bc8a65b47e12f14aa4d8b444263dc956a1a7b4b6d038e57223d6073288',standing:'Actual selected-source DOM and issued native request; no fresh-model answer'};
+ };
+ const ordinaryInspectReplies=[];
+ // Only browser-issued production-owner reads count here. The test's own
+ // inspection cannot supply the missing ordinary receiving acknowledgement.
+ page.on('response',response=>{
+  const request=response.request();if(request.url()!==cfg.bridge+'/op'||request.method()!=='POST')return;
+  const raw=request.postData();if(!raw||Buffer.byteLength(raw)>64*1024)return;let sent;try{sent=JSON.parse(raw);}catch{return;}
+  if(sent.op!=='expression'||sent.request?.operation!=='inspect'||sent.request.expression_ref!==cfg.expression_ref)return;
+  const observed=(async()=>{
+   const ordinal=ordinaryInspectReplies.length,request_file=`navigation-owner-inspect-${ordinal}.request.json`,response_file=`navigation-owner-inspect-${ordinal}.response.json`;
+   assert.deepEqual(sent,{op:'expression',request:{operation:'inspect',expression_ref:cfg.expression_ref}});
+   assert.equal(response.ok(),true);const declared=response.headers()['content-length'];assert.match(declared??'',/^(0|[1-9][0-9]*)$/);assert.ok(Number(declared)<=64*1024*1024);
+   const bytes=await response.body();assert.equal(bytes.length,Number(declared));const value=JSON.parse(bytes);assert.equal(value.ok,true);assert.equal(value.outcome?.result,'expression');assert.ok(value.outcome.data.document);
+   await writeFile(resolve(cfg.output,request_file),raw);await writeFile(resolve(cfg.output,response_file),bytes);
+   return {request_file,response_file,request_sha256:hash(raw),response_sha256:hash(bytes),response_bytes:bytes.length,document:value.outcome.data.document,unchanged_actual_response:true};
+  })().catch(error=>({failure:String(error)}));ordinaryInspectReplies.push(observed);
+ });
+ const actualAppFocusResponses=[];
+ let expected=before.document,expectedLocal=target;
+ if(cfg.selection_case==='navigation-native-refusal'){
+  const changed=await native({operation:'edit',expression_ref:cfg.expression_ref,expected_revision:before.document.revision,actor:'human:controlled-navigation-refusal',changes:[{change:'focus',scene_ref:sceneRef,entity_ref:other}]});
+  assert.ok(changed.document);exactFocusOnly(before.document,changed.document,sceneRef,other);expected=changed.document;
+  assert.equal((await localFocus()).revision,before.document.revision,'Do not silently refresh the app old-CAS basis');
+  page.on('response',response=>{
+   const request=response.request();if(request.url()!==cfg.bridge+'/op'||request.method()!=='POST')return;
+   const raw=request.postData();if(!raw||Buffer.byteLength(raw)>32*1024*1024)return;let sent;try{sent=JSON.parse(raw);}catch{return;}
+   const change=sent.request?.changes?.[0];if(sent.op!=='expression'||sent.request?.operation!=='edit'||sent.request.expression_ref!==cfg.expression_ref
+    ||sent.request.actor!=='human:expressions-app'||change?.change!=='focus'||change.scene_ref!==sceneRef||change.entity_ref!==other)return;
+   const observed=(async()=>{
+    const ordinal=actualAppFocusResponses.length,request_file=`navigation-focus-refusal-${ordinal}.request.json`,response_file=`navigation-focus-refusal-${ordinal}.response.json`;
+    await writeFile(resolve(cfg.output,request_file),raw);
+    assert.deepEqual(sent,{op:'expression',request:{operation:'edit',expression_ref:cfg.expression_ref,expected_revision:before.document.revision,actor:'human:expressions-app',changes:[{change:'focus',scene_ref:sceneRef,entity_ref:other}]}});
+    assert.equal(response.ok(),true);const declared=response.headers()['content-length'];assert.match(declared??'',/^(0|[1-9][0-9]*)$/);assert.ok(Number(declared)<=64*1024);
+    const bytes=await response.body();assert.equal(bytes.length,Number(declared));await writeFile(resolve(cfg.output,response_file),bytes);const value=JSON.parse(bytes);
+    assert.equal(value.ok,true);assert.equal(value.outcome?.result,'expression');
+    assert.deepEqual(value.outcome.data,{state:'revision_conflict',expression_ref:cfg.expression_ref,expected_revision:before.document.revision,current_revision:expected.revision});
+    return {request_file,response_file,request_sha256:hash(raw),request_bytes:Buffer.byteLength(raw),response_sha256:hash(bytes),response_bytes:bytes.length,actual_native_result:value.outcome.data,unchanged_actual_response:true};
+   })().catch(error=>({failure:String(error)}));actualAppFocusResponses.push(observed);
+  });
+ }
+ if(cfg.selection_case==='navigation-return-positive'||cfg.selection_case==='navigation-local-changed')await openActualSource();
+ report.before_navigation_dom=await captureDOM('before-navigation');
+ assert.ok(!errorText||!report.before_navigation_dom.alert_visible||report.before_navigation_dom.alert_text!==errorText,'New refusal cannot be pre-existing');
+ assert.equal(report.before_navigation_dom.choose_disabled,false);assert.equal(report.before_navigation_dom.native_working.busy,false);
+ if(cfg.selection_case==='navigation-local-changed'){
+  let observed,release,claimed=false;const heldObserved=new Promise(resolve=>{observed=resolve;}),released=new Promise(resolve=>{release=resolve;});releaseHeld=release;
+  await page.route(cfg.bridge+'/op',async route=>{
+   const raw=route.request().postData();let request;try{request=raw&&JSON.parse(raw);}catch{}
+   if(claimed||request?.op!=='expression'||request.request?.operation!=='inspect'||request.request.expression_ref!==cfg.expression_ref){await route.continue();return;}
+   claimed=true;const response=await route.fetch();assert.ok(response.ok());const declared=response.headers()['content-length'];assert.match(declared??'',/^(0|[1-9][0-9]*)$/);assert.ok(Number(declared)<=64*1024*1024);
+   const bytes=await response.body();assert.equal(bytes.length,Number(declared));const real=JSON.parse(bytes);assert.equal(real.ok,true);assert.equal(real.outcome?.result,'expression');assert.deepEqual(real.outcome.data.document,before.document);
+   await writeFile(resolve(cfg.output,'navigation-held-inspect.request.json'),raw);await writeFile(resolve(cfg.output,'navigation-held-inspect.response.json'),bytes);
+   report.held_actual_navigation_inspect={request_sha256:hash(raw),response_sha256:hash(bytes),response_bytes:bytes.length,request_file:'navigation-held-inspect.request.json',response_file:'navigation-held-inspect.response.json',unchanged_actual_response:true};
+   observed();await released;await route.fulfill({response});
+  });
+  await frame.locator('[data-epi-source="return"]').click();
+  let timer;try{await Promise.race([heldObserved,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('The ordinary navigation independent native inspect was not held in30s')),30000);})]);}finally{clearTimeout(timer);}
+  assert.equal(await frame.locator('.epi-source-dialog').evaluate(dialog=>dialog.open),false,'Source Return must close disclosure before its held navigation read');
+  await local(other);await requireLocal(other);
+  const changed=await native({operation:'edit',expression_ref:cfg.expression_ref,expected_revision:before.document.revision,actor:'human:controlled-navigation-current-basis',changes:[{change:'focus',scene_ref:sceneRef,entity_ref:other}]});
+  assert.ok(changed.document);exactFocusOnly(before.document,changed.document,sceneRef,other);expected=changed.document;expectedLocal=other;
+  releaseHeld();releaseHeld=null;
+ }else if(cfg.selection_case==='navigation-return-positive')await frame.locator('[data-epi-source="return"]').click();
+ else await frame.locator('[data-epi-body]').selectOption(other);
+ if(cfg.selection_case==='navigation-choose-positive'){
+  const after=await waitCurrent(other);exactFocusOnly(before.document,after.document,sceneRef,other);expected=after.document;expectedLocal=other;
+ }
+ await requireTerminal(errorText,expectedLocal);
+ const after=await inspect();if(cfg.selection_case==='navigation-return-positive')exactFocusOnly(before.document,after.document,sceneRef,target);else assert.deepEqual(after.document,expected);
+ assert.deepEqual(await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument()),beforeJourney,'Navigation must preserve every authored body/layout/source/private/occasion field');
+ if(cfg.selection_case==='navigation-native-refusal'){
+  assert.equal(actualAppFocusResponses.length,1,'One actual app stale-CAS response is mandatory');report.actual_app_navigation_refusal=await actualAppFocusResponses[0];assert.ok(!report.actual_app_navigation_refusal.failure,report.actual_app_navigation_refusal.failure);
+  const work=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());assert.equal(work.pending,'selection','Retain the actual refused focus for Inspect');
+ }
+ if(cfg.selection_case==='navigation-native-refusal')assert.equal(ordinaryInspectReplies.length,0,'Refused navigation must stop before independent readback');
+ else {
+  assert.equal(ordinaryInspectReplies.length,1,'One actual production navigation owner inspection is mandatory; test-side reads cannot stand in');
+  const observed=await ordinaryInspectReplies[0];assert.ok(!observed.failure,observed.failure);
+  assert.deepEqual(observed.document,cfg.selection_case==='navigation-local-changed'?before.document:after.document,'Qualify the actual production owner reply against independent pre-action or post-action basis');
+  const {document:observedDocument,...ref}=observed;report.actual_ordinary_navigation_inspect=ref;
+ }
+ report.after_navigation_dom=await captureDOM('after-navigation');
+ assert.equal(report.after_navigation_dom.source_open,false);assert.equal(report.after_navigation_dom.choose_disabled,false);
+ if(errorText){assert.equal(report.after_navigation_dom.alert_text,errorText);assert.equal(report.after_navigation_dom.alert_visible,true);}
+ report.navigation={case:cfg.selection_case,passed:true,before_revision:before.document.revision,after_revision:after.document.revision,
+  local_focus:await requireLocal(expectedLocal),native_focus:after.document.selection,complete_journey_sha256:hash(JSON.stringify(beforeJourney)),
+  whole_document_conservation:'Exact complete Document; only an acknowledged focus/revision or the recorded external focus is allowed',
+  saved_file_conservation:'The existing independent before/after native inspect_file/file_read/physical hash gates remain mandatory'};
+ report.checks.push('Actual '+cfg.selection_case+' retained exact local/native focus and complete source/person/occasion/material on acknowledged or refused ordinary navigation');
+ assert.ok(!report.requests.slice(requestStart).some(v=>(v.op==='encounter'&&['prompt','draft'].includes(v.action))||['send','epii_delegate'].includes(v.operation)),'Selection qualification must not send a model question');
+ }else{
  const initial=await choose(cfg.selection_case==='native-changed'?target:other);exactFocusOnly(document,initial.document,sceneRef,cfg.selection_case==='native-changed'?target:other);
  let expected=initial.document;
  if(cfg.selection_case==='native-refusal'||cfg.selection_case==='native-changed'){
@@ -248,7 +500,8 @@ try{
   assert.equal(await instrument.isVisible(),false,'Conversation must remain unopened after actual native reply, pending focus and complete-document conservation');
   report.checks.push('Actual '+cfg.selection_case+' preserved native source/person/occasion/material and refused ordinary conversation');
  }
- assert.ok(!report.requests.slice(requestStart).some(v=>(v.op==='encounter'&&['prompt','draft'].includes(v.action))||['send','epii_delegate'].includes(v.operation)),'Selection qualification must not send a model question');assert.deepEqual(errors,[]);if(selectionOnly){await qualifyHostedDurable('after actual selection outcome');await qualifyHostedOwner();report.portable_custody_after=requalifyPortableCurrentCustody(hostedSourceExpectation,hostedSourceQualification);}report.passed=true;
+ assert.ok(!report.requests.slice(requestStart).some(v=>(v.op==='encounter'&&['prompt','draft'].includes(v.action))||['send','epii_delegate'].includes(v.operation)),'Selection qualification must not send a model question'); }
+ assert.deepEqual(errors,[]);if(selectionOnly){await qualifyHostedDurable('after actual selection outcome');await qualifyHostedOwner();report.portable_custody_after=requalifyPortableCurrentCustody(hostedSourceExpectation,hostedSourceQualification);}report.passed=true;
 }catch(error){report.failure=String(error);if(captureDOM)try{report.failed_current_dom=await captureDOM('failed-current');}catch(diagnostic){report.failed_dom_diagnostic_error=String(diagnostic);}throw error;}finally{
  releaseHeld?.();if(frame)try{await frame.locator('#nara-instrument').press('Escape');}catch{}if(browser)await browser.close();await writeFile(resolve(cfg.output,'receipt.json'),JSON.stringify(report,null,2)+'\n');
 }

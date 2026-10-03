@@ -484,7 +484,11 @@ impl PerformancePartCatalog {
         }
         let packed = self.encoded_part(&page, false)?;
         let plain = PerformancePart::EventPage(page);
-        Ok(if encoded(&packed)? < encoded(&plain)? { packed } else { plain })
+        Ok(if encoded(&packed)? < encoded(&plain)? {
+            packed
+        } else {
+            plain
+        })
     }
     /// Canonical power-of-two left subtree keeps append-only indexes persistent:
     /// all full prior subtrees are shared; only the right path changes.

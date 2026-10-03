@@ -752,14 +752,22 @@ fn actual_fifteen_minute_asset_history_shares_pages_preserves_undo_and_detects_m
     let part = corrupted
         .parts
         .iter_mut()
-        .find(|p| matches!(p.part, PerformancePart::EventPage(_) | PerformancePart::EncodedEventPage(_)))
+        .find(|p| {
+            matches!(
+                p.part,
+                PerformancePart::EventPage(_) | PerformancePart::EncodedEventPage(_)
+            )
+        })
         .unwrap();
     match &mut part.part {
-        PerformancePart::EventPage(p) => { p.events.remove(0); }
+        PerformancePart::EventPage(p) => {
+            p.events.remove(0);
+        }
         PerformancePart::EncodedEventPage(p) => {
             let mut page = p.read::<EventPage>().unwrap();
             page.events.remove(0);
-            *p = oi_cradle_kernel::expression_performance_codec::EncodedPage::from_value(&page).unwrap();
+            *p = oi_cradle_kernel::expression_performance_codec::EncodedPage::from_value(&page)
+                .unwrap();
         }
         _ => unreachable!(),
     }
@@ -813,7 +821,12 @@ fn actual_file_and_indexed_document_editions_preserve_full_material_without_expa
         if first.is_none() {
             first = Some(edition.clone());
         }
+        let append_started = std::time::Instant::now();
         custody = custody.appended(&edition).unwrap();
+        if block == 1 || block % 30 == 0 {
+            eprintln!("native-history-progress path=document_append block={block}/180 events={} elapsed_ms={}",
+                edition.scenes[0].performance.as_ref().unwrap().event_count(), append_started.elapsed().as_millis());
+        }
     }
     eprintln!(
         "full native 15min Document history {} editions bytes={}",
@@ -860,6 +873,13 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
             .map(|e| EventPage { events: e.to_vec() })
             .collect();
         recorded = recorded.seal().unwrap();
+        let block_started = std::time::Instant::now();
+        if block == 1 || block % 30 == 0 {
+            eprintln!(
+                "native-history-progress path=act_perform phase=before block={block}/180 events={}",
+                recorded.event_count()
+            );
+        }
         if block > 1 {
             kernel_world(
                 &mut kernel,
@@ -894,6 +914,9 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
             first = Some(document(&mut kernel)["scenes"][0]["performance"].clone());
         }
         last_act = Some(result["act"].clone());
+        if block == 1 || block % 30 == 0 {
+            eprintln!("native-history-progress path=act_perform phase=after block={block}/180 elapsed_ms={}", block_started.elapsed().as_millis());
+        }
     }
     let retained = document(&mut kernel);
     let selected: Document = serde_json::from_value(retained.clone()).unwrap();

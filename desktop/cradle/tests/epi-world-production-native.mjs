@@ -4,6 +4,7 @@
  * invented domain data, component mount or replacement material producer.
  * This is candidate browser/native evidence, not an installed Mac claim. */
 import assert from 'node:assert/strict';
+import {createEpiFirstRestReceivingGate} from './epi-first-rest-receiving.mjs';
 import {readFileSync,writeFileSync,mkdirSync,openSync,readSync,closeSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -24,7 +25,7 @@ const selectionStage=['selected-conversation-setup','selected-conversation-case'
 if(selectionStage){
  assert.ok(config.reopen_file&&config.selection_custody_file&&config.selection_custody_sha256,'Selection qualification requires actual file admission and source-built owner custody');
  assert.ok(!config.reopen_acknowledgement_file&&!config.reopen_expected&&!config.existing_expression_ref,'This isolated gate cannot substitute for the original whole/restart continuation');
- if(config.stage==='selected-conversation-case')assert.ok(['positive','native-refusal','native-changed','local-changed'].includes(config.selection_case));
+ if(config.stage==='selected-conversation-case')assert.ok(['positive','native-refusal','native-changed','local-changed','navigation-choose-positive','navigation-return-positive','navigation-native-refusal','navigation-local-changed','required-cosmic-body-disabled'].includes(config.selection_case));
 }
 
 if(config.reopen_file!==undefined)assert.equal(typeof config.reopen_file,'string','reopen_file must be the actual Central-relative path accepted by the production app file-opening API');
@@ -76,7 +77,7 @@ const receipt={schema:'oi.epi-world-production-native-proof/v1',passed:false,
  verifier_projection_units:{owner:scaleSource,sha256:sha(readFileSync(scaleSource)),world_scale:WORLD_SCALE,meaning:'Resident GPU coordinates divided by the actual authored-stage WORLD_SCALE before production projectNative; QL torus presentation units remain distinct'},
  independent_source_expectations:(config.independent_expectation_files??[]).map(path=>({path:resolve(path),sha256:sha(readFileSync(resolve(path)))})),
  source:Object.fromEntries(['src/expressions/hostedApp.ts','src/expressions/nativeChannel.ts','src/expressions/naraChannel.ts','expressions-app/field-studies-journeys/src/app.ts','expressions-app/field-studies-journeys/src/epiWorldProduction.ts','expressions-app/field-studies-journeys/src/sceneWorkflow.ts','expressions-app/field-studies-journeys/src/sceneCorrespondence.ts','expressions-app/field-studies-journeys/src/native-field/channel.ts','expressions-app/field-studies-journeys/src/epiWorldMaterial.ts','expressions-app/field-studies-journeys/src/nativeWorkspace.ts','expressions-app/field-studies-journeys/src/naraEvidenceField.ts','expressions-app/field-studies-journeys/src/naraInstrument.tsx','expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts','expressions-app/src/engine/fieldModel.ts','expressions-app/src/engine/PointCloudField.ts','expressions-app/src/engine/LocalizedResonanceBank.ts','expressions-app/src/engine/localizedResonanceProjection.ts'].map(p=>[p,sha(readFileSync(resolve(root,p)))]))};
-if(selectionStage){receipt.schema='oi.epi-selected-conversation-hosted-stage/v1';receipt.selection_case=config.selection_case??null;receipt.scope='Actual isolated source-built ordinary file admission and selected-focus receiving only; whole/answer/provider/Keep/restart/installed/H remain unaccepted';}
+if(selectionStage){receipt.schema='oi.epi-selected-conversation-hosted-stage/v1';receipt.selection_case=config.selection_case??null;receipt.scope=config.selection_case==='required-cosmic-body-disabled'?'Actual isolated source-built native material/body counterproof and original restored receiving; whole/answer/provider/Keep/restart/installed/H remain unaccepted':'Actual isolated source-built ordinary file admission and selected-focus receiving only; whole/answer/provider/Keep/restart/installed/H remain unaccepted';}
 let server,browser,page,frame,phase='setup',heartbeat;const nativeComposes=[],nativePrepared=[],nativeFrames=[],nativeInspections=[],nativeM3=[];
 const check=(value,label)=>{assert.ok(value,label);receipt.checks.push(label);console.log('PASS',label);json('receipt.json',receipt);};
 const artifact=(name,value)=>{json(name,value);receipt.artifacts.push(name);};
@@ -148,36 +149,7 @@ async function sceneNavigate(ref){
  await frame.waitForFunction(r=>{const f=window.__FIELD_STUDIES__,scene=f.getDocument().scenes[f.getState().sceneIndex],actual=f.inspect();return scene?.id===r&&scene.entities.every(e=>actual.partitions.some(p=>p.entityId===e.id&&p.end>p.start));},ref,{timeout:30000});
  await frame.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
 }
-function requirePartitions(reading,entities,label){
- const parts=reading.rendered?.partitions??[];
- for(const entity of entities){const part=parts.find(p=>p.entityId===entity);assert.ok(part&&part.end>part.start,`${label}: actual renderer partition for ${entity}`);}
- check(parts.length===entities.length,`${label}: every required native occurrence has a nonempty resident render partition (${entities.length})`);
-}
-function requireInitialRestTargets(reading,entities,label){
- const resident=reading.rendered,positions=resident?.positions,targets=resident?.targets;
- assert.ok(reading.state.fieldPaused&&reading.state.simTime===0&&resident?.simTime===0&&resident.steps===0,
-  label+': compare only the actual unplayed first rest');
- assert.ok(Array.isArray(positions)&&Array.isArray(targets)&&positions.length===resident.particleCount*4&&targets.length===positions.length,
-  label+': paired real GPU positions and actual owner target readbacks are required');
- const statuses=reading.telemetry.sourceStatus,maskRoles=['degree','governor','decan','codon','skin','aperture'];
- const maskReadings=maskRoles.map(role=>{const entity=reading.working.native_ref+':entity:world-register-'+role;
-  const rows=Object.entries(statuses).filter(([key])=>JSON.parse(key)[0]===entity);
-  assert.equal(rows.length,1,label+': one actual decoded mask source for '+role);
-  assert.ok(rows[0][1].includes('source active'),label+': the actual '+role+' source decoded successfully');
-  return{role,entity_ref:entity,status:rows[0][1]};});
- const deltas=new Float64Array(resident.particleCount);let max=0,mismatches=0;
- for(let i=0;i<positions.length;i++)assert.ok(Number.isFinite(positions[i])&&Number.isFinite(targets[i]),label+': finite actual paired readback at '+i);
- for(let particle=0;particle<resident.particleCount;particle++){let squared=0;for(let axis=0;axis<3;axis++){const offset=particle*4+axis;squared+=(positions[offset]-targets[offset])**2;}
-  const gap=Math.sqrt(squared);deltas[particle]=gap;max=Math.max(max,gap);if(gap!==0)mismatches++;}
- const byPartition=entities.map(entity=>{const p=resident.partitions.find(row=>row.entityId===entity);assert.ok(p&&p.end>p.start);
-  let max_gap=0,mismatched=0;for(let i=p.start;i<p.end;i++){max_gap=Math.max(max_gap,deltas[i]);if(deltas[i]!==0)mismatched++;}
-  return{entity_ref:entity,count:p.end-p.start,max_gap,mismatched};});
- artifact(label+'-resident-target-admission.json',{scope:'Actual first-rest receiving comparison only; source semantic expectations and visual composition remain separate',
-  simTime:resident.simTime,steps:resident.steps,seeds:resident.seeds,bakes:resident.bakes,particle_count:resident.particleCount,
-  positions_sha256:sha(JSON.stringify(positions)),actual_owner_targets_sha256:sha(JSON.stringify(targets)),max_gap:max,mismatches,maskReadings,byPartition});
- check(max===0&&mismatches===0&&byPartition.length===32&&byPartition.every(row=>row.mismatched===0),
-  label+': all actual resident particles receive the decoded authored targets for every32 required bodies before play or manual reseeding');
-}
+const {requirePartitions,requireInitialRestTargets}=createEpiFirstRestReceivingGate({check,artifact,sha});
 async function savedFile(working,label){
  assert.ok(working.file?.location?.ref&&working.file?.revision,'Actual material owner file save/readback is required');
  const o=await op({op:'file_read',location:working.file.location});assert.equal(o.result,'file_read');

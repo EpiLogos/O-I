@@ -251,7 +251,9 @@ fn safe_storage(value: &Value, depth: usize) -> Result<(), String> {
                 if k.contains('\0')
                     || ["__proto__", "prototype"].contains(&k.as_str())
                     || (k == "constructor"
-                        && !crate::expression_performance_source_asset::native_constructor_metadata(o))
+                        && !crate::expression_performance_source_asset::native_constructor_metadata(
+                            o,
+                        ))
                 {
                     return Err("unsafe native performance file key".into());
                 }

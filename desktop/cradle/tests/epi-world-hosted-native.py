@@ -35,6 +35,7 @@ D30_SUCCESSION_SHA256 = '2c36eb34c388903d7d6dd97c3a36f2b399c164d0974680f09bfe9d0
 LOCUS = 'ql:m-coordinate:bimba:M4.4.4.4'
 OI_SCOPE = [
     'desktop/cradle/tests/epi-selected-conversation-native.mjs',
+    'desktop/cradle/tests/epi-first-rest-receiving.mjs',
     'desktop/cradle/tests/epi-world-production-native.mjs',
     'desktop/cradle/tests/epi-personal-native-proof.mjs',
     'desktop/cradle/tests/epi-scene-damping-native-proof.mjs',
@@ -979,7 +980,10 @@ class Replay:
         self.stop_bridge()
         original_env = dict(self.env)
         try:
-            for selection_case in ('positive', 'native-refusal', 'native-changed', 'local-changed'):
+            for selection_case in ('positive', 'native-refusal', 'native-changed', 'local-changed',
+                                   'navigation-choose-positive', 'navigation-return-positive',
+                                   'navigation-native-refusal', 'navigation-local-changed',
+                                   'required-cosmic-body-disabled'):
                 name = 'selected-conversation-' + selection_case
                 case_root = self.out / (name + '-owner')
                 require(not case_root.exists(), 'Each selection case needs a fresh owned owner location')
@@ -1023,7 +1027,8 @@ class Replay:
             # never rollback or clean it into the original whole lifetime.
             self.stop_bridge()
             self.env = original_env
-        require(len(self.report['selected_conversation']['stages']) == 5, 'Setup and all four actual cases are mandatory')
+        require(len(self.report['selected_conversation']['stages']) == 10,
+                'Setup, all four original Ask cases, four ordinary navigation cases and actual required-body counterproof are mandatory')
         self.report['selected_conversation']['passed'] = True
         self.report['selected_conversation']['elapsed_seconds'] = 1500 - (selection_deadline - time.monotonic())
         first = self.start_bridge('whole')

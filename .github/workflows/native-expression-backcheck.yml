@@ -17,6 +17,7 @@ on:
       - 'packages/oi-design-system/expressions-engine/shell/**'
       - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
       - 'scripts/vendor-expressions-engine.mjs'
+      - 'scripts/epi-mac-candidate.py'
       - 'scripts/prepare-retained-performance-fixture.py'
       - 'scripts/retained-performance-ci-environment.py'
       - 'scripts/retained-performance-environment-regressions.py'

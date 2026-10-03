@@ -141,7 +141,9 @@ fn safe(value: &Value, depth: usize) -> Result<(), String> {
                 if key.contains('\0')
                     || ["__proto__", "prototype"].contains(&key.as_str())
                     || (key == "constructor"
-                        && !crate::expression_performance_source_asset::native_constructor_metadata(values))
+                        && !crate::expression_performance_source_asset::native_constructor_metadata(
+                            values,
+                        ))
                 {
                     return Err("Unsafe Expression file key".into());
                 }

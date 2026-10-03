@@ -1805,6 +1805,10 @@ impl Kernel {
                     });
                 }
                 let snapshot = Some(before);
+                // A qualified retained candidate may cross this synchronous
+                // owner operation only with its exact complete prospective
+                // Document. Store CAS is still rechecked before and at commit.
+                let mut prepared_retained: Option<(Act, Box<Document>)> = None;
                 // The ordinary native pure edit and complete retained-record
                 // preflight must qualify BEFORE count-driven archival. The
                 // existing capacity/store checks repeat after make-room; this
@@ -1886,8 +1890,13 @@ impl Kernel {
                     if weight > available {
                         return Err("Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit".into());
                     }
-                    let prospective = if let Some(candidate) = retained_candidate {
-                        candidate
+                    if let Some(candidate) = retained_candidate {
+                        crate::expression_act_store::ActStore::encoded_record(&candidate)?;
+                        let expected_document = passage
+                            .edition
+                            .take()
+                            .ok_or("retained prospective Document absent")?;
+                        prepared_retained = Some((candidate, expected_document));
                     } else {
                         let mut prospective = previous.clone();
                         prospective.position = Some(passage.index);
@@ -1900,9 +1909,8 @@ impl Kernel {
                         prospective.phase = ActPhase::Running;
                         prospective.revision = next_revision;
                         prospective.updated_at_unix_ms = unix_ms();
-                        prospective
-                    };
-                    crate::expression_act_store::ActStore::encoded_record(&prospective)?;
+                        crate::expression_act_store::ActStore::encoded_record(&prospective)?;
+                    }
                 }
                 if !existing {
                     self.act_make_room()?;
@@ -1943,42 +1951,54 @@ impl Kernel {
                 let edition = self.world_document(&expression_ref)?;
                 let previous = self.world.acts.get(&act_ref).cloned();
                 let previous_revision = previous.as_ref().map(|a| a.revision);
-                let mut act = previous.unwrap_or_else(|| {
-                    Act::new(
-                        act_ref.clone(),
-                        expression_ref.clone(),
-                        summary.clone(),
-                        actor.clone(),
-                        ActMode::Expressions,
-                    )
-                });
-                if retained_expected.is_some() && act.material_contract.is_none() {
-                    act.material_contract =
-                        Some(crate::expression_performance_act::MATERIAL_SCHEMA.into());
-                    act.performance_custody = Some(
-                        crate::expression_performance_storage::ActPerformanceCustody::default(),
-                    );
-                }
-                let mut passage = Passage::new(act.sequence.len(), PassageKind::Edition, act.mode);
-                passage.target_ref = Some(expression_ref.clone());
-                passage.revision = Some(edition.revision.to_string());
-                passage.summary = Some(summary.clone());
-                if retained_expected.is_some() {
-                    crate::expression_performance_act::retain_edition(
-                        &mut act,
-                        &mut passage,
-                        edition.clone(),
-                    )?;
+                let act = if let Some((mut candidate, expected_document)) = prepared_retained {
+                    // Exact actual owner output, not a declared digest or a
+                    // cached consumer, qualifies reuse of the preflight.
+                    if expected_document.as_ref() != &edition {
+                        if let Some(snapshot) = snapshot {
+                            self.act_rollback(snapshot, &mut receipts)?;
+                        }
+                        return Err("actual retained Expression edit differs from its complete prospective Document".into());
+                    }
+                    // The new passage retains the original post-edit native
+                    // creation time; preparation is not its public timestamp.
+                    candidate
+                        .sequence
+                        .get_mut(passages)
+                        .ok_or("prepared retained passage absent")?
+                        .at_unix_ms = unix_ms();
+                    candidate
                 } else {
+                    if retained_expected.is_some() {
+                        if let Some(snapshot) = snapshot {
+                            self.act_rollback(snapshot, &mut receipts)?;
+                        }
+                        return Err("retained performance preflight absent at commit".into());
+                    }
+                    let mut act = previous.unwrap_or_else(|| {
+                        Act::new(
+                            act_ref.clone(),
+                            expression_ref.clone(),
+                            summary.clone(),
+                            actor.clone(),
+                            ActMode::Expressions,
+                        )
+                    });
+                    let mut passage =
+                        Passage::new(act.sequence.len(), PassageKind::Edition, act.mode);
+                    passage.target_ref = Some(expression_ref.clone());
+                    passage.revision = Some(edition.revision.to_string());
+                    passage.summary = Some(summary.clone());
                     passage.edition = Some(Box::new(edition.clone()));
-                }
-                act.position = Some(passage.index);
-                act.sequence.push(passage);
-                act.summary = summary;
-                act.actor = actor;
-                act.activity_ref = activity_ref.or(act.activity_ref);
-                act.phase = ActPhase::Running;
-                act.basis_revision = expected_revision;
+                    act.position = Some(passage.index);
+                    act.sequence.push(passage);
+                    act.summary = summary;
+                    act.actor = actor;
+                    act.activity_ref = activity_ref.or(act.activity_ref);
+                    act.phase = ActPhase::Running;
+                    act.basis_revision = expected_revision;
+                    act
+                };
                 let committed = self.act_commit(act, previous_revision);
                 if !matches!(committed, Ok(Ok(_))) {
                     if let Some(snapshot) = snapshot {
