@@ -209,18 +209,18 @@ fn document() -> Document {
         entities.insert(r.clone(),json!({"entity_ref":r,"revision":1,"title":id,"subject":null,
             "parameters":{"scale":{"value":1.0,"automation":null},"x":{"value":0.0,"automation":null},"force_strength":{"value":0.2,"automation":null}}}));
     }
+    let a = json!({"id":format!("{EXPRESSION}:entity:a"),"kind":"formation","scale":1.0,"position":{"x":0.0,"y":0.0,"z":0.0},"force":{"strength":0.2},
+        "layers":[{"id":"layer:a","text":"A","z":0.0},{"id":"layer:b","text":"B","z":0.0}],
+        "sequence":{"steps":[{"id":"step:a","text":"A"},{"id":"step:b","text":"B"}]}});
+    let b = json!({"id":format!("{EXPRESSION}:entity:b"),"kind":"pin","force":{"strength":0.2}});
+    let presentation = json!({"schema":"oi.journey-scene/v1","scene":{"id":format!("{EXPRESSION}:scene:main"),"name":"Main",
+        "duration":30,"transition":2,"view":{"mode":"3d","yaw":0,"pitch":0,"zoom":1,"panX":0,"panY":0},
+        "field":{"params":{"speed":0.5}},"composition":{},"morph":{},"engine":{},"text":[],"automation":[],"entities":[a,b]}});
+    let scene = json!({"scene_ref":format!("{EXPRESSION}:scene:main"),"revision":1,"title":"Main",
+        "entity_refs":[format!("{EXPRESSION}:entity:a"),format!("{EXPRESSION}:entity:b")],"presentation":presentation});
     let d:Document=serde_json::from_value(json!({"schema":"oi.expression/v1","expression_ref":EXPRESSION,"revision":1,
         "title":"Independent native targets","entities":entities,"relations":{},"provenance":[],"representations":[],
-        "selection":{"scene_ref":format!("{EXPRESSION}:scene:main"),"entity_ref":null},
-        "scenes":[{"scene_ref":format!("{EXPRESSION}:scene:main"),"revision":1,"title":"Main",
-            "entity_refs":[format!("{EXPRESSION}:entity:a"),format!("{EXPRESSION}:entity:b")],
-            "presentation":{"schema":"oi.journey-scene/v1","scene":{"id":format!("{EXPRESSION}:scene:main"),"name":"Main",
-                "duration":30,"transition":2,"view":{"mode":"3d","yaw":0,"pitch":0,"zoom":1,"panX":0,"panY":0},
-                "field":{"params":{"speed":0.5}},"composition":{},"morph":{},"engine":{},"text":[],"automation":[],
-                "entities":[{"id":format!("{EXPRESSION}:entity:a"),"kind":"formation","scale":1.0,"position":{"x":0.0,"y":0.0,"z":0.0},"force":{"strength":0.2},
-                    "layers":[{"id":"layer:a","text":"A","z":0.0},{"id":"layer:b","text":"B","z":0.0}],
-                    "sequence":{"steps":[{"id":"step:a","text":"A"},{"id":"step:b","text":"B"}]}},
-                    {"id":format!("{EXPRESSION}:entity:b"),"kind":"pin","force":{"strength":0.2}}]}}}]})).unwrap();
+        "selection":{"scene_ref":format!("{EXPRESSION}:scene:main"),"entity_ref":null},"scenes":[scene]})).unwrap();
     d.validate().unwrap();
     d
 }
