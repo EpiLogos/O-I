@@ -22,6 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
           fetch-depth: 0
       - uses: actions/checkout@v4
@@ -41,7 +42,12 @@ jobs:
         with:
           node-version: '22'
       - name: Tested source identity
-        run: git rev-parse HEAD | tee source-head.txt
+        env:
+          EXPECTED_SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD | tee source-head.txt
+          test "$(cat source-head.txt)" = "$EXPECTED_SOURCE_REVISION"
       - name: Install locked dependencies
         working-directory: desktop/cradle
         run: npm ci --ignore-scripts --no-audit --no-fund
