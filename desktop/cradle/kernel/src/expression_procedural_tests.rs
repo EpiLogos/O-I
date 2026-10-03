@@ -3057,3 +3057,35 @@ fn a13_native_fork_preserves_prefixed_layer_state_and_driver_coordinates() {
         .unwrap();
     assert_eq!(read["snapshot"].as_array().unwrap().len(), 3);
 }
+
+
+#[test]
+fn a13_ordinary_native_export_does_not_create_an_absent_procedural_journal() {
+    let client = CentralClient::discover();
+    for declared_empty_retention in [false, true] {
+        let mut material = document();
+        if declared_empty_retention {
+            material.scenes[0].presentation.as_mut().unwrap().scene["procedural"] = empty_retention();
+        }
+        let mut app = Application::default();
+        app.open(material, "agent:independent-export".into()).unwrap();
+        let before = app.document(EXPRESSION).unwrap().clone();
+        let (receipt, changed) = app.apply(
+            &client,
+            ExpressionRequest::Export {
+                expression_ref: EXPRESSION.into(),
+                expected_revision: before.revision,
+            },
+        ).unwrap();
+        let exported: Document = serde_json::from_value(receipt["document"].clone()).unwrap();
+        assert_eq!(receipt["state"], "exported");
+        assert!(changed.is_none(), "Native Export acknowledged an edit");
+        assert_eq!(exported, before, "Observation rewrote authored native material");
+        assert_eq!(app.document(EXPRESSION).unwrap(), &before);
+        assert_eq!(
+            exported.scenes[0].presentation.as_ref().unwrap().scene.get("procedural"),
+            before.scenes[0].presentation.as_ref().unwrap().scene.get("procedural"),
+            "An absent journal must stay absent; existing empty retention must stay exact",
+        );
+    }
+}

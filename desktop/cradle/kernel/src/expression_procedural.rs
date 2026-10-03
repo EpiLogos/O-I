@@ -2806,7 +2806,12 @@ impl Runtime {
         let mut out = document.clone();
         for scene in &mut out.scenes {
             if let Some(p) = &mut scene.presentation {
-                if let Some(rows) = p.scene["procedural"]["operations"].as_array_mut() {
+                if let Some(rows) = p
+                    .scene
+                    .get_mut("procedural")
+                    .and_then(|retained| retained.get_mut("operations"))
+                    .and_then(Value::as_array_mut)
+                {
                     for row in rows {
                         if let Some(op) = row["envelope"]["operation_ref"]
                             .as_str()
