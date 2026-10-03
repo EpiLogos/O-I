@@ -200,6 +200,9 @@ pub struct Runtime {
     operations: BTreeMap<String, Operation>,
     cursor: u64,
     deltas: Vec<Value>,
+    // The bounded global cursor survives retirement. Readers crossing this
+    // boundary need a complete snapshot rather than a prior-life delta.
+    retired_through: Option<u64>,
     restored: BTreeSet<String>,
     producers: BTreeMap<String, ProducerAdmission>,
     /// Live native qualification is not reconstructed from a saved label.
@@ -1890,7 +1893,7 @@ fn validate_retention_metadata_write(
             let new = after[key]
                 .as_array()
                 .ok_or("Invalid source-qualified retention basis")?;
-            if old.iter().any(|row|!new.contains(row)) || new.iter().filter(|row|!old.contains(row)).any(|row|**row!=json!({"ref":definition["recipe"]["source_ref"],"revision":definition["recipe"]["revision"],"availability":"available"})&&**row!=json!({"ref":definition["profile"]["source_ref"],"revision":definition["profile"]["revision"],"availability":"available"})) {
+            if old.iter().any(|row|!new.contains(row)) || new.iter().filter(|row|!old.contains(row)).any(|row|*row!=json!({"ref":definition["recipe"]["source_ref"],"revision":definition["recipe"]["revision"],"availability":"available"})&&*row!=json!({"ref":definition["profile"]["source_ref"],"revision":definition["profile"]["revision"],"availability":"available"})) {
                 return Err("Granular native source metadata replaced another continuing source basis".into());
             }
             continue;
@@ -2113,6 +2116,102 @@ pub fn validate_retention(value: &Value) -> Result<(), String> {
 
 pub fn empty_retention() -> Value {
     json!({"schema":SCHEMA,"bindings":[],"procedures":[],"contributions":[],"controls":[],"operations":[],"scene_flow":[],"time_mappings":[],"source_basis":[]})
+}
+
+/// A fork copies authored material, not another Expression's operation owner.
+/// Original receipts remain unchanged in the original document and runtime.
+pub(super) fn fork_document_retention(document: &mut Document, old: &str, new: &str) {
+    let prefix = format!("{old}:");
+    let remap = |reference: &str| {
+        if reference == old {
+            Some(new.to_owned())
+        } else {
+            reference
+                .strip_prefix(&prefix)
+                .map(|suffix| format!("{new}:{suffix}"))
+        }
+    };
+    let map_ref = |value: &mut Value| {
+        if let Some(next) = value.as_str().and_then(&remap) {
+            *value = json!(next);
+        }
+    };
+    let map_address = |value: &mut Value| {
+        // Layer, SequenceLink and Driver coordinates are stable opaque IDs.
+        // Native Scene remapping changes only Expression/Scene/entity refs.
+        for key in ["expression_ref", "scene_ref", "entity_ref"] {
+            if let Some(reference) = value.get_mut(key) {
+                map_ref(reference);
+            }
+        }
+    };
+    for scene in &mut document.scenes {
+        let Some(presentation) = &mut scene.presentation else {
+            continue;
+        };
+        for material in
+            std::iter::once(&mut presentation.scene).chain(presentation.saved.iter_mut())
+        {
+            let Some(retained) = material.get_mut("procedural") else {
+                continue;
+            };
+            retained["operations"] = json!([]);
+            // These observations belong to the original receiving instances.
+            retained.as_object_mut().unwrap().remove("checkpoint");
+            retained["time_mappings"] = json!([]);
+            for key in ["bindings", "controls"] {
+                if let Some(rows) = retained[key].as_array_mut() {
+                    for row in rows {
+                        map_address(&mut row["address"]);
+                        if key == "controls" {
+                            row.as_object_mut().unwrap().remove("takeover");
+                        }
+                    }
+                }
+            }
+            if let Some(rows) = retained["procedures"].as_array_mut() {
+                for row in rows {
+                    map_ref(&mut row["procedure_ref"]);
+                    for address in row["resolved_targets"].as_array_mut().unwrap() {
+                        map_address(address);
+                    }
+                    row["cursor"] = json!(0);
+                    row["state"] = json!("held");
+                    row["membership_events"] = json!([]);
+                }
+            }
+            if let Some(rows) = retained["contributions"].as_array_mut() {
+                for row in rows {
+                    for key in ["contribution_ref", "procedure_ref", "occurrence_ref"] {
+                        map_ref(&mut row[key]);
+                    }
+                    for address in row["owned_addresses"].as_array_mut().unwrap() {
+                        map_address(address);
+                    }
+                    for overlay in row["authored_overrides"].as_array_mut().unwrap() {
+                        map_address(&mut overlay["address"]);
+                    }
+                    // The basis is material with the same known native Scene
+                    // identity fields. Literal source definitions stay exact.
+                    if let Some(basis) = row["generated_basis"].as_object_mut() {
+                        if let Some(scene) = basis.get_mut("scene") {
+                            crate::expression_scene::remap_refs(scene, &remap);
+                        }
+                        if let Some(saved) = basis.get_mut("saved").filter(|v| !v.is_null()) {
+                            crate::expression_scene::remap_refs(saved, &remap);
+                        }
+                    }
+                }
+            }
+            if let Some(rows) = retained["scene_flow"].as_array_mut() {
+                for row in rows {
+                    map_ref(&mut row["from_scene_ref"]);
+                    map_ref(&mut row["to_scene_ref"]);
+                    row["cursor"] = json!(0);
+                }
+            }
+        }
+    }
 }
 
 /// Only the actual native request owner changes durable operation receipts.
@@ -2580,6 +2679,9 @@ impl Runtime {
             .retain(|id, _| !released.contains(id));
         self.producers
             .retain(|_, p| p.expression_ref != expression_ref);
+        self.deltas
+            .retain(|row| row["delta"]["expression_ref"] != expression_ref);
+        self.retired_through = Some(self.cursor);
     }
 
     pub fn output_readings(
@@ -3541,6 +3643,7 @@ impl Application {
                 let resync = after_cursor.is_some_and(|c| {
                     c > runtime.cursor
                         || c < runtime.cursor.saturating_sub(MAX_DELTA_HISTORY as u64)
+                        || runtime.retired_through.is_some_and(|retired| c <= retired)
                 });
                 let deltas = if resync {
                     vec![]

@@ -2035,6 +2035,11 @@ impl Application {
                 d.selection.relation_ref = d.selection.relation_ref.map(|r| map(&r));
                 d.representations.clear();
                 d.refinements.clear();
+                procedural::fork_document_retention(
+                    &mut d,
+                    &expression_ref,
+                    &new_expression_ref,
+                );
                 return self.open(d, actor);
             }
             Request::Edit {

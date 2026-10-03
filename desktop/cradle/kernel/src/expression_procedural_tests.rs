@@ -8,6 +8,9 @@ const EXPRESSION: &str = "expression:independent-native";
 // A real manually authored Application creation is applied material.
 // It cannot mint a source-qualified procedural continuation witness.
 fn warm_native_output() -> (Application, CentralClient, Document, Operation) {
+    warm_native_output_with_saved(false)
+}
+fn warm_native_output_with_saved(saved: bool) -> (Application, CentralClient, Document, Operation) {
     let (mut app, client) = opened();
     let d = app.document(EXPRESSION).unwrap().clone();
     let scene_ref = format!("{EXPRESSION}:scene:generated");
@@ -15,6 +18,9 @@ fn warm_native_output() -> (Application, CentralClient, Document, Operation) {
     material.scene["id"] = json!(scene_ref);
     material.scene["name"] = json!("Generated");
     material.scene["entities"] = json!([]);
+    if saved {
+        material.saved = Some(material.scene.clone());
+    }
     let generated_basis = serde_json::to_value(&material).unwrap();
     let owned = Address {
         expression_ref: EXPRESSION.into(),
@@ -2599,4 +2605,448 @@ fn a11_a14_native_layer_source_admission_is_same_in_procedural_and_ordinary_appl
         );
         assert_eq!(d, before);
     }
+}
+
+#[test]
+fn a13_native_fork_keeps_original_receipts_and_copies_material_without_live_authority() {
+    for (committed, saved) in [(false, false), (true, false), (true, true)] {
+        let (mut app, client, original, operation) = if committed {
+            warm_native_output_with_saved(saved)
+        } else {
+            let (mut app, client) = opened();
+            let operation = prepared(&mut app, &client);
+            let original = app.document(EXPRESSION).unwrap().clone();
+            (app, client, original, operation)
+        };
+        let fork_ref = format!("{EXPRESSION}:fork:{committed}:{saved}");
+        let original_journal = journal(&original).unwrap();
+        let original_operation = serde_json::to_value(
+            app.procedural_runtime
+                .inspect(&operation.envelope.operation_ref)
+                .unwrap(),
+        )
+        .unwrap();
+        let (_, changed) = app
+            .apply(
+                &client,
+                ExpressionRequest::Fork {
+                    expression_ref: EXPRESSION.into(),
+                    expected_revision: original.revision,
+                    new_expression_ref: fork_ref.clone(),
+                    actor: "agent:independent".into(),
+                },
+            )
+            .unwrap();
+        assert_eq!(changed.unwrap().expression_ref, fork_ref);
+        let fork = app.document(&fork_ref).unwrap().clone();
+        assert_eq!(app.document(EXPRESSION).unwrap(), &original);
+        assert_eq!(
+            journal(app.document(EXPRESSION).unwrap()).unwrap(),
+            original_journal
+        );
+        assert_eq!(
+            serde_json::to_value(
+                app.procedural_runtime
+                    .inspect(&operation.envelope.operation_ref)
+                    .unwrap()
+            )
+            .unwrap(),
+            original_operation
+        );
+        assert_eq!(fork.provenance.len(), original.provenance.len() + 1);
+        assert_eq!(
+            &fork.provenance[..original.provenance.len()],
+            &original.provenance
+        );
+        assert_eq!(
+            fork.provenance.last().unwrap(),
+            &ReadingRef {
+                r#ref: EXPRESSION.into(),
+                revision: original.revision.to_string(),
+                availability: super::super::Availability::Available,
+            }
+        );
+        assert_eq!(
+            fork.entities[&format!("{fork_ref}:entity:a")].parameters,
+            original.entities[&format!("{EXPRESSION}:entity:a")].parameters
+        );
+        assert!(journal(&fork).unwrap().is_empty());
+        assert!(
+            !app.procedural_runtime
+                .operations
+                .values()
+                .any(|op| op.envelope.expression_ref == fork_ref)
+        );
+        assert!(
+            !app.procedural_runtime
+                .producers
+                .values()
+                .any(|producer| producer.expression_ref == fork_ref)
+        );
+        if committed {
+            let old = &original
+                .scenes
+                .iter()
+                .find(|s| s.scene_ref.ends_with(":scene:generated"))
+                .unwrap()
+                .presentation
+                .as_ref()
+                .unwrap()
+                .scene["procedural"];
+            let new = &fork
+                .scenes
+                .iter()
+                .find(|s| s.scene_ref.ends_with(":scene:generated"))
+                .unwrap()
+                .presentation
+                .as_ref()
+                .unwrap()
+                .scene["procedural"];
+            assert_eq!(new["source_basis"], old["source_basis"]);
+            assert_eq!(
+                new["procedures"][0]["definition"],
+                old["procedures"][0]["definition"]
+            );
+            assert_eq!(
+                new["contributions"][0]["owned_addresses"][0]["expression_ref"],
+                fork_ref
+            );
+            assert_eq!(
+                new["contributions"][0]["occurrence_ref"],
+                format!("{fork_ref}:scene:generated")
+            );
+            assert_eq!(
+                new["contributions"][0]["generated_basis"]["scene"]["id"],
+                format!("{fork_ref}:scene:generated")
+            );
+            if saved {
+                assert_eq!(
+                    old["contributions"][0]["generated_basis"]["saved"]["id"],
+                    format!("{EXPRESSION}:scene:generated")
+                );
+                assert_eq!(
+                    new["contributions"][0]["generated_basis"]["saved"]["id"],
+                    format!("{fork_ref}:scene:generated")
+                );
+                let saved_scene = fork
+                    .scenes
+                    .iter()
+                    .find(|s| s.scene_ref.ends_with(":scene:generated"))
+                    .unwrap()
+                    .presentation
+                    .as_ref()
+                    .unwrap()
+                    .saved
+                    .as_ref()
+                    .unwrap();
+                assert_eq!(saved_scene["id"], format!("{fork_ref}:scene:generated"));
+            }
+            assert!(
+                app.procedural_runtime
+                    .output_readings(&fork, "procedure:independent-owner")
+                    .is_err()
+            );
+        }
+        let (reading, _) = app
+            .procedural(
+                &client,
+                Request::Read {
+                    expression_ref: fork_ref,
+                    scope: Scope::Expression,
+                    after_cursor: Some(0),
+                },
+            )
+            .unwrap();
+        assert_eq!(reading["operation_history"], json!([]));
+        assert_eq!(reading["effective_observations"], json!([]));
+    }
+}
+
+#[test]
+fn a13_native_runtime_retirement_and_reopen_resynchronise_without_prior_life_deltas() {
+    let (mut app, client) = opened();
+    let operation = prepared(&mut app, &client);
+    app.procedural(
+        &client,
+        Request::Commit {
+            operation_ref: operation.envelope.operation_ref.clone(),
+        },
+    )
+    .unwrap();
+    let retained = app
+        .procedural_runtime
+        .checkpoint_document(app.document(EXPRESSION).unwrap())
+        .unwrap();
+    let retained_bytes = serde_json::to_vec(&retained).unwrap();
+    let (before, _) = app
+        .procedural(
+            &client,
+            Request::Read {
+                expression_ref: EXPRESSION.into(),
+                scope: Scope::Expression,
+                after_cursor: Some(0),
+            },
+        )
+        .unwrap();
+    assert!(!before["deltas"].as_array().unwrap().is_empty());
+    let other = "expression:other-retirement-owner";
+    app.apply(
+        &client,
+        ExpressionRequest::Create {
+            expression_ref: other.into(),
+            title: "Other native material".into(),
+            actor: "agent:independent".into(),
+        },
+    )
+    .unwrap();
+    let mut other_intent = envelope(app.document(other).unwrap(), Scope::Expression, "a");
+    other_intent.operation_ref = "operation:other-retirement-owner".into();
+    other_intent.changes = vec![Change::Rename {
+        title: "Other owner's actual edit".into(),
+    }];
+    app.procedural(
+        &client,
+        Request::Prepare {
+            envelope: Box::new(other_intent.clone()),
+        },
+    )
+    .unwrap();
+    app.procedural(
+        &client,
+        Request::Commit {
+            operation_ref: other_intent.operation_ref.clone(),
+        },
+    )
+    .unwrap();
+    let cursor = app.procedural_runtime.cursor;
+    // Invoke the actual cleanup callback used by native Close. No save marker,
+    // receiving ACK, producer qualification or external effect is fabricated.
+    app.procedural_runtime.release_expression(EXPRESSION);
+    assert_eq!(app.procedural_runtime.cursor, cursor);
+    assert!(
+        !app.procedural_runtime
+            .deltas
+            .iter()
+            .any(|row| row["delta"]["expression_ref"] == EXPRESSION)
+    );
+    assert!(
+        app.procedural_runtime
+            .deltas
+            .iter()
+            .any(|row| row["delta"]["expression_ref"] == other)
+    );
+    assert!(
+        app.procedural_runtime
+            .inspect(&other_intent.operation_ref)
+            .is_ok()
+    );
+    let mut fresh = Application::default();
+    fresh.procedural_runtime = std::mem::take(&mut app.procedural_runtime);
+    fresh
+        .open(
+            serde_json::from_slice(&retained_bytes).unwrap(),
+            "agent:independent".into(),
+        )
+        .unwrap();
+    let (reopened, _) = fresh
+        .procedural(
+            &client,
+            Request::Read {
+                expression_ref: EXPRESSION.into(),
+                scope: Scope::Expression,
+                after_cursor: Some(0),
+            },
+        )
+        .unwrap();
+    assert_eq!(reopened["resynchronised"], true);
+    assert_eq!(reopened["deltas"], json!([]));
+    assert_eq!(reopened["effective_observations"], json!([]));
+    assert!(!reopened["snapshot"].as_array().unwrap().is_empty());
+    assert!(
+        reopened["operation_history"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|row| row["restored"] == true)
+    );
+    let unchanged = fresh.document(EXPRESSION).unwrap().clone();
+    let (repeated, changed) = fresh
+        .procedural(
+            &client,
+            Request::Commit {
+                operation_ref: operation.envelope.operation_ref,
+            },
+        )
+        .unwrap();
+    assert_eq!(repeated["repeated"], true);
+    assert!(changed.is_none());
+    assert_eq!(fresh.document(EXPRESSION).unwrap(), &unchanged);
+    let mut continuing = envelope(&unchanged, Scope::Expression, "a");
+    continuing.operation_ref = "operation:after-native-retirement".into();
+    continuing.changes = vec![Change::ParameterSet {
+        entity_ref: format!("{EXPRESSION}:entity:a"),
+        parameter: "scale".into(),
+        value: json!(3.0),
+    }];
+    fresh
+        .procedural(
+            &client,
+            Request::Prepare {
+                envelope: Box::new(continuing.clone()),
+            },
+        )
+        .unwrap();
+    fresh
+        .procedural(
+            &client,
+            Request::Commit {
+                operation_ref: continuing.operation_ref,
+            },
+        )
+        .unwrap();
+    let (continuation, _) = fresh
+        .procedural(
+            &client,
+            Request::Read {
+                expression_ref: EXPRESSION.into(),
+                scope: Scope::Expression,
+                after_cursor: Some(cursor),
+            },
+        )
+        .unwrap();
+    assert_eq!(continuation["resynchronised"], true);
+    let (current, _) = fresh
+        .procedural(
+            &client,
+            Request::Read {
+                expression_ref: EXPRESSION.into(),
+                scope: Scope::Expression,
+                after_cursor: Some(cursor + 1),
+            },
+        )
+        .unwrap();
+    assert_eq!(current["resynchronised"], false);
+    assert!(!current["deltas"].as_array().unwrap().is_empty());
+    assert_eq!(
+        fresh.document(EXPRESSION).unwrap().entities[&format!("{EXPRESSION}:entity:a")].parameters
+            ["scale"]
+            .value,
+        3.0
+    );
+}
+
+#[test]
+fn a13_native_fork_preserves_prefixed_layer_state_and_driver_coordinates() {
+    let mut original = complete_layer_document();
+    let layer_ref = format!("{EXPRESSION}:opaque-layer");
+    let state_ref = format!("{EXPRESSION}:opaque-state");
+    let driver_ref = format!("{EXPRESSION}:opaque-driver");
+    let mut state = state_layer_addr(&state_ref, None);
+    state.constituent_ref = Some(layer_ref.clone());
+    let link = addr(Component::SequenceLink, Some("a"), Some(&state_ref), None);
+    let driver = addr(Component::Driver, Some("a"), Some(&driver_ref), None);
+    let material = original.scenes[0].presentation.as_mut().unwrap();
+    material.scene["entities"][0]["sequence"]["steps"][0]["id"] = json!(state_ref);
+    material.scene["entities"][0]["sequence"]["steps"][0]["layers"][0]["id"] = json!(layer_ref);
+    material.saved = Some(material.scene.clone());
+    let generated_basis = serde_json::to_value(&*material).unwrap();
+    let mut retained = empty_retention();
+    let locus = json!({"ref":EXPRESSION,"revision":original.revision.to_string(),"availability":"available"});
+    retained["bindings"] = json!([{"address":state,"locus":locus,
+        "principal":{"subject_ref":"agent:independent","native_owner":"agent-system","sources":[]},
+        "contributors":[],"tags":[{"tag":"work","origin":"authored"}]}]);
+    retained["controls"] = json!([{"address":state,"target":driver_ref,
+        "dormant_lanes":[],"dormant_tracks":[],"source_basis":[]}]);
+    retained["procedures"] = json!([{"procedure_ref":"procedure:independent-owner","revision":"1","source_basis":[],
+        "seed":{"algorithm":"mulberry32","version":"1","value":"17"},
+        "definition":{"schema":"oi.native-functional-owner-test/v1","admitted_operation":"scene_material_set"},
+        "resolved_targets":[state,link,driver],"cursor":0,"state":"held","membership_events":[]}]);
+    retained["contributions"] = json!([{"contribution_ref":"contribution:independent-owner","procedure_ref":"procedure:independent-owner",
+        "output_slot":"scene","subject_refs":[],"occurrence_ref":original.scenes[0].scene_ref,"recipe_revision":"1",
+        "owned_addresses":[state,link,driver],"generated_basis":generated_basis,
+        "authored_overrides":[{"address":state,"actor":"agent:independent"}],"status":"active"}]);
+    original.scenes[0].presentation.as_mut().unwrap().scene["procedural"] = retained;
+    original.validate().unwrap();
+    let original_state = addressed(&original, &state).unwrap();
+    let mut app = Application::default();
+    let client = CentralClient::discover();
+    app.open(original.clone(), "agent:independent".into())
+        .unwrap();
+    let fork_ref = format!("{EXPRESSION}:fork:opaque-coordinates");
+    app.apply(
+        &client,
+        ExpressionRequest::Fork {
+            expression_ref: EXPRESSION.into(),
+            expected_revision: original.revision,
+            new_expression_ref: fork_ref.clone(),
+            actor: "agent:independent".into(),
+        },
+    )
+    .unwrap();
+    let fork = app.document(&fork_ref).unwrap();
+    assert_eq!(app.document(EXPRESSION).unwrap(), &original);
+    let p = fork.scenes[0].presentation.as_ref().unwrap();
+    let retained = &p.scene["procedural"];
+    assert_eq!(retained["controls"][0]["target"], driver_ref);
+    assert_eq!(retained["bindings"][0]["locus"], locus);
+    for address in std::iter::once(&retained["bindings"][0]["address"])
+        .chain(std::iter::once(&retained["controls"][0]["address"]))
+        .chain(
+            retained["procedures"][0]["resolved_targets"]
+                .as_array()
+                .unwrap(),
+        )
+        .chain(
+            retained["contributions"][0]["owned_addresses"]
+                .as_array()
+                .unwrap(),
+        )
+        .chain(std::iter::once(
+            &retained["contributions"][0]["authored_overrides"][0]["address"],
+        ))
+    {
+        let address: Address = serde_json::from_value(address.clone()).unwrap();
+        assert_eq!(address.expression_ref, fork_ref);
+        assert_eq!(address.scene_ref, Some(format!("{fork_ref}:scene:main")));
+        assert_eq!(address.entity_ref, Some(format!("{fork_ref}:entity:a")));
+        let actual = addressed(fork, &address)
+            .expect("fork retained address must resolve against actual native material");
+        match address.component {
+            Component::Layer => {
+                assert_eq!(address.constituent_ref.as_deref(), Some(layer_ref.as_str()));
+                assert_eq!(address.parent_ref, Some(Some(state_ref.clone())));
+                assert_eq!(actual, original_state);
+            }
+            Component::SequenceLink => assert_eq!(actual["id"], state_ref),
+            Component::Driver => assert_eq!(actual["target"], driver_ref),
+            _ => panic!("unexpected test coordinate"),
+        }
+    }
+    let basis = &retained["contributions"][0]["generated_basis"];
+    assert_eq!(basis["saved"]["id"], format!("{fork_ref}:scene:main"));
+    assert_eq!(
+        basis["saved"]["entities"][0]["id"],
+        format!("{fork_ref}:entity:a")
+    );
+    assert_eq!(
+        basis["saved"]["entities"][0]["sequence"]["steps"][0]["id"],
+        state_ref
+    );
+    assert_eq!(
+        basis["saved"]["entities"][0]["sequence"]["steps"][0]["layers"][0]["id"],
+        layer_ref
+    );
+    let addresses: Vec<Address> =
+        serde_json::from_value(retained["procedures"][0]["resolved_targets"].clone()).unwrap();
+    let (read, _) = app
+        .procedural(
+            &client,
+            Request::Read {
+                expression_ref: fork_ref,
+                scope: Scope::Addresses { addresses },
+                after_cursor: Some(0),
+            },
+        )
+        .unwrap();
+    assert_eq!(read["snapshot"].as_array().unwrap().len(), 3);
 }
