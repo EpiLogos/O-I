@@ -2618,7 +2618,7 @@ fn a13_native_fork_keeps_original_receipts_and_copies_material_without_live_auth
             let original = app.document(EXPRESSION).unwrap().clone();
             (app, client, original, operation)
         };
-        let fork_ref = format!("{EXPRESSION}:fork:{committed}:{saved}");
+        let fork_ref = format!("expression:independent-native-fork-{committed}-{saved}");
         let original_journal = journal(&original).unwrap();
         let original_operation = serde_json::to_value(
             app.procedural_runtime
@@ -2972,7 +2972,7 @@ fn a13_native_fork_preserves_prefixed_layer_state_and_driver_coordinates() {
     let client = CentralClient::discover();
     app.open(original.clone(), "agent:independent".into())
         .unwrap();
-    let fork_ref = format!("{EXPRESSION}:fork:opaque-coordinates");
+    let fork_ref = String::from("expression:independent-native-fork-opaque-coordinates");
     app.apply(
         &client,
         ExpressionRequest::Fork {
