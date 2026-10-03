@@ -66,7 +66,7 @@ import type {ExpressionDocument,ExpressionResult} from '../../../src/expression/
 import type {NativeCurrentReading} from '../../../src/nara/nativeCurrent';
 import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
-import {createEvidenceField,qualifyPersonalContext,type PersonalCurrentAdmission,type EvidencePresentation,type PrivateEvidenceField} from './naraEvidenceField.js';
+import {createEvidenceField,qualifyPersonalContext,personalContextKey,type PersonalCurrentAdmission,type EvidencePresentation,type PrivateEvidenceField} from './naraEvidenceField.js';
 import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
 import {applyResearchMaterial,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
@@ -1507,7 +1507,46 @@ epiEncounter=installEpiWorldEncounter({
  scene:()=>nativeWorkspace?.nativeView()?.bindings[scene().id]?.scene_ref??scene().id,
  selected:()=>{const binding=nativeWorkspace?.nativeView()?.bindings[scene().id];return binding?.occurrences.find(o=>o.view_entity_id===selected[0])?.entity_ref??null;},
  identity:()=>{closeEntryGate();naraInstrument.open('identity');},
- ask:async()=>{await nativeWorkspace?.select(scene().id,selected[0]??null);naraInstrument.open('conversation');},
+ ask:async()=>{
+  const workspace=nativeWorkspace,view=workspace?.nativeView(),sceneId=scene().id,entityId=selected[0];
+  const binding=view?.bindings[sceneId],occurrence=binding?.occurrences.find(o=>o.view_entity_id===entityId);
+  const personal=readEpiPersonalContext(view,sceneId),record=epiWorld;
+  if(!workspace||!view||!binding||!occurrence||!entityId||!personal||!record)
+   throw Error('Open and admit your saved personal world, then select its body before opening conversation.');
+  const basis=JSON.stringify(epiSceneAuthoringBasis()),localSelection=JSON.stringify(selected),personalBasis=personalContextKey(personal);
+  const worldBasis=JSON.stringify([epiPersonalBasisKey(record),record.world.snapshot_ref,record.source_basis]);
+  const expressionRef=view.document.expression_ref,sceneRef=binding.scene_ref,entityRef=occurrence.entity_ref;
+  const subject=JSON.stringify(view.document.entities[entityRef]?.subject);
+  const sameWorld=(document:ExpressionDocument)=>{
+   const world=readEpiWorldRecord(document);
+   return !!world&&world.world.instance_ref===expressionRef&&JSON.stringify([epiPersonalBasisKey(world),world.world.snapshot_ref,world.source_basis])===worldBasis;
+  };
+  if(!sameWorld(view.document as unknown as ExpressionDocument)||!view.document.scenes.find(s=>s.scene_ref===sceneRef)?.entity_refs.includes(entityRef))
+   throw Error('This selected body does not belong to the admitted personal world. Reopen its current native basis.');
+  const requireCurrent=()=>{
+   const current=workspace.nativeView(),context=readEpiPersonalContext(current,sceneId);
+   if(nativeWorkspace!==workspace||JSON.stringify(epiSceneAuthoringBasis())!==basis||JSON.stringify(selected)!==localSelection
+    ||!current||!context||personalContextKey(context)!==personalBasis||current.document.expression_ref!==expressionRef
+    ||current.bindings[sceneId]?.scene_ref!==sceneRef||!current.bindings[sceneId]?.occurrences.some(o=>o.view_entity_id===entityId&&o.entity_ref===entityRef)
+    ||!sameWorld(current.document as unknown as ExpressionDocument)||JSON.stringify(current.document.entities[entityRef]?.subject)!==subject)
+    throw Error('The selected body, person or occasion changed before conversation opened. Select the body and try again.');
+   return current;
+  };
+  const outcome=await workspace.select(sceneId,entityId);
+  if(outcome!=='applied')throw Error(outcome==='failed'
+   ?'The native owner did not accept this selection. Inspect the retained operation, then select the body again.'
+   :'The selection changed before conversation opened. Select the body and try again.');
+  const current=requireCurrent();
+  const inspected=await nativeExpressionRequest({operation:'inspect',expression_ref:expressionRef}) as ExpressionResult;
+  const live=requireCurrent(),document=inspected.document,selection=live.document.selection;
+  if(!document||!selection||live.document.revision!==current.document.revision||document.expression_ref!==expressionRef||document.revision!==live.document.revision
+   ||document.selection.scene_ref!==sceneRef||document.selection.entity_ref!==entityRef||document.selection.relation_ref
+   ||selection.scene_ref!==sceneRef||selection.entity_ref!==entityRef||selection.relation_ref
+   ||!document.scenes.find(s=>s.scene_ref===sceneRef)?.entity_refs.includes(entityRef)||!sameWorld(document)
+   ||JSON.stringify(document.entities[entityRef]?.subject)!==subject)
+   throw Error('The current native selection differs from the selected body. Reopen its current basis before conversation.');
+  naraInstrument.open('conversation');
+ },
  navigate:async(ref,entityRef)=>{const view=nativeWorkspace?.nativeView(),binding=Object.entries(view?.bindings??{}).find(([,b])=>b.scene_ref===ref);if(!binding)throw Error('This Scene is not part of the open native world.');const index=store.document.scenes.findIndex(s=>s.id===binding[0]);if(index!==sceneIndex&&!await setScene(index))return;const occurrence=binding[1].occurrences.find(o=>o.entity_ref===entityRef);selected=occurrence?[occurrence.view_entity_id]:[];await nativeWorkspace?.select(scene().id,selected[0]??null);editing=false;contextKind='';inspectorOpen=false;renderAll();},
  axes:()=>{
   const record=epiWorld;if(!record)return null;
