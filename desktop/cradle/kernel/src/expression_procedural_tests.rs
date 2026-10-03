@@ -1743,6 +1743,7 @@ fn complete_layer_document() -> Document {
     .unwrap();
     let material = &mut presentation["scene"];
     material["id"] = json!(d.scenes[0].scene_ref);
+    material["name"] = json!(d.scenes[0].title);
     material["entities"][0]["id"] = json!(format!("{EXPRESSION}:entity:a"));
     material["entities"][1]["id"] = json!(format!("{EXPRESSION}:entity:b"));
     let mut state_layer = material["entities"][0]["layers"][0].clone();
@@ -2790,15 +2791,21 @@ fn a13_native_runtime_retirement_and_reopen_resynchronise_without_prior_life_del
         .unwrap();
     assert!(!before["deltas"].as_array().unwrap().is_empty());
     let other = "expression:other-retirement-owner";
-    app.apply(
+    // Use unjournaled authored native material for the neighbour. Its basic
+    // native Fork in a separate Application has no live receipts to transfer.
+    let mut material_owner = Application::default();
+    material_owner.open(document(), "agent:independent".into()).unwrap();
+    let source_revision = material_owner.document(EXPRESSION).unwrap().revision;
+    material_owner.apply(
         &client,
-        ExpressionRequest::Create {
-            expression_ref: other.into(),
-            title: "Other native material".into(),
+        ExpressionRequest::Fork {
+            expression_ref: EXPRESSION.into(),
+            expected_revision: source_revision,
+            new_expression_ref: other.into(),
             actor: "agent:independent".into(),
         },
-    )
-    .unwrap();
+    ).unwrap();
+    app.open(material_owner.document(other).unwrap().clone(), "agent:independent".into()).unwrap();
     let mut other_intent = envelope(app.document(other).unwrap(), Scope::Expression, "a");
     other_intent.operation_ref = "operation:other-retirement-owner".into();
     other_intent.changes = vec![Change::Rename {

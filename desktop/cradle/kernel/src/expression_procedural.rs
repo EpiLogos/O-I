@@ -2152,7 +2152,7 @@ pub(super) fn fork_document_retention(document: &mut Document, old: &str, new: &
         for material in
             std::iter::once(&mut presentation.scene).chain(presentation.saved.iter_mut())
         {
-            let Some(retained) = material.get_mut("procedural") else {
+            let Some(retained) = material.get_mut("procedural").filter(|value| !value.is_null()) else {
                 continue;
             };
             retained["operations"] = json!([]);
