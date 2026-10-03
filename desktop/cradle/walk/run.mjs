@@ -21,6 +21,7 @@
  */
 
 import { spawn, execFileSync } from "node:child_process";
+import {spawnInheritedService} from './service-process.mjs';
 import { mkdirSync, writeFileSync, readFileSync, realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
@@ -272,10 +273,18 @@ normalizeRegistry(SCENARIOS);
 // process plumbing
 
 const services = [];
+const inheritedServices = process.env.OI_WALK_SUPERVISED_GROUP === '1';
 
 /** Spawn a service in its own process group so teardown reaches its
  * children (vite under npm, the kernel binary under cargo). */
 function spawnService(label, command, args, options = {}) {
+  if (inheritedServices) {
+    const record = spawnInheritedService(label, command, args, {cwd:cradleRoot, ...options}, chunk => {
+      for (const line of String(chunk).split('\n').filter(Boolean)) console.log(`  [${label}] ${line}`);
+    });
+    services.push(record);
+    return record;
+  }
   const child = spawn(command, args, {
     cwd: cradleRoot,
     detached: true,
@@ -300,7 +309,14 @@ function spawnService(label, command, args, options = {}) {
   return record;
 }
 
-function stopService(record) {
+async function stopService(record) {
+  if (inheritedServices) {
+    await record.stop();
+    const index = services.indexOf(record);
+    if (index >= 0) services.splice(index, 1);
+    console.log(`  stopped and reaped ${record.label}`);
+    return;
+  }
   const index = services.indexOf(record);
   if (index >= 0) services.splice(index, 1);
   if (record.child.exitCode !== null) return;
@@ -312,14 +328,25 @@ function stopService(record) {
   console.log(`  stopped ${record.label}`);
 }
 
-function stopServices() {
-  for (const record of [...services].reverse()) stopService(record);
+async function stopServices() {
+  const failures = [];
+  for (const record of [...services].reverse()) {
+    try {await stopService(record);} catch(error) {failures.push(String(error?.stack ?? error));}
+  }
+  if (failures.length) throw new Error(failures.join('\n'));
 }
 
-process.once("exit", stopServices);
+// Exit cannot await asynchronous reaping. Normal completion awaits it below;
+// the explicit native supervisor remains the final owner on abrupt exit.
+process.once('exit', () => {
+  for (const record of services) {
+    if (inheritedServices) record.child.kill('SIGTERM');
+    else void stopService(record);
+  }
+});
 for (const signal of ["SIGINT", "SIGTERM"]) {
-  process.once(signal, () => {
-    stopServices();
+  process.once(signal, async () => {
+    try {await stopServices();} catch(error) {console.error(error);}
     process.exit(130);
   });
 }
@@ -350,7 +377,12 @@ async function runToCompletion(label, command, args, env = {}) {
   const child = spawnService(label, command, args, {
     env: { ...process.env, ...env },
   });
-  const code = await new Promise((resolve) => child.child.on("exit", resolve));
+  const outcome = inheritedServices ? await child.closed : {code:await new Promise(resolve => {
+    child.child.once('error', () => resolve(null));
+    child.child.once('exit', resolve);
+  })};
+  if (outcome.error) throw outcome.error;
+  const code = outcome.code;
   if (code !== 0) {
     throw new Error(`${label} failed with exit code ${code}:\n${child.output()}`);
   }
@@ -567,10 +599,11 @@ async function runScenario(name, { baseUrl }) {
     let bridgeUrl = null;
     if (spec.kernel) {
       stage = "bridge";
+      if (inheritedServices && !process.env.OI_WALK_BRIDGE) throw new Error('Supervised walk requires its actual prebuilt OI_WALK_BRIDGE');
       const bridgeService = spawnService(
         "walk-bridge",
-        "cargo",
-        [
+        inheritedServices ? process.env.OI_WALK_BRIDGE : "cargo",
+        inheritedServices ? [`127.0.0.1:${BRIDGE_PORT}`] : [
           "run",
           "--quiet",
           "--manifest-path",
@@ -638,7 +671,13 @@ async function runScenario(name, { baseUrl }) {
       receipt.passed = false;
       receipt.error = String(error?.stack ?? error);
       receipt.failure_stage = classifyFailure("scenario");
-      await page.screenshot({path:join(here,"artifacts",`${name}-failure.png`)}).catch(()=>{});
+      try {
+        const file = `${name}-failure.png`;
+        await page.screenshot({path:join(artifactsDir,file)});
+        receipt.screenshots.push(file);
+      } catch(captureError) {
+        receipt.capture_errors = [{label:'failure', error:String(captureError?.stack ?? captureError)}];
+      }
       console.error(`  SCENARIO ERROR: ${receipt.error}`);
     }
   } catch (error) {
@@ -652,6 +691,8 @@ async function runScenario(name, { baseUrl }) {
     if (receipt) {
       if (cleanup.errors.length) {
         receipt.cleanup_errors = cleanup.errors;
+        receipt.passed = false;
+        if (!receipt.failure_stage) receipt.failure_stage = 'harness-cleanup';
         for (const { label, error } of cleanup.errors) console.error(`  cleanup error (${label}): ${error}`);
       }
     } else {
@@ -730,8 +771,13 @@ try {
     );
     if (!receipt.passed) failed++;
   }
-  process.exit(failed ? 1 : 0);
+  process.exitCode = failed ? 1 : 0;
 } catch (error) {
   console.error(`\nRUN FAILED: ${error?.stack ?? error}`);
-  process.exit(1);
+  process.exitCode = 1;
+} finally {
+  try {await stopServices();} catch(error) {
+    console.error(`NATIVE CLEANUP FAILED: ${error?.stack ?? error}`);
+    process.exitCode = 1;
+  }
 }

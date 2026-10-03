@@ -25,6 +25,8 @@ export interface InboxMaterial {
 export interface LeftHost {
   /** ⌘K — the typed palette. */
   onSearch?: () => void;
+  /** The configured shortcut from the existing window search-leader state. */
+  searchShortcut?: string;
   /** The one "+" create menu. Each entry is offered only when lent. */
   onNewChat?: () => void;
   onNewFlow?: () => void;

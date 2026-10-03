@@ -123,29 +123,6 @@ jobs:
             2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/design-system-dependencies.log"
           npm --prefix desktop/cradle run build \
             2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/frontend-build.log"
-      - name: Exercise native Explore constellation interaction and view continuation
-        working-directory: desktop/cradle
-        shell: bash
-        env:
-          TMPDIR: ${{ runner.temp }}/readable-native-work
-          OI_TEST_RUN_DIR: ${{ runner.temp }}/readable-native-work
-          AIKIT_HOME: ${{ runner.temp }}/readable-native-work/aikit-home
-          OI_HOME: ${{ runner.temp }}/readable-native-work/oi-home
-        run: |
-          set -euo pipefail
-          npx playwright install --with-deps chromium webkit
-          walk_failures=0
-          for walk_engine in chromium webkit; do
-            evidence="$RUNNER_TEMP/readable-native-evidence/explore-$walk_engine"
-            mkdir -p "$evidence"
-            if WALK_ENGINE="$walk_engine" node walk/run.mjs explore-sf2 knowledge 2>&1 | tee "$evidence/walk.log"; then
-              :
-            else
-              walk_failures=$((walk_failures + 1))
-            fi
-            if [ -d walk/artifacts ]; then cp -a walk/artifacts/. "$evidence/"; fi
-          done
-          test "$walk_failures" -eq 0
       - name: Prove native source, library, context and account readability
         working-directory: desktop/cradle
         shell: bash
@@ -169,6 +146,133 @@ jobs:
             fi
           done
           test "$native_failures" -eq 0
+      # Original native-readable checks run first. This additional replay uses
+      # the real SDK and job-local owner, explicitly bound to the CI database.
+      - name: Install the pinned SharedField client and native transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix shared-field/spacetimedb --no-save --package-lock=false --no-audit --no-fund \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/shared-field-dependencies.log"
+          curl -sSf https://install.spacetimedb.com | \
+            SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.8.1" \
+            sh -s -- -y
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          spacetime version install 2.8.1
+          spacetime version use 2.8.1
+          spacetime --version | tee "$RUNNER_TEMP/readable-native-evidence/spacetimedb-version.txt"
+          grep -q '2.8.1' "$RUNNER_TEMP/readable-native-evidence/spacetimedb-version.txt"
+      - name: Build the actual job-local SharedField module
+        shell: bash
+        run: |
+          set -euo pipefail
+          spacetime build --module-path shared-field/spacetimedb \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/shared-field-build.log"
+          spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
+      - name: Verify the existing finite native process supervisor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 desktop/cradle/tests/native-expression-local.test.py \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/native-process-supervisor.log"
+      - name: Verify real native cgroup admission and detached-descendant retirement
+        shell: bash
+        run: |
+          set -euo pipefail
+          native_python=$(command -v python3)
+          sudo -n env OI_NATIVE_CGROUP_UID="$(id -u)" OI_NATIVE_CGROUP_GID="$(id -g)" \
+            "$native_python" desktop/cradle/tests/native-expression-cgroup.test.py \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/native-cgroup-supervisor.log"
+      - name: Exercise native Explore constellation interaction and view continuation
+        working-directory: desktop/cradle
+        shell: bash
+        env:
+          TMPDIR: ${{ runner.temp }}/readable-native-work
+          OI_TEST_RUN_DIR: ${{ runner.temp }}/readable-native-work
+          AIKIT_HOME: ${{ runner.temp }}/readable-native-work/aikit-home
+          OI_HOME: ${{ runner.temp }}/readable-native-work/oi-home
+          OI_SHARED_FIELD_TARGET: ci
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium webkit
+          native_python=$(command -v python3)
+          native_environment="$RUNNER_TEMP/readable-native-work/explore-runner-environment.json"
+          python3 - "$native_environment" <<'PY'
+          import json,os,pwd,sys
+          from pathlib import Path
+          keys=['PATH','HOME','USER','LOGNAME','SHELL','LANG','LC_ALL','TZ','RUNNER_TEMP','TMPDIR',
+                'OI_TEST_RUN_DIR','AIKIT_HOME','OI_HOME','OI_SHARED_FIELD_TARGET','OI_BIN','OI_AIKIT_BIN',
+                'OI_CENTRAL_CTRL_BIN','WIKI_KERNEL_BIN','OI_CTRL_BIN','OI_WALK_BRIDGE']
+          uid,gid=os.getuid(),os.getgid()
+          if uid<=0 or gid<=0 or pwd.getpwuid(uid).pw_dir!=os.environ['HOME']:
+            raise RuntimeError('Explore replay requires the actual nonroot runner identity and home')
+          environment={key:os.environ[key] for key in keys if key in os.environ}
+          for key in ['PATH','HOME','RUNNER_TEMP','TMPDIR','OI_TEST_RUN_DIR','AIKIT_HOME','OI_HOME',
+                      'OI_SHARED_FIELD_TARGET','OI_BIN','OI_AIKIT_BIN','OI_CENTRAL_CTRL_BIN',
+                      'WIKI_KERNEL_BIN','OI_CTRL_BIN','OI_WALK_BRIDGE']:
+            if not environment.get(key): raise RuntimeError('Missing actual runner binding: '+key)
+          if environment['OI_SHARED_FIELD_TARGET']!='ci': raise RuntimeError('Job-local SharedField target required')
+          record={'uid':uid,'gid':gid,'cwd':str(Path.cwd().resolve()),'environment':environment}
+          with open(sys.argv[1],'x',opener=lambda path,flags:os.open(path,flags,0o600)) as source:
+            json.dump(record,source)
+          PY
+          # Only this finite native supervisor is privileged. The entire real
+          # replay enters its pinned native subtree and then the runner UID/GID
+          # before Bash, server, browser or native owner can execute.
+          sudo -n "$native_python" - "$native_environment" "$(id -u)" "$(id -g)" <<'PY'
+          import importlib.util,json,os,sys
+          from pathlib import Path
+          runner=json.loads(Path(sys.argv[1]).read_text())
+          if (runner['uid'],runner['gid'])!=(int(sys.argv[2]),int(sys.argv[3])):
+            raise RuntimeError('Actual runner identity changed before native admission')
+          cwd=Path(runner['cwd'])
+          if cwd!=Path.cwd().resolve(): raise RuntimeError('Actual runner cwd changed before native admission')
+          environment=runner['environment']
+          spec=importlib.util.spec_from_file_location('native_supervision',cwd/'tests/native-expression-local.py')
+          owner=importlib.util.module_from_spec(spec);spec.loader.exec_module(owner)
+          evidence=Path(environment['RUNNER_TEMP'])/'readable-native-evidence'
+          script=r"""set -euo pipefail
+          # Every descendant inherits the owned native cgroup, including the
+          # actual Playwright browsers that create independent process groups.
+          spacetime start --listen-addr 127.0.0.1:3000 > "$RUNNER_TEMP/readable-native-evidence/spacetimedb.log" 2>&1 &
+          ready=0
+          for attempt in $(seq 1 60); do
+            if spacetime server ping local; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          spacetime publish oi-shared-field-ci --server local --module-path ../../shared-field/spacetimedb --yes=all
+          walk_failures=0
+          for walk_engine in chromium webkit; do
+            evidence="$RUNNER_TEMP/readable-native-evidence/explore-$walk_engine"
+            python3 walk/retain-evidence.py start --output "$evidence" --engine "$walk_engine" --scenario explore-sf2 --scenario knowledge
+            if OI_WALK_SUPERVISED_GROUP=1 WALK_ENGINE="$walk_engine" node walk/run.mjs explore-sf2 knowledge 2>&1 | tee "$evidence/walk.log"; then
+              :
+            else
+              walk_failures=$((walk_failures + 1))
+            fi
+            if python3 walk/retain-evidence.py retain --output "$evidence"; then
+              :
+            else
+              walk_failures=$((walk_failures + 1))
+            fi
+          done
+          test "$walk_failures" -eq 0
+          """
+          cleanup={};status=None;failure=None
+          try:
+            status=owner.run_isolated(['bash','--noprofile','--norc','-c',script],cwd=cwd,env=environment,stdout=sys.stdout,timeout=1800,cleanup=cleanup,linux_cgroup={'root':'/sys/fs/cgroup','uid':runner['uid'],'gid':runner['gid']})
+          except BaseException as error:
+            failure={'kind':type(error).__name__,'detail':str(error)}
+          finally:
+            native=cleanup.get('linux_cgroup',{})
+            retired=native.get('events_after_retirement',{}).get('populated')==0 and native.get('owned_leaf_removed') is True and native.get('descriptor_closed') is True and native.get('same_directory_before_retirement') is True and 'cleanup_unknown' not in native
+            passed=status==0 and failure is None and retired and cleanup.get('owned_leader_reaped') is True and cleanup.get('owned_group_absent_at_readback') is True and 'cleanup_unknown' not in cleanup
+            (evidence/'shared-field-producer-cleanup.json').write_text(json.dumps({'exit_code':status,'failure':failure,'cleanup':cleanup,'passed':passed},indent=2)+'\n')
+          if not passed:
+            raise SystemExit(1)
+          PY
       - name: Retain native source provenance and all performed results
         if: always()
         uses: actions/upload-artifact@v4

@@ -124,3 +124,35 @@ test("the real runner registry validates and reports an unknown scenario cleanly
     assert.match(String(error.stderr), /unknown scenario `__definitely_not_a_scenario__`/);
   }
 });
+
+
+test('supervised real service bounds retained output and reaps its actual child', async () => {
+  const {spawnInheritedService} = await import('../walk/service-process.mjs');
+  const service = spawnInheritedService('actual-output', process.execPath,
+    ['-e', "process.stdout.write('x'.repeat(512*1024))"]);
+  const result = await service.closed;
+  assert.equal(result.code, 0);
+  assert.equal(service.output().length, 256*1024);
+  assert.equal(service.discardedBytes(), 256*1024);
+  await service.stop();
+});
+
+test('supervised real service inherits the owned group and retires a TERM-ignoring child', {skip:process.platform==='win32'}, async () => {
+  const {spawnInheritedService} = await import('../walk/service-process.mjs');
+  const service = spawnInheritedService('actual-group', 'python3', ['-c',
+    'import os,signal,time;signal.signal(signal.SIGTERM,signal.SIG_IGN);print(os.getpgrp(),flush=True);time.sleep(30)']);
+  try {
+    const deadline = Date.now()+3000;
+    while (!service.output().trim()) {
+      assert.ok(Date.now()<deadline, 'Real child did not disclose its process group');
+      await new Promise(resolve=>setTimeout(resolve,10));
+    }
+    const parentGroup = Number(execFileSync('python3', ['-c','import os;print(os.getpgrp())'], {encoding:'utf8'}).trim());
+    assert.equal(Number(service.output().trim()), parentGroup);
+    const started = Date.now();
+    const result = await service.stop();
+    assert.equal(result.signal, 'SIGKILL');
+    assert.ok(Date.now()-started<4000, 'Real owned service retirement exceeded its bound');
+    assert.equal(service.child.signalCode, 'SIGKILL');
+  } finally {await service.stop();}
+});

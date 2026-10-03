@@ -1,4 +1,6 @@
 import {setup as sourceSetup} from './editor.mjs';
+import {bindDefaultCentral,waitForDoc} from '../editor-doc.mjs';
+import {subjectLabel} from '../../../../shared-field/presentation-text.mjs';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
@@ -42,6 +44,12 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
     };
   });
   await page.goto(baseUrl);await channel('info');
+  await bindDefaultCentral(page,p.root);
+  // Browsing a project's rows does not change the selected working scope.
+  // Enter Editor through the native scope menu before comparing owner reads.
+  await page.getByRole('button',{name:/^Scope: /}).click();
+  await page.locator('[data-scope-project="Editor"]').click();
+  await page.getByRole('button',{name:/^Scope: Editor/}).waitFor();
   const macOS=await page.evaluate(()=>/Mac|iPhone|iPad/.test(navigator.platform));
   const primary=macOS?'Meta':'Control';
   await page.locator('[data-project-path="Work/Editor"]').click();
@@ -55,9 +63,9 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   const editor=page.locator(`.cm-content[data-source-ref="${p.sources[0].binding.ref}"]`);
   await editor.waitFor();
   await editor.click();
-  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.press(`${primary}+a`);
   await page.keyboard.type(editorText);
-  await page.waitForFunction(text=>document.querySelector('.cm-content')?.textContent===text,editorText);
+  await waitForDoc(page,editorText,`.cm-content[data-source-ref="${p.sources[0].binding.ref}"]`);
   const beforeFocus=(await channel('read.focus')).data;
   const historyBefore=native('history').length;
   await page.keyboard.press(`${primary}+k`);
@@ -69,8 +77,15 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   if(!await overlay.locator('li').count())throw new Error(`Native search returned no selectable rows: ${await overlay.innerText()}`);
   await overlay.locator('li').first().waitFor();
   await page.waitForFunction(()=>document.querySelector('.search-aperture ul')?.getAttribute('aria-busy')==='false');
-  const expected=native('search','editor-walk').hits;
-  check(JSON.stringify(await overlay.locator('li strong').allTextContents())===JSON.stringify(expected.map(h=>h.label)),'Search rows preserve real AIKit order and labels');
+  // Match the two actual owner requests, their limit and exact address/provider
+  // deduplication; the palette contains direct hits followed by resolve-only hits.
+  const direct=native('search','--limit','50','--','editor-walk').hits;
+  const resolved=native('resolve','--limit','50','--','editor-walk').hits??[];
+  const seen=new Set();
+  const expected=[...direct,...resolved].filter(hit=>{const key=JSON.stringify([hit.resource,hit.address.kind,hit.address.value,hit.provider]);if(seen.has(key))return false;seen.add(key);return true;});
+  const rendered=await overlay.locator('[data-resource-ref]').evaluateAll(rows=>rows.map(row=>({ref:row.getAttribute('data-resource-ref'),title:row.querySelector('strong')?.textContent})));
+  const expectedRows=expected.map((hit,index)=>({ref:hit.resource,title:subjectLabel(hit,`Unnamed result ${index+1}`)}));
+  check(JSON.stringify(rendered)===JSON.stringify(expectedRows),'Search rows preserve real AIKit order, admitted identity and readable labels',{rendered,expected:expectedRows,direct_count:direct.length,resolve_count:resolved.length});
   check(native('history').length===historyBefore,'Displaying search results does not record successful use');
   check(JSON.stringify((await channel('read.focus')).data)===JSON.stringify(beforeFocus),'Querying does not move kernel semantic focus');
   await page.keyboard.press('Escape');
@@ -86,7 +101,7 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   await overlay.getByRole('button',{name:'Search options',exact:true}).click();
   await overlay.getByLabel('Search shortcut').selectOption('true');
   await page.keyboard.press('Escape');
-  check((await page.locator('.summon-search kbd').innerText()).includes('⇧'),'Sidebar shortcut label follows the selected leader');
+  check((await page.locator('.left-head-tools').getByRole('button',{name:'Search',exact:true}).getAttribute('title')).includes('⇧'),'Sidebar search tooltip follows the selected leader');
   await page.keyboard.press(`${primary}+k`);
   check(await overlay.count()===0,'Previous shortcut no longer summons the configured aperture');
   await page.keyboard.press(`${primary}+Shift+k`); await overlay.waitFor();

@@ -18,6 +18,8 @@ import signal
 import subprocess
 import sys
 import time
+import threading
+import uuid
 
 
 def run(args, cwd=None, timeout=30):
@@ -59,13 +61,203 @@ def group_readback(group):
                 'errno': getattr(error, 'errno', None), 'error': str(error)}
 
 
-def run_isolated(args, *, cwd, env, stdout, timeout=180, cleanup=None):
+class _LinuxTestCgroup:
+    """One explicit remote test subtree, pinned until native empty readback.
+
+    The privileged supervisor owns control descriptors; only its pre-exec
+    child enters, then drops to the explicitly supplied actual runner IDs.
+    This does not authenticate a World or grant any product operation.
+    """
+    def __init__(self, specification, reading):
+        if sys.platform != 'linux' or os.geteuid() != 0:
+            raise PermissionError('Explicit Linux root test supervisor required for native cgroup custody')
+        if threading.active_count() != 1:
+            raise RuntimeError('Native cgroup pre-exec custody requires a single-threaded supervisor')
+        if not isinstance(specification, dict) or set(specification) != {'root', 'uid', 'gid'}:
+            raise ValueError('Native cgroup requires exactly root, uid and gid')
+        self.uid, self.gid = specification['uid'], specification['gid']
+        if any(type(value) is not int or value <= 0 for value in (self.uid, self.gid)):
+            raise ValueError('Native cgroup child requires explicit nonroot runner UID/GID')
+        root = Path(specification['root'])
+        if not root.is_absolute() or root.resolve(strict=True) != root:
+            raise ValueError('Native cgroup root must be an explicit canonical directory')
+        self.reading = reading
+        self.root_fd = self.leaf_fd = self.kill_fd = self.events_fd = None
+        self.created = False
+        self.name = 'oi-walk-' + uuid.uuid4().hex
+        self.path = root/self.name
+        self.reading.update({'schema': 'oi.native-test-cgroup/v1', 'name': self.name,
+                            'path': str(self.path), 'child_uid': self.uid, 'child_gid': self.gid})
+        try:
+            flags = os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+            self.root_fd = os.open(root, os.O_RDONLY | flags)
+            magic = self._filesystem_magic(self.root_fd)
+            self.reading['filesystem_magic'] = magic
+            if magic != 0x63677270:
+                raise RuntimeError('Native test custody requires the actual Linux cgroup v2 filesystem')
+            os.mkdir(self.name, 0o700, dir_fd=self.root_fd)
+            self.created = True
+            self.leaf_fd = os.open(self.name, os.O_RDONLY | flags, dir_fd=self.root_fd)
+            owned = os.fstat(self.leaf_fd)
+            self.identity = (owned.st_dev, owned.st_ino)
+            self.reading['directory_identity'] = {'device': owned.st_dev, 'inode': owned.st_ino}
+            self.kill_fd = os.open('cgroup.kill', os.O_WRONLY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                   dir_fd=self.leaf_fd)
+            self.events_fd = os.open('cgroup.events', os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                     dir_fd=self.leaf_fd)
+            initial = self._events()
+            self.reading['events_before_launch'] = initial
+            if initial['populated'] != 0:
+                raise RuntimeError('New native test cgroup was already populated; no product launched')
+        except BaseException:
+            # Construction may already own a leaf. Preserve retirement evidence
+            # independently of the original admission/setup exception.
+            try:
+                self.retire()
+            except BaseException as error:
+                self.reading['cleanup_unknown'] = str(error)
+            finally:
+                try:
+                    self.close_descriptors()
+                except OSError as error:
+                    self.reading['cleanup_unknown'] = str(error)
+                except RuntimeError:
+                    pass
+            raise
+
+    @staticmethod
+    def _filesystem_magic(fd):
+        native = ctypes.CDLL(None, use_errno=True)
+        native.fstatfs.argtypes = [ctypes.c_int, ctypes.c_void_p]
+        native.fstatfs.restype = ctypes.c_int
+        # Linux's native statfs starts with f_type. This over-sized aligned
+        # storage supports both native 32/64-bit layouts without an ABI struct.
+        storage = (ctypes.c_long * 64)()
+        if native.fstatfs(fd, ctypes.byref(storage)) != 0:
+            error = ctypes.get_errno()
+            raise OSError(error, os.strerror(error))
+        return storage[0]
+
+    def _events(self):
+        os.lseek(self.events_fd, 0, os.SEEK_SET)
+        raw = os.read(self.events_fd, 4097)
+        if len(raw) > 4096:
+            raise RuntimeError('Native cgroup event reading exceeded its finite bound')
+        value = {}
+        for line in raw.decode('ascii').splitlines():
+            key, number = line.split()
+            if key in value:
+                raise RuntimeError('Native cgroup event reading contains duplicate keys')
+            value[key] = int(number)
+        if value.get('populated') not in (0, 1):
+            raise RuntimeError('Native cgroup populated reading is unavailable')
+        return value
+
+    def prepare_child(self):
+        owned = os.fstat(self.leaf_fd)
+        if (owned.st_dev, owned.st_ino) != self.identity:
+            raise RuntimeError('Native cgroup descriptor identity changed before child admission')
+        fd = os.open('cgroup.procs', os.O_WRONLY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                     dir_fd=self.leaf_fd)
+        try:
+            entry = (str(os.getpid())+'\n').encode('ascii')
+            if os.write(fd, entry) != len(entry):
+                raise RuntimeError('Native child cgroup admission did not complete')
+        finally:
+            os.close(fd)
+        with open('/proc/self/cgroup', 'r') as membership:
+            rows = membership.read(4097)
+        if len(rows) > 4096 or not any(row == '0::/'+self.name or row.endswith('/'+self.name)
+                                     for row in rows.splitlines() if row.startswith('0::')):
+            raise RuntimeError('Native child membership does not match its owned cgroup')
+        os.close(self.leaf_fd)
+        os.setgroups([])
+        os.setresgid(self.gid, self.gid, self.gid)
+        os.setresuid(self.uid, self.uid, self.uid)
+        if os.getuid() != self.uid or os.geteuid() != self.uid or os.getgid() != self.gid or os.getegid() != self.gid:
+            raise RuntimeError('Native child did not enter the actual runner identity')
+
+    def retire(self):
+        if not self.created:
+            self.reading['owned_leaf_created'] = False
+            return
+        self.reading['owned_leaf_created'] = True
+        if self.leaf_fd is None:
+            raise RuntimeError('Native cgroup allocation has no pinned directory descriptor; retained for inspection')
+        if self.events_fd is None:
+            self.events_fd = os.open('cgroup.events', os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                     dir_fd=self.leaf_fd)
+        try:
+            named = os.stat(self.name, dir_fd=self.root_fd, follow_symlinks=False)
+            same = (named.st_dev, named.st_ino) == self.identity
+        except OSError as error:
+            same = False
+            self.reading['name_observation_error'] = {'errno': error.errno, 'detail': str(error)}
+        self.reading['same_directory_before_retirement'] = same
+        # The kill FD remains attached to the actual owned subtree even if an
+        # external privileged writer moved its name. Never signal by cached PID.
+        failure = None
+        try:
+            if self.kill_fd is None:
+                self.kill_fd = os.open('cgroup.kill', os.O_WRONLY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                       dir_fd=self.leaf_fd)
+            if os.write(self.kill_fd, b'1\n') != 2:
+                raise RuntimeError('Native cgroup retirement write did not complete')
+            self.reading['native_subtree_signalled'] = 'cgroup.kill'
+        except (OSError, RuntimeError) as error:
+            failure = error
+            self.reading['native_signal_error'] = {'errno': getattr(error, 'errno', None), 'detail': str(error)}
+        deadline = time.monotonic()+3
+        while True:
+            events = self._events()
+            self.reading['events_after_retirement'] = events
+            if events['populated'] == 0:
+                break
+            if time.monotonic() >= deadline:
+                raise RuntimeError('Native cgroup empty-subtree readback did not complete within three seconds')
+            time.sleep(.005)
+        if not same:
+            raise RuntimeError('Owned cgroup name no longer matches its pinned native directory; not removed')
+        named = os.stat(self.name, dir_fd=self.root_fd, follow_symlinks=False)
+        if (named.st_dev, named.st_ino) != self.identity:
+            raise RuntimeError('Owned cgroup name changed before removal; not removed')
+        # Kernel rmdir refuses a populated cgroup. Keep the native directory FD
+        # until both empty readback and this exact owned-name removal complete.
+        os.rmdir(self.name, dir_fd=self.root_fd)
+        self.created = False
+        self.reading['owned_leaf_removed'] = True
+        if failure is not None:
+            raise RuntimeError('Native cgroup retirement signal failed; retained native empty/removal evidence') from failure
+
+    def close_descriptors(self):
+        errors = []
+        for name in ('events_fd', 'kill_fd', 'leaf_fd', 'root_fd'):
+            fd = getattr(self, name)
+            if fd is not None:
+                try:
+                    os.close(fd)
+                except OSError as error:
+                    errors.append({'descriptor': name, 'errno': error.errno, 'detail': str(error)})
+                finally:
+                    # Never retry closing a numeric descriptor after ownership
+                    # was lost; attempt retirement of every other owned FD.
+                    setattr(self, name, None)
+        self.reading['descriptor_closed'] = not errors
+        if errors:
+            self.reading['descriptor_close_errors'] = errors
+            self.reading['cleanup_unknown'] = 'Native cgroup descriptor retirement failed'
+            raise RuntimeError(self.reading['cleanup_unknown'])
+
+
+def run_isolated(args, *, cwd, env, stdout, timeout=180, cleanup=None, linux_cgroup=None):
     """Reap this opt-in test's owned group; preserve its unreaped PID fence.
 
     Temporary handlers belong only to this command. Native membership must
     qualify retirement independently; neither EPERM nor leader exit is absence.
     """
     process = None
+    cgroup = None
+    cgroup_failure = None
     if not hasattr(os, 'waitid') or not hasattr(os, 'WNOWAIT'):
         raise RuntimeError('Isolated native acceptance requires unreaped-leader observation on this platform')
     previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
@@ -76,8 +268,15 @@ def run_isolated(args, *, cwd, env, stdout, timeout=180, cleanup=None):
     try:
         for sig in previous:
             signal.signal(sig, interrupted)
+        launch = {}
+        if linux_cgroup is not None:
+            native = {}
+            if cleanup is not None:
+                cleanup['linux_cgroup'] = native
+            cgroup = _LinuxTestCgroup(linux_cgroup, native)
+            launch = {'preexec_fn': cgroup.prepare_child, 'pass_fds': (cgroup.leaf_fd,)}
         process = subprocess.Popen(args, cwd=cwd, env=env, stdout=stdout,
-                                   stderr=subprocess.STDOUT, start_new_session=True)
+                                   stderr=subprocess.STDOUT, start_new_session=True, **launch)
         deadline = time.monotonic() + timeout
         while True:
             observed = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
@@ -91,6 +290,14 @@ def run_isolated(args, *, cwd, env, stdout, timeout=180, cleanup=None):
         for sig in previous:
             signal.signal(sig, signal.SIG_IGN)
         try:
+            if cgroup is not None:
+                try:
+                    cgroup.retire()
+                except BaseException as error:
+                    cgroup_failure = error
+                    cgroup.reading['cleanup_unknown'] = str(error)
+                    if cleanup is not None:
+                        cleanup['cleanup_unknown'] = 'Native cgroup retirement is unavailable: '+str(error)
             if process is not None:
                 reading = {'owned_pid_and_pgid': process.pid,
                            'leader_kept_unreaped_until_group_signal': True}
@@ -137,8 +344,19 @@ def run_isolated(args, *, cwd, env, stdout, timeout=180, cleanup=None):
                 if cleanup is not None:
                     cleanup.update(reading)
         finally:
-            for sig, handler in previous.items():
-                signal.signal(sig, handler)
+            try:
+                if cgroup is not None:
+                    try:
+                        cgroup.close_descriptors()
+                    except BaseException as error:
+                        cgroup_failure = cgroup_failure or error
+                        if cleanup is not None:
+                            cleanup['cleanup_unknown'] = str(error)
+            finally:
+                for sig, handler in previous.items():
+                    signal.signal(sig, handler)
+        if cgroup_failure is not None:
+            raise RuntimeError('Native cgroup cleanup failed; inspect retained native ownership evidence') from cgroup_failure
 
 
 def verify_joined_receipt(path, files, owners=None):

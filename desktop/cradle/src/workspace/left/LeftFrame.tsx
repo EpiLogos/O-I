@@ -199,7 +199,7 @@ export function LeftHead(props: Omit<LeftFrameProps, "body" | "onMode">) {
   return <div className="left-head" data-left-head="true">
     <ScopeMenu {...props}/>
     <span className="left-head-tools">
-      {props.host.onSearch && <button type="button" className="left-icon left-head-tool" aria-label="Search" title="Search (⌘K)" onClick={props.host.onSearch}><Glyph name="search" size={15}/></button>}
+      {props.host.onSearch && <button type="button" className="left-icon left-head-tool" aria-label="Search" title={props.host.searchShortcut ? `Search (${props.host.searchShortcut})` : "Search"} onClick={props.host.onSearch}><Glyph name="search" size={15}/></button>}
       <CreateMenu mode={props.mode} host={props.host}/>
     </span>
   </div>;

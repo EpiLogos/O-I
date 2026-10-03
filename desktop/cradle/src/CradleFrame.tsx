@@ -2002,6 +2002,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const planeOf=(pattern:RegExp)=>MODE_CURATION[mode].panel.planes.find(plane=>pattern.test(plane));
   const leftHost:LeftHost={
     onSearch:()=>setSearchOpen(true),
+    searchShortcut:leader.label,
     onNewChat:()=>{if(curation.panel.conversationInCentre){setState(s=>({...s,accompanying:undefined}));publishCentreView("tasks");return;}const chat=planeOf(/^chat$/i);setState(s=>({...s,accompanying:undefined,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:chat?{...s.panelPlanes,[mode]:chat}:s.panelPlanes}));},
     onNewFlow:()=>void startWriting(),
     onNewExpression:()=>void createExpression(kernel.transport).catch(report),
