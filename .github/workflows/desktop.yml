@@ -256,6 +256,7 @@ jobs:
           path: |
             desktop/cradle/tests/artifacts/readable-presentation/
             desktop/cradle/tests/artifacts/visuals-preferences/
+            desktop/cradle/tests/artifacts/shared-expression-resources/native-module-refresh/
             ${{ runner.temp }}/walk-bridge.log
           if-no-files-found: warn
       - name: Retain collection source-identity consumer evidence
