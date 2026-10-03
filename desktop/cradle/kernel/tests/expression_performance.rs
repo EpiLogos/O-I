@@ -571,11 +571,20 @@ fn actual_scene_act_file_edition_restart_seek_and_continue_preserve_the_complete
         expression_file::decode(&expression_file::encode(&legacy).unwrap()).unwrap(),
         legacy
     );
+    // Derive the complete expected native edit from the independently read
+    // original Document and actual retained producer performance, before ACK.
+    let mut expected_initial = old.clone();
+    let expected_revision = legacy.revision.checked_add(1).unwrap();
+    expected_initial["revision"] = json!(expected_revision);
+    expected_initial["scenes"][0]["revision"] = json!(expected_revision);
+    expected_initial["scenes"][0]["performance"] = serde_json::to_value(&p).unwrap();
     let admitted=kernel_world(&mut k,json!({"operation":"act_perform","act_ref":"act:retained-performance","expression_ref":"expression:retained-current","expected_revision":1,
         "actor":"agent:retained-performance-test","summary":"Record native source-qualified work","activity_ref":"agent-session/direct:retained-performance",
         "changes":[{"change":"scene_performance_set","scene_ref":"expression:retained-current:scene:main","performance":p}]})).unwrap();
     assert_eq!(admitted["act"]["sequence"][0]["kind"], "edition");
     let initial = document(&mut k);
+    assert_eq!(initial, expected_initial, "complete native snapshot must retain the actual producer/body/source and every original Document field");
+    assert_eq!(admitted["act"]["sequence"][0]["edition"], expected_initial, "native immutable Edition and ordinary Inspect must receive the complete same Document");
     let revision = initial["revision"].as_u64().unwrap();
     kernel_world(
         &mut k,
@@ -586,9 +595,16 @@ fn actual_scene_act_file_edition_restart_seek_and_continue_preserve_the_complete
     let edit = PerformanceOperation::Record {
         events: vec![note(3, 240, 2, 1), off(4, 400, 2)],
     };
+    let mut expected_continued = expected_initial.clone();
+    let expected_revision = expected_revision.checked_add(1).unwrap();
+    expected_continued["revision"] = json!(expected_revision);
+    expected_continued["scenes"][0]["revision"] = json!(expected_revision);
+    expected_continued["scenes"][0]["performance"] =
+        serde_json::to_value(p.clone().edited(vec![edit.clone()]).unwrap()).unwrap();
     kernel_world(&mut k,json!({"operation":"act_perform","act_ref":"act:retained-performance","expression_ref":"expression:retained-current","expected_revision":revision,
         "actor":"agent:retained-performance-test","summary":"Continue native performance","changes":[{"change":"scene_performance_edit","scene_ref":"expression:retained-current:scene:main","operations":[edit]}]})).unwrap();
     let continued = document(&mut k);
+    assert_eq!(continued, expected_continued, "real continuation must preserve all native Document fields around the complete source-qualified performance");
     assert_eq!(
         continued["scenes"][0]["performance"]["pages"][0]["events"]
             .as_array()

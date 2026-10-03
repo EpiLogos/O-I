@@ -1738,7 +1738,7 @@ impl Application {
             .collect()
     }
 
-    fn document(&self, r: &str) -> Result<&Document, String> {
+    pub(crate) fn document(&self, r: &str) -> Result<&Document, String> {
         self.documents
             .get(r)
             .ok_or_else(|| "Expression is not open".into())

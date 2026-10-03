@@ -2933,14 +2933,10 @@ impl Kernel {
     }
 
     fn world_document(&mut self, expression_ref: &str) -> Result<expression::Document, String> {
-        let (inspected, _) = self.expressions.apply(
-            &self.client,
-            expression::Request::Inspect {
-                expression_ref: expression_ref.to_owned(),
-            },
-        )?;
-        serde_json::from_value(inspected["document"].clone())
-            .map_err(|e| format!("Expression document unreadable: {e}"))
+        // Read the same complete admitted native Document as public Inspect.
+        // Crossing a JSON Value here reimports every performance page and loses
+        // its private immutable qualification. Public Inspect stays unchanged.
+        Ok(self.expressions.document(expression_ref)?.clone())
     }
 
     /// Load material: an open Expression (`expression:` ref) or a Central

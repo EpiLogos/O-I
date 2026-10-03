@@ -705,6 +705,7 @@ mod unix {
 #[cfg(all(test, unix))]
 mod actual_checkpoint_tests {
     use super::*;
+    use serde_json::json;
 
     /// This target is invoked by the existing hosted helper only after real
     /// explicit production admission with the native saved identity,
