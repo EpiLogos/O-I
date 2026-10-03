@@ -855,15 +855,21 @@ mod tests {
             expression_ref: document.expression_ref.clone(),
             expected_revision: document.revision,
             actor: "human:owner".into(),
-            changes: vec![Change::SceneMaterialSet {
-                scene_ref: document.scenes[0].scene_ref.clone(),
-                presentation,
-            }],
+            changes: vec![
+                Change::SceneRename {
+                    scene_ref: document.scenes[0].scene_ref.clone(),
+                    title: "Human revision".into(),
+                },
+                Change::SceneMaterialSet {
+                    scene_ref: document.scenes[0].scene_ref.clone(),
+                    presentation,
+                },
+            ],
         }
     }
     #[test]
-    fn existing_authored_field_control_survives_real_ordinary_edit_without_native_parameter_authority()
-     {
+    fn existing_authored_field_control_survives_real_ordinary_edit_without_native_parameter_authority(
+    ) {
         let mut document = actual_document();
         let scene = document.scenes[0].scene_ref.clone();
         let field = json!({"address":{"expression_ref":document.expression_ref,"scene_ref":scene,"entity_ref":null,"component":"field","constituent_ref":null,"property":"params.opacity"},
@@ -879,16 +885,19 @@ mod tests {
             .open(document.clone(), "human:owner".into())
             .unwrap();
         let original = rename(&document);
-        assert!(
-            application
-                .prepare_procedural_manual_request(&client, &original)
-                .unwrap()
-                .is_none()
-        );
+        assert!(application
+            .prepare_procedural_manual_request(&client, &original)
+            .unwrap()
+            .is_none());
         let (_, changed) = application.apply(&client, original).unwrap();
         assert!(changed.is_some());
         let actual = application.document(&document.expression_ref).unwrap();
         assert_eq!(actual.revision, document.revision + 1);
+        assert_eq!(actual.scenes[0].title, "Human revision");
+        assert_eq!(
+            actual.scenes[0].presentation.as_ref().unwrap().scene["name"],
+            json!(actual.scenes[0].title)
+        );
         assert_eq!(
             actual.scenes[0].presentation.as_ref().unwrap().scene["procedural"]["controls"],
             json!([field])
@@ -905,9 +914,27 @@ mod tests {
             "scale",
         )
         .unwrap();
-        document.scenes[0].presentation.as_mut().unwrap().scene["procedural"]["controls"] = json!([{
-            "address":target,"parameter":"scale","procedure_ref":"procedure:lost-source","target":"scale",
-            "takeover":{"value":1,"native_value":1,"lifetime":"gesture","operation_ref":"operation:retained"},"dormant_overrides":[]}]);
+        let entity_ref = document.scenes[0].entity_refs[0].clone();
+        let mut control = json!({
+            "address":target,"parameter":"scale","procedure_ref":"procedure:lost-source",
+            "target":"entity:expression%3Ajoined-native-control%3Aentity%3Atarget:scale",
+            "authored_base":1,"native_base":document.entities[&entity_ref].parameters["scale"],
+            "dormant_lanes":[],"dormant_tracks":[],"suspended_lanes":[],"source_basis":[],
+            "takeover":{"value":1,"native_value":1,"lifetime":"gesture",
+                "actor":"human:owner","operation_ref":"operation:retained"},"dormant_overrides":[]});
+        validate_native_control_target(&control, &entity_ref, "scale").unwrap();
+        document.scenes[0].presentation.as_mut().unwrap().scene["procedural"]["controls"] =
+            json!([control.clone()]);
+        document.validate().unwrap();
+        // Remove ONLY the paired native baseline from an otherwise complete
+        // retained control. Syntax/target failures must not mask this detector.
+        control
+            .as_object_mut()
+            .unwrap()
+            .remove("native_base")
+            .unwrap();
+        document.scenes[0].presentation.as_mut().unwrap().scene["procedural"]["controls"] =
+            json!([control]);
         document.validate().unwrap();
         let mut application = Application::default();
         application
@@ -934,15 +961,13 @@ mod tests {
             json!([source_parameter_location(&document, scene, entity, "force_strength").unwrap()])
         );
         assert_eq!(driver["native_parameter"]["value"], json!(0.2));
-        assert!(
-            source_parameter_location(
-                &document,
-                "expression:foreign:scene:main",
-                entity,
-                "force_strength"
-            )
-            .is_err()
-        );
+        assert!(source_parameter_location(
+            &document,
+            "expression:foreign:scene:main",
+            entity,
+            "force_strength"
+        )
+        .is_err());
         assert!(source_parameter_location(&document, scene, entity, "caption").is_err());
         assert_eq!(driver["scenes"][0]["entity_refs"][entity], json!(entity));
     }

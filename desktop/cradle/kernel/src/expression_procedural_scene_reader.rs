@@ -188,7 +188,7 @@ mod tests {
     use super::*;
     use crate::{CentralClient, KernelOp, KernelOpResult};
     fn apply(kernel: &mut crate::Kernel, request: Value) -> Value {
-        match kernel
+        let data = match kernel
             .apply(KernelOp::Expression {
                 request: serde_json::from_value(request).unwrap(),
             })
@@ -197,7 +197,12 @@ mod tests {
         {
             KernelOpResult::Expression { data } => data,
             other => panic!("{other:?}"),
-        }
+        };
+        assert_eq!(
+            data["state"], "ready",
+            "actual native application setup refused: {data}"
+        );
+        data
     }
     fn inspect(kernel: &mut crate::Kernel) -> Document {
         serde_json::from_value(
@@ -211,21 +216,34 @@ mod tests {
     }
     fn setup() -> crate::Kernel {
         let mut kernel = crate::Kernel::new(CentralClient::discover());
-        apply(
+        let created = apply(
             &mut kernel,
             json!({"operation":"create","expression_ref":"expression:closed-current-source",
             "title":"Actual current source","actor":"human:source-reader-test"}),
         );
+        let before = inspect(&mut kernel);
+        before.validate().unwrap();
+        assert_eq!(created["document"], serde_json::to_value(&before).unwrap());
+        let scene = &before.scenes[0];
         let material = json!({"schema":"oi.journey-scene/v1","scene":{
-            "id":"expression:closed-current-source:scene:main","name":"Main","character":"Authored native Scene",
+            "id":scene.scene_ref,"name":scene.title,"character":"Authored native Scene",
             "duration":42,"transition":3,"view":{"mode":"3d","yaw":0.0,"pitch":0.0,"zoom":1.0,"panX":0.0,"panY":0.0},
             "field":{"background":"#fafafa","palette":["#111111"],"material":"ink","params":{}},
+            "composition":{},"morph":{},"engine":{},
             "entities":[],"text":[{"body":"Original native authored source material"}],"automation":[]}});
-        apply(
+        let edited = apply(
             &mut kernel,
-            json!({"operation":"edit","expression_ref":"expression:closed-current-source","expected_revision":1,
+            json!({"operation":"edit","expression_ref":before.expression_ref,"expected_revision":before.revision,
             "actor":"human:source-reader-test","changes":[{"change":"scene_material_set",
-            "scene_ref":"expression:closed-current-source:scene:main","presentation":material}]}),
+            "scene_ref":scene.scene_ref,"presentation":material}]}),
+        );
+        let current = inspect(&mut kernel);
+        current.validate().unwrap();
+        assert_eq!(edited["document"], serde_json::to_value(&current).unwrap());
+        assert_eq!(current.revision, before.revision + 1);
+        assert_eq!(
+            serde_json::to_value(current.scenes[0].presentation.as_ref().unwrap()).unwrap(),
+            material
         );
         kernel
     }

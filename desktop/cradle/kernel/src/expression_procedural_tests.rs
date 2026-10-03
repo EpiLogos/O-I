@@ -294,7 +294,7 @@ fn warm_native_output_with_saved(saved: bool) -> (Application, CentralClient, Do
     let mut retained = empty_retention();
     retained["procedures"] = json!([{"procedure_ref":"procedure:independent-owner","revision":"1","source_basis":[],
         "seed":{"algorithm":"mulberry32","version":"1","value":"17"},
-        "definition":{"schema":"oi.native-functional-owner-test/v1","admitted_operation":"scene_create"},
+        "definition":{"schema":"oi.native-functional-owner-test/v1","expression_ref":EXPRESSION,"procedure_ref":"procedure:independent-owner","revision":"1","admitted_operation":"scene_create"},
         "resolved_targets":[],"cursor":0,"state":"held","membership_events":[]}]);
     retained["contributions"] = json!([{"contribution_ref":"contribution:independent-owner","procedure_ref":"procedure:independent-owner",
         "output_slot":"scene","subject_refs":[],"occurrence_ref":scene_ref,"recipe_revision":"1",
@@ -5651,10 +5651,16 @@ fn a06_a10_a16_joined_active_controls_charge_full_material_before_source_qualifi
     d.validate().unwrap();
     let mut changed = d.scenes[0].presentation.clone().unwrap();
     changed.scene["name"] = json!("Actual human name revision");
-    let changes = vec![Change::SceneMaterialSet {
-        scene_ref: d.scenes[0].scene_ref.clone(),
-        presentation: changed,
-    }];
+    let changes = vec![
+        Change::SceneRename {
+            scene_ref: d.scenes[0].scene_ref.clone(),
+            title: "Actual human name revision".into(),
+        },
+        Change::SceneMaterialSet {
+            scene_ref: d.scenes[0].scene_ref.clone(),
+            presentation: changed,
+        },
+    ];
     let candidate = d.edited(changes.clone()).unwrap();
     assert!(
         serde_json::to_vec(&d).unwrap().len() < budget::SOURCE_BYTES,
@@ -5904,22 +5910,22 @@ fn a05_a14_actual_edit_rejects_stale_source_snapshot_before_unqualified_payload_
 
 // Append to the actual native independent receiving test module.
 // These are configured Document negatives, never qualified producer examples.
-fn independent_peer_configuration_document(controls: Vec<Value>) -> Document {
+fn independent_peer_configuration_candidate(controls: Vec<Value>) -> Result<Document, String> {
     let document = independent_budget_document(false, 0, 0)
         .edited(vec![Change::ParameterSet {
             entity_ref: format!("{EXPRESSION}:entity:a"),
             parameter: "force_radius".into(),
             value: json!(80.0),
-        }])
-        .unwrap();
+        }])?;
     let mut presentation = document.scenes[0].presentation.clone().unwrap();
     presentation.scene["procedural"]["controls"] = json!(controls);
-    let document = document
-        .edited(vec![Change::SceneMaterialSet {
-            scene_ref: document.scenes[0].scene_ref.clone(),
-            presentation,
-        }])
-        .unwrap();
+    document.edited(vec![Change::SceneMaterialSet {
+        scene_ref: document.scenes[0].scene_ref.clone(),
+        presentation,
+    }])
+}
+fn independent_peer_configuration_document(controls: Vec<Value>) -> Document {
+    let document = independent_peer_configuration_candidate(controls).unwrap();
     document.validate().unwrap();
     document
 }
@@ -5965,6 +5971,22 @@ fn a02_a05_a06_native_peer_intake_refuses_wrong_coordinates_duplicate_or_lost_pa
         } else {
             vec![peer]
         };
+        if case == "duplicate" {
+            // The normal Document boundary refuses duplicate retained addresses
+            // before a Source request can exist. Do not forge an invalid live
+            // Document merely to reach a later private peer guard.
+            let before = independent_budget_document(false, 0, 0);
+            let mut application = Application::default();
+            application.open(before.clone(), "human:owner".into()).unwrap();
+            let error = independent_peer_configuration_candidate(controls).unwrap_err();
+            assert_eq!(error, "Conflicting retained control",
+                "duplicate peer escaped its actual retained identity guard");
+            assert_eq!(application.document(EXPRESSION).unwrap(), &before);
+            assert!(application.procedural_runtime.producers.is_empty());
+            assert!(application.procedural_runtime.qualified_operations.is_empty());
+            assert!(application.procedural_runtime.controls.is_empty());
+            continue;
+        }
         let document = independent_peer_configuration_document(controls);
         let mut application = Application::default();
         application
@@ -5977,10 +5999,6 @@ fn a02_a05_a06_native_peer_intake_refuses_wrong_coordinates_duplicate_or_lost_pa
             .prepare_procedural_control(&request)
             .unwrap_err();
         match case {
-            "duplicate" => assert!(
-                error.contains("Duplicate actual native control peer"),
-                "duplicate peer escaped its actual identity guard: {error}"
-            ),
             "lost_base" => assert!(
                 error.contains("lost its paired baseline/value identity"),
                 "lost paired native baseline escaped its guard: {error}"
@@ -6092,6 +6110,7 @@ fn a06_a10_a16_distinct_native_peer_cardinality_refuses_before_source_qualificat
     for scene in &document.scenes {
         let mut presentation = original_material.clone();
         presentation.scene["id"] = json!(scene.scene_ref);
+        presentation.scene["name"] = json!(scene.title);
         let mut material_entities = Vec::new();
         let mut controls = Vec::new();
         for reference in &entities {
@@ -6220,10 +6239,16 @@ fn a02_a06_ordinary_active_edit_refuses_wrong_encoded_native_target_before_quali
         let document = independent_peer_configuration_document(vec![configured]);
         let mut presentation = document.scenes[0].presentation.clone().unwrap();
         presentation.scene["name"] = json!("Actual human name revision");
-        let changes = vec![Change::SceneMaterialSet {
-            scene_ref: document.scenes[0].scene_ref.clone(),
-            presentation,
-        }];
+        let changes = vec![
+            Change::SceneRename {
+                scene_ref: document.scenes[0].scene_ref.clone(),
+                title: "Actual human name revision".into(),
+            },
+            Change::SceneMaterialSet {
+                scene_ref: document.scenes[0].scene_ref.clone(),
+                presentation,
+            },
+        ];
         document.edited(changes.clone()).unwrap();
         let mut application = Application::default();
         application
