@@ -99,7 +99,11 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   check(await encounter.getByRole('navigation',{name:'Subjects in this Expression'}).getByRole('button').count()===local.nodes.length,'Every live Expression member remains labelled and addressable through the same subject refs');
   await shot('living-knowledge-expression');
   await encounter.getByRole('button',{name:'Pin',exact:true}).click();
-  check(await encounter.getByRole('button',{name:'Pinned',exact:true}).getAttribute('aria-pressed')==='true'&&await encounter.getByRole('button',{name:wiki.ref,exact:true}).count()===1,'Pin persists the exact projected semantic ref in the knowledge presentation');
+  // Human-facing labels come from the current owner reading. The pin's
+  // exact semantic address is carried separately by its existing native binding.
+  const pin=encounter.locator(`.knowledge-encounter__pins button[data-subject-ref=${JSON.stringify(wiki.ref)}]`);
+  const storedPins=await page.evaluate(world=>JSON.parse(localStorage.getItem(`oi-cradle.knowledge.${encodeURIComponent(world)}.pins.v2`)??'null'),reading.entry.world_ref);
+  check(await encounter.getByRole('button',{name:'Pinned',exact:true}).getAttribute('aria-pressed')==='true'&&await pin.count()===1&&Array.isArray(storedPins)&&storedPins.includes(wiki.ref),'Pin persists the exact projected semantic ref in the knowledge presentation',{world_ref:reading.entry.world_ref,subject_ref:wiki.ref,storedPins});
   await encounter.getByRole('button',{name:'Following locus',exact:true}).click();
   check(await encounter.getByRole('button',{name:'Follow locus',exact:true}).getAttribute('aria-pressed')==='false','Follow can freeze the visual locus without creating a second navigation history');
   await encounter.getByRole('button',{name:'graph',exact:true}).click();
@@ -148,7 +152,7 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
 
   const afterCancellation=(await channel('invoke.kernel_op',[{op:'expression',request:{operation:'inspect',expression_ref:expressionRef}}])).data.outcome.data.document;
   check(JSON.stringify(afterCancellation)===JSON.stringify(changed),'Departing during native inspect prevents the cancelled request from editing the owner document');
-  check(await explore.getByRole('button',{name:wiki.ref,exact:true}).isEnabled(),'Pinned semantic ref remains traversable after recentering');
+  check(await pin.count()===1&&await pin.isEnabled(),'Pinned semantic ref remains traversable after recentering',{subject_ref:await pin.getAttribute('data-subject-ref'),label:await pin.innerText()});
   await explore.getByRole('button',{name:'Back',exact:true}).click();await explore.locator(`[data-selected-ref=${JSON.stringify(wiki.ref)}]`).waitFor({timeout:60000});
   await explore.getByRole('button',{name:'Forward',exact:true}).click();await explore.locator(`[data-selected-ref=${JSON.stringify(neighbour.ref)}]`).waitFor({timeout:60000});
   check(true,'Back and Forward restore exact knowledge refs through Explore’s existing bounded history');

@@ -1,8 +1,9 @@
 import {setup as sourceSetup} from './editor.mjs';
-import {bindDefaultCentral,waitForDoc} from '../editor-doc.mjs';
+import {bindDefaultCentral,docText,waitForDoc} from '../editor-doc.mjs';
 import {subjectLabel} from '../../../../shared-field/presentation-text.mjs';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {join} from 'node:path';
 export async function setup(args) {
   const p=await sourceSetup(args);
@@ -15,10 +16,24 @@ export async function setup(args) {
   if(!status.ok)throw new Error(JSON.stringify(status));
   return {...p,wiki,env,knowledgeStatus:status};
 }
-export default async function run({page,baseUrl,check,metric,shot,channel,provision:p}) {
+export default async function run({page,baseUrl,check,metric,shot,channel,op,provision:p}) {
   const native=(...args)=>{
-    const envelope=JSON.parse(execFileSync(process.env.OI_AIKIT_BIN??'aikit',['--json','-C',p.projectRoot,'knowledge',...args],{encoding:'utf8',env:{...process.env,...p.env}}));
+    const envelope=JSON.parse(execFileSync(process.env.OI_AIKIT_BIN??'aikit',['--json','-C',p.projectRoot,'knowledge',...args],{encoding:'utf8',env:{...process.env,...p.env},timeout:45000,maxBuffer:8*1024*1024}));
     if(!envelope.ok)throw new Error(JSON.stringify(envelope));return envelope.data;
+  };
+  const observe=async (name,read)=>{
+    return (await op(name,async ()=>{
+      try{
+        const value=await read();
+        if(Buffer.byteLength(JSON.stringify(value),'utf8')>64*1024)throw new Error(`${name} exceeds the 64KiB walk observation budget`);
+        return value;
+      }catch(cause){
+        const text=String(cause),bytes=Buffer.byteLength(text,'utf8');
+        if(bytes<=16*1024)throw cause;
+        const sha256=createHash('sha256').update(text).digest('hex');
+        throw new Error(`${name} failed: ${text.slice(0,4096)} [actual error UTF8 bytes=${bytes}, sha256=${sha256}; error excerpt bounded to4096characters]`);
+      }
+    })).data;
   };
   // Observe the real production Worker; no request/reply is replaced or
   // fulfilled. Keep bounded transient test observations, not a graph store.
@@ -62,10 +77,24 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   const editorText='A real dirty source stays untouched while navigating knowledge.';
   const editor=page.locator(`.cm-content[data-source-ref="${p.sources[0].binding.ref}"]`);
   await editor.waitFor();
+  const editorSelector=`.cm-content[data-source-ref="${p.sources[0].binding.ref}"]`;
+  const requireDocument=async (expected,phase)=>{
+    try{await waitForDoc(page,expected,editorSelector);}
+    catch(error){
+      const held=await docText(page,editorSelector);
+      const state=(await channel('read.state')).data;
+      const buffer=state.buffers[p.sources[0].binding.ref];
+      check(false,'Actual editor document equals the exact owner or authored text',{phase,source_ref:p.sources[0].binding.ref,expected:expected?.slice(0,4096),expected_length:expected?.length,held:held?.slice(0,4096),held_length:held?.length,buffer:buffer?{content:buffer.content?.slice(0,4096),length:buffer.content?.length,dirty:buffer.dirty,base_revision:buffer.base_revision}:null});
+      throw error;
+    }
+  };
+  // The element can mount before its real owner document arrives. Establish
+  // that exact document before editing, as the original editor walk does.
+  await requireDocument(p.originals.get(p.sources[0].binding.path),'owner-loaded');
   await editor.click();
   await page.keyboard.press(`${primary}+a`);
   await page.keyboard.type(editorText);
-  await waitForDoc(page,editorText,`.cm-content[data-source-ref="${p.sources[0].binding.ref}"]`);
+  await requireDocument(editorText,'dirty-after-typing');
   const beforeFocus=(await channel('read.focus')).data;
   const historyBefore=native('history').length;
   await page.keyboard.press(`${primary}+k`);
@@ -73,14 +102,20 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   await overlay.waitFor();
   check(await overlay.isVisible(),'Leader summons one window-wide native search aperture');
   await overlay.getByRole('searchbox',{name:'Search or resolve'}).fill('editor-walk');
-  await page.waitForTimeout(1200);
+  // Preserve the real native readings on failure; neither zero rows nor
+  // an owner refusal is made into a passing observation. Wait for the two
+  // production requests to finish rather than assuming a fixed delay.
+  await observe('observe.native-query-context',()=>({project_root:p.projectRoot,status:p.knowledgeStatus.data}));
+  const directReading=await observe('native.aikit.knowledge.search',()=>native('search','--limit','50','--','editor-walk'));
+  const resolvedReading=await observe('native.aikit.knowledge.resolve',()=>native('resolve','--limit','50','--','editor-walk'));
+  await page.waitForFunction(()=>document.querySelector('.search-aperture ul')?.getAttribute('aria-busy')==='false',null,{timeout:45000});
+  await observe('observe.search-disclosure',()=>overlay.innerText());
   if(!await overlay.locator('li').count())throw new Error(`Native search returned no selectable rows: ${await overlay.innerText()}`);
   await overlay.locator('li').first().waitFor();
-  await page.waitForFunction(()=>document.querySelector('.search-aperture ul')?.getAttribute('aria-busy')==='false');
   // Match the two actual owner requests, their limit and exact address/provider
   // deduplication; the palette contains direct hits followed by resolve-only hits.
-  const direct=native('search','--limit','50','--','editor-walk').hits;
-  const resolved=native('resolve','--limit','50','--','editor-walk').hits??[];
+  const direct=directReading.hits;
+  const resolved=resolvedReading.hits??[];
   const seen=new Set();
   const expected=[...direct,...resolved].filter(hit=>{const key=JSON.stringify([hit.resource,hit.address.kind,hit.address.value,hit.provider]);if(seen.has(key))return false;seen.add(key);return true;});
   const rendered=await overlay.locator('[data-resource-ref]').evaluateAll(rows=>rows.map(row=>({ref:row.getAttribute('data-resource-ref'),title:row.querySelector('strong')?.textContent})));
