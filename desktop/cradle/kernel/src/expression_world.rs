@@ -6068,7 +6068,8 @@ mod tests {
         let original = fixture.stored_bytes();
         let encoded = ActStore::encoded_record(&act).unwrap();
         let stored = original
-            .values()
+            .iter()
+            .map(|(_name, bytes)| bytes)
             .find(|bytes| {
                 serde_json::from_slice::<Value>(bytes)
                     .is_ok_and(|record| record["act"]["act_ref"] == TEXT_ACT)
