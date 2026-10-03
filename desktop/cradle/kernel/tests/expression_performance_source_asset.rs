@@ -7,6 +7,7 @@ use oi_cradle_kernel::expression_performance_source_asset::NativePerformanceSour
 use oi_cradle_kernel::expression_performance_storage::ActPerformanceCustody;
 use oi_cradle_kernel::{expression::Document, expression_file, Kernel};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 
 fn fixture() -> Value {
     let path=std::env::var("QL_RETAINED_SOURCE_PERFORMANCE_FIXTURE")
@@ -407,7 +408,11 @@ fn rehashed_omitted_native_defaults_and_alias_amplification_refuse_before_expans
         .unwrap()
         .remove("body")
         .is_some());
-    literal.r#ref = expression_file::digest(&serde_json::to_vec(&literal.value).unwrap());
+    // Rehash the actual corrupted literal without widening the native API.
+    literal.r#ref = format!(
+        "sha256:{:x}",
+        Sha256::digest(serde_json::to_vec(&literal.value).unwrap())
+    );
     stored.documents[0].scenes[0].scene_part = literal.r#ref.clone();
     assert!(ActPerformanceCustody::read(stored)
         .unwrap_err()
