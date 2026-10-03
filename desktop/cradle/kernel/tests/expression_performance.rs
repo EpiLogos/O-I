@@ -4,6 +4,7 @@
 use oi_cradle_kernel::expression::{Availability, ReadingRef};
 use oi_cradle_kernel::expression_performance::*;
 use serde_json::{json, Value};
+use sha2::Digest;
 use std::collections::BTreeMap;
 fn scalar(v: f64) -> Scalar {
     Scalar::new(v).unwrap()
@@ -704,6 +705,68 @@ fn fifteen_minute_work() -> Performance {
     p
 }
 
+fn assert_native_catalog_projection(
+    catalog: &oi_cradle_kernel::expression_performance_assets::PerformancePartCatalog,
+    original: &Performance,
+    index: usize,
+) {
+    use oi_cradle_kernel::expression_performance_assets::*;
+    let stored = catalog.snapshot();
+    let manifest = &stored.manifests[index];
+    let mut expected = serde_json::to_value(original).unwrap();
+    let mut header = serde_json::Map::new();
+    for key in [
+        "schema",
+        "performance_ref",
+        "sample_rate",
+        "ppq",
+        "pitches",
+        "layers",
+        "parameters",
+        "routes",
+        "tempo",
+        "replay",
+    ] {
+        header.insert(
+            key.into(),
+            expected.as_object_mut().unwrap().remove(key).unwrap(),
+        );
+    }
+    let actual = stored
+        .parts
+        .iter()
+        .find(|p| p.r#ref == manifest.header_ref)
+        .unwrap();
+    let PerformancePart::Header(actual) = &actual.part else {
+        panic!("native header missing")
+    };
+    assert_eq!(serde_json::to_value(actual).unwrap(), Value::Object(header));
+    for key in [
+        "bases",
+        "pages",
+        "checkpoints",
+        "native_sources",
+        "native_recordings",
+    ] {
+        if let Some(array) = expected.get(key).and_then(Value::as_array) {
+            if array.is_empty() {
+                assert!(manifest.performance[key].as_array().unwrap().is_empty());
+            } else {
+                let reference: IndexReference =
+                    serde_json::from_value(manifest.performance[key].clone()).unwrap();
+                assert_eq!(reference.items as usize, array.len());
+            }
+            expected[key] = manifest.performance[key].clone();
+        } else {
+            assert!(manifest.performance.get(key).is_none());
+        }
+    }
+    assert_eq!(
+        manifest.performance, expected,
+        "full native header/edition fields and optional omission remain exact"
+    );
+}
+
 #[test]
 fn actual_fifteen_minute_asset_history_shares_pages_preserves_undo_and_detects_missing_corrupt_parts(
 ) {
@@ -729,6 +792,43 @@ fn actual_fifteen_minute_asset_history_shares_pages_preserves_undo_and_detects_m
         }
         catalog = catalog.appended(&recorded).unwrap();
     }
+    assert_native_catalog_projection(&catalog, first.as_ref().unwrap(), 0);
+    assert_native_catalog_projection(&catalog, &full, 179);
+    // A coherently rehashed leaf/root size cannot replace actual decoded weight.
+    // This uses the same actual native first edition; no fabricated owner data.
+    let single = PerformancePartCatalog::default()
+        .appended(first.as_ref().unwrap())
+        .unwrap();
+    let mut wrong_weight = single.snapshot();
+    // This actual work has exactly one admitted basis (its first edition has
+    // two event pages, so a page-root leaf would be a false setup assumption).
+    assert_eq!(first.as_ref().unwrap().bases.len(), 1);
+    let root: IndexReference =
+        serde_json::from_value(wrong_weight.manifests[0].performance["bases"].clone()).unwrap();
+    let leaf = wrong_weight
+        .parts
+        .iter_mut()
+        .find(|p| p.r#ref == root.r#ref)
+        .unwrap();
+    let PartIndex::Leaf { expanded_bytes, .. } = (match &mut leaf.part {
+        PerformancePart::Index(v) => v,
+        _ => panic!("native leaf missing"),
+    }) else {
+        panic!("actual single basis is a leaf")
+    };
+    *expanded_bytes += 1;
+    let new_ref = format!(
+        "sha256:{:x}",
+        sha2::Sha256::digest(serde_json::to_vec(&leaf.part).unwrap())
+    );
+    leaf.r#ref = new_ref.clone();
+    wrong_weight.manifests[0].performance["bases"]["ref"] = Value::from(new_ref);
+    wrong_weight.manifests[0].performance["bases"]["expanded_bytes"] =
+        Value::from(root.expanded_bytes + 1);
+    wrong_weight.manifests[0].expanded_bytes += 1;
+    assert!(PerformancePartCatalog::read(wrong_weight)
+        .unwrap_err()
+        .contains("native performance leaf kind/weight differs"));
     assert_eq!(catalog.manifests().len(), 180);
     assert_eq!(catalog.restore(0).unwrap(), first.unwrap());
     assert_eq!(catalog.restore(179).unwrap(), full);

@@ -148,9 +148,14 @@ impl PerformancePart {
         }
         .map_err(|e| e.to_string())
     }
-    fn validate(&self) -> Result<(), String> {
-        match self {
-            Self::NativeRecording(v) => v.validate()?,
+    // Return the actual, canonical typed data once for this admission only.
+    // No material or qualification is retained between catalog calls.
+    fn qualified_value(&self) -> Result<Option<Value>, String> {
+        let value = match self {
+            Self::NativeRecording(v) => {
+                v.validate()?;
+                self.value()?
+            }
             Self::EncodedEventPage(v) => {
                 let page = v.read::<EventPage>()?;
                 if page.events.is_empty()
@@ -158,12 +163,29 @@ impl PerformancePart {
                 {
                     return Err("encoded event page budget differs".into());
                 }
+                serde_json::to_value(&page).map_err(|e| e.to_string())?
             }
-            Self::Basis(v) => v.validate()?,
-            Self::Checkpoint(v) => v.validate()?,
-            Self::EncodedCheckpoint(v) => v.read::<CheckpointBinding>()?.validate()?,
-            Self::Index(v) => return v.validate(),
-            Self::NativeSource(v) => v.validate()?,
+            Self::Basis(v) => {
+                v.validate()?;
+                self.value()?
+            }
+            Self::Checkpoint(v) => {
+                v.validate()?;
+                self.value()?
+            }
+            Self::EncodedCheckpoint(v) => {
+                let checkpoint = v.read::<CheckpointBinding>()?;
+                checkpoint.validate()?;
+                serde_json::to_value(&checkpoint).map_err(|e| e.to_string())?
+            }
+            Self::Index(v) => {
+                v.validate()?;
+                return Ok(None);
+            }
+            Self::NativeSource(v) => {
+                v.validate()?;
+                self.value()?
+            }
             Self::Header(v) => {
                 if ![
                     crate::expression_performance::SCHEMA,
@@ -184,6 +206,7 @@ impl PerformancePart {
                 {
                     return Err("native performance header budget invalid".into());
                 }
+                self.value()?
             }
             Self::EventPage(v) => {
                 if v.events.is_empty()
@@ -191,9 +214,14 @@ impl PerformancePart {
                 {
                     return Err("performance asset page budget invalid".into());
                 }
+                self.value()?
             }
-        }
-        reject_indexes(&self.value()?)
+        };
+        reject_indexes(&value)?;
+        Ok(Some(value))
+    }
+    fn validate(&self) -> Result<(), String> {
+        self.qualified_value().map(|_| ())
     }
 }
 fn digest<T: Serialize + ?Sized>(v: &T) -> Result<String, String> {
@@ -383,6 +411,72 @@ struct Walk {
     private: bool,
     depth: usize,
 }
+/// Separate the exact native header and edition fields before any indexed
+/// material is cloned. The exhaustive pattern makes new native fields an
+/// explicit reconciliation. Part insertion still validates every full body and
+/// rejects nested indexes; edition fields and header retain their own guards.
+fn performance_fields(p: &Performance) -> Result<(PerformanceHeader, Value), String> {
+    let Performance {
+        schema,
+        performance_ref,
+        sample_rate,
+        duration_samples,
+        ppq,
+        bases: _,
+        pitches,
+        layers,
+        pages: _,
+        parameters,
+        routes,
+        tempo,
+        loop_range,
+        position_sample,
+        replay,
+        checkpoints: _,
+        native_sources,
+        native_recordings,
+        native_reservations,
+        content_digest,
+    } = p;
+    let header = PerformanceHeader {
+        schema: schema.clone(),
+        performance_ref: performance_ref.clone(),
+        sample_rate: *sample_rate,
+        ppq: *ppq,
+        pitches: pitches.clone(),
+        layers: layers.clone(),
+        parameters: parameters.clone(),
+        routes: routes.clone(),
+        tempo: tempo.clone(),
+        replay: replay.clone(),
+    };
+    let mut fields = serde_json::Map::new();
+    for (key, value) in [
+        ("duration_samples", serde_json::to_value(duration_samples)),
+        ("loop_range", serde_json::to_value(loop_range)),
+        ("position_sample", serde_json::to_value(position_sample)),
+        ("content_digest", serde_json::to_value(content_digest)),
+    ] {
+        fields.insert(key.into(), value.map_err(|e| e.to_string())?);
+    }
+    for key in ["bases", "pages", "checkpoints"] {
+        fields.insert(key.into(), Value::Array(Vec::new()));
+    }
+    if !native_sources.is_empty() {
+        fields.insert("native_sources".into(), Value::Array(Vec::new()));
+    }
+    if !native_recordings.is_empty() {
+        fields.insert("native_recordings".into(), Value::Array(Vec::new()));
+    }
+    if !native_reservations.is_empty() {
+        fields.insert(
+            "native_reservations".into(),
+            serde_json::to_value(native_reservations).map_err(|e| e.to_string())?,
+        );
+    }
+    Ok((header, Value::Object(fields)))
+}
+
 impl PerformancePartCatalog {
     /// Canonical qualification precedes typed default expansion. Each value
     /// is one physically bounded dictionary, never expanded history.
@@ -529,32 +623,8 @@ impl PerformancePartCatalog {
             return Err("native Act passage/manifest budget exceeded".into());
         }
         let mut next = self.clone();
-        let mut value = serde_json::to_value(p).map_err(|e| e.to_string())?;
+        let (header, mut value) = performance_fields(p)?;
         reject_indexes(&value)?;
-        let mut header = serde_json::Map::new();
-        for key in [
-            "schema",
-            "performance_ref",
-            "sample_rate",
-            "ppq",
-            "pitches",
-            "layers",
-            "parameters",
-            "routes",
-            "tempo",
-            "replay",
-        ] {
-            header.insert(
-                key.into(),
-                value
-                    .as_object_mut()
-                    .ok_or("native performance fields absent")?
-                    .remove(key)
-                    .ok_or("native performance header field absent")?,
-            );
-        }
-        let header: PerformanceHeader =
-            serde_json::from_value(Value::Object(header)).map_err(|e| e.to_string())?;
         let header_ref = next.insert(PerformancePart::Header(header))?;
         for (key, kind, parts) in [
             (
@@ -656,6 +726,7 @@ impl PerformancePartCatalog {
         used: &mut BTreeSet<String>,
         out: &mut Option<Vec<Value>>,
         summaries: &mut BTreeMap<String, Walk>,
+        qualified_weights: Option<&BTreeMap<&str, usize>>,
     ) -> Result<Walk, String> {
         if path.len() > 32 || !path.insert(reference.into()) {
             return Err("cyclic/deep native performance part index".into());
@@ -694,7 +765,17 @@ impl PerformancePartCatalog {
                     .parts
                     .get(part)
                     .ok_or("missing immutable native performance data part")?;
-                if data.kind() != kind || encoded(&data.value()?)? != *expanded_bytes as usize {
+                if data.kind() != kind {
+                    return Err("native performance leaf kind/weight differs".into());
+                }
+                let actual_bytes = if let Some(weights) = qualified_weights {
+                    *weights
+                        .get(part.as_str())
+                        .ok_or("native performance leaf was not qualified in this validation")?
+                } else {
+                    encoded(&data.value()?)?
+                };
+                if actual_bytes != *expanded_bytes as usize {
                     return Err("native performance leaf kind/weight differs".into());
                 }
                 used.insert(part.clone());
@@ -717,8 +798,8 @@ impl PerformancePartCatalog {
                 expanded_bytes,
                 ..
             } => {
-                let l = self.walk(left, kind, path, used, out, summaries)?;
-                let r = self.walk(right, kind, path, used, out, summaries)?;
+                let l = self.walk(left, kind, path, used, out, summaries, qualified_weights)?;
+                let r = self.walk(right, kind, path, used, out, summaries, qualified_weights)?;
                 let count = l
                     .items
                     .checked_add(r.items)
@@ -751,9 +832,14 @@ impl PerformancePartCatalog {
         }
         let mut used = BTreeSet::new();
         let mut summaries = BTreeMap::new();
+        let mut qualified_weights = BTreeMap::new();
         let mut bytes = 0usize;
         for (r, p) in &self.parts {
-            p.validate()?;
+            if let Some(value) = p.qualified_value()? {
+                // Borrowed references and scalar weights live only while this
+                // exact immutable catalog is being completely validated.
+                qualified_weights.insert(r.as_str(), encoded(&value)?);
+            }
             if let PerformancePart::NativeSource(source) = p.as_ref() {
                 if source.reading()?.r#ref != *r {
                     return Err("native source leaf address differs".into());
@@ -799,6 +885,7 @@ impl PerformancePartCatalog {
                     &mut used,
                     &mut None,
                     &mut summaries,
+                    Some(&qualified_weights),
                 )?;
                 let expanded = w
                     .bytes
@@ -871,6 +958,7 @@ impl PerformancePartCatalog {
                 &mut BTreeSet::new(),
                 &mut values,
                 &mut BTreeMap::new(),
+                None,
             )?;
             if w.items != r.items || w.bytes.checked_add(2) != Some(r.expanded_bytes) {
                 return Err("native performance index changed".into());
