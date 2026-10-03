@@ -131,7 +131,7 @@ jobs:
           spacetime build --module-path shared-field/spacetimedb
           spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb -y
 
-      - name: Test the exact retained reader on this native bundle host
+      - name: Test the exact retained reader and recovery store on this native bundle host
         env:
           EXPECTED_OI_HEAD: ${{ github.sha }}
           EXPECTED_TARGET: ${{ matrix.target }}
@@ -143,7 +143,7 @@ jobs:
           out = Path(os.environ['RUNNER_TEMP']) / 'retained-file-kernel-tests'
           out.mkdir(exist_ok=False)
           report = {'schema':'oi.retained-file-native-unit-acceptance/v1','pass':False,
-                    'standing':'Actual native retained reader unit effects on the selected source; no installed, Ctrl roundtrip or two-human claim',
+                    'standing':'Actual native retained reader and recovery unit effects on the selected source; no installed, Ctrl roundtrip or two-human claim',
                     'source_head':os.environ['EXPECTED_OI_HEAD'],'target':os.environ['EXPECTED_TARGET'],
                     'host':platform.platform(),'uid':os.geteuid(),'cases':[]}
           def digest(path):
@@ -195,25 +195,53 @@ jobs:
               shutil.copy2(binary, out/binary.name)
               assert digest(out/binary.name) == report['binary']['sha256']
               report['binary']['artifact'] = binary.name
-              prefix = 'retained_files::tests::'
-              listing = execute([str(binary),prefix,'--list'],'native-case-census')
-              cases = [line.removesuffix(': test') for line in listing.splitlines() if line.startswith(prefix) and line.endswith(': test')]
-              required = {'native_record_survives_restart_exactly_and_cannot_grant_operations',
-                          'actual_absent_cache_never_creates_a_directory_and_corrupt_record_stays_retained',
-                          'actual_stable_hardlink_and_configured_directory_alias_keep_read_compatibility',
-                          'actual_symlink_and_fifo_never_become_retained_body_reads',
-                          'actual_oversize_and_growth_after_held_open_refuse_without_truncated_success',
-                          'actual_hardlink_in_place_rewrite_between_held_passes_is_not_acknowledged',
-                          'actual_final_name_replacement_after_last_held_read_refuses_preserved_bytes',
-                          'actual_named_parent_replacement_and_root_alias_retarget_refuse_old_affiliation',
-                          'actual_file_permission_failure_keeps_original_private_io_errno'}
-              assert required <= {case.rsplit('::',1)[-1] for case in cases}, 'A required original or physical reader case is absent'
-              assert len(cases) == len(set(cases)) and len(cases) >= len(required)
+              required_by_prefix = {
+                  'retained_files::tests::': {
+                      'native_record_survives_restart_exactly_and_cannot_grant_operations',
+                      'actual_default_fixture_uses_product_run_space_without_an_override',
+                      'actual_invalid_explicit_fixture_refuses_without_fallback_or_allocation',
+                      'actual_two_fixtures_remove_only_their_owned_children',
+                      'actual_explicit_fixture_alias_qualifies_the_same_existing_field',
+                      'actual_fixture_cleanup_refuses_replaced_root_and_preserves_both_trees',
+                      'actual_absent_cache_never_creates_a_directory_and_corrupt_record_stays_retained',
+                      'actual_stable_hardlink_and_configured_directory_alias_keep_read_compatibility',
+                      'actual_symlink_and_fifo_never_become_retained_body_reads',
+                      'actual_oversize_and_growth_after_held_open_refuse_without_truncated_success',
+                      'actual_hardlink_in_place_rewrite_between_held_passes_is_not_acknowledged',
+                      'actual_final_name_replacement_after_last_held_read_refuses_preserved_bytes',
+                      'actual_named_parent_replacement_and_root_alias_retarget_refuse_old_affiliation',
+                      'actual_file_permission_failure_keeps_original_private_io_errno',
+                  },
+                  'expression_recovery::tests::': {
+                      'durable_reopen_scopes_metadata_and_no_revision_aba',
+                      'actual_native_document_identity_and_interrupted_creation_are_retained_without_execution',
+                      'independent_store_writers_have_exactly_one_cas_winner',
+                      'symlink_and_hardlink_destinations_never_touch_their_target',
+                      'malformed_paths_fifo_and_unsafe_revision_refuse_without_hanging',
+                      'bounded_capacity_refuses_without_evicting_saved_work',
+                      'interrupted_atomic_temporaries_are_cleaned_without_evicting_work',
+                      'aggregate_byte_capacity_refuses_without_eviction',
+                      'held_home_replacement_refuses_without_touching_foreign_directory',
+                      'late_home_destination_is_not_overwritten_by_native_restoration',
+                  },
+              }
               run_space = repo/'ProjectCentral'/'now'/'tmp'; run_space.mkdir(parents=True,exist_ok=True)
-              output = execute([str(binary),prefix,'--nocapture','--test-threads=1','--color','never'],'native-retained-reader-tests',cwd=run_space,timeout=180)
-              successful = re.findall(r'^test (retained_files::tests::\S+) \.\.\. ok$',output,re.M)
-              assert set(successful) == set(cases) and len(successful) == len(cases), 'Every disclosed case must actually pass'
-              assert re.search(r'test result: ok\. '+str(len(cases))+r' passed; 0 failed; 0 ignored;',output)
+              cases = []
+              components = []
+              for prefix, required in required_by_prefix.items():
+                  component = prefix.split('::',1)[0]
+                  listing = execute([str(binary),prefix,'--list'],component+'-native-case-census')
+                  disclosed = [line.removesuffix(': test') for line in listing.splitlines() if line.startswith(prefix) and line.endswith(': test')]
+                  assert required <= {case.rsplit('::',1)[-1] for case in disclosed}, 'A required original or adverse native case is absent: '+component
+                  assert len(disclosed) == len(set(disclosed)) and len(disclosed) >= len(required)
+                  output = execute([str(binary),prefix,'--nocapture','--test-threads=1','--color','never'],component+'-native-tests',cwd=run_space,timeout=180)
+                  successful = re.findall(r'^test ('+re.escape(prefix)+r'\S+) \.\.\. ok$',output,re.M)
+                  assert set(successful) == set(disclosed) and len(successful) == len(disclosed), 'Every disclosed native case must actually pass: '+component
+                  assert re.search(r'test result: ok\. '+str(len(disclosed))+r' passed; 0 failed; 0 ignored;',output)
+                  cases.extend(disclosed)
+                  components.append({'prefix':prefix,'cases':disclosed,'passed':len(disclosed),'failed':0,'ignored':0})
+              assert len(cases) == len(set(cases)) and len(cases) >= 24
+              report['components'] = components
               assert digest(binary) == report['binary']['sha256'], 'The exact emitted test executable must remain unchanged'
               source_after = {name:digest(repo/name) for name in paths}; assert source_after == source_before
               execute(['git','diff','--exit-code','HEAD','--','desktop/cradle/kernel','desktop/cradle/tests/native-expression-local.py','desktop/cradle/tests/native-expression-local.test.py','.github/workflows/desktop-bundle.yml'],'source-clean-after')

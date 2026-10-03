@@ -1220,9 +1220,7 @@ mod tests {
     struct Home(crate::retained_files::tests::Fixture);
     impl Home {
         fn new() -> Self {
-            Self(crate::retained_files::tests::Fixture::with_cleanup_capacity(
-                2 * MAX_RECORDS + 16,
-            ))
+            Self(crate::retained_files::tests::Fixture::with_cleanup_capacity(2 * MAX_RECORDS + 16))
         }
         fn store(&self) -> Store {
             Store {
@@ -1331,7 +1329,9 @@ mod tests {
             if directory_identity(&self.original.metadata()?)
                 != directory_identity(&fs::symlink_metadata(&self.held)?)
             {
-                return Err(std::io::Error::other("held Home descriptor affiliation changed"));
+                return Err(std::io::Error::other(
+                    "held Home descriptor affiliation changed",
+                ));
             }
             match fs::symlink_metadata(&self.fixture.root) {
                 Ok(metadata)
@@ -1342,7 +1342,11 @@ mod tests {
                     fs::remove_file(&self.fixture.root)?;
                 }
                 Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
-                _ => return Err(std::io::Error::other("owned Home replacement affiliation changed")),
+                _ => {
+                    return Err(std::io::Error::other(
+                        "owned Home replacement affiliation changed",
+                    ))
+                }
             }
             after_release();
             rename_absent(&self.held, &self.fixture.root)?;
@@ -1791,7 +1795,10 @@ mod tests {
             );
         });
         let late_directory = late_directory.unwrap();
-        assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::AlreadyExists);
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::AlreadyExists
+        );
         let late_identity = directory_identity(&late_directory.metadata().unwrap());
         assert_eq!(
             directory_identity(&fs::symlink_metadata(&home.0.root).unwrap()),
