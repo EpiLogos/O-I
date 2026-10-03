@@ -156,7 +156,7 @@ mod unix {
                         std::thread::spawn(move || {
                             let result = line(&mut stream)
                                 .and_then(|raw| {
-                                    serde_json::from_str::<R>(&raw).map_err(|e| e.to_string())
+                                    crate::expression_file::read_native_json::<R>(raw.as_bytes()).map_err(|e| e.to_string())
                                 })
                                 .and_then(|request| apply(request));
                             let response = match result {
@@ -195,7 +195,7 @@ mod unix {
             .set_write_timeout(Some(Duration::from_secs(5)))
             .map_err(|e| e.to_string())?;
         writeln!(stream, "{body}").map_err(|e| e.to_string())?;
-        serde_json::from_str(&line(&mut stream)?).map_err(|e| e.to_string())
+        crate::expression_file::read_native_json(line(&mut stream)?.as_bytes()).map_err(|e| e.to_string())
     }
 }
 #[cfg(unix)]

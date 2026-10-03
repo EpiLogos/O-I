@@ -126,7 +126,9 @@ pub struct TargetRule {
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct ParameterDomain {
+    #[serde(deserialize_with = "crate::expression_file::finite_number")]
     pub min: f64,
+    #[serde(deserialize_with = "crate::expression_file::finite_number")]
     pub max: f64,
 }
 

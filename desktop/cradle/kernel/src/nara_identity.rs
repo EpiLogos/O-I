@@ -224,6 +224,12 @@ pub(crate) fn same_input(left: &Value, right: &Value) -> bool {
         (Value::Array(a), Value::Array(b)) => {
             a.len() == b.len() && a.iter().zip(b).all(|(a, b)| same_input(a, b))
         }
+        // This is the existing typed-profile representation comparison, not
+        // receipt/witness/digest equality. Preserve equal finite binary64
+        // profile values across QL's scientific/decimal serialization.
+        (Value::Number(a), Value::Number(b)) if a.is_f64() && b.is_f64() => {
+            a.as_f64().is_some() && a.as_f64() == b.as_f64()
+        }
         (Value::Number(a), Value::Number(b)) if a.is_f64() != b.is_f64() => {
             let (integer, float) = if a.is_f64() { (b, a) } else { (a, b) };
             const EXACT_LIMIT: u64 = 1_u64 << 53;
@@ -281,7 +287,7 @@ pub(crate) fn read(
     if !source.source.path.starts_with(PREFIX) || source.content.len() > MAX_PROFILE {
         return Err("source is outside the Central identity aperture or exceeds its bound".into());
     }
-    let profile: Value = serde_json::from_str(&source.content).map_err(|e| e.to_string())?;
+    let profile: Value = crate::expression_file::read_native_json(source.content.as_bytes()).map_err(|e| e.to_string())?;
     if profile["schema"] != "ql.nara-identity-profile/v1"
         || source.source.path != profile_path(&profile)?
     {
@@ -533,5 +539,40 @@ mod input_roundtrip_tests {
             &json!(9007199254740992.0)
         ));
         assert!(!same_input(&json!(i64::MAX), &json!(i64::MAX as f64)));
+    }
+}
+
+
+#[cfg(test)]
+mod scientific_profile_input_tests {
+    use super::*;
+    #[test]
+    fn existing_typed_profile_policy_accepts_equal_scientific_values_but_not_changed_basis() {
+        let entered: Value = crate::expression_file::read_native_json(br#"{"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.00001,"role_weights":[1,0,2]}}"#).unwrap();
+        let returned: Value = crate::expression_file::read_native_json(br#"{"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":1e-05,"role_weights":[1.0,0.0,2.0]}}"#).unwrap();
+        assert_ne!(entered, returned, "full Value/receipt equality retains exact token custody");
+        assert!(same_input(&entered, &returned), "typed profile admission retains its existing finite representation policy");
+        let changed: Value = crate::expression_file::read_native_json(br#"{"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":1.000000000000001e-05,"role_weights":[1.0,0.0,2.0]}}"#).unwrap();
+        assert!(!same_input(&entered, &changed));
+        let mut other = returned.clone(); other["person_ref"] = json!("controlled:two");
+        assert!(!same_input(&entered, &other));
+        other = returned; other["encoding_policy"]["new_authority"] = Value::Null;
+        assert!(!same_input(&entered, &other));
+    }
+}
+
+
+#[cfg(test)]
+mod raw_profile_source_admission_tests {
+    use super::*;
+    #[test]
+    fn original_identity_source_json_cannot_impersonate_finite_profile_values() {
+        let raw = r#"{"schema":"ql.nara-identity-profile/v1","person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.00001}}"#;
+        let profile: Value = crate::expression_file::read_native_json(raw.as_bytes()).unwrap();
+        assert_eq!(profile["encoding_policy"]["lens_element_factor"].as_f64(), Some(0.00001));
+        for value in [r#"{"$serde_json::private::Number":"0.00001"}"#, r#"{"$serde_json::private::RawValue":"0.00001"}"#, "1e400"] {
+            let wrong = raw.replace("0.00001", value);
+            assert!(crate::expression_file::read_native_json::<Value>(wrong.as_bytes()).is_err());
+        }
     }
 }

@@ -55,14 +55,27 @@ pub struct Detached {
 pub struct Windows(pub Mutex<BTreeMap<String, Detached>>);
 static NEXT: AtomicU64 = AtomicU64::new(1);
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct DetachRequest {
+    workspace_id: String,
+    binding: Binding,
+    bounds: Option<Bounds>,
+}
+fn parse_detach_request(request_json: &str) -> Result<DetachRequest, String> {
+    oi_cradle_kernel::expression_file::read_native_json(request_json.as_bytes())
+        .map_err(|error| format!("Invalid detached binding: {error}"))
+}
+
 #[tauri::command]
 pub fn window_detach(
     app: AppHandle,
     window: Window,
-    workspace_id: String,
-    binding: Binding,
-    bounds: Option<Bounds>,
+    request_json: String,
 ) -> Result<(), String> {
+    // Parse the actual original request before framework Value decoding can
+    // coerce opaque binding metadata or non-finite native window bounds.
+    let DetachRequest { workspace_id, binding, bounds } = parse_detach_request(&request_json)?;
     if window.label() != "main" {
         return Err("Detach belongs to the workspace window".into());
     }
@@ -291,4 +304,26 @@ pub fn window_focus_main(app: AppHandle, window: Window) -> Result<(), String> {
     if window.label() != "main" { return Err("Workspace navigation focus belongs to the main window".into()); }
     app.get_window("main").ok_or("Workspace window is unavailable")?
         .set_focus().map_err(|error|error.to_string())
+}
+
+
+#[cfg(test)]
+mod detach_json_admission_tests {
+    use super::*;
+    #[test]
+    fn actual_detach_parser_preserves_valid_binding_and_refuses_raw_impersonation() {
+        let raw = r#"{"workspaceId":"controlled-workspace","binding":{"id":"controlled-surface","kind":"knowledge","title":"Retained source","ref":"source:controlled","project":null,"address":null,"encounter":null,"browser":null,"terminal":null,"flow":null,"view":{"scale":1e-05},"location":null},"bounds":{"x":0,"y":0,"width":800,"height":650}}"#;
+        let request = parse_detach_request(raw).unwrap();
+        assert_eq!(request.workspace_id, "controlled-workspace");
+        assert_eq!(request.binding.reference.as_deref(), Some("source:controlled"));
+        assert_eq!(serde_json::to_string(&request.binding.view.unwrap()["scale"]).unwrap(), "1e-05");
+        assert_eq!(request.bounds.unwrap().width, 800.0);
+        for wrong in [
+            raw.replace("1e-05", r#"{"$serde_json::private::Number":"0.00001"}"#),
+            raw.replace("1e-05", r#"{"$serde_json::private::RawValue":"0.00001"}"#),
+            raw.replace("1e-05", "1e400"),
+            raw.replace("\"width\":800", "\"width\":1e400"),
+            raw.replace("\"width\":800", "\"width\":800,\"width\":900"),
+        ] { assert!(parse_detach_request(&wrong).is_err()); }
+    }
 }

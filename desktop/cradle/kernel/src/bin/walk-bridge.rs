@@ -231,8 +231,7 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
             }
         }
         ("POST", "/op") => {
-            let body = String::from_utf8_lossy(&request.body);
-            let op: KernelOp = match serde_json::from_str(body.trim()) {
+            let op: KernelOp = match oi_cradle_kernel::expression_file::read_native_json(&request.body) {
                 Ok(op) => op,
                 Err(error) => return json_error(400, format!("unreadable op: {error}")),
             };
@@ -641,5 +640,38 @@ mod replay_query_tests {
                 "{query}"
             );
         }
+    }
+}
+
+
+#[cfg(test)]
+mod native_op_json_tests {
+    use super::*;
+    use serde_json::Value;
+    fn post(kernel: &Mutex<Kernel>, raw: &[u8]) -> (u16, Value) {
+        match handle(kernel, &Request { method: "POST".into(), path: "/op".into(), body: raw.into(), keep_alive: false }) {
+            BridgeResponse::Json { status, body } => (status, body),
+            _ => panic!("native operation must produce JSON"),
+        }
+    }
+    #[test]
+    fn genuine_http_operation_handler_refuses_bad_raw_before_native_mutation() {
+        let kernel = Mutex::new(Kernel::discover());
+        let (_, created) = post(&kernel, br#"{"op":"expression","request":{"operation":"create","expression_ref":"expression:http-number","title":"Raw numerical custody","actor":"human:controlled"}}"#);
+        assert_eq!(created["ok"], true, "{created}");
+        let read = br#"{"op":"expression","request":{"operation":"inspect","expression_ref":"expression:http-number"}}"#;
+        let before = post(&kernel, read).1;
+        assert!(before["outcome"]["data"]["document"].is_object(), "{before}");
+        for value in ["1e400", r#"{"$serde_json::private::Number":"10"}"#, r#"{"$serde_json::private::RawValue":"10"}"#, r#"{"\u0024serde_json::private::Number":"10"}"#] {
+            let raw = format!(r#"{{"op":"expression","request":{{"operation":"edit","expression_ref":"expression:http-number","expected_revision":1,"actor":"human:controlled","changes":[{{"change":"composition_set","presentation":{{"invalid_transport_probe":{value}}}}}]}}}}"#);
+            let (status, refused) = post(&kernel, raw.as_bytes());
+            assert_eq!(status, 400, "{refused}");
+            assert_eq!(refused["ok"], false);
+            assert_eq!(post(&kernel, read).1, before);
+        }
+        let duplicate = br#"{"op":"expression","op":"presentation_read","request":{"operation":"inspect","expression_ref":"expression:http-number"}}"#;
+        assert_eq!(post(&kernel, duplicate).0, 400);
+        assert_eq!(post(&kernel, &[b'{', 0xff, b'}']).0, 400);
+        assert_eq!(post(&kernel, read).1, before);
     }
 }

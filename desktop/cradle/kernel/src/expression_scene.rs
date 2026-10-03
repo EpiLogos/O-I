@@ -40,9 +40,10 @@ pub fn data(value: &Value, depth: usize) -> Result<(), String> {
         return Err("Scene presentation nesting budget exceeded".into());
     }
     match value {
+        Value::Number(number) if number.as_f64().is_none() => return Err("Scene presentation number must be finite".into()),
         Value::Object(values) => {
             for (key, value) in values {
-                if ["__proto__", "constructor", "prototype"].contains(&key.as_str()) {
+                if ["__proto__", "constructor", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&key.as_str()) {
                     return Err("Unsafe Scene presentation key".into());
                 }
                 if key == "dataUrl" {

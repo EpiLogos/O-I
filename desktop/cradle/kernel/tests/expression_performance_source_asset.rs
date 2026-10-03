@@ -817,3 +817,77 @@ fn native_consumer_role_nullable_reason_is_retained_without_inventing_route_admi
         .verify_native_replay(&world.bases[0], original)
         .unwrap();
 }
+
+#[test]
+fn actual_current_world_personal_shared_and_workload_keep_all_three_complete_witnesses() {
+    let directory = std::path::PathBuf::from(
+        std::env::var("QL_CURRENT_RECEIVING_ARTIFACT_DIRECTORY")
+            .expect("normal native gate must produce actual World/Personal/Shared receiving files"),
+    );
+    let workload = std::path::PathBuf::from(
+        std::env::var("QL_RETAINED_SOURCE_WORKLOAD_DIRECTORY")
+            .expect("normal native gate must produce the complete SourceForm workload"),
+    );
+    let mut paths: Vec<_> = ["world", "personal", "shared"]
+        .into_iter()
+        .map(|kind| directory.join(format!("{kind}.source-performance.json")))
+        .collect();
+    paths.push(workload.join("source-performance.json"));
+    let mut accepted = Vec::new();
+    for path in paths {
+        let original = std::fs::read(&path).unwrap();
+        let actual: Value = serde_json::from_slice(&original).unwrap();
+        assert_eq!(actual["schema"], "ql.retained-source-performance-fixture/v1");
+        let basis: PerformanceBasis = serde_json::from_value(actual["basis"].clone()).unwrap();
+        let basis = basis.seal().unwrap();
+        let bundle = &actual["source_assets"];
+        let current = &bundle["current_receiving"];
+        let witness = &current["source_payload_context"];
+        for (name, value) in [
+            ("source_inputs_sha256", &bundle["receiving_source_inputs"]),
+            ("source_context_sha256", &current["source_context"]),
+            ("native_admission_sha256", &current["native_admission"]),
+        ] {
+            let exact = format!("sha256:{:x}", Sha256::digest(serde_json::to_vec(value).unwrap()));
+            assert_eq!(witness[name], exact, "{}", path.display());
+        }
+        let asset = NativePerformanceSourceAsset::from_native(&basis, bundle.clone()).unwrap();
+        asset.require_source_context(&basis).unwrap();
+        // Re-read the full original source asset, without a projection/cache.
+        let bytes = serde_json::to_vec(&asset).unwrap();
+        let cold: NativePerformanceSourceAsset = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(cold, asset);
+        cold.validate_basis(&basis).unwrap();
+        cold.require_source_context(&basis).unwrap();
+        assert_eq!(cold.native_bundle(), bundle);
+        for name in ["source_inputs_sha256", "source_context_sha256", "native_admission_sha256"] {
+            let mut changed = bundle.clone();
+            changed["current_receiving"]["source_payload_context"][name] =
+                json!(format!("sha256:{}", "0".repeat(64)));
+            assert!(NativePerformanceSourceAsset::from_native(&basis, changed)
+                .unwrap_err().contains("native receiving complete payload binding differs"));
+        }
+        // Demonstrate the old loss: converting the real exponent-bearing
+        // source token through f64 changes the retained bytes and must refuse.
+        let numeric_path = "/current_receiving/native_admission/native_basis/input/source_receipts/0/bodies/0/latitude_speed_degrees_per_day";
+        let mut reformatted = bundle.clone();
+        let original_number = reformatted.pointer(numeric_path).unwrap().clone();
+        let number = serde_json::Number::from_f64(original_number.as_f64().unwrap()).unwrap();
+        let replacement = Value::Number(number);
+        assert_ne!(original_number, replacement);
+        *reformatted.pointer_mut(numeric_path).unwrap() = replacement;
+        assert!(NativePerformanceSourceAsset::from_native(&basis, reformatted)
+            .unwrap_err().contains("native receiving complete payload binding differs"));
+        accepted.push((basis, bundle.clone()));
+    }
+    // Complete actual contexts cannot be transferred by a matching label.
+    for from in 0..3 {
+        for to in 0..3 {
+            if from != to {
+                assert!(NativePerformanceSourceAsset::from_native(
+                    &accepted[to].0, accepted[from].1.clone()
+                ).is_err());
+            }
+        }
+    }
+}

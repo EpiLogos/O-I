@@ -66,7 +66,7 @@ impl Serialize for Scalar {
 }
 impl<'de> Deserialize<'de> for Scalar {
     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        Self::new(f64::deserialize(d)?).map_err(serde::de::Error::custom)
+        Self::new(crate::expression_file::finite_number(d)?).map_err(serde::de::Error::custom)
     }
 }
 fn text(value: &str) -> Result<(), String> {
@@ -95,6 +95,7 @@ pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
         return Err("performance native reading nesting budget exceeded".into());
     }
     match value {
+        Value::Number(number) if number.as_f64().is_none() => return Err("performance native reading number must be finite".into()),
         Value::String(v) if v.contains('\0') => return Err("performance contains NUL".into()),
         Value::Array(v) => {
             if v.len() > 4096 {
@@ -106,7 +107,7 @@ pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
         }
         Value::Object(v) => {
             for (key, x) in v {
-                if ["__proto__", "prototype"].contains(&key.as_str())
+                if ["__proto__", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&key.as_str())
                     || (key == "constructor"
                         && !crate::expression_performance_source_asset::native_constructor_metadata(
                             v,

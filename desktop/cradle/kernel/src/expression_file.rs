@@ -43,64 +43,112 @@ struct ImageRef {
     r#ref: String,
 }
 // Preserve typed duplicate-field admission through the envelope's Value
-// carrier too, including rich material objects.
+// carrier too, including rich material objects. Raw child views preserve the
+// producer's complete numeric JSON tokens without cloning nested raw bodies.
 pub(crate) struct UniqueValue(pub(crate) Value);
 impl<'de> Deserialize<'de> for UniqueValue {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        struct UniqueVisitor;
-        impl<'de> Visitor<'de> for UniqueVisitor {
-            type Value = UniqueValue;
-            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.write_str("JSON without duplicate object keys")
-            }
-            fn visit_bool<E: serde::de::Error>(self, value: bool) -> Result<Self::Value, E> {
-                Ok(UniqueValue(Value::Bool(value)))
-            }
-            fn visit_i64<E: serde::de::Error>(self, value: i64) -> Result<Self::Value, E> {
-                Ok(UniqueValue(Value::Number(value.into())))
-            }
-            fn visit_u64<E: serde::de::Error>(self, value: u64) -> Result<Self::Value, E> {
-                Ok(UniqueValue(Value::Number(value.into())))
-            }
-            fn visit_f64<E: serde::de::Error>(self, value: f64) -> Result<Self::Value, E> {
-                serde_json::Number::from_f64(value)
-                    .map(|number| UniqueValue(Value::Number(number)))
-                    .ok_or_else(|| E::custom("Invalid JSON number"))
-            }
-            fn visit_str<E: serde::de::Error>(self, value: &str) -> Result<Self::Value, E> {
-                Ok(UniqueValue(Value::String(value.to_owned())))
-            }
-            fn visit_string<E: serde::de::Error>(self, value: String) -> Result<Self::Value, E> {
-                Ok(UniqueValue(Value::String(value)))
-            }
-            fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
-                Ok(UniqueValue(Value::Null))
-            }
-            fn visit_seq<A: SeqAccess<'de>>(
-                self,
-                mut sequence: A,
-            ) -> Result<Self::Value, A::Error> {
-                let mut values = Vec::new();
-                while let Some(UniqueValue(value)) = sequence.next_element()? {
-                    values.push(value);
-                }
-                Ok(UniqueValue(Value::Array(values)))
-            }
-            fn visit_map<A: MapAccess<'de>>(self, mut entries: A) -> Result<Self::Value, A::Error> {
-                let mut values = serde_json::Map::new();
-                while let Some(key) = entries.next_key::<String>()? {
-                    if values.contains_key(&key) {
-                        return Err(serde::de::Error::custom("Duplicate Expression file key"));
-                    }
-                    let UniqueValue(value) = entries.next_value()?;
-                    values.insert(key, value);
-                }
-                Ok(UniqueValue(Value::Object(values)))
-            }
-        }
-        deserializer.deserialize_any(UniqueVisitor)
+        let raw = Box::<serde_json::value::RawValue>::deserialize(deserializer)?;
+        unique_raw_value(&raw, 0)
+            .map(UniqueValue)
+            .map_err(serde::de::Error::custom)
     }
 }
+
+fn unique_raw_value(raw: &serde_json::value::RawValue, depth: usize) -> Result<Value, serde_json::Error> {
+    // serde_json's ordinary 128-level parser refuses the 128th container.
+    // Parsing borrowed child RawValues must not reset that admission boundary.
+    const MAX_CONTAINER_DEPTH: usize = 127;
+    struct ObjectVisitor {
+        depth: usize,
+    }
+    impl<'de> Visitor<'de> for ObjectVisitor {
+        type Value = Value;
+        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("JSON object without duplicate or reserved decoder keys")
+        }
+        fn visit_map<A: MapAccess<'de>>(self, mut entries: A) -> Result<Value, A::Error> {
+            let mut values = serde_json::Map::new();
+            while let Some(key) = entries.next_key::<String>()? {
+                // These are internal serde_json number/raw transports, never
+                // authored object keys. Parse actual object keys before Value
+                // decoding so an object cannot impersonate a numeric token.
+                if matches!(key.as_str(), "$serde_json::private::Number" | "$serde_json::private::RawValue") {
+                    return Err(serde::de::Error::custom("Reserved JSON decoder key"));
+                }
+                if values.contains_key(&key) {
+                    return Err(serde::de::Error::custom("Duplicate Expression file key"));
+                }
+                let child = entries.next_value::<&'de serde_json::value::RawValue>()?;
+                let value = unique_raw_value(child, self.depth + 1)
+                    .map_err(serde::de::Error::custom)?;
+                values.insert(key, value);
+            }
+            Ok(Value::Object(values))
+        }
+    }
+    struct ArrayVisitor {
+        depth: usize,
+    }
+    impl<'de> Visitor<'de> for ArrayVisitor {
+        type Value = Value;
+        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.write_str("JSON array with qualified child values")
+        }
+        fn visit_seq<A: SeqAccess<'de>>(self, mut sequence: A) -> Result<Value, A::Error> {
+            let mut values = Vec::new();
+            while let Some(child) = sequence.next_element::<&'de serde_json::value::RawValue>()? {
+                values.push(unique_raw_value(child, self.depth + 1)
+                    .map_err(serde::de::Error::custom)?);
+            }
+            Ok(Value::Array(values))
+        }
+    }
+    let first = raw.get().trim_start().as_bytes().first().copied();
+    if matches!(first, Some(b'{') | Some(b'[')) && depth >= MAX_CONTAINER_DEPTH {
+        return Err(<serde_json::Error as serde::de::Error>::custom("recursion limit exceeded"));
+    }
+    let mut decoder = serde_json::Deserializer::from_str(raw.get());
+    let value = match first {
+        Some(b'{') => decoder.deserialize_map(ObjectVisitor { depth })?,
+        Some(b'[') => decoder.deserialize_seq(ArrayVisitor { depth })?,
+        _ => Value::deserialize(&mut decoder)?,
+    };
+    decoder.end()?;
+    if matches!(&value, Value::Number(number) if number.as_f64().is_none()) {
+        return Err(<serde_json::Error as serde::de::Error>::custom("Invalid JSON number"));
+    }
+    Ok(value)
+}
+/// Raw native JSON admission. Capture the actual object shape before Serde's
+/// private Number/RawValue transports can reinterpret an authored map. Preserve
+/// every admitted Value number token; caller and native-family byte caps remain.
+pub fn read_native_json<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T, serde_json::Error> {
+    let UniqueValue(value) = serde_json::from_slice(bytes)?;
+    serde_json::from_value(value)
+}
+
+// Tagged enum content can buffer an arbitrary-precision Number as Serde's
+// internal Number map. Typed scalar controls consume its finite value, while
+// full receipt Values retain the original Number token. Real reserved maps are
+// refused by raw native admission before this typed conversion.
+pub(crate) fn finite_number<'de, D: Deserializer<'de>>(d: D) -> Result<f64, D::Error> {
+    Value::deserialize(d)?.as_f64()
+        .ok_or_else(|| serde::de::Error::custom("native scalar must be a finite JSON number"))
+}
+pub(crate) fn optional_finite_number<'de, D: Deserializer<'de>>(d: D) -> Result<Option<f64>, D::Error> {
+    Option::<Value>::deserialize(d)?.map(|value| value.as_f64()
+        .ok_or_else(|| serde::de::Error::custom("native scalar must be a finite JSON number"))).transpose()
+}
+pub(crate) fn finite_vector<'de, D: Deserializer<'de>>(d: D) -> Result<[f64; 3], D::Error> {
+    let values = <[Value; 3]>::deserialize(d)?;
+    let mut result = [0.0; 3];
+    for (slot, value) in result.iter_mut().zip(values) {
+        *slot = value.as_f64().ok_or_else(|| serde::de::Error::custom("native vector must contain three finite JSON numbers"))?;
+    }
+    Ok(result)
+}
+
 pub(crate) fn digest(bytes: &[u8]) -> String {
     format!("sha256:{:x}", Sha256::digest(bytes))
 }
@@ -126,6 +174,7 @@ fn safe(value: &Value, depth: usize) -> Result<(), String> {
         return Err("Expression file nesting budget exceeded".into());
     }
     match value {
+        Value::Number(number) if number.as_f64().is_none() => Err("Expression file number must be finite".into()),
         Value::String(value) if value.contains('\0') => Err("Expression file contains NUL".into()),
         Value::Array(values) => {
             if values.len() > 4096 {
@@ -139,7 +188,7 @@ fn safe(value: &Value, depth: usize) -> Result<(), String> {
         Value::Object(values) => {
             for (key, value) in values {
                 if key.contains('\0')
-                    || ["__proto__", "prototype"].contains(&key.as_str())
+                    || ["__proto__", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&key.as_str())
                     || (key == "constructor"
                         && !crate::expression_performance_source_asset::native_constructor_metadata(
                             values,
@@ -372,4 +421,91 @@ pub fn decode(content: &str) -> Result<Document, String> {
     }
     document.validate()?;
     Ok(document)
+}
+
+#[cfg(test)]
+mod complete_json_custody_tests {
+    use super::*;
+
+    #[test]
+    fn unique_read_keeps_original_numeric_tokens_without_numeric_reinterpretation() {
+        // The scientific token is from the actual QL240 World sky source
+        // payload in canonical ee880's retained original native artifact.
+        let raw = r#"{"source":[2.0937213582368774e-05,1e+09,0.08000000000000002],"text":"$serde_json::private::Number"}"#;
+        let UniqueValue(value) = serde_json::from_str(raw).unwrap();
+        assert_eq!(serde_json::to_string(&value).unwrap(), raw);
+        assert_eq!(value["source"][0].as_f64().unwrap(), 2.0937213582368774e-05);
+        assert_eq!(value["source"][1].as_f64().unwrap(), 1e9);
+    }
+
+    #[test]
+    fn unique_read_refuses_real_reserved_keys_duplicates_and_original_number_depth_bounds() {
+        for raw in [
+            r#"{"$serde_json::private::Number":"1"}"#,
+            r#"{"nested":{"$serde_json::private::RawValue":"null"}}"#,
+            r#"{"\u0024serde_json::private::Number":"1"}"#,
+            r#"{"value":1,"\u0076alue":2}"#,
+            r#"[{"native":[2.0937213582368774e-05],"native":[] }]"#,
+            r#"{"number":1e400}"#,
+        ] {
+            assert!(serde_json::from_str::<UniqueValue>(raw).is_err(), "{raw}");
+        }
+        let allowed = format!("{}0{}", "[".repeat(127), "]".repeat(127));
+        let refused = format!("{}0{}", "[".repeat(128), "]".repeat(128));
+        assert!(serde_json::from_str::<UniqueValue>(&allowed).is_ok());
+        assert!(serde_json::from_str::<UniqueValue>(&refused).is_err());
+    }
+}
+
+
+#[cfg(test)]
+mod native_json_admission_tests {
+    use super::*;
+    use crate::{expression::Request, KernelOp};
+
+    #[test]
+    fn exact_receipt_numbers_and_typed_tagged_finite_controls_are_distinct() {
+        let a: Value = read_native_json(br#"{"value":1e-05}"#).unwrap();
+        let b: Value = read_native_json(br#"{"value":1e-5}"#).unwrap();
+        assert_eq!(serde_json::to_vec(&a).unwrap(), br#"{"value":1e-05}"#);
+        assert_eq!(serde_json::to_vec(&b).unwrap(), br#"{"value":1e-5}"#);
+        assert_ne!(a, b, "receipt Value equality retains exact Number custody");
+        for token in ["1e-05", "1e-5", "0.00001"] {
+            let raw = format!(r#"{{"op":"expression","request":{{"operation":"edit","expression_ref":"expression:numeric","expected_revision":1,"actor":"human:numeric","changes":[{{"change":"parameter_automate","entity_ref":"expression:numeric:entity:one","parameter":"x","automation":{{"min":{token},"max":1,"rate_hz":{token},"waveform":"sine"}}}}]}}}}"#);
+            let KernelOp::Expression { request: Request::Edit { changes, .. } } = read_native_json(raw.as_bytes()).unwrap() else { panic!("exact tagged operation required") };
+            let crate::expression::Change::ParameterAutomate { automation, .. } = &changes[0] else { panic!("exact tagged change required") };
+            assert_eq!(automation.min.to_bits(), 0.00001_f64.to_bits());
+            assert_eq!(automation.rate_hz.to_bits(), 0.00001_f64.to_bits());
+            let factory = format!(r#"{{"op":"factory_owner","request":{{"kind":"telemetry-watch","state_path":"controlled-state","duration_secs":{token}}}}}"#);
+            let op: KernelOp = read_native_json(factory.as_bytes()).unwrap();
+            assert_eq!(serde_json::to_value(op).unwrap()["request"]["duration_secs"].as_f64(), Some(0.00001));
+            let world = format!(r#"{{"op":"expression_world","request":{{"operation":"act_text","act_ref":"act:numeric","actor":"human:numeric","role":"progress","value":{token}}}}}"#);
+            let op: KernelOp = read_native_json(world.as_bytes()).unwrap();
+            assert_eq!(serde_json::to_value(op).unwrap()["request"]["value"].as_f64(), Some(0.00001));
+            let scalar: crate::expression_performance::Scalar = read_native_json(token.as_bytes()).unwrap();
+            assert_eq!(scalar.value().to_bits(), 0.00001_f64.to_bits());
+        }
+    }
+
+    #[test]
+    fn raw_admission_refuses_duplicate_escaped_reserved_overflow_and_non_utf8_before_typing() {
+        for raw in [
+            r#"{"x":1,"x":2}"#, r#"{"x":1,"\u0078":2}"#,
+            r#"{"$serde_json::private::Number":"3600"}"#,
+            r#"{"\u0024serde_json::private::Number":"3600"}"#,
+            r#"{"$serde_json::private::RawValue":"42"}"#,
+            r#"{"nested":[{"value":1e400}]}"#,
+        ] { assert!(read_native_json::<Value>(raw.as_bytes()).is_err(), "{raw}"); }
+        assert!(read_native_json::<Value>(&[b'"', 0xff, b'"']).is_err());
+        let infinite: Value = serde_json::from_str("1e400").unwrap();
+        assert!(safe(&infinite, 0).is_err());
+        assert!(crate::expression_scene::data(&infinite, 0).is_err());
+        assert!(crate::expression_performance::safe(&infinite, 0).is_err());
+        for key in ["$serde_json::private::Number", "$serde_json::private::RawValue"] {
+            let object = Value::Object([(key.into(), Value::String("3600".into()))].into_iter().collect());
+            assert!(safe(&object, 0).is_err());
+            assert!(crate::expression_scene::data(&object, 0).is_err());
+            assert!(crate::expression_performance::safe(&object, 0).is_err());
+        }
+    }
 }
