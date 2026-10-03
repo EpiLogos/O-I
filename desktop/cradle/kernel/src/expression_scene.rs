@@ -118,9 +118,14 @@ pub fn validate(
         "pointerScope",
         "research",
         "epiWorld",
+        "procedural",
     ];
     if material.keys().any(|key| !KEYS.contains(&key.as_str())) {
         return Err("Unsupported authoring Scene field; original input was not rewritten".into());
+    }
+    crate::expression::procedural::validate_scene_sources(&presentation.scene)?;
+    if let Some(retained) = material.get("procedural") {
+        crate::expression::procedural::validate_retention(retained)?;
     }
     if material.get("id").and_then(Value::as_str) != Some(scene.scene_ref.as_str()) {
         return Err("Scene presentation addresses a different native Scene".into());

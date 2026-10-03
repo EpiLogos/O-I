@@ -5,6 +5,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "expression_procedural.rs"]
+pub mod procedural;
+
 pub const SCHEMA: &str = "oi.expression/v1";
 pub(crate) const LIMIT: usize = 256;
 /// A document's own semantic cardinality (entities, relations,
@@ -687,6 +690,7 @@ pub enum Change {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    Procedural { request: procedural::Request },
     Capabilities,
     List,
     Inspect {
@@ -848,6 +852,7 @@ pub struct Changed {
 }
 #[derive(Debug, Default)]
 pub struct Application {
+    pub(super) procedural_runtime: procedural::Runtime,
     documents: BTreeMap<String, Document>,
     saved: BTreeMap<String, u64>,
     /// Recency disclosure (owner direction 2026-09-19): the unix second of
@@ -869,7 +874,8 @@ pub struct Application {
 
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
+        "procedural":{"schema":procedural::SCHEMA,"owner":"existing Expression Application","operations":["read","read_source","read_outputs","prepare","commit","inspect_operation","cancel"],"runtime_observation":"receiving native owner only","restoration":"configuration open interrupts unresolved operations; replay/checkpoint are explicit","operation_intent":"native journal inherited from actual current Document; output_readings attested by owner"},
+        "operations":["procedural","capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
         "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
@@ -1047,6 +1053,10 @@ impl Document {
     /// lets the Act owner check retained-history capacity before mutating the
     /// live document, without a second edit interpretation.
     pub(crate) fn edited(&self, changes: Vec<Change>) -> Result<Self, String> {
+        self.edited_with_journal(changes, false)
+    }
+    pub(crate) fn edited_with_journal(&self, changes: Vec<Change>, owner_write: bool) -> Result<Self, String> {
+        if !owner_write { procedural::guard_journal_edit(self, &changes)?; }
         let mut next = self.clone();
         for change in changes {
             next.change(change)?;
@@ -1804,6 +1814,7 @@ impl Application {
     ) -> Result<(Value, Option<Changed>), String> {
         let mut changed = None;
         let result = match request {
+            Request::Procedural { request } => return self.procedural(client, request),
             Request::Capabilities => capabilities(),
             Request::List => {
                 // Most recently touched first — the recency the Library and
@@ -2024,6 +2035,11 @@ impl Application {
                 d.selection.relation_ref = d.selection.relation_ref.map(|r| map(&r));
                 d.representations.clear();
                 d.refinements.clear();
+                procedural::fork_document_retention(
+                    &mut d,
+                    &expression_ref,
+                    &new_expression_ref,
+                );
                 return self.open(d, actor);
             }
             Request::Edit {
@@ -2040,7 +2056,7 @@ impl Application {
                     return Err("Edit budget exceeded".into());
                 }
                 let before = self.document(&expression_ref)?;
-                let d = before.edited(changes)?;
+                let d = before.edited_with_journal(changes, self.procedural_runtime.owner_write)?;
                 if &d != before {
                     changed = Some(Changed {
                         expression_ref: expression_ref.clone(),
@@ -2099,6 +2115,7 @@ impl Application {
                 }
                 // Validate the complete proposed edit against a clone. A proposal
                 // that could not be applied to its stated basis never enters history.
+                procedural::guard_journal_edit(before, &changes)?;
                 let mut candidate = before.clone();
                 for change in changes.clone() {
                     candidate.change(change)?;
@@ -2175,6 +2192,8 @@ impl Application {
                 }
                 let mut d = before.clone();
                 if decision == RefinementState::Accepted {
+                    let reviewed: Vec<_> = proposal.changes.iter().cloned().chain(corrections.iter().cloned()).collect();
+                    procedural::guard_journal_edit(before, &reviewed)?;
                     for change in proposal
                         .changes
                         .iter()
@@ -2227,7 +2246,7 @@ impl Application {
                 if let Some(c) = self.conflict(&expression_ref, expected_revision)? {
                     return Ok((c, None));
                 }
-                json!({"state":"exported","audience":"local_private","document":self.document(&expression_ref)?,"dynamic_checkpoint":false})
+                json!({"state":"exported","audience":"local_private","document":self.procedural_runtime.checkpoint_document(self.document(&expression_ref)?)?,"dynamic_checkpoint":false})
             }
             Request::SaveAs {
                 expression_ref,
@@ -2246,7 +2265,7 @@ impl Application {
                 if let Some(conflict) = self.conflict(&expression_ref, expected_revision)? {
                     return Ok((conflict, None));
                 }
-                let document = self.document(&expression_ref)?.clone();
+                let document = self.procedural_runtime.checkpoint_document(self.document(&expression_ref)?)?;
                 let content = crate::expression_file::encode(&document)?;
                 // The explicit directory already supplies root identity. Suppress the
                 // generic project fallback before the strict file-owner call.
@@ -2292,7 +2311,8 @@ impl Application {
                 if original.expression_ref != expression_ref {
                     return Err("Save destination belongs to another Expression".into());
                 }
-                let result=client.run("central.files.write",json!({"location":location,"expected_revision":expected_file_revision,"content":crate::expression_file::encode(self.document(&expression_ref)?)?,"actor":actor,"actor_kind":actor_kind}));
+                let saved_document = self.procedural_runtime.checkpoint_document(self.document(&expression_ref)?)?;
+                let result=client.run("central.files.write",json!({"location":location,"expected_revision":expected_file_revision,"content":crate::expression_file::encode(&saved_document)?,"actor":actor,"actor_kind":actor_kind}));
                 match result {
                     Ok(data) => {
                         // Central can refuse CAS in a successful protocol response.
@@ -2303,7 +2323,7 @@ impl Application {
                             && matches!(data["outcome"].as_str(), Some("written" | "unchanged"))
                             && data["revision"].as_str().is_some_and(|r| !r.is_empty())
                         {
-                            let document = self.document(&expression_ref)?.clone();
+                            let document = saved_document.clone();
                             self.accept_saved(
                                 client,
                                 &document,
@@ -2555,6 +2575,7 @@ impl Application {
                         None,
                     ));
                 }
+                self.procedural_runtime.release_expression(&expression_ref);
                 self.documents.remove(&expression_ref);
                 self.saved.remove(&expression_ref);
                 self.touched.remove(&expression_ref);
@@ -2579,6 +2600,7 @@ impl Application {
                     return Err("Restore document is not behind the current draft".into());
                 }
                 let mut d = *document;
+                procedural::retain_journal_on_restore(self.document(&expression_ref)?, &mut d)?;
                 d.revision = d.revision.checked_add(1).ok_or("Revision exhausted")?;
                 while d.revision <= expected_revision {
                     // Stay strictly ahead of the draft the checkpoint returns over.
@@ -2659,6 +2681,7 @@ impl Application {
         if self.documents.len() >= 64 {
             return Err("Open Expression budget exceeded".into());
         }
+        self.procedural_runtime.restore_document(&d)?;
         let event = Changed {
             expression_ref: d.expression_ref.clone(),
             revision: d.revision,

@@ -107,6 +107,15 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         }
         // Composing may provision QL's dated sky for tens of seconds: run it
         // outside the lock; only the single-owner open is serialised.
+        let procedure=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_procedural_compile(&op)?;
+        if let Some(prepared)=procedure { let completed=prepared.execute()?; return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_procedural_compile(completed); }
+        let attribution=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_procedural_manual(&op);
+        if let Ok(Some(prepared))=attribution {
+            let completed=prepared.execute();
+            let outcome=host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_procedural_manual(completed)?;
+            for receipt in &outcome.receipts { let _=app.emit(KERNEL_EVENT_TOPIC,receipt); }
+            return Ok(outcome);
+        }
         let compose=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_compose(&op)?;
         if let Some(prepared)=compose{let composed=prepared.execute()?;return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_compose(composed);}
         let prepared = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_owner_read(&op);
@@ -269,7 +278,14 @@ fn main() {
                         oi_cradle_kernel::expression_transport::Request::Expression(request) => KernelOp::Expression { request },
                         oi_cradle_kernel::expression_transport::Request::World(request) => KernelOp::ExpressionWorld { request },
                     };
-                    let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.apply(op)?;
+                    let prepared=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_procedural_manual(&op);
+                    let outcome=match prepared {
+                        Ok(Some(prepared))=> {
+                            let completed=prepared.execute();
+                            host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_procedural_manual(completed)?
+                        },
+                        _=>host.0.lock().map_err(|_|"kernel lock unavailable")?.apply(op)?,
+                    };
                     for receipt in &outcome.receipts { let _ = handle.emit(KERNEL_EVENT_TOPIC, kernel_event_hint(receipt)); }
                     serde_json::to_value(outcome).map_err(|e| e.to_string())
                 }) {

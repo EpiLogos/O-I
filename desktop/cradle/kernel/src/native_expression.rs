@@ -15,6 +15,9 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
+#[path = "native_expression_procedural.rs"]
+pub mod procedural;
+
 const MAX_REQUEST: usize = 32 * 1024 * 1024;
 const MAX_REPLY: usize = 64 * 1024 * 1024;
 const TIMEOUT: Duration = Duration::from_secs(20);
@@ -22,6 +25,8 @@ const TIMEOUT: Duration = Duration::from_secs(20);
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    ProceduralCompile { request: procedural::CompileRequest },
+    ProceduralConduct { request: procedural::conduct::Request },
     Open {
         path: String,
         expected_revision: String,
@@ -61,6 +66,7 @@ pub struct Manager {
     active: Option<Owner>,
     sequence: u64,
     composed: u64,
+    procedural_manual_completion: Option<procedural::manual::Completed>,
 }
 
 #[derive(Debug)]
@@ -74,6 +80,12 @@ struct Owner {
     stderr: Arc<Mutex<Vec<u8>>>,
     config_path: PathBuf,
     identity: Value,
+    procedural_source: Value,
+    procedural_position: Value,
+    procedural_executable: PathBuf,
+    procedural_worker: PathBuf,
+    procedural_definitions: BTreeMap<String, Value>,
+    procedural_checkpoints: BTreeMap<String, std::collections::BTreeSet<String>>,
     last_request_id: u64,
     stopped: bool,
 }
@@ -559,6 +571,8 @@ impl Drop for Owner {
 impl Manager {
     pub fn apply(&mut self, client: &CentralClient, request: Request) -> Result<Value, String> {
         match request {
+            Request::ProceduralCompile { request } => procedural::Prepared::new(request)?.execute().map(|completed| completed.response),
+            Request::ProceduralConduct { .. } => Err("Procedural conduct requires the current native Kernel source intake".into()),
             Request::Open {
                 path,
                 expected_revision,
@@ -632,10 +646,13 @@ impl Manager {
                             && cursor(&reply["request_id"]).ok() == Some(id)
                             && cursor(&reply["last_request_id"]).ok() == Some(id)
                             && reply["available"] == true
+                            && cursor(&reply["field"]["generation"]).is_ok()
+                            && cursor(&reply["field"]["samples_elapsed"]).is_ok()
                             && ["ok", "refused"]
                                 .contains(&reply["status"].as_str().unwrap_or("")) =>
                     {
                         owner.last_request_id = id;
+                        owner.procedural_position = json!({"generation":reply["field"]["generation"],"samples_elapsed":reply["field"]["samples_elapsed"]});
                         Ok(reply)
                     }
                     result => {
@@ -719,9 +736,9 @@ impl Manager {
             return Err(e.to_string());
         }
         drop(file);
-        let mut command = Command::new(host);
+        let mut command = Command::new(&host);
         command
-            .arg(worker)
+            .arg(&worker)
             .arg(&config_path)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -788,6 +805,12 @@ impl Manager {
             stderr,
             config_path,
             identity: Value::Null,
+            procedural_source: source.clone(),
+            procedural_position: Value::Null,
+            procedural_executable: host,
+            procedural_worker: worker,
+            procedural_definitions: BTreeMap::new(),
+            procedural_checkpoints: BTreeMap::new(),
             last_request_id: 0,
             stopped: false,
         };
@@ -805,6 +828,8 @@ impl Manager {
             ));
         }
         owner.last_request_id = cursor(&receipt["last_request_id"])?;
+        for key in ["generation","samples_elapsed"] { cursor(&receipt["field"][key])?; }
+        owner.procedural_position = json!({"generation":receipt["field"]["generation"],"samples_elapsed":receipt["field"]["samples_elapsed"]});
         owner.identity = json!({"instance_ref":receipt["instance_ref"],"event_ref":receipt["field"]["event_ref"],"subject_ref":receipt["field"]["subject_ref"]});
         if ["instance_ref", "event_ref", "subject_ref"]
             .iter()
@@ -1652,6 +1677,32 @@ impl Manager {
 }
 
 impl crate::Kernel {
+    pub fn prepare_native_procedural_compile(&mut self, op: &crate::KernelOp) -> Result<Option<procedural::Prepared>, String> {
+        let crate::KernelOp::NativeExpression {request:Request::ProceduralCompile {request}} = op else {return Ok(None);};
+        let prepared = procedural::Prepared::new(request.clone())?;
+        let prepared = if let Some(basis) = prepared.basis() {
+            let before = self.expressions.procedural_source_snapshot(&basis.expression_ref, basis.document_revision)?;
+            prepared.bind(before)?
+        } else { prepared };
+        Ok(Some(prepared))
+    }
+    pub fn finish_native_procedural_compile(&mut self, completed: procedural::Completed) -> Result<crate::KernelOpOutcome, String> {
+        let procedural::Completed {mut response,before,command} = completed;
+        let prepared = match command {
+            procedural::Command::Prepare => Some(response["native_result"]["result"].clone()),
+            procedural::Command::Regenerate => response["native_result"]["result"].get("prepared").filter(|v| !v.is_null()).cloned(),
+            _ => None,
+        };
+        if let Some(prepared) = prepared {
+            let before = before.as_ref().ok_or("Native compilation has no original captured Expression basis")?;
+            let admission = self.expressions.admit_procedural_source(before, prepared, response["source"].clone())?;
+            response["admission"] = admission;
+        }
+        Ok(crate::KernelOpOutcome {receipts:Vec::new(),result:crate::KernelOpResult::NativeExpression {data:response}})
+    }
+
+    /// Composing may provision the dated sky for tens of seconds on a first
+    /// run; hosts run `execute` outside the kernel lock and finish under it.
     /// Composing may provision the dated sky for tens of seconds on a first
     /// run; hosts run `execute` outside the kernel lock and finish under it.
     pub fn prepare_native_compose(

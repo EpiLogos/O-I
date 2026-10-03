@@ -2421,7 +2421,10 @@ impl Kernel {
                 })
             }
             KernelOp::NativeExpression { request } => {
-                let data = self.native_expression.apply(&self.client, request)?;
+                let data = match request {
+                    native_expression::Request::ProceduralConduct { request } => self.native_procedural_conduct(request)?,
+                    request => self.native_expression.apply(&self.client, request)?,
+                };
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::NativeExpression { data },
@@ -2527,7 +2530,7 @@ impl Kernel {
                     }
                     _ => None,
                 };
-                let (data, changed) = self.expressions.apply(&self.client, request)?;
+                let (data, changed) = self.apply_native_expression_with_procedural_attribution(request)?;
                 if data["state"] == "closed" {
                     if let Some(reference) = closed_ref {
                         self.nara_contexts.retain(|_, entry| {
