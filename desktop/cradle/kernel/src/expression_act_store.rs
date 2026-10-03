@@ -11,11 +11,13 @@
 //! [`MAX_RECORDS`] acts — the same cap as the kernel's in-memory act set.
 //! Ended acts leave it by archiving: the record moves to `archive/` and is
 //! never deleted; archived acts stay readable (and replayable) by ref.
-use crate::expression_world::Act;
+use crate::expression_world::{Act, ActPhase};
 use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 pub const SCHEMA: &str = "oi.expression-act/v1";
@@ -34,10 +36,32 @@ pub enum Written {
     },
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct ActStore {
     root: PathBuf,
+    // Revision-only proof, never retained body/current-Document authority.
+    // Every use still locks and reads the actual bounded file and hashes all
+    // its bytes. A changed/cold record receives the original complete decode.
+    qualifications: Arc<Mutex<BTreeMap<PathBuf, QualifiedRevision>>>,
 }
+
+#[derive(Clone, Debug)]
+struct QualifiedRevision {
+    sha256: [u8; 32],
+    bytes: usize,
+    revision: u64,
+    ended: bool,
+    archived: bool,
+}
+
+// Store identity remains its native root. Transient qualification metadata is
+// an optimization, excluded from WorldState semantic equality/serialization.
+impl PartialEq for ActStore {
+    fn eq(&self, other: &Self) -> bool {
+        self.root == other.root
+    }
+}
+impl Eq for ActStore {}
 
 impl ActStore {
     pub(crate) fn encoded_record(act: &Act) -> Result<Vec<u8>, String> {
@@ -57,6 +81,7 @@ impl ActStore {
     pub fn at_home(home: &Path) -> Self {
         Self {
             root: home.join("desktop").join("expression-acts"),
+            qualifications: Arc::new(Mutex::new(BTreeMap::new())),
         }
     }
 
@@ -167,18 +192,87 @@ impl ActStore {
         let Some(bytes) = Self::read_bytes(path)? else {
             return Ok(None);
         };
+        Self::decode_path_bytes(path, &bytes, available, require_archived).map(Some)
+    }
+
+    fn decode_path_bytes(
+        path: &Path,
+        bytes: &[u8],
+        available: usize,
+        require_archived: bool,
+    ) -> Result<Act, String> {
         if require_archived {
-            let (_, ended, _, archived) = crate::expression_act_storage::header(&bytes)?;
+            let (_, ended, _, archived) = crate::expression_act_storage::header(bytes)?;
             if !ended || !archived {
                 return Err("An archive-path record must be ended and marked archived before transient body admission".into());
             }
         }
-        let act = crate::expression_act_storage::decode(&bytes, available)
+        let act = crate::expression_act_storage::decode(bytes, available)
             .map_err(|e| format!("Act record {} is unreadable: {e}", path.display()))?;
         if path.file_name().and_then(|s| s.to_str()) != Some(Self::name(&act.act_ref).as_str()) {
             return Err("Act record is filed under another ref".into());
         }
-        Ok(Some(act))
+        Ok(act)
+    }
+
+    fn remember_revision(&self, path: &Path, bytes: &[u8], act: &Act) -> Result<(), String> {
+        let mut qualified = self
+            .qualifications
+            .lock()
+            .map_err(|_| "Act revision qualification lock is unavailable")?;
+        qualified.insert(
+            path.to_owned(),
+            QualifiedRevision {
+                sha256: Sha256::digest(bytes).into(),
+                bytes: bytes.len(),
+                revision: act.revision,
+                ended: matches!(act.phase, ActPhase::Completed | ActPhase::Cancelled),
+                archived: act.archived,
+            },
+        );
+        // There is no extra Act/Document/catalog cache. Metadata also stays
+        // bounded when archived Acts are checked over a long-running session.
+        while qualified.len() > MAX_RECORDS {
+            let oldest_key = qualified.keys().next().unwrap().clone();
+            qualified.remove(&oldest_key);
+        }
+        Ok(())
+    }
+
+    fn current_revision(&self, path: &Path, require_archived: bool) -> Result<Option<u64>, String> {
+        let Some(bytes) = Self::read_bytes(path)? else {
+            self.qualifications
+                .lock()
+                .map_err(|_| "Act revision qualification lock is unavailable")?
+                .remove(path);
+            return Ok(None);
+        };
+        let hash: [u8; 32] = Sha256::digest(&bytes).into();
+        {
+            let mut qualified = self
+                .qualifications
+                .lock()
+                .map_err(|_| "Act revision qualification lock is unavailable")?;
+            if let Some(witness) = qualified.get(path) {
+                if witness.sha256 == hash && witness.bytes == bytes.len() {
+                    if require_archived && (!witness.ended || !witness.archived) {
+                        return Err("An archive-path record must be ended and marked archived before transient body admission".into());
+                    }
+                    return Ok(Some(witness.revision));
+                }
+            }
+            qualified.remove(path);
+        }
+        // Qualify exactly the bytes just read, rather than reading twice and
+        // joining the digest of one file with the body of a later successor.
+        let act = Self::decode_path_bytes(
+            path,
+            &bytes,
+            crate::expression_act_storage::LIVE_BYTES,
+            require_archived,
+        )?;
+        self.remember_revision(path, &bytes, &act)?;
+        Ok(Some(act.revision))
     }
 
     /// Every stored act, ordered by ref. Unreadable records are returned as
@@ -308,12 +402,7 @@ impl ActStore {
     ) -> Result<Written, String> {
         let _lock = self.prepare()?;
         let path = self.locate(act_ref);
-        let current = Self::read_path(
-            &path,
-            crate::expression_act_storage::LIVE_BYTES,
-            path == self.archived_path(act_ref),
-        )?
-        .map(|a| a.revision);
+        let current = self.current_revision(&path, path == self.archived_path(act_ref))?;
         if current != expected {
             return Ok(Written::Conflict { current });
         }
@@ -360,8 +449,7 @@ impl ActStore {
         let _lock = self.prepare()?;
         let path = self.locate(&act.act_ref);
         let archived = path == self.archived_path(&act.act_ref);
-        let current = Self::read_path(&path, crate::expression_act_storage::LIVE_BYTES, archived)?
-            .map(|a| a.revision);
+        let current = self.current_revision(&path, archived)?;
         if current != expected {
             return Ok(Written::Conflict { current });
         }
@@ -384,6 +472,10 @@ impl ActStore {
         if let Some(dir) = path.parent().and_then(|p| fs::File::open(p).ok()) {
             let _ = dir.sync_all();
         }
+        // The native encoder validated the full prospective Act before this
+        // atomic write. Issue only its exact-byte revision witness on success;
+        // a consumer read still follows the complete original admission.
+        self.remember_revision(&path, &bytes, act)?;
         Ok(Written::Written)
     }
 }

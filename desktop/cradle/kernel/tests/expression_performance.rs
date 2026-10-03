@@ -840,6 +840,75 @@ fn actual_file_and_indexed_document_editions_preserve_full_material_without_expa
     let mut missing = custody.snapshot();
     missing.performance_catalogs.clear();
     assert!(ActPerformanceCustody::read(missing).is_err());
+    // These are complete actual native editions above, including all 180
+    // blocks and revision digit-width transitions, not a fabricated dictionary.
+    // Reusing one literal under another role must still type that second role.
+    let mut wrong_role = custody.snapshot();
+    let string_ref = wrong_role.documents[179].fields["expression_ref"].clone();
+    wrong_role.documents[179]
+        .fields
+        .insert("revision".into(), string_ref);
+    let error = ActPerformanceCustody::read(wrong_role).unwrap_err();
+    assert!(error.contains("expected u64"), "{error}");
+
+    // A correctly rehashed foreign dictionary cannot omit native Scene defaults.
+    // All editions deliberately share this altered metadata reference, so the
+    // first failed qualification must prevent any within-call reuse of it.
+    let mut omitted = custody.snapshot();
+    let old_ref = omitted.documents[0].scenes[0].scene_part.clone();
+    let literal = omitted
+        .literals
+        .iter_mut()
+        .find(|l| l.r#ref == old_ref)
+        .unwrap();
+    assert!(literal
+        .value
+        .as_object_mut()
+        .unwrap()
+        .remove("triggers")
+        .is_some());
+    use sha2::{Digest, Sha256};
+    let changed_ref = format!(
+        "sha256:{:x}",
+        Sha256::digest(serde_json::to_vec(&literal.value).unwrap())
+    );
+    literal.r#ref = changed_ref.clone();
+    for edition in &mut omitted.documents {
+        for scene in &mut edition.scenes {
+            if scene.scene_part == old_ref {
+                scene.scene_part = changed_ref.clone();
+            }
+        }
+    }
+    let error = ActPerformanceCustody::read(omitted).unwrap_err();
+    assert!(
+        error.contains("omitted canonical nested defaults"),
+        "{error}"
+    );
+
+    // Revision is separately retained: sharing metadata cannot share its old
+    // serialized revision weight or waive the complete expanded size fence.
+    let mut wrong_revision_weight = custody.snapshot();
+    wrong_revision_weight.documents[179].scenes[0].revision = u64::MAX;
+    let error = ActPerformanceCustody::read(wrong_revision_weight).unwrap_err();
+    assert!(error.contains("weight differs before cloning"), "{error}");
+    let mut wrong_expanded = custody.snapshot();
+    wrong_expanded.documents[179].expanded_bytes += 1;
+    let error = ActPerformanceCustody::read(wrong_expanded).unwrap_err();
+    assert!(error.contains("weight differs before cloning"), "{error}");
+
+    // Qualification never survives this call. A subsequent cold read must still
+    // discover changed literal bytes even after a complete successful restore.
+    let mut changed = custody.snapshot();
+    let title_ref = changed.documents[179].fields["title"].clone();
+    changed
+        .literals
+        .iter_mut()
+        .find(|l| l.r#ref == title_ref)
+        .unwrap()
+        .value = json!("Changed after qualification");
+    let error = ActPerformanceCustody::read(changed).unwrap_err();
+    assert!(error.contains("literal digest differs"), "{error}");
 }
 
 #[test]

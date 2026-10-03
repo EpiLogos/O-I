@@ -38,6 +38,7 @@ OI_SCOPE = [
     'desktop/cradle/tests/epi-selected-conversation-native.mjs',
     'desktop/cradle/tests/epi-first-rest-receiving.mjs',
     'desktop/cradle/tests/epi-world-production-native.mjs',
+    'desktop/cradle/tests/epi-saved-identity-use-refusals.mjs',
     'desktop/cradle/tests/epi-personal-native-proof.mjs',
     'desktop/cradle/tests/epi-scene-damping-native-proof.mjs',
     'desktop/cradle/tests/epi-scene-axis-native-proof.mjs',

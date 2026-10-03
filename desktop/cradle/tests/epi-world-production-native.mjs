@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict';
 import {isDeepStrictEqual} from 'node:util';
 import {createEpiFirstRestReceivingGate} from './epi-first-rest-receiving.mjs';
+import {prepareSavedIdentityUseRefusals} from './epi-saved-identity-use-refusals.mjs';
 import {readFileSync,writeFileSync,mkdirSync,openSync,readSync,closeSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -582,6 +583,7 @@ try{
   const missing='The saved native personal current has no protected checkpoint; explicitly use this saved identity to admit a new current';
   await frame.waitForFunction(message=>Array.from(document.querySelectorAll('.epi-world-entrance [data-native-personal-current-refusal] pre')).some(e=>e.textContent===message||e.textContent==='Error: '+message),missing,{timeout:180000});
   assert.match(await frame.locator('.epi-world-entrance [role="alert"]').innerText(),/Open Your identity.*Use saved identity/,'The native refusal has an executable ordinary recovery route; its exact raw cause remains in Inspect');
+  const savedUseRefusals=await prepareSavedIdentityUseRefusals({page,frame,bridge:config.bridge,identity:identities[0],op,nativeDocument,selectActualBody:clickActualBody,receipt,output:out,artifact,onPhase:label=>{phase=label;}});
   const before=await snapshot('selection-historical-missing-private-current');
   assert.equal(before.current,null,'A missing private historical checkpoint cannot be reconstructed or silently recalculated');
   const oldReference=before.record.receiving.personal.current;
@@ -614,7 +616,21 @@ try{
   await frame.locator('.nara-personal select[aria-label="Saved profiles"]').selectOption('');
   await frame.locator('.nara-personal select[aria-label="Saved profiles"]').selectOption(identities[0].source.source_ref);
   await frame.waitForFunction(()=>Array.from(document.querySelectorAll('.nara-personal button')).some(button=>button.textContent==='Use saved identity'&&!button.disabled),null,{timeout:180000});
+  const savedUseAdmission=await savedUseRefusals.armAcknowledgementRefusal();
   await useSaved.focus();await useSaved.press('Enter');
+  receipt.saved_identity_use_refusals=await savedUseAdmission.finish();
+  // The historical Restore alert remains until this actual Use is acknowledged.
+  // Wait for its own mounted action to settle, rather than treating that earlier
+  // alert as the outcome of a still-pending native selection/acquisition.
+  await frame.waitForFunction(()=>{
+   const instrument=document.querySelector('.nara-personal');
+   return instrument?.querySelector('.nara-personal-content')?.getAttribute('aria-busy')==='false'
+    &&(Array.from(instrument.querySelectorAll('[role="status"]')).some(e=>e.textContent==='Your saved identity is used in this Expression.')
+      ||Array.from(instrument.querySelectorAll('[role="alert"]')).some(e=>e.textContent?.trim()));
+  },null,{timeout:180000});
+  const useErrors=await frame.locator('.nara-personal [role="alert"]').allTextContents();
+  assert.equal(useErrors.filter(Boolean).length,0,'The actual ordinary saved-identity Use refused: '+useErrors.join(' / '));
+  assert.ok((await frame.locator('.nara-personal [role="status"]').allTextContents()).includes('Your saved identity is used in this Expression.'),'Ordinary Use must complete its native rebind/Save/admission before the existing continuation predicates');
   await readyCurrent(identities[0].reading.person_ref);await noAlert();
   const identityAfter=(await op({op:'nara_identity',request:{operation:'open',source_ref:identities[0].source.source_ref}})).data;
   assert.deepEqual(identityAfter.source,identityBefore.source,'Ordinary Use saved identity preserves the native Central source and exact revision');

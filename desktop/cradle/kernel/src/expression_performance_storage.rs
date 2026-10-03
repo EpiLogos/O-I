@@ -419,6 +419,37 @@ pub struct ActPerformanceCustody {
     literals: BTreeMap<String, std::sync::Arc<Value>>,
     performance_catalogs: BTreeMap<String, std::sync::Arc<PerformancePartCatalog>>,
 }
+/// Qualification belongs to one complete native validation/selection call.
+/// The borrowed dictionary cannot change during that call. Field role remains
+/// part of the key: identical literal bytes cannot qualify a different type.
+#[derive(Default)]
+struct EditionQualification<'a> {
+    fields: BTreeMap<(&'a str, &'a str), usize>,
+    scenes: BTreeMap<&'a str, usize>,
+}
+impl<'a> EditionQualification<'a> {
+    fn field(&mut self, key: &'a str, reference: &'a str, value: &Value) -> Result<usize, String> {
+        if let Some(size) = self.fields.get(&(key, reference)) {
+            return Ok(*size);
+        }
+        crate::expression_act_storage::canonical_field(key, value)?;
+        let size = weight(key)? + 1 + weight(value)? + 1;
+        self.fields.insert((key, reference), size);
+        Ok(size)
+    }
+    fn scene(&mut self, reference: &'a str, value: &Value, revision: u64) -> Result<usize, String> {
+        if let Some(size) = self.scenes.get(reference) {
+            return Ok(*size);
+        }
+        // SceneEdition already types each revision as u64. The canonical
+        // comparison removes that separately retained revision; every edition
+        // still measures its own revision below, including digit-width changes.
+        canonical_scene_metadata(value, &Value::from(revision))?;
+        let size = weight(value)?;
+        self.scenes.insert(reference, size);
+        Ok(size)
+    }
+}
 impl Serialize for ActPerformanceCustody {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         use serde::ser::{SerializeMap, SerializeSeq};
@@ -570,6 +601,7 @@ impl ActPerformanceCustody {
         }
         let mut used_literals = BTreeSet::new();
         let mut used_catalogs = BTreeSet::new();
+        let mut qualification = EditionQualification::default();
         for (r, value) in &self.literals {
             no_refs(value)?;
             if expression_file::digest(
@@ -618,7 +650,7 @@ impl ActPerformanceCustody {
                     .literals
                     .get(r)
                     .ok_or("missing native Act edition literal")?;
-                crate::expression_act_storage::canonical_field(key, literal)?;
+                qualification.field(key.as_str(), r.as_str(), literal)?;
                 used_literals.insert(r.clone());
             }
             for s in &d.scenes {
@@ -626,7 +658,7 @@ impl ActPerformanceCustody {
                     return Err("missing native Act Scene metadata".into());
                 }
                 let metadata = self.literals.get(&s.scene_part).unwrap();
-                canonical_scene_metadata(metadata, &Value::from(s.revision))?;
+                qualification.scene(s.scene_part.as_str(), metadata, s.revision)?;
                 used_literals.insert(s.scene_part.clone());
                 match (&s.performance_catalog, s.performance_manifest) {
                     (None, None) => {}
@@ -643,7 +675,7 @@ impl ActPerformanceCustody {
                     _ => return Err("partial native Act performance binding".into()),
                 }
             }
-            self.selected_weight(index)?;
+            self.selected_weight_with(index, &mut qualification)?;
         }
         if used_literals.len() != self.literals.len()
             || used_catalogs.len() != self.performance_catalogs.len()
@@ -684,6 +716,13 @@ impl ActPerformanceCustody {
         ))
     }
     fn selected_weight(&self, index: usize) -> Result<usize, String> {
+        self.selected_weight_with(index, &mut EditionQualification::default())
+    }
+    fn selected_weight_with<'a>(
+        &'a self,
+        index: usize,
+        qualification: &mut EditionQualification<'a>,
+    ) -> Result<usize, String> {
         let d = self
             .documents
             .get(index)
@@ -695,9 +734,9 @@ impl ActPerformanceCustody {
                 .literals
                 .get(r)
                 .ok_or("missing native Act edition literal")?;
-            crate::expression_act_storage::canonical_field(key, v)?;
+            let size = qualification.field(key.as_str(), r.as_str(), v)?;
             expanded = expanded
-                .checked_add(weight(key)? + 1 + weight(v.as_ref())? + 1)
+                .checked_add(size)
                 .ok_or("native Act selected size overflow")?;
         }
         let mut scene_bytes = 2usize;
@@ -706,8 +745,9 @@ impl ActPerformanceCustody {
                 .literals
                 .get(&scene.scene_part)
                 .ok_or("missing native Act Scene metadata")?;
-            canonical_scene_metadata(metadata, &Value::from(scene.revision))?;
-            let mut size = weight(metadata.as_ref())?
+            let metadata_bytes =
+                qualification.scene(scene.scene_part.as_str(), metadata, scene.revision)?;
+            let mut size = metadata_bytes
                 .checked_add(11 + weight(&scene.revision)?)
                 .ok_or("native Scene size overflow")?;
             // comma + quoted revision key + colon = 12 bytes.

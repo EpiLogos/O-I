@@ -1024,6 +1024,41 @@ fn actual_closed_act_reader_rechecks_attached_store_before_and_after_and_refuses
         std::path::PathBuf::from(std::env::var("OI_RETAINED_PERFORMANCE_TEST_HOME").unwrap())
             .join(format!("delivery-{name}-{}", std::process::id()));
     let store = ActStore::at_home(&home);
+    assert_eq!(
+        store.check(&act.act_ref, Some(act.revision)).unwrap(),
+        Written::Written
+    );
+    let path = store
+        .root()
+        .join(format!("{:x}.json", Sha256::digest(act.act_ref.as_bytes())));
+    let exact_record = std::fs::read(&path).unwrap();
+    let mut defaulted: Value = serde_json::from_slice(&exact_record).unwrap();
+    assert!(defaulted["act"]
+        .as_object_mut()
+        .unwrap()
+        .remove("mode")
+        .is_some());
+    defaulted["retained_act_sha256"] = json!(format!(
+        "sha256:{:x}",
+        Sha256::digest(serde_json::to_vec(&defaulted["act"]).unwrap())
+    ));
+    let altered_record = serde_json::to_vec(&defaulted).unwrap();
+    std::fs::write(&path, &altered_record).unwrap();
+    assert!(store
+        .check(&act.act_ref, Some(act.revision))
+        .unwrap_err()
+        .contains("omitted canonical native defaults"));
+    assert!(store
+        .write(&act, Some(act.revision))
+        .unwrap_err()
+        .contains("omitted canonical native defaults"));
+    assert_eq!(
+        std::fs::read(&path).unwrap(),
+        altered_record,
+        "Same-revision rehashed omission cannot be masked by a warm witness"
+    );
+    std::fs::write(&path, &exact_record).unwrap();
+    assert_eq!(store.read_retained(&act.act_ref).unwrap().unwrap(), act);
     kernel
         .with_native_act_delivery(&act.act_ref, &request, |reader| {
             reader.compile_with(|native, pages| {

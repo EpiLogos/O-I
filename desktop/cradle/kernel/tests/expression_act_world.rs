@@ -192,6 +192,15 @@ fn actual_world_storage_refuses_corruption_amplification_and_wrong_file_identity
     let stored: Value = serde_json::from_slice(&bytes).unwrap();
     let store = ActStore::at_home(&home.0);
     let actual = store.read(ACT).unwrap().unwrap();
+    // Warm the real revision-only path before archive/default/corruption tests.
+    assert_eq!(
+        store.check(ACT, Some(actual.revision)).unwrap(),
+        Written::Written
+    );
+    assert_eq!(
+        store.clone().check(ACT, Some(actual.revision)).unwrap(),
+        Written::Written
+    );
     assert!(store.archive(ACT).unwrap_err().contains("marked archived"));
     assert_eq!(std::fs::read(&path).unwrap(), bytes);
     let archived_path = store.root().join("archive").join(path.file_name().unwrap());
@@ -229,7 +238,25 @@ fn actual_world_storage_refuses_corruption_amplification_and_wrong_file_identity
         .read(ACT)
         .unwrap_err()
         .contains("canonical native field"));
+    let refused_bytes = std::fs::read(&path).unwrap();
+    assert!(store
+        .check(ACT, Some(actual.revision))
+        .unwrap_err()
+        .contains("canonical native field"));
+    assert!(store
+        .write(&actual, Some(actual.revision))
+        .unwrap_err()
+        .contains("canonical native field"));
+    assert_eq!(
+        std::fs::read(&path).unwrap(),
+        refused_bytes,
+        "Warm revision proof must not overwrite a changed invalid body"
+    );
     std::fs::write(&path, &bytes).unwrap();
+    assert_eq!(
+        store.check(ACT, Some(actual.revision)).unwrap(),
+        Written::Written
+    );
     assert_eq!(
         store.write(&actual, Some(actual.revision + 1)).unwrap(),
         Written::Conflict {
@@ -814,4 +841,53 @@ fn full_native_register_aggregate_refusal_preserves_every_completed_concern() {
         "unknown_act"
     );
     assert_eq!(admission_files(&home), stored);
+}
+
+#[test]
+fn warmed_revision_proof_observes_real_failed_write_and_other_store_successor() {
+    let home = Home::new();
+    let mut k = kernel();
+    k.attach_act_store(&home.0).unwrap();
+    expression(&mut k, json!({"operation":"create","expression_ref":WORLD,"actor":"person:controlled-world-a","title":"Native revision witness"})).unwrap();
+    let response = world(&mut k, json!({"operation":"act_open","act_ref":"act:revision-witness","expression_ref":WORLD,"mode":"expressions","actor":"person:controlled-world-a","summary":"Real native Act"})).unwrap();
+    let act: Act = serde_json::from_value(response["act"].clone()).unwrap();
+    let store = ActStore::at_home(&home.0);
+    assert_eq!(
+        store.check(&act.act_ref, Some(act.revision)).unwrap(),
+        Written::Written
+    );
+    let path = home.record(&act.act_ref);
+    let original = std::fs::read(&path).unwrap();
+    let mut successor = act.clone();
+    successor.revision += 1;
+    successor.summary = "A real second native store advances the same Act".into();
+    let pending = path.with_extension("json.pending");
+    std::fs::create_dir(&pending).unwrap();
+    assert!(store.write(&successor, Some(act.revision)).is_err());
+    assert_eq!(std::fs::read(&path).unwrap(), original);
+    assert_eq!(
+        store.check(&act.act_ref, Some(act.revision)).unwrap(),
+        Written::Written
+    );
+    std::fs::remove_dir(&pending).unwrap();
+    let other = ActStore::at_home(&home.0);
+    assert_eq!(
+        other.write(&successor, Some(act.revision)).unwrap(),
+        Written::Written
+    );
+    assert_eq!(
+        store.check(&act.act_ref, Some(act.revision)).unwrap(),
+        Written::Conflict {
+            current: Some(successor.revision)
+        }
+    );
+    assert_eq!(
+        store.write(&act, Some(act.revision)).unwrap(),
+        Written::Conflict {
+            current: Some(successor.revision)
+        }
+    );
+    assert_eq!(store.read(&act.act_ref).unwrap().unwrap(), successor);
+    let cold = ActStore::at_home(&home.0);
+    assert_eq!(cold.read(&act.act_ref).unwrap().unwrap(), successor);
 }
