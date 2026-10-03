@@ -46,15 +46,15 @@ pub mod events;
 pub mod expression;
 // Source6 private support children; original File/Act/performance families are
 // not replaced or enrolled by this contextual first-passage proposal.
-pub(crate) mod expression_procedural_source_budget;
-pub(crate) mod expression_procedural_source_codec;
-pub(crate) mod expression_procedural_field_source;
-pub(crate) mod expression_procedural_scene_reader;
 pub mod expression_act_store;
 pub mod expression_asset;
 pub mod expression_blueprint;
 pub mod expression_carrier;
 pub mod expression_material;
+pub(crate) mod expression_procedural_field_source;
+pub(crate) mod expression_procedural_scene_reader;
+pub(crate) mod expression_procedural_source_budget;
+pub(crate) mod expression_procedural_source_codec;
 pub mod expression_profile;
 pub mod expression_recovery;
 pub mod expression_scene;
@@ -88,9 +88,9 @@ mod nara_voice_constitution;
 mod nara_voice_transport;
 pub mod nara_world_readiness;
 pub mod native_expression;
+pub mod native_owner_transport;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub mod native_parent_image;
-pub mod native_owner_transport;
 pub mod native_process;
 pub mod owner_read;
 pub mod presentation;
@@ -2065,9 +2065,13 @@ impl Kernel {
                         "This native host has reached its expressive checkpoint bound".into(),
                     );
                 }
-                let (data, changed) = self.apply_native_expression_with_procedural_attribution(focus.request.clone())?;
+                let (data, changed) = self
+                    .apply_native_expression_with_procedural_attribution(focus.request.clone())?;
                 if data["state"] != "ready" {
-                    return Err(data["reason"].as_str().unwrap_or("Native focus admission was refused").into());
+                    return Err(data["reason"]
+                        .as_str()
+                        .unwrap_or("Native focus admission was refused")
+                        .into());
                 }
                 if changed.is_none() {
                     return Err("The reviewed focus did not change the native selection".into());
@@ -2407,8 +2411,12 @@ impl Kernel {
             }
             KernelOp::NativeExpression { request } => {
                 let data = match request {
-                    native_expression::Request::ProceduralConduct { request } => self.native_procedural_conduct(request)?,
-                    native_expression::Request::ProceduralSourceBootstrapRetry { request } => self.native_procedural_source_bootstrap_retry(request)?,
+                    native_expression::Request::ProceduralConduct { request } => {
+                        self.native_procedural_conduct(request)?
+                    }
+                    native_expression::Request::ProceduralSourceBootstrapRetry { request } => {
+                        self.native_procedural_source_bootstrap_retry(request)?
+                    }
                     request => self.native_expression.apply(&self.client, request)?,
                 };
                 Ok(KernelOpOutcome {
@@ -2516,7 +2524,8 @@ impl Kernel {
                     }
                     _ => None,
                 };
-                let (data, changed) = self.apply_native_expression_with_procedural_attribution(request)?;
+                let (data, changed) =
+                    self.apply_native_expression_with_procedural_attribution(request)?;
                 if data["state"] == "closed" {
                     if let Some(reference) = closed_ref {
                         self.nara_contexts.retain(|_, entry| {

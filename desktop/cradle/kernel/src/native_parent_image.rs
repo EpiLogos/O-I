@@ -583,10 +583,10 @@ pub(crate) fn qualify_native_spawn(host_path: &Path) -> Result<Option<Value>, St
     let (root, uid) = native_receipt_root()?;
     let developer = root.join("receipts/dev/installed/oi-native-act-parent.json");
     let installed = root.join("receipts/installed-desktop.json");
-    if !developer.exists() {
-        if !installed.exists() || owned_json(&installed, uid)?["native_parent_cut"].is_null() {
-            return Ok(None);
-        }
+    if !developer.exists()
+        && (!installed.exists() || owned_json(&installed, uid)?["native_parent_cut"].is_null())
+    {
+        return Ok(None);
     }
     let cut = locate_native_cut(&root, uid)?;
     let supervisor = loaded_image(std::process::id())?;

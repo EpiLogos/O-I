@@ -237,20 +237,38 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 if let KernelOp::NaraCoordinate { request } = op {
                     return oi_cradle_kernel::nara_coordinate::execute(request);
                 }
-                let lifecycle = kernel.lock().expect("kernel mutex").prepare_native_procedural_lifecycle(&op)?;
+                let lifecycle = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_native_procedural_lifecycle(&op)?;
                 if let Some(prepared) = lifecycle {
                     let completed = prepared.execute()?;
-                    return kernel.lock().expect("kernel mutex").finish_native_procedural_lifecycle(completed);
+                    return kernel
+                        .lock()
+                        .expect("kernel mutex")
+                        .finish_native_procedural_lifecycle(completed);
                 }
-                let lifecycle = kernel.lock().expect("kernel mutex").prepare_native_procedural_lifecycle_cancel(&op)?;
+                let lifecycle = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_native_procedural_lifecycle_cancel(&op)?;
                 if let Some(prepared) = lifecycle {
                     let completed = prepared.execute()?;
-                    return kernel.lock().expect("kernel mutex").finish_native_procedural_lifecycle_cancel(completed);
+                    return kernel
+                        .lock()
+                        .expect("kernel mutex")
+                        .finish_native_procedural_lifecycle_cancel(completed);
                 }
-                let bootstrap = kernel.lock().expect("kernel mutex").prepare_native_procedural_bootstrap(&op)?;
+                let bootstrap = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_native_procedural_bootstrap(&op)?;
                 if let Some(prepared) = bootstrap {
                     let completed = prepared.execute()?;
-                    return kernel.lock().expect("kernel mutex").finish_native_procedural_bootstrap(completed);
+                    return kernel
+                        .lock()
+                        .expect("kernel mutex")
+                        .finish_native_procedural_bootstrap(completed);
                 }
                 let epii = kernel
                     .lock()
@@ -258,7 +276,9 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                     .prepare_nara_epii(&op)?;
                 if let Some(prepared) = epii {
                     let completed = prepared.execute()?;
-                    let attribution = kernel.lock().expect("kernel mutex")
+                    let attribution = kernel
+                        .lock()
+                        .expect("kernel mutex")
                         .prepare_nara_epii_attribution(&completed)?;
                     let attribution = attribution.map(|prepared| prepared.execute());
                     return kernel
@@ -272,7 +292,9 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                     .prepare_nara_expressive_act(&op)?;
                 if let Some(prepared) = act {
                     let completed = prepared.execute()?;
-                    let attribution = kernel.lock().expect("kernel mutex")
+                    let attribution = kernel
+                        .lock()
+                        .expect("kernel mutex")
                         .prepare_nara_expressive_act_attribution(&completed)?;
                     let attribution = attribution.map(|prepared| prepared.execute());
                     return kernel
