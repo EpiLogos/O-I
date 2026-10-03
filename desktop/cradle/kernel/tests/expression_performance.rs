@@ -713,6 +713,21 @@ fn assert_native_catalog_projection(
     use oi_cradle_kernel::expression_performance_assets::*;
     let stored = catalog.snapshot();
     let manifest = &stored.manifests[index];
+    // Independent legacy byte oracle for every actual admitted enum part and
+    // the complete native Performance at both ends of the original history.
+    for part in &stored.parts {
+        let literal = serde_json::to_vec(&part.part).unwrap();
+        assert_eq!(
+            part.r#ref,
+            format!("sha256:{:x}", sha2::Sha256::digest(&literal))
+        );
+    }
+    let literal = serde_json::to_vec(original).unwrap();
+    assert_eq!(manifest.expanded_bytes as usize, literal.len());
+    assert_eq!(
+        manifest.expanded_performance_sha256,
+        format!("sha256:{:x}", sha2::Sha256::digest(&literal))
+    );
     let mut expected = serde_json::to_value(original).unwrap();
     let mut header = serde_json::Map::new();
     for key in [

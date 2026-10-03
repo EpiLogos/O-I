@@ -225,10 +225,9 @@ impl PerformancePart {
     }
 }
 fn digest<T: Serialize + ?Sized>(v: &T) -> Result<String, String> {
-    Ok(format!(
-        "sha256:{:x}",
-        Sha256::digest(serde_json::to_vec(v).map_err(|e| e.to_string())?)
-    ))
+    // Preserve the full native Serde stream without retaining a second buffer.
+    // The independent admission/weight paths keep their original limits.
+    Ok(crate::expression_act_storage::fingerprint(v, usize::MAX)?.1)
 }
 fn encoded<T: Serialize + ?Sized>(v: &T) -> Result<usize, String> {
     crate::expression_act_storage::measure(v, crate::expression_act_storage::LIVE_BYTES)
@@ -410,6 +409,12 @@ struct Walk {
     bytes: u32,
     private: bool,
     depth: usize,
+}
+// Per-traversal qualification only; selected restitution has no weights.
+#[derive(Default)]
+struct WalkQualification<'a> {
+    summaries: BTreeMap<String, Walk>,
+    qualified_weights: Option<&'a BTreeMap<&'a str, usize>>,
 }
 /// Separate the exact native header and edition fields before any indexed
 /// material is cloned. The exhaustive pattern makes new native fields an
@@ -702,13 +707,18 @@ impl PerformancePartCatalog {
             })
             .map_err(|e| e.to_string())?;
         }
+        let (expanded_bytes, expanded_performance_sha256) =
+            crate::expression_act_storage::fingerprint(
+                p,
+                crate::expression_act_storage::LIVE_BYTES,
+            )?;
         next.manifests.push(PerformanceManifest {
             schema: MANIFEST_SCHEMA.into(),
             performance: value,
             header_ref,
             performance_digest: p.content_digest.clone(),
-            expanded_performance_sha256: digest(p)?,
-            expanded_bytes: u32::try_from(encoded(p)?)
+            expanded_performance_sha256,
+            expanded_bytes: u32::try_from(expanded_bytes)
                 .map_err(|_| "performance expanded size overflow")?,
             private_context: p.bases.iter().any(|b| b.context.private)
                 || p.native_sources
@@ -725,8 +735,7 @@ impl PerformancePartCatalog {
         path: &mut BTreeSet<String>,
         used: &mut BTreeSet<String>,
         out: &mut Option<Vec<Value>>,
-        summaries: &mut BTreeMap<String, Walk>,
-        qualified_weights: Option<&BTreeMap<&str, usize>>,
+        qualification: &mut WalkQualification<'_>,
     ) -> Result<Walk, String> {
         if path.len() > 32 || !path.insert(reference.into()) {
             return Err("cyclic/deep native performance part index".into());
@@ -747,7 +756,7 @@ impl PerformancePartCatalog {
         // its descendants are in `used`. Selected material restitution never
         // takes this summary path, and cached depth preserves the original bound.
         if out.is_none() {
-            if let Some(summary) = summaries.get(reference) {
+            if let Some(summary) = qualification.summaries.get(reference) {
                 if path.len().checked_add(summary.depth).is_none_or(|n| n > 33) {
                     return Err("cyclic/deep native performance part index".into());
                 }
@@ -768,7 +777,7 @@ impl PerformancePartCatalog {
                 if data.kind() != kind {
                     return Err("native performance leaf kind/weight differs".into());
                 }
-                let actual_bytes = if let Some(weights) = qualified_weights {
+                let actual_bytes = if let Some(weights) = qualification.qualified_weights {
                     *weights
                         .get(part.as_str())
                         .ok_or("native performance leaf was not qualified in this validation")?
@@ -798,8 +807,8 @@ impl PerformancePartCatalog {
                 expanded_bytes,
                 ..
             } => {
-                let l = self.walk(left, kind, path, used, out, summaries, qualified_weights)?;
-                let r = self.walk(right, kind, path, used, out, summaries, qualified_weights)?;
+                let l = self.walk(left, kind, path, used, out, qualification)?;
+                let r = self.walk(right, kind, path, used, out, qualification)?;
                 let count = l
                     .items
                     .checked_add(r.items)
@@ -822,7 +831,9 @@ impl PerformancePartCatalog {
         };
         path.remove(reference);
         if out.is_none() {
-            summaries.insert(reference.into(), result.clone());
+            qualification
+                .summaries
+                .insert(reference.into(), result.clone());
         }
         Ok(result)
     }
@@ -831,7 +842,6 @@ impl PerformancePartCatalog {
             return Err("native performance part/manifest budget exceeded".into());
         }
         let mut used = BTreeSet::new();
-        let mut summaries = BTreeMap::new();
         let mut qualified_weights = BTreeMap::new();
         let mut bytes = 0usize;
         for (r, p) in &self.parts {
@@ -858,13 +868,21 @@ impl PerformancePartCatalog {
                     .ok_or("native source asset lost its exact saved basis")?;
                 source.validate_basis(basis)?;
             }
-            if digest(p.as_ref())? != *r {
+            let (part_bytes, part_digest) = crate::expression_act_storage::fingerprint(
+                p.as_ref(),
+                crate::expression_act_storage::LIVE_BYTES,
+            )?;
+            if part_digest != *r {
                 return Err("performance asset digest differs".into());
             }
             bytes = bytes
-                .checked_add(encoded(p.as_ref())?)
+                .checked_add(part_bytes)
                 .ok_or("retained performance size overflow")?;
         }
+        let mut qualification = WalkQualification {
+            summaries: BTreeMap::new(),
+            qualified_weights: Some(&qualified_weights),
+        };
         for m in &self.manifests {
             let header = self
                 .parts
@@ -884,8 +902,7 @@ impl PerformancePartCatalog {
                     &mut BTreeSet::new(),
                     &mut used,
                     &mut None,
-                    &mut summaries,
-                    Some(&qualified_weights),
+                    &mut qualification,
                 )?;
                 let expanded = w
                     .bytes
@@ -957,8 +974,7 @@ impl PerformancePartCatalog {
                 &mut BTreeSet::new(),
                 &mut BTreeSet::new(),
                 &mut values,
-                &mut BTreeMap::new(),
-                None,
+                &mut WalkQualification::default(),
             )?;
             if w.items != r.items || w.bytes.checked_add(2) != Some(r.expanded_bytes) {
                 return Err("native performance index changed".into());
@@ -967,9 +983,13 @@ impl PerformancePartCatalog {
         }
         let p: Performance = serde_json::from_value(v).map_err(|e| e.to_string())?;
         p.validate()?;
+        let (expanded_bytes, expanded_digest) = crate::expression_act_storage::fingerprint(
+            &p,
+            crate::expression_act_storage::LIVE_BYTES,
+        )?;
         if p.content_digest != m.performance_digest
-            || digest(&p)? != m.expanded_performance_sha256
-            || encoded(&p)? != m.expanded_bytes as usize
+            || expanded_digest != m.expanded_performance_sha256
+            || expanded_bytes != m.expanded_bytes as usize
         {
             return Err("restored native performance differs from retained edition".into());
         }

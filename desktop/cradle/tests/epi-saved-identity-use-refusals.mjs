@@ -24,6 +24,8 @@ export async function prepareSavedIdentityUseRefusals({page,frame,bridge,identit
  // Capture the actual presented basis BEFORE the controlled Timeline race.
  // The native Document alone cannot prove which body the person was seeing.
  const initialVisible=await frame.evaluate(()=>{const f=window.__FIELD_STUDIES__,state=f.getState(),journey=f.getDocument();return{scene_id:journey.scenes[state.sceneIndex].id,selected:[...state.selected]};});
+ const initialTool=await frame.evaluate(()=>window.__FIELD_STUDIES__.getState().tool);
+ assert.ok(['interact','select'].includes(initialTool),'This controlled presented basis uses an ordinary Interact or Select tool');
  const initialBinding=workingBefore.bindings?.[initialVisible.scene_id];
  assert.ok(!workingBefore.busy&&!workingBefore.pending&&!workingBefore.failed);
  assert.equal(workingBefore.native_ref,expressionRef);assert.equal(workingBefore.revision,initialDocument.revision);
@@ -33,7 +35,7 @@ export async function prepareSavedIdentityUseRefusals({page,frame,bridge,identit
  if(initialDocument.selection.entity_ref)assert.ok(initialOccurrence,'The originally selected native body must be loaded before this fixture');
  assert.deepEqual(initialVisible.selected,initialOccurrence?[initialOccurrence.view_entity_id]:[],
   'The genuine initial presented selection must match the exact current native selection before any controlled negative');
- artifact('saved-use-initial-presented-basis.json',{expression_ref:expressionRef,document_revision:initialDocument.revision,native_selection:initialDocument.selection,visible:initialVisible,
+ artifact('saved-use-initial-presented-basis.json',{expression_ref:expressionRef,document_revision:initialDocument.revision,native_selection:initialDocument.selection,visible:initialVisible,tool:initialTool,
   standing:'Actual local state and independently inspected native basis before controlled Source/Timeline negatives; no forced selection or baseline rewrite'});
  const pinCount=()=>receipt.issued_requests.filter(row=>row.op==='nara_current'&&row.operation==='pin').length;
  const originalPins=pinCount();
@@ -172,7 +174,20 @@ export async function prepareSavedIdentityUseRefusals({page,frame,bridge,identit
     // captured original body through the existing actual Stage pointer path.
     // Epi's dropdown would begin a new encounter and clear the old refusal;
     // this normal pointer choice preserves that original sticky-error gate.
-    if(initialDocument.selection.entity_ref)await selectActualBody(initialDocument.selection.entity_ref);
+    await cleanup('visible-scene-body-selection',null,[
+     ['ordinary Select control and original body Stage pointer',async()=>{
+      if(initialDocument.selection.entity_ref){
+       await frame.locator('[data-action="tool-select"]').first().click({timeout:10000});
+       await frame.waitForFunction(()=>window.__FIELD_STUDIES__.getState().tool==='select',null,{timeout:10000});
+       await selectActualBody(initialDocument.selection.entity_ref);
+      }
+     }],
+     ['ordinary captured tool restoration without another Stage click',async()=>{
+      if(await frame.evaluate(()=>window.__FIELD_STUDIES__.getState().tool)!==initialTool)
+       await frame.locator('[data-action="tool-'+initialTool+'"]').first().click({timeout:10000});
+      await frame.waitForFunction(tool=>window.__FIELD_STUDIES__.getState().tool===tool,initialTool,{timeout:10000});
+     }],
+    ]);
     await frame.waitForFunction(expected=>{const f=window.__FIELD_STUDIES__,state=f.getState(),journey=f.getDocument(),working=f.nativeWorking();
      return journey.scenes[state.sceneIndex].id===expected.visible.scene_id
       &&JSON.stringify(state.selected)===JSON.stringify(expected.visible.selected)
@@ -183,7 +198,7 @@ export async function prepareSavedIdentityUseRefusals({page,frame,bridge,identit
     assert.deepEqual(restored,initialDocument,'Restoring the controlled visible basis must leave every native Document value and revision unchanged');
     const visible=await frame.evaluate(()=>{const f=window.__FIELD_STUDIES__,state=f.getState(),journey=f.getDocument();return{scene_id:journey.scenes[state.sceneIndex].id,selected:[...state.selected]};});
     assert.deepEqual(visible,initialVisible);
-    report.presented_basis_restoration={operation:'actual Timeline return then original body Stage pointer',native_selection:restored.selection,document_revision:restored.revision,visible,
+    report.presented_basis_restoration={operation:'actual Timeline return, ordinary Select control and original body Stage pointer, then captured tool restoration',native_selection:restored.selection,document_revision:restored.revision,visible,tool:initialTool,
      standing:'The originally acknowledged native focus is unchanged; actual pointer/restored local basis independently verified before positive Use'};
     artifact('saved-use-restored-presented-basis.json',report.presented_basis_restoration);
    }]

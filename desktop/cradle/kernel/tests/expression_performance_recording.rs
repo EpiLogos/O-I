@@ -649,6 +649,19 @@ fn actual_native_receipts_are_atomic_lossless_scene_parts_and_survive_authored_e
     );
     let saved = PerformancePartCatalog::default().appended(next).unwrap();
     assert_eq!(saved.snapshot().schema, RECORDING_CATALOG_SCHEMA);
+    // Actual callback/journal material is the byte oracle, not a fabricated
+    // recording DTO. Tagged enum order and full expanded native bytes stay exact.
+    let stored = saved.snapshot();
+    for part in &stored.parts {
+        let literal = serde_json::to_vec(&part.part).unwrap();
+        assert_eq!(part.r#ref, format!("sha256:{:x}", Sha256::digest(&literal)));
+    }
+    let literal = serde_json::to_vec(next).unwrap();
+    assert_eq!(stored.manifests[0].expanded_bytes as usize, literal.len());
+    assert_eq!(
+        stored.manifests[0].expanded_performance_sha256,
+        format!("sha256:{:x}", Sha256::digest(&literal))
+    );
     let reopened = PerformancePartCatalog::read(saved.snapshot()).unwrap();
     assert_eq!(&reopened.restore(0).unwrap(), next);
     // Imported wire cannot carry native qualification. Cold reopen repeats the
@@ -1293,7 +1306,16 @@ fn full_workload(source_required: bool) {
     assert_eq!(seek.from_sample, Counter(42960000));
     assert_eq!(seek.target_sample, Counter(43199000));
     assert!(seek.checkpoint.unwrap().management.is_some());
+    // Complete real 180-edition native histories include retained checkpoints,
+    // recordings and source parts. Compare each current dictionary part to the
+    // unchanged pre-stream native Serde byte/hash oracle before corrupting it.
     let mut corrupt = custody.snapshot();
+    for catalog in corrupt.performance_catalogs.values() {
+        for part in &catalog.parts {
+            let literal = serde_json::to_vec(&part.part).unwrap();
+            assert_eq!(part.r#ref, format!("sha256:{:x}", Sha256::digest(&literal)));
+        }
+    }
     let catalog = corrupt.performance_catalogs.values_mut().next().unwrap();
     let before = catalog.parts.len();
     catalog.parts.retain(|p| {

@@ -196,7 +196,10 @@ pub(crate) fn preflight_append(
         EXPANDED_BYTES,
     )
 }
-fn fingerprint<T: Serialize + ?Sized>(value: &T, limit: usize) -> Result<(usize, String), String> {
+pub(crate) fn fingerprint<T: Serialize + ?Sized>(
+    value: &T,
+    limit: usize,
+) -> Result<(usize, String), String> {
     let mut output = Counter {
         bytes: 0,
         limit,
@@ -707,6 +710,17 @@ mod tests {
             panic!("Wrong native result")
         };
         let actual: Act = serde_json::from_value(data["act"].clone()).unwrap();
+        // Compare the actual native Act against the prior literal serializer,
+        // including the exact complete-length boundary and its real refusal.
+        let canonical = serde_json::to_vec(&actual).unwrap();
+        let literal_digest = format!("sha256:{:x}", Sha256::digest(&canonical));
+        assert_eq!(
+            fingerprint(&actual, canonical.len()).unwrap(),
+            (canonical.len(), literal_digest)
+        );
+        assert!(fingerprint(&actual, canonical.len() - 1)
+            .unwrap_err()
+            .contains("Expanded Act byte budget exceeded before cloning"));
         let mut literal = data["act"].clone();
         literal.as_object_mut().unwrap().remove("cast");
         let raw_weight = serde_json::to_vec(&literal).unwrap().len();
