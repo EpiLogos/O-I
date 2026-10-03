@@ -139,13 +139,14 @@ impl Store {
         let path = self
             .directory()?
             .join(format!("{}.json", key(epoch, location)?));
-        let Some(bytes) = crate::expression_recovery::read_retained_record_bytes(
-            &path, MAX_FILE_BYTES,
-        ).map_err(|error| error.to_string())? else {
+        let Some(bytes) =
+            crate::expression_recovery::read_retained_record_bytes(&path, MAX_FILE_BYTES)
+                .map_err(|error| error.to_string())?
+        else {
             return Ok(None);
         };
-        let mut record: Record = serde_json::from_slice(&bytes)
-            .map_err(|error| error.to_string())?;
+        let mut record: Record =
+            serde_json::from_slice(&bytes).map_err(|error| error.to_string())?;
         if record.schema != "oi.retained-file-reading/v1"
             || record.owner_epoch != epoch
             || record.retained.reading.location != *location
@@ -285,9 +286,9 @@ fn parent_allows_missing(client: &CentralClient, location: &Location) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{ffi::OsStr, fs, io, path::Path};
     #[cfg(unix)]
     use std::os::unix::fs::MetadataExt;
+    use std::{ffi::OsStr, fs, io, path::Path};
 
     struct Fixture {
         root: PathBuf,
@@ -305,16 +306,23 @@ mod tests {
             // caller cwd/HOME and path labels do not mint a native World.
             let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
             if !manifest.is_absolute() || !manifest.ends_with("desktop/cradle/kernel") {
-                return Err(io::Error::new(io::ErrorKind::InvalidInput,
-                    "actual kernel package Source layout is unavailable"));
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "actual kernel package Source layout is unavailable",
+                ));
             }
             let product = manifest.ancestors().nth(3).ok_or_else(|| {
-                io::Error::new(io::ErrorKind::InvalidInput, "kernel Source has no product root")
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "kernel Source has no product root",
+                )
             })?;
             let product = fs::canonicalize(product)?;
             if fs::canonicalize(manifest)? != product.join("desktop/cradle/kernel") {
-                return Err(io::Error::new(io::ErrorKind::InvalidInput,
-                    "kernel package Source does not belong to the declared product layout"));
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "kernel package Source does not belong to the declared product layout",
+                ));
             }
             let field = product.join("ProjectCentral/now/tmp");
             fs::create_dir_all(&field)?;
@@ -327,8 +335,10 @@ mod tests {
                 Some(value) => {
                     let path = Path::new(value);
                     if value.is_empty() || !path.is_absolute() {
-                        return Err(io::Error::new(io::ErrorKind::InvalidInput,
-                            "explicit retained fixture field must be nonempty and absolute"));
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            "explicit retained fixture field must be nonempty and absolute",
+                        ));
                     }
                     fs::canonicalize(path)?
                 }
@@ -336,8 +346,10 @@ mod tests {
             };
             let field_metadata = fs::symlink_metadata(&field)?;
             if !field_metadata.is_dir() || field_metadata.file_type().is_symlink() {
-                return Err(io::Error::new(io::ErrorKind::InvalidInput,
-                    "actual retained fixture field must be an existing directory"));
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "actual retained fixture field must be an existing directory",
+                ));
             }
             let mut nonce = [0u8; 16];
             getrandom::fill(&mut nonce).map_err(|error| io::Error::other(error.to_string()))?;
@@ -348,19 +360,29 @@ mod tests {
                 let metadata = fs::symlink_metadata(&root)?;
                 (metadata.dev(), metadata.ino())
             };
-            Ok(Self { root, #[cfg(unix)] identity })
+            Ok(Self {
+                root,
+                #[cfg(unix)]
+                identity,
+            })
         }
         fn check_root(&self) -> io::Result<()> {
             let metadata = fs::symlink_metadata(&self.root)?;
-            if !metadata.is_dir() || metadata.file_type().is_symlink()
-                || fs::canonicalize(&self.root)? != self.root {
-                return Err(io::Error::new(io::ErrorKind::InvalidData,
-                    "retained test fixture root affiliation changed"));
+            if !metadata.is_dir()
+                || metadata.file_type().is_symlink()
+                || fs::canonicalize(&self.root)? != self.root
+            {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "retained test fixture root affiliation changed",
+                ));
             }
             #[cfg(unix)]
             if (metadata.dev(), metadata.ino()) != self.identity {
-                return Err(io::Error::new(io::ErrorKind::InvalidData,
-                    "retained test fixture root affiliation changed"));
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "retained test fixture root affiliation changed",
+                ));
             }
             Ok(())
         }
@@ -373,20 +395,26 @@ mod tests {
             while let Some((directory, depth)) = pending.pop() {
                 let metadata = fs::symlink_metadata(&directory)?;
                 if !metadata.is_dir() || metadata.file_type().is_symlink() {
-                    return Err(io::Error::new(io::ErrorKind::InvalidData,
-                        "owned fixture directory affiliation changed"));
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "owned fixture directory affiliation changed",
+                    ));
                 }
                 for entry in fs::read_dir(directory)? {
                     let entry = entry?;
                     entries += 1;
                     if entries > 256 {
-                        return Err(io::Error::new(io::ErrorKind::InvalidData,
-                            "owned retained fixture exceeds cleanup entry capacity"));
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "owned retained fixture exceeds cleanup entry capacity",
+                        ));
                     }
                     if entry.file_type()?.is_dir() {
                         if depth >= 4 {
-                            return Err(io::Error::new(io::ErrorKind::InvalidData,
-                                "owned retained fixture exceeds cleanup depth capacity"));
+                            return Err(io::Error::new(
+                                io::ErrorKind::InvalidData,
+                                "owned retained fixture exceeds cleanup depth capacity",
+                            ));
                         }
                         pending.push((entry.path(), depth + 1));
                     }
@@ -396,7 +424,12 @@ mod tests {
             fs::remove_dir_all(&self.root)
         }
         #[cfg(unix)]
-        fn store(&self) -> Store { Store { path: Some(self.root.join("retained")), ..Store::default() } }
+        fn store(&self) -> Store {
+            Store {
+                path: Some(self.root.join("retained")),
+                ..Store::default()
+            }
+        }
         #[cfg(unix)]
         fn reading(&self) -> Reading {
             // A declared mechanical Record fixture, not a substituted Central
@@ -405,17 +438,25 @@ mod tests {
         }
         #[cfg(unix)]
         fn retained(&self) -> (Store, Reading, PathBuf, Vec<u8>) {
-            let store = self.store(); let reading = self.reading();
+            let store = self.store();
+            let reading = self.reading();
             store.remember("native-owner-one", &reading).unwrap();
-            let path = store.directory().unwrap().join(format!("{}.json",key("native-owner-one",&reading.location).unwrap()));
-            let bytes = fs::read(&path).unwrap(); (store,reading,path,bytes)
+            let path = store.directory().unwrap().join(format!(
+                "{}.json",
+                key("native-owner-one", &reading.location).unwrap()
+            ));
+            let bytes = fs::read(&path).unwrap();
+            (store, reading, path, bytes)
         }
     }
     impl Drop for Fixture {
         fn drop(&mut self) {
             if let Err(error) = self.cleanup() {
-                if std::thread::panicking() { eprintln!("owned retained fixture cleanup: {error}"); }
-                else { panic!("owned retained fixture cleanup: {error}"); }
+                if std::thread::panicking() {
+                    eprintln!("owned retained fixture cleanup: {error}");
+                } else {
+                    panic!("owned retained fixture cleanup: {error}");
+                }
             }
         }
     }
@@ -464,10 +505,17 @@ mod tests {
         let fixture = Fixture::from_override(None).unwrap();
         assert_eq!(fixture.root.parent(), Some(field.as_path()));
         let owned = fixture.root.clone();
-        fs::write(owned.join("owned-default-bytes"), b"actual default native fixture").unwrap();
+        fs::write(
+            owned.join("owned-default-bytes"),
+            b"actual default native fixture",
+        )
+        .unwrap();
         drop(fixture);
         assert!(!owned.try_exists().unwrap());
-        assert!(field.is_dir(), "cleanup must preserve the native Run-space parent");
+        assert!(
+            field.is_dir(),
+            "cleanup must preserve the native Run-space parent"
+        );
     }
 
     #[test]
@@ -477,17 +525,27 @@ mod tests {
         let file = parent.root.join("ordinary-file");
         fs::write(&file, b"preserved invalid explicit root").unwrap();
         let names = || {
-            let mut names: Vec<_> = fs::read_dir(&parent.root).unwrap()
-                .map(|entry| entry.unwrap().file_name()).collect();
+            let mut names: Vec<_> = fs::read_dir(&parent.root)
+                .unwrap()
+                .map(|entry| entry.unwrap().file_name())
+                .collect();
             names.sort();
             names
         };
         let before = names();
-        for value in [OsStr::new(""), OsStr::new("relative-field"),
-                      absent.as_os_str(), file.as_os_str()] {
+        for value in [
+            OsStr::new(""),
+            OsStr::new("relative-field"),
+            absent.as_os_str(),
+            file.as_os_str(),
+        ] {
             assert!(Fixture::from_override(Some(value)).is_err());
         }
-        assert_eq!(names(), before, "invalid explicit inputs cannot allocate another fixture");
+        assert_eq!(
+            names(),
+            before,
+            "invalid explicit inputs cannot allocate another fixture"
+        );
         assert!(!absent.try_exists().unwrap());
         assert_eq!(fs::read(&file).unwrap(), b"preserved invalid explicit root");
     }
@@ -504,7 +562,10 @@ mod tests {
         fs::write(&neighbour, b"other owned fixture remains").unwrap();
         drop(first);
         assert!(!first_root.try_exists().unwrap());
-        assert_eq!(fs::read(&neighbour).unwrap(), b"other owned fixture remains");
+        assert_eq!(
+            fs::read(&neighbour).unwrap(),
+            b"other owned fixture remains"
+        );
         second.check_root().unwrap();
         drop(second);
         assert!(!second_root.try_exists().unwrap());
@@ -514,8 +575,8 @@ mod tests {
     #[cfg(unix)]
     mod physical {
         use super::*;
-        use std::os::unix::fs::{symlink, PermissionsExt};
         use crate::expression_recovery::{RetainedReadHook, RetainedReadPhase};
+        use std::os::unix::fs::{symlink, PermissionsExt};
 
         #[test]
         fn actual_explicit_fixture_alias_qualifies_the_same_existing_field() {
@@ -529,7 +590,10 @@ mod tests {
             let root = child.root.clone();
             drop(child);
             assert!(!root.try_exists().unwrap());
-            assert!(fs::symlink_metadata(&alias).unwrap().file_type().is_symlink());
+            assert!(fs::symlink_metadata(&alias)
+                .unwrap()
+                .file_type()
+                .is_symlink());
             assert_eq!(fs::read(&neighbour).unwrap(), b"preserved alias field");
             field.check_root().unwrap();
         }
@@ -545,10 +609,18 @@ mod tests {
             fs::write(fixture.root.join("peer"), b"replacement peer root").unwrap();
             let error = fixture.cleanup().unwrap_err();
             assert_eq!(error.kind(), io::ErrorKind::InvalidData);
-            assert_eq!(fs::read(preserved.join("original")).unwrap(), b"original owned root");
-            assert_eq!(fs::read(fixture.root.join("peer")).unwrap(), b"replacement peer root");
-            assert_ne!(fs::metadata(&preserved).unwrap().ino(),
-                fs::metadata(&fixture.root).unwrap().ino());
+            assert_eq!(
+                fs::read(preserved.join("original")).unwrap(),
+                b"original owned root"
+            );
+            assert_eq!(
+                fs::read(fixture.root.join("peer")).unwrap(),
+                b"replacement peer root"
+            );
+            assert_ne!(
+                fs::metadata(&preserved).unwrap().ino(),
+                fs::metadata(&fixture.root).unwrap().ino()
+            );
             // Restore only these controlled test inputs after preserving the
             // refusal; cleanup never repairs or deletes an unknown root itself.
             fs::remove_dir_all(&fixture.root).unwrap();
@@ -562,112 +634,204 @@ mod tests {
 
         #[test]
         fn actual_absent_cache_never_creates_a_directory_and_corrupt_record_stays_retained() {
-            let fixture = Fixture::new(); let reading = fixture.reading();
-            let store = Store { path: Some(fixture.root.join("missing/retained")), ..Store::default() };
-            assert!(store.load("native-owner-one", &reading.location).unwrap().is_none());
+            let fixture = Fixture::new();
+            let reading = fixture.reading();
+            let store = Store {
+                path: Some(fixture.root.join("missing/retained")),
+                ..Store::default()
+            };
+            assert!(store
+                .load("native-owner-one", &reading.location)
+                .unwrap()
+                .is_none());
             assert!(!fixture.root.join("missing").exists());
-            let (store,reading,path,_) = fixture.retained();
-            fs::write(&path,b"actual corrupt retained JSON").unwrap();
+            let (store, reading, path, _) = fixture.retained();
+            fs::write(&path, b"actual corrupt retained JSON").unwrap();
             assert!(store.load("native-owner-one", &reading.location).is_err());
-            assert_eq!(fs::read(&path).unwrap(),b"actual corrupt retained JSON");
+            assert_eq!(fs::read(&path).unwrap(), b"actual corrupt retained JSON");
         }
         #[test]
         fn actual_stable_hardlink_and_configured_directory_alias_keep_read_compatibility() {
-            let fixture = Fixture::new(); let (store,reading,path,bytes) = fixture.retained();
-            let alias = fixture.root.join("ordinary-hardlink"); fs::hard_link(&path,&alias).unwrap();
-            assert_eq!(fs::symlink_metadata(&path).unwrap().nlink(),2);
-            assert_eq!(store.load("native-owner-one",&reading.location).unwrap().unwrap().reading.content,"kept");
+            let fixture = Fixture::new();
+            let (store, reading, path, bytes) = fixture.retained();
+            let alias = fixture.root.join("ordinary-hardlink");
+            fs::hard_link(&path, &alias).unwrap();
+            assert_eq!(fs::symlink_metadata(&path).unwrap().nlink(), 2);
+            assert_eq!(
+                store
+                    .load("native-owner-one", &reading.location)
+                    .unwrap()
+                    .unwrap()
+                    .reading
+                    .content,
+                "kept"
+            );
             let directory_alias = fixture.root.join("configured-directory-alias");
-            symlink(store.directory().unwrap(),&directory_alias).unwrap();
-            let aliased = Store { path: Some(directory_alias), ..Store::default() };
-            assert_eq!(aliased.load("native-owner-one",&reading.location).unwrap().unwrap().reading.revision,reading.revision);
-            assert_eq!(fs::read(&path).unwrap(),bytes); assert_eq!(fs::read(&alias).unwrap(),bytes);
+            symlink(store.directory().unwrap(), &directory_alias).unwrap();
+            let aliased = Store {
+                path: Some(directory_alias),
+                ..Store::default()
+            };
+            assert_eq!(
+                aliased
+                    .load("native-owner-one", &reading.location)
+                    .unwrap()
+                    .unwrap()
+                    .reading
+                    .revision,
+                reading.revision
+            );
+            assert_eq!(fs::read(&path).unwrap(), bytes);
+            assert_eq!(fs::read(&alias).unwrap(), bytes);
         }
         #[test]
         fn actual_symlink_and_fifo_never_become_retained_body_reads() {
-            let fixture = Fixture::new(); let (store,reading,path,bytes) = fixture.retained();
-            let original = fixture.root.join("preserved-record"); fs::rename(&path,&original).unwrap();
-            symlink(&original,&path).unwrap();
-            let error = crate::expression_recovery::read_retained_record_bytes(&path,MAX_FILE_BYTES).unwrap_err();
-            assert_eq!(error.raw_os_error(),Some(libc::ELOOP));
-            assert!(store.load("native-owner-one",&reading.location).is_err());
+            let fixture = Fixture::new();
+            let (store, reading, path, bytes) = fixture.retained();
+            let original = fixture.root.join("preserved-record");
+            fs::rename(&path, &original).unwrap();
+            symlink(&original, &path).unwrap();
+            let error =
+                crate::expression_recovery::read_retained_record_bytes(&path, MAX_FILE_BYTES)
+                    .unwrap_err();
+            assert_eq!(error.raw_os_error(), Some(libc::ELOOP));
+            assert!(store.load("native-owner-one", &reading.location).is_err());
             fs::remove_file(&path).unwrap();
             use std::os::unix::ffi::OsStrExt;
             let name = std::ffi::CString::new(path.as_os_str().as_bytes()).unwrap();
-            assert_eq!(unsafe { libc::mkfifo(name.as_ptr(),0o600) },0);
+            assert_eq!(unsafe { libc::mkfifo(name.as_ptr(), 0o600) }, 0);
             let start = std::time::Instant::now();
-            assert!(store.load("native-owner-one",&reading.location).is_err());
-            assert!(start.elapsed() < std::time::Duration::from_secs(2),"actual FIFO observation must not wait for a writer");
-            assert_eq!(fs::read(&original).unwrap(),bytes);
+            assert!(store.load("native-owner-one", &reading.location).is_err());
+            assert!(
+                start.elapsed() < std::time::Duration::from_secs(2),
+                "actual FIFO observation must not wait for a writer"
+            );
+            assert_eq!(fs::read(&original).unwrap(), bytes);
         }
         #[test]
         fn actual_oversize_and_growth_after_held_open_refuse_without_truncated_success() {
-            let fixture = Fixture::new(); let (store,reading,path,bytes) = fixture.retained();
+            let fixture = Fixture::new();
+            let (store, reading, path, bytes) = fixture.retained();
             let opened = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
-            opened.set_len(MAX_FILE_BYTES+1).unwrap();
-            assert!(store.load("native-owner-one",&reading.location).is_err());
-            assert_eq!(fs::metadata(&path).unwrap().len(),MAX_FILE_BYTES+1);
-            fs::write(&path,&bytes).unwrap();
-            let hook = RetainedReadHook::new(RetainedReadPhase::FileOpened,move |path| {
-                std::fs::OpenOptions::new().write(true).open(path).unwrap().set_len(MAX_FILE_BYTES+1).unwrap();
+            opened.set_len(MAX_FILE_BYTES + 1).unwrap();
+            assert!(store.load("native-owner-one", &reading.location).is_err());
+            assert_eq!(fs::metadata(&path).unwrap().len(), MAX_FILE_BYTES + 1);
+            fs::write(&path, &bytes).unwrap();
+            let hook = RetainedReadHook::new(RetainedReadPhase::FileOpened, move |path| {
+                std::fs::OpenOptions::new()
+                    .write(true)
+                    .open(path)
+                    .unwrap()
+                    .set_len(MAX_FILE_BYTES + 1)
+                    .unwrap();
             });
-            assert!(store.load("native-owner-one",&reading.location).is_err()); hook.assert_fired();
-            assert_eq!(fs::metadata(&path).unwrap().len(),MAX_FILE_BYTES+1);
+            assert!(store.load("native-owner-one", &reading.location).is_err());
+            hook.assert_fired();
+            assert_eq!(fs::metadata(&path).unwrap().len(), MAX_FILE_BYTES + 1);
         }
         #[test]
         fn actual_hardlink_in_place_rewrite_between_held_passes_is_not_acknowledged() {
-            let fixture = Fixture::new(); let (store,reading,path,bytes) = fixture.retained();
-            let alias = fixture.root.join("ordinary-hardlink"); fs::hard_link(&path,&alias).unwrap();
+            let fixture = Fixture::new();
+            let (store, reading, path, bytes) = fixture.retained();
+            let alias = fixture.root.join("ordinary-hardlink");
+            fs::hard_link(&path, &alias).unwrap();
             let before_inode = fs::metadata(&path).unwrap().ino();
-            let text = String::from_utf8(bytes).unwrap(); let changed = text.replace("kept","evil").into_bytes();
-            assert_ne!(changed,text.as_bytes()); assert_eq!(changed.len(),text.len());
+            let text = String::from_utf8(bytes).unwrap();
+            let changed = text.replace("kept", "evil").into_bytes();
+            assert_ne!(changed, text.as_bytes());
+            assert_eq!(changed.len(), text.len());
             let retained_changed = changed.clone();
-            let hook = RetainedReadHook::new(RetainedReadPhase::FirstRead,move |_| { fs::write(&alias,&changed).unwrap(); });
-            assert!(store.load("native-owner-one",&reading.location).is_err()); hook.assert_fired();
-            assert_eq!(fs::metadata(&path).unwrap().ino(),before_inode);
-            assert_eq!(fs::read(&path).unwrap(),retained_changed,"read refusal must not fabricate rollback");
+            let hook = RetainedReadHook::new(RetainedReadPhase::FirstRead, move |_| {
+                fs::write(&alias, &changed).unwrap();
+            });
+            assert!(store.load("native-owner-one", &reading.location).is_err());
+            hook.assert_fired();
+            assert_eq!(fs::metadata(&path).unwrap().ino(), before_inode);
+            assert_eq!(
+                fs::read(&path).unwrap(),
+                retained_changed,
+                "read refusal must not fabricate rollback"
+            );
         }
         #[test]
         fn actual_final_name_replacement_after_last_held_read_refuses_preserved_bytes() {
-            let fixture = Fixture::new(); let (store,reading,path,bytes) = fixture.retained();
-            let original = fixture.root.join("held-original"); let original_check = original.clone(); let peer = bytes.clone();
-            let hook = RetainedReadHook::new(RetainedReadPhase::SecondRead,move |path| {
-                fs::rename(path,&original).unwrap(); fs::write(path,&peer).unwrap();
+            let fixture = Fixture::new();
+            let (store, reading, path, bytes) = fixture.retained();
+            let original = fixture.root.join("held-original");
+            let original_check = original.clone();
+            let peer = bytes.clone();
+            let hook = RetainedReadHook::new(RetainedReadPhase::SecondRead, move |path| {
+                fs::rename(path, &original).unwrap();
+                fs::write(path, &peer).unwrap();
             });
-            assert!(store.load("native-owner-one",&reading.location).is_err()); hook.assert_fired();
-            assert_eq!(fs::read(&original_check).unwrap(),bytes); assert_eq!(fs::read(&path).unwrap(),bytes);
-            assert_ne!(fs::metadata(&original_check).unwrap().ino(),fs::metadata(&path).unwrap().ino());
+            assert!(store.load("native-owner-one", &reading.location).is_err());
+            hook.assert_fired();
+            assert_eq!(fs::read(&original_check).unwrap(), bytes);
+            assert_eq!(fs::read(&path).unwrap(), bytes);
+            assert_ne!(
+                fs::metadata(&original_check).unwrap().ino(),
+                fs::metadata(&path).unwrap().ino()
+            );
         }
         #[test]
         fn actual_named_parent_replacement_and_root_alias_retarget_refuse_old_affiliation() {
-            let fixture = Fixture::new(); let (store,reading,path,bytes) = fixture.retained();
-            let dir = store.directory().unwrap(); let original = fixture.root.join("held-directory");
-            let original_check = original.clone(); let peer = bytes.clone(); let filename = path.file_name().unwrap().to_owned();
-            let hook = RetainedReadHook::new(RetainedReadPhase::FirstRead,move |_| {
-                fs::rename(&dir,&original).unwrap(); fs::create_dir(&dir).unwrap(); fs::write(dir.join(filename),&peer).unwrap();
+            let fixture = Fixture::new();
+            let (store, reading, path, bytes) = fixture.retained();
+            let dir = store.directory().unwrap();
+            let original = fixture.root.join("held-directory");
+            let original_check = original.clone();
+            let peer = bytes.clone();
+            let filename = path.file_name().unwrap().to_owned();
+            let hook = RetainedReadHook::new(RetainedReadPhase::FirstRead, move |_| {
+                fs::rename(&dir, &original).unwrap();
+                fs::create_dir(&dir).unwrap();
+                fs::write(dir.join(filename), &peer).unwrap();
             });
-            assert!(store.load("native-owner-one",&reading.location).is_err()); hook.assert_fired(); drop(hook);
-            assert_eq!(fs::read(&path).unwrap(),bytes);
-            assert_eq!(fs::read(original_check.join(path.file_name().unwrap())).unwrap(),bytes);
-            let alias = fixture.root.join("configured-alias"); symlink(&original_check,&alias).unwrap();
-            let target = fixture.root.join("peer-directory"); fs::create_dir(&target).unwrap();
-            let aliased = Store { path: Some(alias.clone()), ..Store::default() };
-            let hook = RetainedReadHook::new(RetainedReadPhase::DirectoryOpened,move |_| {
-                fs::remove_file(&alias).unwrap(); symlink(&target,&alias).unwrap();
+            assert!(store.load("native-owner-one", &reading.location).is_err());
+            hook.assert_fired();
+            drop(hook);
+            assert_eq!(fs::read(&path).unwrap(), bytes);
+            assert_eq!(
+                fs::read(original_check.join(path.file_name().unwrap())).unwrap(),
+                bytes
+            );
+            let alias = fixture.root.join("configured-alias");
+            symlink(&original_check, &alias).unwrap();
+            let target = fixture.root.join("peer-directory");
+            fs::create_dir(&target).unwrap();
+            let aliased = Store {
+                path: Some(alias.clone()),
+                ..Store::default()
+            };
+            let hook = RetainedReadHook::new(RetainedReadPhase::DirectoryOpened, move |_| {
+                fs::remove_file(&alias).unwrap();
+                symlink(&target, &alias).unwrap();
             });
-            assert!(aliased.load("native-owner-one",&reading.location).is_err()); hook.assert_fired();
-            assert_eq!(fs::read(original_check.join(path.file_name().unwrap())).unwrap(),bytes);
+            assert!(aliased.load("native-owner-one", &reading.location).is_err());
+            hook.assert_fired();
+            assert_eq!(
+                fs::read(original_check.join(path.file_name().unwrap())).unwrap(),
+                bytes
+            );
         }
         #[test]
         fn actual_file_permission_failure_keeps_original_private_io_errno() {
-            assert_ne!(unsafe { libc::geteuid() },0,"actual EACCES prerequisite must not green-skip");
-            let fixture = Fixture::new(); let (_,_,path,bytes) = fixture.retained();
-            fs::set_permissions(&path,fs::Permissions::from_mode(0o000)).unwrap();
-            let error = crate::expression_recovery::read_retained_record_bytes(&path,MAX_FILE_BYTES).unwrap_err();
-            assert_eq!(error.kind(),std::io::ErrorKind::PermissionDenied); assert_eq!(error.raw_os_error(),Some(libc::EACCES));
-            assert_eq!(fs::metadata(&path).unwrap().permissions().mode() & 0o777,0);
-            fs::set_permissions(&path,fs::Permissions::from_mode(0o600)).unwrap();
-            assert_eq!(fs::read(&path).unwrap(),bytes);
+            assert_ne!(
+                unsafe { libc::geteuid() },
+                0,
+                "actual EACCES prerequisite must not green-skip"
+            );
+            let fixture = Fixture::new();
+            let (_, _, path, bytes) = fixture.retained();
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o000)).unwrap();
+            let error =
+                crate::expression_recovery::read_retained_record_bytes(&path, MAX_FILE_BYTES)
+                    .unwrap_err();
+            assert_eq!(error.kind(), std::io::ErrorKind::PermissionDenied);
+            assert_eq!(error.raw_os_error(), Some(libc::EACCES));
+            assert_eq!(fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0);
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+            assert_eq!(fs::read(&path).unwrap(), bytes);
         }
     }
 }

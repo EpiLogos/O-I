@@ -668,34 +668,84 @@ fn read_records(
 
 /// Physical observation for disposable retained readings only. It grants no
 /// current Source permission and never creates a missing cache directory.
-pub(crate) fn read_retained_record_bytes(path: &std::path::Path, maximum: u64) -> std::io::Result<Option<Vec<u8>>> {
-    #[cfg(unix)] { unix::read_retained(path, maximum) }
-    #[cfg(not(unix))] { let _ = (path, maximum); Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "Held retained reading unsupported on this platform")) }
+pub(crate) fn read_retained_record_bytes(
+    path: &std::path::Path,
+    maximum: u64,
+) -> std::io::Result<Option<Vec<u8>>> {
+    #[cfg(unix)]
+    {
+        unix::read_retained(path, maximum)
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = (path, maximum);
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "Held retained reading unsupported on this platform",
+        ))
+    }
 }
 #[cfg(all(test, unix))]
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum RetainedReadPhase { DirectoryOpened, FileOpened, FirstRead, SecondRead }
+pub(crate) enum RetainedReadPhase {
+    DirectoryOpened,
+    FileOpened,
+    FirstRead,
+    SecondRead,
+}
+#[cfg(all(test, unix))]
+type RetainedReadOperation = (RetainedReadPhase, Box<dyn FnOnce(&std::path::Path)>);
 #[cfg(all(test, unix))]
 thread_local! {
-    static RETAINED_READ_HOOK: std::cell::RefCell<Option<(RetainedReadPhase, Box<dyn FnOnce(&std::path::Path)>)>> = std::cell::RefCell::new(None);
+    static RETAINED_READ_HOOK: std::cell::RefCell<Option<RetainedReadOperation>> = std::cell::RefCell::new(None);
 }
 #[cfg(all(test, unix))]
 pub(crate) struct RetainedReadHook;
 #[cfg(all(test, unix))]
 impl RetainedReadHook {
-    pub(crate) fn new(phase: RetainedReadPhase, operation: impl FnOnce(&std::path::Path) + 'static) -> Self {
-        RETAINED_READ_HOOK.with(|slot| { assert!(slot.borrow().is_none()); *slot.borrow_mut() = Some((phase, Box::new(operation))); }); Self
+    pub(crate) fn new(
+        phase: RetainedReadPhase,
+        operation: impl FnOnce(&std::path::Path) + 'static,
+    ) -> Self {
+        RETAINED_READ_HOOK.with(|slot| {
+            assert!(slot.borrow().is_none());
+            *slot.borrow_mut() = Some((phase, Box::new(operation)));
+        });
+        Self
     }
-    pub(crate) fn assert_fired(&self) { RETAINED_READ_HOOK.with(|slot| assert!(slot.borrow().is_none(), "actual held read did not reach checkpoint")); }
+    pub(crate) fn assert_fired(&self) {
+        RETAINED_READ_HOOK.with(|slot| {
+            assert!(
+                slot.borrow().is_none(),
+                "actual held read did not reach checkpoint"
+            )
+        });
+    }
 }
 #[cfg(all(test, unix))]
-impl Drop for RetainedReadHook { fn drop(&mut self) { RETAINED_READ_HOOK.with(|slot| { slot.borrow_mut().take(); }); } }
+impl Drop for RetainedReadHook {
+    fn drop(&mut self) {
+        RETAINED_READ_HOOK.with(|slot| {
+            slot.borrow_mut().take();
+        });
+    }
+}
 #[cfg(all(test, unix))]
 fn retained_read_checkpoint(phase: RetainedReadPhase, path: &std::path::Path) {
-    let operation = RETAINED_READ_HOOK.with(|slot| { let mut current = slot.borrow_mut();
-        if current.as_ref().is_some_and(|(expected, _)| *expected == phase) { current.take().map(|(_, operation)| operation) } else { None }
+    let operation = RETAINED_READ_HOOK.with(|slot| {
+        let mut current = slot.borrow_mut();
+        if current
+            .as_ref()
+            .is_some_and(|(expected, _)| *expected == phase)
+        {
+            current.take().map(|(_, operation)| operation)
+        } else {
+            None
+        }
     });
-    if let Some(operation) = operation { operation(path); }
+    if let Some(operation) = operation {
+        operation(path);
+    }
 }
 #[cfg(unix)]
 mod unix {
@@ -705,7 +755,10 @@ mod unix {
         io::{self, Read, Seek, SeekFrom, Write},
         os::{
             fd::{AsRawFd, FromRawFd},
-            unix::{ffi::OsStrExt, fs::{MetadataExt, OpenOptionsExt}},
+            unix::{
+                ffi::OsStrExt,
+                fs::{MetadataExt, OpenOptionsExt},
+            },
         },
         path::{Component, Path, PathBuf},
     };
@@ -722,13 +775,19 @@ mod unix {
     fn physical_name(value: &OsStr) -> io::Result<CString> {
         let bytes = value.as_bytes();
         if bytes.is_empty() || bytes.contains(&b'/') || bytes == b"." || bytes == b".." {
-            return Err(io::Error::new(io::ErrorKind::InvalidInput, "Invalid physical record member"));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Invalid physical record member",
+            ));
         }
         CString::new(bytes).map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))
     }
     fn owned_file_io(fd: i32) -> io::Result<File> {
-        if fd < 0 { Err(io::Error::last_os_error()) }
-        else { Ok(unsafe { File::from_raw_fd(fd) }) }
+        if fd < 0 {
+            Err(io::Error::last_os_error())
+        } else {
+            Ok(unsafe { File::from_raw_fd(fd) })
+        }
     }
     fn owned_file(fd: i32) -> Result<File, String> {
         if fd < 0 {
@@ -757,8 +816,13 @@ mod unix {
         }
         fn open_file_io(&self, value: &OsStr, writable: bool, create: bool) -> io::Result<File> {
             let value = physical_name(value)?;
-            let flags = (if writable { libc::O_RDWR } else { libc::O_RDONLY })
-                | libc::O_NOFOLLOW | libc::O_CLOEXEC | libc::O_NONBLOCK
+            let flags = (if writable {
+                libc::O_RDWR
+            } else {
+                libc::O_RDONLY
+            }) | libc::O_NOFOLLOW
+                | libc::O_CLOEXEC
+                | libc::O_NONBLOCK
                 | if create { libc::O_CREAT } else { 0 };
             let fd = unsafe { libc::openat(self.0.as_raw_fd(), value.as_ptr(), flags, 0o600) };
             owned_file_io(fd)
@@ -932,10 +996,14 @@ mod unix {
         }
     }
     fn same_directory(held: &Directory, named: &Directory) -> io::Result<()> {
-        let a = held.0.metadata()?; let b = named.0.metadata()?;
-        if !a.is_dir() || !b.is_dir() || a.nlink() == 0
-            || (a.dev(), a.ino()) != (b.dev(), b.ino()) {
-            return Err(io::Error::new(io::ErrorKind::InvalidData, "Retained directory affiliation changed"));
+        let a = held.0.metadata()?;
+        let b = named.0.metadata()?;
+        if !a.is_dir() || !b.is_dir() || a.nlink() == 0 || (a.dev(), a.ino()) != (b.dev(), b.ino())
+        {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Retained directory affiliation changed",
+            ));
         }
         Ok(())
     }
@@ -948,76 +1016,137 @@ mod unix {
     impl ReadDirectory {
         fn check(&self) -> io::Result<()> {
             if std::fs::canonicalize(&self.original_anchor)? != self.canonical_anchor {
-                return Err(io::Error::new(io::ErrorKind::InvalidData, "Retained directory alias changed"));
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Retained directory alias changed",
+                ));
             }
-            same_directory(&self.directories[0], &Directory::open_io(&self.canonical_anchor)?)?;
+            same_directory(
+                &self.directories[0],
+                &Directory::open_io(&self.canonical_anchor)?,
+            )?;
             for (index, member) in self.members.iter().enumerate() {
                 let named = self.directories[index].child_existing_io(member)?;
                 same_directory(&self.directories[index + 1], &named)?;
             }
             Ok(())
         }
-        fn current(&self) -> &Directory { self.directories.last().expect("held directory") }
+        fn current(&self) -> &Directory {
+            self.directories.last().expect("held directory")
+        }
         fn complete(&self, requested: &Path) -> io::Result<()> {
             self.check()?;
             let mut canonical = self.canonical_anchor.clone();
-            for member in &self.members { canonical.push(member); }
+            for member in &self.members {
+                canonical.push(member);
+            }
             if std::fs::canonicalize(requested)? != canonical {
-                return Err(io::Error::new(io::ErrorKind::InvalidData, "Retained requested directory changed"));
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Retained requested directory changed",
+                ));
             }
             same_directory(self.current(), &Directory::open_io(&canonical)?)
         }
     }
     fn fingerprint(meta: &std::fs::Metadata) -> io::Result<(u64, u64, u64, i64, i64, i64, i64)> {
         if !meta.is_file() {
-            return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid native retained reading"));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Invalid native retained reading",
+            ));
         }
         // Read-only retention permits stable hardlinks. This is not the
         // Expression private-file policy. Access time is not a content basis.
-        Ok((meta.dev(), meta.ino(), meta.len(), meta.mtime(), meta.mtime_nsec(), meta.ctime(), meta.ctime_nsec()))
+        Ok((
+            meta.dev(),
+            meta.ino(),
+            meta.len(),
+            meta.mtime(),
+            meta.mtime_nsec(),
+            meta.ctime(),
+            meta.ctime_nsec(),
+        ))
     }
     fn read_pass(file: &mut File, maximum: u64) -> io::Result<Vec<u8>> {
-        let cap = maximum.checked_add(1).ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Retained read capacity overflow"))?;
-        let mut bytes = Vec::new(); Read::by_ref(file).take(cap).read_to_end(&mut bytes)?;
+        let cap = maximum.checked_add(1).ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Retained read capacity overflow",
+            )
+        })?;
+        let mut bytes = Vec::new();
+        Read::by_ref(file).take(cap).read_to_end(&mut bytes)?;
         if bytes.len() as u64 > maximum {
-            return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid native retained reading"));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Invalid native retained reading",
+            ));
         }
         Ok(bytes)
     }
     pub(super) fn read_retained(path: &Path, maximum: u64) -> io::Result<Option<Vec<u8>>> {
-        let requested = if path.is_absolute() { path.to_owned() } else { std::env::current_dir()?.join(path) };
-        let filename = requested.file_name().ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Missing retained filename"))?;
-        let requested_dir = requested.parent().ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Missing retained directory"))?;
-        let mut anchor = requested_dir.to_owned(); let mut missing = Vec::new();
+        let requested = if path.is_absolute() {
+            path.to_owned()
+        } else {
+            std::env::current_dir()?.join(path)
+        };
+        let filename = requested.file_name().ok_or_else(|| {
+            io::Error::new(io::ErrorKind::InvalidInput, "Missing retained filename")
+        })?;
+        let requested_dir = requested.parent().ok_or_else(|| {
+            io::Error::new(io::ErrorKind::InvalidInput, "Missing retained directory")
+        })?;
+        let mut anchor = requested_dir.to_owned();
+        let mut missing = Vec::new();
         let canonical = loop {
             match std::fs::canonicalize(&anchor) {
                 Ok(canonical) => break canonical,
                 Err(error) if error.kind() == io::ErrorKind::NotFound => {
                     if missing.len() >= 128 {
-                        return Err(io::Error::new(io::ErrorKind::InvalidData, "Retained directory depth exceeds observation bound"));
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "Retained directory depth exceeds observation bound",
+                        ));
                     }
-                    let Some(Component::Normal(member)) = anchor.components().next_back() else { return Err(error); };
-                    missing.push(member.to_owned()); anchor.pop();
+                    let Some(Component::Normal(member)) = anchor.components().next_back() else {
+                        return Err(error);
+                    };
+                    missing.push(member.to_owned());
+                    anchor.pop();
                 }
                 Err(error) => return Err(error),
             }
         };
         let mut context = ReadDirectory {
-            directories: vec![Directory::open_io(&canonical)?], members: Vec::new(),
-            original_anchor: anchor, canonical_anchor: canonical,
+            directories: vec![Directory::open_io(&canonical)?],
+            members: Vec::new(),
+            original_anchor: anchor,
+            canonical_anchor: canonical,
         };
         context.check()?;
-        #[cfg(test)] super::retained_read_checkpoint(super::RetainedReadPhase::DirectoryOpened, &requested);
+        #[cfg(test)]
+        super::retained_read_checkpoint(super::RetainedReadPhase::DirectoryOpened, &requested);
         context.check()?;
         for member in missing.into_iter().rev() {
             match context.current().child_existing_io(&member) {
-                Ok(child) => { context.members.push(member); context.directories.push(child); context.check()?; }
+                Ok(child) => {
+                    context.members.push(member);
+                    context.directories.push(child);
+                    context.check()?;
+                }
                 Err(error) if error.kind() == io::ErrorKind::NotFound => {
                     context.check()?;
                     return match context.current().child_existing_io(&member) {
-                        Err(second) if second.kind() == io::ErrorKind::NotFound => { context.check()?; Ok(None) }
+                        Err(second) if second.kind() == io::ErrorKind::NotFound => {
+                            context.check()?;
+                            Ok(None)
+                        }
                         Err(second) => Err(second),
-                        Ok(_) => Err(io::Error::new(io::ErrorKind::InvalidData, "Absent retained directory appeared during observation")),
+                        Ok(_) => Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "Absent retained directory appeared during observation",
+                        )),
                     };
                 }
                 Err(error) => return Err(error),
@@ -1029,27 +1158,50 @@ mod unix {
             Err(error) if error.kind() == io::ErrorKind::NotFound => {
                 context.complete(requested_dir)?;
                 return match context.current().open_file_io(filename, false, false) {
-                    Err(second) if second.kind() == io::ErrorKind::NotFound => { context.complete(requested_dir)?; Ok(None) }
+                    Err(second) if second.kind() == io::ErrorKind::NotFound => {
+                        context.complete(requested_dir)?;
+                        Ok(None)
+                    }
                     Err(second) => Err(second),
-                    Ok(_) => Err(io::Error::new(io::ErrorKind::InvalidData, "Absent retained reading appeared during observation")),
+                    Ok(_) => Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "Absent retained reading appeared during observation",
+                    )),
                 };
             }
             Err(error) => return Err(error),
         };
         let basis = fingerprint(&file.metadata()?)?;
-        if basis.2 > maximum { return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid native retained reading")); }
-        #[cfg(test)] super::retained_read_checkpoint(super::RetainedReadPhase::FileOpened, &requested);
+        if basis.2 > maximum {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Invalid native retained reading",
+            ));
+        }
+        #[cfg(test)]
+        super::retained_read_checkpoint(super::RetainedReadPhase::FileOpened, &requested);
         let bytes = read_pass(&mut file, maximum)?;
-        #[cfg(test)] super::retained_read_checkpoint(super::RetainedReadPhase::FirstRead, &requested);
+        #[cfg(test)]
+        super::retained_read_checkpoint(super::RetainedReadPhase::FirstRead, &requested);
         file.seek(SeekFrom::Start(0))?;
         let second = read_pass(&mut file, maximum)?;
-        #[cfg(test)] super::retained_read_checkpoint(super::RetainedReadPhase::SecondRead, &requested);
-        if bytes != second || bytes.len() as u64 != basis.2 || fingerprint(&file.metadata()?)? != basis {
-            return Err(io::Error::new(io::ErrorKind::InvalidData, "Native retained reading changed during observation"));
+        #[cfg(test)]
+        super::retained_read_checkpoint(super::RetainedReadPhase::SecondRead, &requested);
+        if bytes != second
+            || bytes.len() as u64 != basis.2
+            || fingerprint(&file.metadata()?)? != basis
+        {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Native retained reading changed during observation",
+            ));
         }
         let named = context.current().open_file_io(filename, false, false)?;
         if fingerprint(&named.metadata()?)? != basis || fingerprint(&file.metadata()?)? != basis {
-            return Err(io::Error::new(io::ErrorKind::InvalidData, "Native retained reading name changed during observation"));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Native retained reading name changed during observation",
+            ));
         }
         context.complete(requested_dir)?;
         Ok(Some(bytes))
