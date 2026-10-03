@@ -33,7 +33,9 @@ export class RetainedProductionAdapter extends RetainedBase {
     // Prefer an actual member centre within 12px; connections retain their
     // own independently selectable midpoints, including parallel records.
     let member = null, distance = 12;
+    const enabled = new Set((this.engine.config.entities ?? []).filter(entity => entity.enabled !== false).map(entity => entity.id));
     for (const pose of this.engine.lastPoses ?? []) {
+      if (!enabled.has(pose.entityId)) continue;
       const p = this.engine.projectWorldToScreen(pose.x, pose.y, pose.z ?? 0);
       if (!p.visible) continue;
       const d = Math.hypot(x-p.x,y-p.y);

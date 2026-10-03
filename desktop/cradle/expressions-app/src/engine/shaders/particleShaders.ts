@@ -41,6 +41,7 @@ uniform float uColorContrast;
 // Entity tints (per particle partition) and the composition focus tint — layered over the field palette
 uniform int uEntityCount;
 uniform float uConnectionStart;
+uniform float uNodePoolVisible;
 uniform sampler2D uConnectionMetadata;
 uniform float uEditHasSelection;
 uniform float uEditSelected[${MAX_FORMATIONS}];
@@ -145,6 +146,14 @@ vec3 evalPaletteRamp(float t, vec3 c1, vec3 c2, vec3 c3, float contrast) {
 
 void main() {
   vSimUv = uv;
+  // Node and relation pools share one simulator, but retain their own draw
+  // membership. Do not hide admitted relations with an empty formation pool.
+  float particleIndex = floor(uv.y * uTexSize.y) * uTexSize.x + floor(uv.x * uTexSize.x);
+  if (particleIndex < uConnectionStart && uNodePoolVisible < 0.5) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    gl_PointSize = 0.0;
+    return;
+  }
 
   // Sample simulation textures
   vec4 posData = texture2D(uPositionTexture, uv);

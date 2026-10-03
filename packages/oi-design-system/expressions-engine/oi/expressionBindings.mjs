@@ -39,7 +39,9 @@ export class ExpressionConnectionLayer {
    * rather than an old authored coordinate while the physical carrier moves. */
   pickEntity(x,y,radius=25) {
     let selected=null,best=radius;
+    const enabled=new Set((this.engine.config.entities??[]).filter(entity=>entity.enabled!==false).map(entity=>entity.id));
     for(const pose of this.engine.lastPoses??[]) {
+      if(!enabled.has(pose.entityId))continue;
       const p=point(pose);if(!p)continue;
       const projected=this.engine.projectWorldToScreen(p.x,p.y,p.z);
       if(!projected?.visible)continue;
