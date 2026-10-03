@@ -33,7 +33,9 @@ export interface NativeAnswer {
   epii?: Pick<NativeEpiiReview, 'enrichment' | 'provenance'>;
   /** Exact submitted basis, deliberately excludes the full private identity matrix. */
   basis: {context: ObjectValue; selected: ObjectValue; identity_source: ObjectValue;
-    input_revision: string; expression: ObjectValue};
+    input_revision: string; expression: ObjectValue;
+    /** Original inquiry refs only: no private numeric current/chart/matrix. */
+    source_projection?:ObjectValue};
 }
 export function nativeAnswer(dialogue: NativeDialogue, reading: EncounterReading, blockId: number): NativeAnswer {
   if (reading.agent_session !== dialogue.provisioning.agent_session) throw new Error('The selected answer belongs to another native session.');
@@ -73,6 +75,12 @@ export function nativeAnswer(dialogue: NativeDialogue, reading: EncounterReading
     questionBlockId: prompt.id, questionBlockIds: prompt.blockIds, answer: blocks[index].text,
     question: text(input.question), basis: {context, selected: object(input.selected), identity_source: source,
       input_revision: text(identity.input_revision), expression}};
+  if(input.selected_source_basis&&input.selected_scene_native_basis){
+    const scene=object(input.selected_scene_native_basis);
+    result.basis.source_projection={selected_source_basis:object(input.selected_source_basis),selected_source_relation:input.selected_source_relation??null,
+      selected_scene_native_basis:{schema:scene.schema,instance_ref:scene.instance_ref,person_ref:scene.person_ref,event_ref:scene.event_ref,
+        snapshot_ref:scene.snapshot_ref,selected_scene_ref:scene.selected_scene_ref,source_basis:scene.source_basis}};
+  }
   if (dialogue.role === 'epii' && input.epii_delegation) result.structuredEpii = true;
   if (new TextEncoder().encode(JSON.stringify(result)).length > 256 * 1024) throw new Error('This answer and its basis exceed the bounded retention size.');
   return result;

@@ -17,6 +17,7 @@ import {kernelOp} from "../../kernel/bridge";
 import type {CentralLocation, KernelTransportStatus} from "../../kernel/types";
 import {materialList, type MaterialListing, type MaterialListResult} from "../../expression/world";
 import {readFile, resolveFileLocation} from "../../files/client";
+import {readExpressionFile} from "../../knowledge/constructionProjection";
 import {asCharacterDocument, type CharacterDocument, type CharacterListing} from "./characterModel";
 
 /** One owner row → the creator's character choice. */
@@ -40,8 +41,7 @@ export async function listCharacters(transport: KernelTransportStatus): Promise<
 
 export async function readCharacter(transport: KernelTransportStatus, fileRef: string): Promise<{document: CharacterDocument; revision: string}> {
   const reading = await readFile(transport, await resolveFileLocation(transport, fileRef));
-  let parsed: unknown;
-  try { parsed = JSON.parse(reading.content); } catch { throw new Error(`${fileRef} is not a JSON material document.`); }
+  const parsed = await readExpressionFile(transport, reading);
   return {document: asCharacterDocument(parsed), revision: reading.revision};
 }
 
@@ -52,8 +52,10 @@ export const OPEN_EXPRESSION_EVENT = "oi:epi-open-expression";
 export async function openCharacterInExpressions(transport: KernelTransportStatus, fileRef: string, known?: CentralLocation): Promise<string> {
   // The listing already names the owner's location; otherwise resolve the ref.
   const location = known && known.ref === fileRef ? known : await resolveFileLocation(transport, fileRef);
-  const reply = await kernelOp(transport, {op: "expression", request: {operation: "open_file", location, actor: "human:agent-creator"}});
+  const reading = await readFile(transport, location);
+  const reply = await kernelOp(transport, {op: "expression", request: {operation: "open_file", location, expected_file_revision: reading.revision, actor: "human:agent-creator"}});
   if (reply.error || reply.outcome?.result !== "expression") throw new Error(reply.error ?? "The Expression owner did not open the character material.");
+  if (reply.outcome.data.state !== 'ready' || reply.outcome.data.file?.revision !== reading.revision || reply.outcome.data.file?.location.ref !== location.ref) throw new Error('The character material changed before opening. Read its current source and try again.');
   const expressionRef = reply.outcome.data.document?.expression_ref;
   if (!expressionRef) throw new Error(`The Expression owner opened ${fileRef} without an Expression identity (state ${String(reply.outcome.data.state)}).`);
   window.dispatchEvent(new CustomEvent(OPEN_EXPRESSION_EVENT, {detail: {expressionRef}}));

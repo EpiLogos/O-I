@@ -136,6 +136,9 @@ if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
   [ -d "${MACOS_APP_PATH}" ] && MACOS_APP="${MACOS_APP_PATH}"
   [ -n "${MACOS_APP}" ] || die "no .app found at ${MACOS_APP_PATH}; run the tauri build first (or drop --skip-build)"
   [ -f "${MACOS_APP}/Contents/Resources/shared-field/field-client.sh" ] || die "${MACOS_APP} carries no shared-field/ client resource; the installed Explore would have no SharedField client"
+  # A linker-signed executable does not seal the surrounding resources.
+  # Signing belongs to the native bundler; adoption never repairs its payload.
+  codesign --verify --deep --strict "${MACOS_APP}" || die "native macOS app signature is invalid; rebuild with the intended Tauri signing identity"
 else
   for candidate in "${TARGET_ROOT}"/release/bundle/appimage/*.AppImage; do
     if [ -f "${candidate}" ]; then APPIMAGE="${candidate}"; break; fi
@@ -151,6 +154,7 @@ mkdir -p "${BUNDLE_ROOT}/app"
 
 if [ -n "${MACOS_APP}" ]; then
   cp -R "${MACOS_APP}" "${BUNDLE_ROOT}/app/O-I.app"
+  codesign --verify --deep --strict "${BUNDLE_ROOT}/app/O-I.app" || die "staged macOS app signature changed during adoption"
 else
   cp "${APPIMAGE}" "${BUNDLE_ROOT}/app/oi-cradle.AppImage"
 fi

@@ -4,6 +4,8 @@ import {chromium} from 'playwright';
 import {fileURLToPath} from 'node:url';
 import {readFileSync,mkdirSync,mkdtempSync,rmSync,writeFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const icon=readFileSync(new URL('../../../packages/oi-design-system/assets/oi-mark.svg',import.meta.url));
 const out=fileURLToPath(new URL('./artifacts/canvas-editor/',import.meta.url));mkdirSync(out,{recursive:true});
@@ -50,21 +52,92 @@ function execute(op){calls.push(op);
  else throw Error('Unknown controlled request '+req.action);
  return {result:'encounter_reading',data};
 }
-const cacheDir=mkdtempSync(out+'vite-cache-');
-const server=await createServer({root,cacheDir,optimizeDeps:{noDiscovery:true,include:['react','react-dom/client','@xterm/xterm']},appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
-server.middlewares.use('/op',(request,response)=>{let body='';request.on('data',chunk=>body+=chunk);request.on('end',()=>{response.setHeader('content-type','application/json');try{const op=JSON.parse(body);if(delayedRead&&op.request?.action==='context'&&op.request.request.operation==='read'){const hold=delayedRead;delayedRead=undefined;hold.response=()=>{const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));};return;}const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));}catch(e){response.end(JSON.stringify({ok:false,error:String(e)}));}});});
-server.middlewares.use('/events',(_q,res)=>{res.setHeader('content-type','application/json');res.end('{"ok":true,"receipts":[]}');});
+// This existing component harness keeps controlled source/context operations.
+// Kernel State, surface events and replay below come from ONE actual native owner.
+const nativeBinary=process.env.OI_KERNEL_BIN;
+assert.ok(nativeBinary?.startsWith('/')&&existsSync(nativeBinary),'Build and supply the exact candidate OI_KERNEL_BIN; no PATH or empty-history fallback');
+const nativeHome=mkdtempSync(out+'native-home-');mkdirSync(nativeHome+'/central');
+const nativeReplay={standing:'Actual native State/surface/replay and production browser receiver; source/context handlers remain controlled component evidence',executable:{path:nativeBinary,sha256:createHash('sha256').update(readFileSync(nativeBinary)).digest('hex')},operations:[]};
+let child,nativeStderr='',nativeEndpoint,server,cacheDir,browser,page;
+const stopNative=async()=>{
+ if(!child?.pid||child.exitCode!==null||child.signalCode!==null)return;
+ const exited=once(child,'exit');child.kill('SIGTERM');
+ const timer=setTimeout(()=>child.kill('SIGKILL'),5000);
+ try{await exited;}finally{clearTimeout(timer);}
+};
+const startNative=async()=>{
+ const env={...process.env,HOME:nativeHome};
+ // An isolated replay owner must not inherit another lane's offered sockets,
+ // remote routes, selected providers or native authority from the gate host.
+ for(const key of Object.keys(env))if(/^(OI_|CENTRAL_|AIKIT_|WORKCELL_)/.test(key))delete env[key];
+ Object.assign(env,{OI_HOME:nativeHome,OI_CENTRAL_ROOT:nativeHome+'/central',OI_CENTRAL_PROJECT_QUERY:''});
+ child=spawn(nativeBinary,['127.0.0.1:0'],{cwd:nativeHome,env,stdio:['ignore','pipe','pipe']});
+ child.stderr.on('data',chunk=>{nativeStderr=(nativeStderr+String(chunk)).slice(-65536);});
+ return new Promise((accept,reject)=>{
+  let text='';const timer=setTimeout(()=>finish(Error('Native replay bridge startup timed out: '+nativeStderr)),15000);
+  const error=reason=>finish(reason),exit=code=>finish(Error('Native replay bridge exited '+code+': '+nativeStderr));
+  const finish=(reason,url)=>{clearTimeout(timer);child.off('error',error);child.off('exit',exit);reason?reject(reason):accept(url);};
+  child.once('error',error);child.once('exit',exit);
+  child.stdout.on('data',chunk=>{text=(text+String(chunk)).slice(-65536);const match=/listening on (http:\/\/127\.0\.0\.1:\d+)/.exec(text);if(match)finish(null,match[1]);});
+ });
+};
+const relayNative=async(path,method='GET',body)=>{
+ const response=await fetch(nativeEndpoint+path,{method,headers:body?{'content-type':'application/json'}:{},body,signal:AbortSignal.timeout(10000)});
+ const chunks=[];let length=0;
+ const reader=response.body?.getReader();
+ if(reader)try{
+  while(true){const {done,value}=await reader.read();if(done)break;
+   if(value.byteLength>512*1024-length){await reader.cancel();throw Error('Native browser replay response exceeds its512KiB bound');}
+   length+=value.byteLength;chunks.push(value);
+  }
+ }finally{reader.releaseLock();}
+ const bytes=Buffer.concat(chunks,length);
+ return{status:response.status,bytes,contentType:response.headers.get('content-type')??'application/json'};
+};
+try{
+ nativeEndpoint=await startNative();nativeReplay.endpoint=nativeEndpoint;nativeReplay.pid=child.pid;
+cacheDir=mkdtempSync(out+'vite-cache-');
+server=await createServer({root,cacheDir,optimizeDeps:{noDiscovery:true,include:['react','react-dom/client','@xterm/xterm']},appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
+server.middlewares.use(async(request,response,next)=>{
+ const path=new URL(request.url,'http://native-browser.test').pathname;
+ if(request.method!=='GET'||!['/event-replay','/events'].includes(path))return next();
+ try{const owner=await relayNative(request.url);response.statusCode=owner.status;response.setHeader('content-type',owner.contentType);response.end(owner.bytes);}
+ catch(error){response.statusCode=502;response.setHeader('content-type','application/json');response.end(JSON.stringify({ok:false,error:String(error)}));}
+});
+server.middlewares.use('/op',(request,response)=>{let body='';request.on('data',chunk=>body+=chunk);request.on('end',async()=>{response.setHeader('content-type','application/json');try{const op=JSON.parse(body);if(['state','surface_open','surface_focus','surface_close'].includes(op.op)){const owner=await relayNative('/op','POST',body);if(op.op!=='state')nativeReplay.operations.push({request:op,response:JSON.parse(owner.bytes.toString('utf8'))});response.statusCode=owner.status;response.end(owner.bytes);return;}if(delayedRead&&op.request?.action==='context'&&op.request.request.operation==='read'){const hold=delayedRead;delayedRead=undefined;hold.response=()=>{const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));};return;}const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));}catch(e){response.end(JSON.stringify({ok:false,error:String(e)}));}});});
 // Full Chromium requests a favicon; serve the actual design-system mark so the
 // controlled page has complete resources and the no-page-errors check stays strict.
 server.middlewares.use('/canvas-icon.svg',(_q,res)=>{res.setHeader('content-type','image/svg+xml');res.end(icon);});
 server.middlewares.use('/canvas-editor',async(_q,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/canvas-editor','<!doctype html><html><head><link rel="icon" type="image/svg+xml" href="/canvas-icon.svg"></head><body class="oi-desktop" style="margin:0"><script>window.__OI_KERNEL_BRIDGE__=location.origin</script><div id="root"></div><script type="module" src="/tests/canvas-editor-page.tsx"></script></body></html>'));});
 await server.listen();const url=`http://127.0.0.1:${server.httpServer.address().port}/canvas-editor`;
-const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{})});
-const page=await browser.newPage({viewport:{width:1280,height:820}});const requests=[];page.on('request',request=>requests.push(request.url()));const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',message=>{if(message.type()==='error')errors.push(`${message.text()}${message.location().url?` · ${message.location().url}`:''}`);});page.on('response',response=>{if(response.status()>=400)errors.push(`${response.status()} ${response.url()}`);});const checks=[];
+browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{})});
+page=await browser.newPage({viewport:{width:1280,height:820}});const requests=[];page.on('request',request=>requests.push(request.url()));const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',message=>{if(message.type()==='error')errors.push(`${message.text()}${message.location().url?` · ${message.location().url}`:''}`);});page.on('response',response=>{if(response.status()>=400)errors.push(`${response.status()} ${response.url()}`);});const checks=[];
 const check=(name,condition)=>{assert.ok(condition,name);checks.push(name);};
 const pending=new Map();page.on('request',request=>pending.set(request,Date.now()));page.on('requestfinished',request=>pending.delete(request));page.on('requestfailed',request=>{pending.delete(request);errors.push(`${request.failure()?.errorText} ${request.url()}`);});
 try{
  await page.goto(url);await page.getByRole('tab',{name:'Source',exact:true}).click();await page.getByRole('textbox',{name:'Editing sample.md'}).waitFor();await page.waitForFunction(()=>window.canvasTest);
+ // Real mutation -> unchanged HTTP replay -> production typed browser reader ->
+ // KernelProvider receipt and current State. This is separate from controlled Context.
+ nativeReplay.browser=await page.evaluate(async()=>{
+  const {kernelOp,readEventHistory}=await import('/src/kernel/bridge.ts');const transport={kind:'bridge',url:location.origin};
+  const initial=await readEventHistory(transport);
+  const call=await kernelOp(transport,{op:'surface_open',surface_id:'canvas-replay-proof',kind:'blank',title:'Actual native browser replay'});
+  if(call.error)throw Error(call.error);
+  const history=await readEventHistory(transport,initial.generation);return{initial,call,history};
+ });
+ assert.equal(nativeReplay.browser.initial.latest_seq,0);assert.deepEqual(nativeReplay.browser.initial.receipts,[]);
+ const actualReceipt=nativeReplay.browser.call.outcome.receipts[0];
+ assert.equal(nativeReplay.browser.call.outcome.result,'surface_opened');assert.equal(actualReceipt.seq,1);assert.equal(actualReceipt.event,'surface_changed');
+ assert.equal(nativeReplay.browser.history.generation,nativeReplay.browser.initial.generation);
+ assert.deepEqual(nativeReplay.browser.history.receipts,[actualReceipt]);
+ await page.waitForFunction(receipt=>canvasTest.kernel().receipts.some(actual=>JSON.stringify(actual)===JSON.stringify(receipt))
+  &&canvasTest.kernel().snapshot.surfaces['canvas-replay-proof']?.title==='Actual native browser replay',actualReceipt);
+ check('actual native replay receipt reaches KernelProvider and re-reads the same owner State',true);
+ const malformed=await fetch(new URL('/event-replay?cursor=0',url),{signal:AbortSignal.timeout(5000)});
+ assert.equal(malformed.status,400);assert.equal((await malformed.json()).ok,false);
+ const retiredResponse=await fetch(new URL('/events',url),{signal:AbortSignal.timeout(5000)});assert.equal(retiredResponse.status,410);
+ nativeReplay.refusals={malformed_cursor_status:400,retired_events_status:410};
+
  const start=original.lastIndexOf('same');await page.evaluate(start=>canvasTest.select(start,start+7),start);
  await page.getByRole('button',{name:'Bold',exact:true}).click();await page.waitForFunction(()=>canvasTest.document().includes('**same 🙂**'));
  check('formatting changes only second passage and preserves frontmatter',(await page.evaluate(()=>canvasTest.document())).startsWith('---\ncustom: retain exactly\n---'));
@@ -139,6 +212,16 @@ try{
  await page.reload();await page.locator('.flow-thread-entry').last().waitFor();check('Flow native save roundtrips the new entry',await page.locator('.flow-thread-entry').count()===3);
  await page.screenshot({path:out+'flow-context.png'});
  check('no page errors',errors.length===0);
- writeFileSync(out+'receipt.json',JSON.stringify({standing:'controlled production-component/handler evidence; native store independently tested in Rust; not installed/provider/human proof',checks,errors,calls:calls.filter(c=>['context','prompt-context'].includes(c.request?.action)).map(c=>({op:c.op,action:c.request.action,project:c.project}))},null,2));
+ writeFileSync(out+'receipt.json',JSON.stringify({standing:'controlled production-component/handler evidence; native store independently tested in Rust; not installed/provider/human proof',checks,errors,native_replay:nativeReplay,calls:calls.filter(c=>['context','prompt-context'].includes(c.request?.action)).map(c=>({op:c.op,action:c.request.action,project:c.project}))},null,2));
  console.log(JSON.stringify({passed:checks.length,checks,errors},null,2));
-}finally{if(errors.length)console.error(errors);writeFileSync(out+'pending-requests.json',JSON.stringify([...pending].map(([request,start])=>({url:request.url(),elapsed_ms:Date.now()-start})),null,2));await page.screenshot({path:out+'last-state.png'}).catch(()=>{});await browser.close();await server.close();rmSync(cacheDir,{recursive:true,force:true});}
+}finally{if(errors.length)console.error(errors);writeFileSync(out+'pending-requests.json',JSON.stringify([...pending].map(([request,start])=>({url:request.url(),elapsed_ms:Date.now()-start})),null,2));await page.screenshot({path:out+'last-state.png'}).catch(()=>{});}
+
+}finally{
+ const cleanupErrors=[];
+ for(const cleanup of [async()=>{await browser?.close();},async()=>{server?.httpServer?.closeAllConnections?.();await server?.close();},async()=>{if(cacheDir)rmSync(cacheDir,{recursive:true,force:true});},stopNative]){
+  try{await cleanup();}catch(error){cleanupErrors.push(String(error));}
+ }
+ writeFileSync(out+'native-replay-owner.json',JSON.stringify({...nativeReplay,stderr_tail:nativeStderr,exit_code:child?.exitCode,signal:child?.signalCode,cleanup_errors:cleanupErrors},null,2));
+ rmSync(nativeHome,{recursive:true,force:true});
+ if(cleanupErrors.length){console.error(cleanupErrors);process.exitCode=1;}
+}

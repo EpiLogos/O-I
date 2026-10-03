@@ -86,14 +86,31 @@ export interface KernelReceipt {
   [payload: string]: unknown;
 }
 
+/** Ephemeral disclosure only. A gap or changed process generation requires
+ * current owner readings; it cannot be accepted as an empty event history. */
+export interface KernelEventReplay {
+  schema: "oi.kernel-event-replay/v1";
+  generation: string;
+  oldest_seq: number | null;
+  latest_seq: number;
+  next_seq: number;
+  resync_required: boolean;
+  has_more: boolean;
+  receipts: KernelReceipt[];
+}
+
 /** The operation payloads (the Rust `KernelOp`, tagged snake_case). */
 export type {CentralLocation} from "./location";
 import type {CentralLocation} from "./location";
 /** QL composes the K² binding; the consumer names only texture, scale, sky and an optional event. */
-export interface NativeComposeRequest { texture: [number, number]; units_per_metre: number; sky: "none" | "now" | {epoch: string}; event?: Record<string, unknown> }
-export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string};
+export type NativeComposeRequest = { texture: [number, number]; units_per_metre: number }
+  & ({sky: "none" | "now" | {epoch: string}; sky_snapshot?: never; snapshot_purpose?:'requested'}
+    | {sky?: never; sky_snapshot: {schema: "ql.sky-snapshot/v1"; snapshot_ref: string; [key: string]: unknown}; snapshot_purpose?:import('../nara/identity/types').SnapshotPurpose})
+  & ({event?: Record<string, unknown>; world?: never; snapshot_purpose?:'requested'}
+    | {event?: never; world: {instance_ref: string; subject_ref: string; start?: Readonly<Record<string, unknown>>}});
+export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "prepare_world"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string};
 /** Provenance of a composed open (`source` in `oi.native-expression-open/v1`). */
-export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
+export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; ql_executable_sha256: string; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
 export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }
 export interface NativeDirectory { schema: "central.directory-reading/v1"; location: CentralLocation; entries: NativeFileEntry[]; automatic_agent_or_model_invocation: false }
 export interface NativeFileReading { schema: "central.file-reading/v1"; location: CentralLocation; revision: string; byte_len: number; content_encoding: "utf-8"; content: string; project: {name:string;path:string;project_ref:string|null} | null; source: ListedSource | null; operations?:Record<"write"|"history"|"restore",{available:boolean;reason:string|null}>; automatic_agent_or_model_invocation: false }

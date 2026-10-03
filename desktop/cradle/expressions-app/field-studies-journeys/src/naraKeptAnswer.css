@@ -1,0 +1,8 @@
+/* Native source-bearing quote body; engine/body remains the same Scene. */
+.page-text.nara-kept-answer{line-height:1.55;overscroll-behavior:contain;scrollbar-gutter:stable;user-select:text;pointer-events:auto}
+.presentation .page-text.nara-kept-answer{pointer-events:auto!important}
+.page-text.nara-kept-answer:focus-visible{outline:1px solid currentColor!important;outline-offset:2px}
+.page-text.nara-kept-answer p{max-width:none;white-space:pre-wrap;overflow-wrap:anywhere;font-size:18px}
+.page-text.nara-kept-answer pre{font-size:12px;max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}
+.page-text.nara-kept-answer details{margin-top:16px}
+.page-text.nara-kept-answer summary{cursor:pointer;font-size:14px}

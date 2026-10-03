@@ -26,7 +26,7 @@ export function hitConnection(paths, x, y, project, radius=7) {
 export class ExpressionConnectionLayer {
   constructor(engine) { this.engine=engine; }
   paths=[]; unavailable=[];
-  configure(bindings=[],selected=[]) { this.engine.setNativeConnections(bindings,selected); }
+  configure(bindings=[],selected=[],restOpacity=1) { this.engine.setNativeConnections(bindings,selected,restOpacity); }
   update() {
     const runtime=this.engine.nativeConnectionRuntime();
     this.paths=runtime.paths;this.unavailable=runtime.unavailable;
@@ -39,7 +39,9 @@ export class ExpressionConnectionLayer {
    * rather than an old authored coordinate while the physical carrier moves. */
   pickEntity(x,y,radius=25) {
     let selected=null,best=radius;
+    const enabled=new Set((this.engine.config.entities??[]).filter(entity=>entity.enabled!==false).map(entity=>entity.id));
     for(const pose of this.engine.lastPoses??[]) {
+      if(!enabled.has(pose.entityId))continue;
       const p=point(pose);if(!p)continue;
       const projected=this.engine.projectWorldToScreen(p.x,p.y,p.z);
       if(!projected?.visible)continue;

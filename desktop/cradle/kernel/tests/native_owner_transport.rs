@@ -176,3 +176,49 @@ fn qualified_owner_fences_restart_and_serialises_concurrent_native_edits() {
     drop(fresh_server);
     std::fs::remove_dir_all(directory).unwrap();
 }
+
+
+#[test]
+fn real_owner_socket_rejects_raw_number_transport_maps_before_owner_callback() {
+    use std::{io::{Read, Write}, os::unix::net::UnixStream, sync::atomic::{AtomicUsize, Ordering}};
+    let directory = std::env::temp_dir().join(format!("oi-native-raw-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    std::fs::create_dir(&directory).unwrap();
+    std::fs::set_permissions(&directory, std::fs::Permissions::from_mode(0o700)).unwrap();
+    let socket = directory.join("owner.sock");
+    let grants = directory.join("grants.json");
+    let create = json!({"op":"expression","request":{"operation":"create","expression_ref":"expression:raw-owner","title":"Full native carrier","actor":"human:controlled"}});
+    let inspect = json!({"op":"expression","request":{"operation":"inspect","expression_ref":"expression:raw-owner"}});
+    std::fs::write(&grants, serde_json::to_vec(&json!({"schema":"oi.native-owner-grants/v1","world_ref":"world:raw-owner","operations":[create, inspect]})).unwrap()).unwrap();
+    std::fs::set_permissions(&grants, std::fs::Permissions::from_mode(0o600)).unwrap();
+    let owner = NativeOwner::new("world:raw-owner".into(), grants).unwrap();
+    let kernel = Arc::new(Mutex::new(Kernel::discover()));
+    let calls = Arc::new(AtomicUsize::new(0));
+    let serving_kernel = kernel.clone(); let serving_calls = calls.clone();
+    let server = expression_transport::serve_native_owner(&socket, move |request| {
+        serving_calls.fetch_add(1, Ordering::SeqCst);
+        owner.apply(&mut serving_kernel.lock().unwrap(), request)
+    }).unwrap();
+    let generation = expression_transport::call(&socket, &json!({"operation":"describe","world_ref":"world:raw-owner"})).unwrap()["outcome"]["owner_generation"].as_str().unwrap().to_owned();
+    let apply = |request: Value| json!({"operation":"apply","world_ref":"world:raw-owner","expected_owner_generation":generation,"request":request});
+    assert_eq!(expression_transport::call(&socket, &apply(create)).unwrap()["ok"], true);
+    let before = expression_transport::call(&socket, &apply(inspect.clone())).unwrap();
+    let prior_calls = calls.load(Ordering::SeqCst);
+    for value in ["1e400", r#"{"$serde_json::private::Number":"10"}"#, r#"{"$serde_json::private::RawValue":"10"}"#, r#"{"\u0024serde_json::private::Number":"10"}"#] {
+        let raw = format!(r#"{{"operation":"apply","world_ref":"world:raw-owner","expected_owner_generation":"{generation}","request":{{"op":"expression","request":{{"operation":"edit","expression_ref":"expression:raw-owner","expected_revision":1,"actor":"human:controlled","changes":[{{"change":"parameter_set","entity_ref":"expression:raw-owner:entity:one","parameter":"x","value":{value}}}]}}}}}}"#);
+        let mut stream = UnixStream::connect(&socket).unwrap();
+        stream.set_read_timeout(Some(std::time::Duration::from_secs(5))).unwrap();
+        stream.set_write_timeout(Some(std::time::Duration::from_secs(5))).unwrap();
+        writeln!(stream, "{raw}").unwrap();
+        let mut response = String::new();
+        stream.take(1024 * 1024 + 1).read_to_string(&mut response).unwrap();
+        let reply: Value = oi_cradle_kernel::expression_file::read_native_json(response.as_bytes()).unwrap();
+        assert_eq!(reply["ok"], false);
+        let error = reply["error"].as_str().unwrap();
+        assert!(error.contains("Reserved JSON decoder key") || error.contains("Invalid JSON number"), "{error}");
+        assert_eq!(calls.load(Ordering::SeqCst), prior_calls, "bad raw request must not reach native owner callback");
+    }
+    let after = expression_transport::call(&socket, &apply(inspect)).unwrap();
+    assert_eq!(after, before);
+    drop(server);
+    std::fs::remove_dir_all(directory).unwrap();
+}

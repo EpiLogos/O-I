@@ -15,11 +15,11 @@ export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTra
     if (reply.error || reply.outcome?.result !== 'native_expression') throw new Error(reply.error ?? 'native-expression kernel result unavailable');
     return reply.outcome.data;
   }): () => void {
-  let live=true, epoch=crypto.randomUUID(), lease:string|null=null, opening=false;
+  let live=true, epoch=crypto.randomUUID(), lease:string|null=null, opening=false, surfaceVisible=false;
   const send=(payload:Record<string,unknown>)=>frame.contentWindow?.postMessage({schema:NATIVE_CHANNEL,epoch,...payload},'*');
   const close=(owned:string|null)=>{ if(owned) void call({operation:'close',lease:owned}).catch(()=>{}); };
   const invalidate=()=>{ const owned=lease; lease=null; opening=false; epoch=crypto.randomUUID(); close(owned); };
-  const announce=()=>send({kind:'available',available:transport.kind!=='unavailable',reason:transport.kind==='unavailable'?transport.reason:null});
+  const announce=()=>{send({kind:'available',available:transport.kind!=='unavailable',reason:transport.kind==='unavailable'?transport.reason:null});send({kind:'visibility',visible:surfaceVisible});};
   const loaded=()=>{invalidate();announce();};
   const handler=async(event:MessageEvent)=>{
     if(!live || event.source!==frame.contentWindow || event.data?.schema!==NATIVE_CHANNEL)return;
@@ -35,14 +35,22 @@ export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTra
       if(data.request?.operation==='source'){
         const path=data.request.path;
         if(typeof path!=='string'||!path.trim()||path.length>4096)throw new Error('Central binding path required');
-        const slash=path.lastIndexOf('/');const directory=await listFiles(transport,slash>=0?(path.slice(0,slash)||'/'):'.');
+        if(path.startsWith('/'))throw new Error('Binding source requires a relative Central path');
+        const slash=path.lastIndexOf('/');const directory=await listFiles(transport,slash>=0?path.slice(0,slash):'');
         const entry=directory.entries.find(e=>e.name===path.slice(slash+1)&&e.retrieval_allowed);
         if(!entry)throw new Error('Central binding source unavailable or withheld');
         const reading=await readFile(transport,entry.location);
         if(reading.byte_len>32*1024*1024)throw new Error('binding source exceeds 32 MiB');
         respond({ok:true,data:{path,location:reading.location,revision:reading.revision,content:reading.content}});return;
       }
-      if(!request || !['open','compose','exchange','close'].includes(request.operation))throw new Error('unsupported native-expression operation');
+      if(!request || !['open','compose','prepare_world','exchange','close'].includes(request.operation))throw new Error('unsupported native-expression operation');
+      // Preparation returns an admitted owner world without opening a driver.
+      // It neither acquires nor releases this frame's existing lease.
+      if(request.operation==='prepare_world'){
+        const result=await call(request);
+        if(!result || result.schema!=='oi.native-expression-prepared-world/v1' || result.source?.world?.schema!=='ql.scene-world/v1' || result.source?.sky?.schema!=='ql.sky-snapshot/v1' || result.lease!==undefined)throw new Error('invalid native world preparation receipt');
+        respond({ok:true,data:result});return;
+      }
       // Compose is an open whose binding QL writes: same lease law. Only the
       // consumer request travels; the kernel validates it strictly.
       if(request.operation==='open' || request.operation==='compose'){
@@ -63,7 +71,8 @@ export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTra
     finally{if(basis===epoch&&(request?.operation==='open'||request?.operation==='compose'))opening=false;}
   };
   const visibility=new IntersectionObserver(entries=>{
-    if(live)send({kind:'visibility',visible:entries.some(e=>e.isIntersecting && e.intersectionRatio>0)});
+    surfaceVisible=entries.some(e=>e.isIntersecting && e.intersectionRatio>0);
+    if(live)send({kind:'visibility',visible:surfaceVisible});
   });
   visibility.observe(frame);
   window.addEventListener('message',handler);frame.addEventListener('load',loaded);announce();

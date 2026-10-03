@@ -41,6 +41,27 @@ carrying one optional block on the document:
 }
 ```
 
+Ordinary-file encoding follows
+[Expression application v1 — Persistence and composition](EXPRESSION-APPLICATION-V1.md#persistence-and-composition).
+A reusable material file may be a legacy raw native Document or the lossless
+file-only `oi.expression-storage/v1` envelope. Native `material_list` and
+`expression_material::read_file` decode before Document/reuse-kind validation;
+character previews use the side-effect-free, revision-fenced `inspect_file`
+reader. Discovery, grafting, state/gesture selection, act performance and replay
+receive the same complete `oi.expression/v1` Document and exact original
+Central file ref/revision. File-local PNG markers are never role slots, native
+assets, source identities or renderer inputs.
+
+Exact embedded PNG interning preserves all source, layers, sequences, sound,
+profile grammar, working Scene and saved reset material. The encoded file
+remains bounded at 4 MiB and its full expanded native Document at 8 MiB. Invalid,
+missing, duplicate, unused, forged or cyclic image references, bad digests or
+schemas, unsafe/incomplete data and over-budget expansion refuse through the
+same native decoder. An unreadable material is disclosed as unreadable rather
+than silently dropped or replaced. A decoded material reading or codec test
+does not establish actual graft/act lifecycle, rendered reception or installed
+acceptance; those operations retain their own source-bound proofs.
+
 - Kernel: `Document.reuse: Option<Reuse>` (serde default, skip if none) and one
   new change `{"change":"reuse_set","reuse":{…}}` / `{"change":"reuse_clear"}`.
 - **Roles are one mechanism.** A role slot is a placeholder in the saved Scene
@@ -180,6 +201,34 @@ seeking across it never performs the operation again. Edition target, revision
 and document validity are checked before any replay edit, including when the
 caller accepts drift of other reusable material. Older Act records remain
 readable; their unrecorded edits cannot be reconstructed from a later label.
+
+Act storage may share exact native Document field literals and embedded PNG
+data URLs inside one private `oi.expression-act-storage/v1` record. Public
+Acts and their immutable editions remain complete Documents. Each literal,
+expanded edition and expanded Act has its native SHA256 digest; parts cannot
+reference other parts, and image references expand only at material `dataUrl`
+positions. Unknown, duplicate, missing, unused, misplaced or noncanonical
+references refuse before adopting a body. PNG custody verifies the existing
+native data-URL spelling and digest; it does not establish rendered image shape.
+
+The physical record remains bounded at4MiB. This receiving repair adds explicit
+operational guards:8MiB of fully expanded serialized Act weight (including
+every edition occurrence and metadata), and64MiB across resident Acts. These
+are storage/admission budgets, not new semantic meanings or measured heap RSS.
+The native Document remains bounded at8MiB. Borrowed prospective history is
+counted before cloning prior editions; the ordinary native prospective edit
+still constructs its Document before the before-live-edit gate. Startup ranks
+bounded metadata before decoding, counts every retained body including pending
+archive records, and discloses records left stored but unloaded. Lazy reads,
+live replacements and CAS-conflict reloads use the same admission accounting.
+One explicit archive-by-ref reading is separately bounded at8MiB. A failed
+successor reload retains and marks the resident as noncurrent; Inspect retries
+the native read instead of returning that cached body as current. Existing
+native CAS, rollback, locking, atomic replacement, revision checks and
+no-provider/no-Action/no-tool seek semantics remain operative. An overfull
+continuation refuses while retaining the last good Act and Expression; the
+person can continue through a successor Act without deleting historical bodies.
+
 The desktop socket (`oi desktop expression`) accepts world requests too: a JSON
 body whose `schema` is `oi.expression-world/v1` routes to `KernelOp::ExpressionWorld`.
 The hosted Expressions frame reaches them through the `kernel-expression-world`

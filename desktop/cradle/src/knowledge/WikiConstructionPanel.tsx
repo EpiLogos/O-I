@@ -10,7 +10,7 @@ import type {SurfaceBinding} from '../surface/types';
 import type {WikiNavigate} from './wikiDocument';
 import type {WikiPassage} from './selection';
 import {listFiles} from '../files/client';
-import {CONSTRUCTION, authoringForms, newRef, readRegister, saveConstruction,
+import {CONSTRUCTION, ConstructionActionError, authoringForms, newRef, readRegister, saveConstruction,
   PARTICIPATION, type AuthoringForm, type ConstructionRequest, type SavedConstruction, type WikiRegister} from './construction';
 import {emptyDraft, fromNative, withForm, withPassage, withoutMember, draftRequest, type ConstructionDraft} from './constructionDraft';
 import {projectConstruction, attachCompositionReturn, compositionReturnRequest, compositionAttached, compositionReturnRecorded, reopenComposition, type ArtifactReturn} from './constructionProjection';
@@ -30,7 +30,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   const [register, setRegister] = useState<WikiRegister>(), [forms, setForms] = useState<AuthoringForm[]>([]);
   const [draft, setDraft] = useState<ConstructionDraft>(() => checkpoint?.draft ?? emptyDraft());
   const [pending, setPending] = useState<ConstructionRequest | undefined>(checkpoint?.pending);
-  const [busy, setBusy] = useState(''), [error, setError] = useState(''), [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(''), [error, setError] = useState<string | ConstructionActionError>(''), [notice, setNotice] = useState('');
   const [saved, setSaved] = useState<SavedConstruction>(), [dirty, setDirty] = useState(checkpoint ? !checkpoint.saved : false);
   const [document, setDocument] = useState<ExpressionDocument>(), [artifact, setArtifact] = useState<ArtifactReturn>();
   const [artifactLocation,setArtifactLocation]=useState(checkpoint?.artifact);
@@ -103,7 +103,8 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
       acceptSaved(value);
       // Readback failure never converts an acknowledged save into a retry.
       await read().catch(error => setNotice(`Saved; the register refresh is unavailable: ${message(error)}`));
-    } catch (error) {if (alive.current) setError(`${message(error)} Inspect the native result before changing or retrying this proposal.`);}
+    } catch (error) {if (alive.current) setError(error instanceof ConstructionActionError ? error
+      : `${message(error)} Inspect the native result before changing or retrying this proposal.`);}
     finally {if (alive.current) setBusy('');}
   };
   const inspect = async () => {
@@ -224,7 +225,15 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   return <aside className="wiki-construction" hidden={!open} aria-label="Constellation authoring">
     <header><h2>{draft.basis ? 'Work on constellation' : 'New constellation'}</h2><button className="oi-tool" aria-label="Close constellation authoring" onClick={onClose}>×</button></header>
     <p className="wiki-construction-intro">Gather passages, give them roles, and make connections. The original writing stays where it is.</p>
-    {busy && <p role="status">{busy}</p>}{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
+    {busy && <p role="status">{busy}</p>}{error && <p role="alert"
+      data-dispatch-state={error instanceof ConstructionActionError ? error.dispatch.state : undefined}
+      data-native-error-code={error instanceof ConstructionActionError ? error.code : undefined}>
+      {error instanceof ConstructionActionError ? <>
+        {error.code === 'source_revision_conflict' && <strong>Source changed. </strong>}
+        {error.code === 'wiki_revision_conflict' && <strong>Constellation register changed. </strong>}
+        {error.message} Inspect the native result before changing or retrying this proposal.
+      </> : error}
+    </p>}{notice && <p role="status">{notice}</p>}
     <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy} onClick={()=>void inspect()}>Inspect saved state</button><button className="oi-action" disabled={!!busy || !!pending || !!artifactSave} onClick={()=>dirty ? setShowDiscard(true) : createNew()}>New inquiry</button></div>
     {showDiscard && <div role="group" aria-label="Discard construction draft"><p>Discard this unsaved proposal? Its source documents are not changed.</p><button className="oi-action" onClick={createNew}>Discard draft and start new</button><button className="oi-action" onClick={()=>setShowDiscard(false)}>Keep working</button></div>}
     {!!register?.frames.length && <label>Saved constellation<select aria-label="Open saved constellation" value={draft.basis?.ref ?? ''} disabled={!!busy || !!pending} onChange={event=>openFrame(event.target.value)}><option value="">Choose a saved inquiry…</option>{register.frames.map(frame=><option key={frame.ref} value={frame.ref}>{frame[CONSTRUCTION].title} · r{frame.revision}</option>)}</select></label>}

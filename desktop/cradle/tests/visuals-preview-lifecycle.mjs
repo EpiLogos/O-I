@@ -14,13 +14,37 @@ import {fileURLToPath} from 'node:url';
 const kernelBridge=process.env.OI_KERNEL_BRIDGE;
 if(!kernelBridge)throw new Error('OI_KERNEL_BRIDGE must name a real kernel with a disposable OI_HOME');
 const root=fileURLToPath(new URL('../',import.meta.url));
-const out=fileURLToPath(new URL('./artifacts/visuals-preferences/',import.meta.url));mkdirSync(out,{recursive:true});
+const enableDiagnostics=process.env.VISUALS_ENABLE_DIAGNOSTICS==='1';
+const out=fileURLToPath(new URL(enableDiagnostics?'./artifacts/visuals-preferences/enable-diagnostics/':'./artifacts/visuals-preferences/',import.meta.url));mkdirSync(out,{recursive:true});
 const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:4390,strictPort:true},logLevel:'error'});
 server.middlewares.use('/visuals-preview',async(_,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/visuals-preview','<body class="oi-desktop"><div id="root"></div><script type="module" src="/tests/visuals-preview-page.tsx"></script>'));});
 await server.listen();const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']});
 const context=await browser.newContext({colorScheme:'light',viewport:{width:900,height:800}});const page=await context.newPage();
 const receipt={...receiptIdentity(import.meta.url),classification:'real components and supplied native kernel; browser rendering, not installed Mac acceptance',checks:[],errors:[],passed:false};
 page.on('pageerror',e=>receipt.errors.push(e.message));
+// Optional passive diagnostics; no response replacement, error filtering,
+// control bypass or changed engine-ready predicate. Keep this attempt separate
+// from the mandatory original uninstrumented run.
+if(enableDiagnostics){
+ receipt.enableDiagnostics={scope:'Observed supplied native kernel and real provider/Stage; diagnostic timing may perturb the gate',requests:[],failedRequests:[],failedResponses:[],console:[],omitted:{}};
+ const observe=(kind,value)=>{const rows=receipt.enableDiagnostics[kind];if(rows.length===64){rows.shift();receipt.enableDiagnostics.omitted[kind]=(receipt.enableDiagnostics.omitted[kind]??0)+1;}rows.push(value);};
+ const address=value=>{try{const url=new URL(value);return url.origin+url.pathname;}catch{return String(value).slice(0,4096);}};
+ const text=value=>{const raw=String(value);return{value:raw.slice(0,4096),truncated:raw.length>4096};};
+ page.on('request',request=>observe('requests',{url:address(request.url()),type:request.resourceType(),method:request.method()}));
+ page.on('requestfailed',request=>observe('failedRequests',{url:address(request.url()),type:request.resourceType(),error:text(request.failure()?.errorText??'Unknown request failure')}));
+ page.on('response',response=>{if(response.status()>=400)observe('failedResponses',{url:address(response.url()),status:response.status(),type:response.request().resourceType(),content_type:response.headers()['content-type']??null});});
+ page.on('console',message=>{if(['error','warning'].includes(message.type()))observe('console',{type:message.type(),text:text(message.text())});});
+}
+async function enableSnapshot(){
+ return page.evaluate(()=>{const stage=window.previewTest?.stage,visuals=window.previewTest?.visuals?.get(),input=[...document.querySelectorAll('label')].find(el=>el.textContent.includes('Enable the shared visual layer'))?.querySelector('input');return{
+  stage:stage?{inspect:stage.inspect(),error:stage.error}:null,
+  visuals:visuals?{enabled:visuals.enabled,welcomeEnabled:visuals.welcomeEnabled,theme:visuals.theme,themeId:visuals.themeId}:null,
+  checkbox:input?{checked:input.checked,disabled:input.disabled}:null,
+  canvases:[...document.querySelectorAll('canvas')].map(canvas=>({stage:canvas.dataset.oiStage??null,width:canvas.width,height:canvas.height,connected:canvas.isConnected})),
+  page:{ready:document.readyState,visibility:document.visibilityState}
+ };});
+}
+
 await context.addInitScript(bridge=>{
  window.__OI_KERNEL_BRIDGE__=bridge;
  if(!sessionStorage.getItem('visuals-seed')){localStorage.setItem('oi-cradle.visuals.v1',JSON.stringify({enabled:false,welcomeEnabled:false,theme:'system'}));sessionStorage.setItem('visuals-seed','yes');}
@@ -92,6 +116,7 @@ try{
  await page.waitForFunction(()=>!document.body.dataset.oiTheme);
  check(await page.evaluate(()=>previewTest.visuals.get().themeId)===null,'removing the active import returns to a house appearance');
  check(await cardCount()===before,'removal takes the card with it');
+ if(enableDiagnostics)receipt.enableDiagnostics.beforeEnable=await enableSnapshot();
  await page.getByLabel('Enable the shared visual layer',{exact:true}).check();
  await page.waitForFunction(()=>previewTest.stage.inspect().engine!==null);
  await noPresentation();
@@ -103,4 +128,17 @@ try{
  await page.getByRole('button',{name:'Open Expressions',exact:true}).click();check(JSON.stringify(await page.evaluate(()=>hostModeRequests))==='["expressions"]','real supported host mode contract dispatched once');
  await page.screenshot({path:out+'/preferences.png'});await page.evaluate(()=>previewTest.unmount());check(await page.locator('canvas').count()===0,'provider unmount disposes canvas');
  assert.deepEqual(receipt.errors,[]);receipt.passed=true;
+}catch(error){
+ receipt.failure={name:error?.name??null,message:String(error),stack:error instanceof Error?error.stack??null:null};
+ // Retain the actual Stage/refusal state even in the original uninstrumented gate.
+ try{receipt.failureSnapshot=await enableSnapshot();}catch(snapshotError){receipt.failureSnapshotError=String(snapshotError);}
+ if(enableDiagnostics){
+  try{receipt.enableDiagnostics.atFailure=await enableSnapshot();}catch(diagnosticError){receipt.enableDiagnostics.snapshotFailure=String(diagnosticError);}
+  try{await page.screenshot({path:out+'/failure.png'});}catch(diagnosticError){receipt.enableDiagnostics.screenshotFailure=String(diagnosticError);}
+  // The existing desktop artifact upload omits this receipt family. Retain
+  // the same bounded diagnostics in the actual job log as well. No env,
+  // request bodies, headers or response bodies are disclosed.
+  console.error(JSON.stringify({scope:'visuals-enable-diagnostics',failure:receipt.failure,observed:receipt.enableDiagnostics}));
+ }
+ throw error;
 }finally{writeFileSync(out+'/receipt.json',JSON.stringify(receipt,null,2));await browser.close();await server.close();}

@@ -17,10 +17,12 @@ export function useExpressionRequest() {
   }, [kernel.transport]);
 }
 
-/** The latest `expression_changed` receipt's seq — "look again", nothing more. */
-export function useExpressionChangeSeq(): number | undefined {
+/** Replay epoch and latest receipt are an invalidation token, never an
+ * Expression revision. Restart/lost history must also cause a real read. */
+export function useExpressionChangeSeq(): string {
   const kernel = useKernel();
-  return kernel.receipts.filter(receipt => receipt.event === "expression_changed").slice(-1)[0]?.seq;
+  const seq = kernel.receipts.filter(receipt => receipt.event === "expression_changed").slice(-1)[0]?.seq;
+  return `${kernel.readModelEpoch}:${seq ?? "none"}`;
 }
 
 export type ExpressionDocumentReading =

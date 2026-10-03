@@ -338,6 +338,17 @@ const rereadGenerations = new Map<string, number>();
  * cannot tell a waiting caller whether a fresh reading is still coming). */
 const rereadsInFlight = new Map<string, number>();
 
+/** Replay loss cannot identify which wiki basis changed. Re-read each
+ * participating register through the existing owner path, preserving the
+ * authored composition while its exact basis is requalified. */
+export function invalidateWikiProjectionReadings(transport: KernelTransportStatus) {
+  appliedWikiReceiptSeq = 0;
+  for (const register of state.registers) {
+    const standing = state.standings[register.key];
+    if (standing && standing.phase !== "idle") void rereadWikiRegister(register, transport, true);
+  }
+}
+
 /** A kernel `file_changed` receipt whose path is a register's wiki basis
  * invalidates that register's cached reading (the seam the 13-step walk
  * named): the store re-reads the local whole and re-projects, and the

@@ -45,6 +45,14 @@ const read = (op:any):any => {
   if (op.op==='files_list') return {result:'directory_read',directory:op.path.endsWith('/wiki')?{location:{...parent,path:'Work/Notes/ProjectCentral/agents/wiki',ref:'central:path:wiki-dir'},entries:[{name:'wiki.json',kind:'file',location:registerLocation}]}:{location:parent,entries:file?[{name:'inquiry.expression.json',kind:'file',location}]:[]}};
   if (op.op==='file_read') return {result:'file_read',reading:op.location.ref===registerLocation.ref?registerFile():file};
   if (op.op==='graph') return {result:'graph_reading',reading:{schema:'oi.cradle.graph-reading/v1',nodes:[],edges:[],formations:[],inputs:{},counts:{},shape_catalog:{schema:'aikit.ql-authoring-forms/v1',forms:[]}}};
+  // Controlled protocol only. The production decoder's addressed read is
+  // fenced by all location fields and the actual retained file revision.
+  if (op.op==='expression'&&op.request.operation==='inspect_file') {
+    const requested=op.request.location;
+    if (!file || !requested || requested.schema!==file.location.schema || requested.ref!==file.location.ref || requested.root!==file.location.root || requested.path!==file.location.path) throw new Error('Controlled Expression file location differs from the retained file');
+    if (op.request.expected_file_revision!==file.revision) return {result:'expression',data:{state:'file_revision_conflict',expected_revision:op.request.expected_file_revision,current_revision:file.revision}};
+    return {result:'expression',data:{state:'ready',document:JSON.parse(file.content),file:{location:file.location,revision:file.revision}}};
+  }
   if (op.op==='expression'&&op.request.operation==='inspect') return {result:'expression',data:{state:'read',document}};
   throw new Error(`Unexpected controlled reading ${JSON.stringify(op)}`);
 };

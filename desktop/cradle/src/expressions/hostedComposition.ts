@@ -3,7 +3,7 @@
  * this module supplies receiving forms, not a second save or source service. */
 import {listFiles, readFile} from '../files/client';
 import {prepareArtifactSave, performArtifactSave, inspectArtifactSave, type ArtifactSaveIntent} from '../knowledge/artifactRecovery';
-import {expressionOperation, sameComposition} from '../knowledge/constructionProjection';
+import {expressionOperation, sameComposition, readExpressionFile} from '../knowledge/constructionProjection';
 import type {CentralLocation, KernelTransportStatus} from '../kernel/types';
 import type {ExpressionDocument} from '../expression/types';
 
@@ -67,15 +67,26 @@ export async function hostedCompositionFile(transport:KernelTransportStatus,raw:
   return operation==='perform'?performArtifactSave(transport,held):inspectArtifactSave(transport,held);
  }
  if(operation==='open'){
-  fields(request,['operation','path']);
+  fields(request,['operation','path','observed']);
+  const observed=request.observed===undefined?null:object(request.observed);
+  if(observed)fields(observed,['location','revision','expression_ref']);
+  const observedLocation=observed?location(observed.location):null;
+  const observedRevision=observed?text(observed.revision):null;
+  const observedExpression=observed?text(observed.expression_ref):null;
+  if(observedExpression&&!observedExpression.startsWith('expression:'))throw new Error('The saved Library row has no native Expression identity');
   const path=relative(request.path),slash=path.lastIndexOf('/');
+  if(observedLocation&&observedLocation.path!==path)throw new Error('The saved Library row names a different native file path');
   const directory=await listFiles(transport,slash<0?'.':path.slice(0,slash),true);
   const entry=directory.entries.find(value=>value.name===path.slice(slash+1)&&value.kind==='file');
   if(!entry||!entry.retrieval_allowed)throw new Error('The owner does not disclose that Expression file for reading');
-  const file=await readFile(transport,entry.location),basis=document(JSON.parse(file.content));
+  if(observedLocation&&!sameComposition(entry.location,observedLocation))throw new Error('The saved Library file location changed. Refresh the Library before opening it.');
+  const file=await readFile(transport,entry.location);
   if(!sameComposition(file.location,entry.location)||!file.revision)throw new Error('Native file readback was redirected or has no revision');
-  const opened=await expressionOperation(transport,{operation:'open_file',location:file.location,actor:'human:expressions-app'});
-  if(!opened.document||!sameComposition(opened.document,basis))throw new Error('The file differs from the current native working composition; no live work was overwritten');
+  if(observedRevision&&file.revision!==observedRevision)throw new Error('The saved Library file changed. Refresh the Library before opening its new revision.');
+  const basis=await readExpressionFile(transport,file);
+  if(observedExpression&&basis.expression_ref!==observedExpression)throw new Error('The saved Library file now belongs to a different Expression. Refresh the Library before opening it.');
+  const opened=await expressionOperation(transport,{operation:'open_file',location:file.location,expected_file_revision:file.revision,actor:'human:expressions-app'});
+  if(!opened.document||!sameComposition(opened.document,basis)||!opened.file||opened.file.revision!==file.revision||!sameComposition(opened.file.location,file.location))throw new Error('The file differs from the exact native working composition; no live work was overwritten');
   return {document:opened.document,file};
  }
  throw new Error(`Unsupported Expression file operation: ${String(operation)}`);

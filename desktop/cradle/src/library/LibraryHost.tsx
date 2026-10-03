@@ -71,11 +71,14 @@ export function LibraryHost() {
   // tab. Nothing here opens a second UI.
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string} | null;
+      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; expressionRef?: unknown} | null;
       if (!data || data.v !== 1 || data.kind !== "host-request") return;
       if (event.source !== frame.current?.contentWindow) return;
       if (data.request === "workspace-mode" && data.mode === "expressions") {
         window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: {mode: data.mode}}));
+      }
+      if (data.request === "open-expression" && typeof data.expressionRef === "string" && data.expressionRef.startsWith("expression:") && data.expressionRef.length <= 4096 && !data.expressionRef.includes("\0")) {
+        window.dispatchEvent(new CustomEvent("oi:epi-open-expression", {detail: {expressionRef: data.expressionRef}}));
       }
       if (data.request === "close-library") window.dispatchEvent(new CustomEvent("oi:library-close"));
     };

@@ -1,3 +1,4 @@
+import {nativeSceneAxes} from './native-field/axis';
 /** The live instrument: the dated sky on the M1 torus clock as a person meets it. One native
  * owner supplies sound and targets; this surface shows what is acting and sends
  * determinant events to that owner. No sample session, fallback input, hidden
@@ -11,7 +12,7 @@ import type {FieldEngineAdapter} from './engine';
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const when=(ms:number|null)=>ms==null?'—':new Date(ms).toISOString().replace('T',' ').replace(/\.\d+Z$/,' UTC');
-export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void){
+export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void,onNativeChanged?:()=>void){
  const port=new NativeChannel();
  const canRetain=typeof (engine as any).retainedTargetPort==='function';
  if(!canRetain){port.dispose();return null;}
@@ -53,6 +54,13 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   </section>
   <section class="ni-block" aria-label="Play">
    <h4>Play</h4>
+   <fieldset class="ni-block" data-ni-axis-controls><legend>Inscription & lensing</legend>
+   <p class="control-note">Two continuous circles on this same owner. Each turns its attached native targets. These do not choose a codon or static aperture, or advance the M1/M3 source clocks.</p>
+   ${([['0','Clock A · inscription'],['1','Clock B · lensing']] as const).map(([axis,label])=>`<div class="ni-row" data-ni-axis-row="${axis}"><label>${label} · whole turns <input type="text" inputmode="numeric" spellcheck="false" data-ni-axis-turns="${axis}" aria-label="${label} whole turns"></label><label>Half-degrees (0–719) <input type="number" min="0" max="719" step="1" data-ni-axis-half="${axis}" aria-label="${label} half-degrees"></label><button type="button" class="secondary" data-ni="set-axis" data-ni-axis="${axis}">Apply ${axis==='0'?'inscription':'lensing'}</button><output data-ni-axis-reading="${axis}"></output></div>`).join('')}
+   <p class="ni-refusal" data-ni-axis-error role="alert" hidden></p>
+   </fieldset>
+   <div class="ni-row"><label>Damping · decay (s⁻¹) <input type="number" min="0" max="1000000" step="any" data-ni-damping aria-describedby="ni-damping-standing"></label><button type="button" class="secondary" data-ni="set-damping">Apply damping</button></div>
+   <p class="control-note" id="ni-damping-standing">Declared material policy. Changes decay from the resident state; it does not strike the voices or turn either clock.</p>
    <div class="ni-row"><button type="button" class="secondary" data-ni="step">Step one tick</button><button type="button" class="secondary" data-ni="strike">Strike voices</button></div>
    ${seg('cadence',[{value:'hold',label:'Hold'},...CADENCES.map(c=>({value:String(c.ticks_per_second),label:c.label,title:c.source}))],'Tick cadence')}
    <p class="control-note" data-ni-v="cadence">Cadence held. 1 tick/s follows the M3/M4′ world clock; 12 ticks/s is PPS's user-facing tick.</p>
@@ -88,8 +96,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    <details class="ni-raw"><summary>Raw readings (JSON)</summary><button type="button" class="secondary" data-ni="raw">Read now</button><pre data-ni-raw></pre></details>
   </div></details>
  </div>
- <details class="control-group ni-depth" data-ni-depth><summary>Inspect depth: open a binding document</summary><div class="group-content native-field-depth">
-  <p class="control-note">A Central binding document for a supplied native owner. Buffered native playback: 8,192 samples per block, 500 ms initial device lead, 500 ms lookahead ceiling.</p>
+ <details class="control-group ni-depth" data-ni-depth><summary>Inspect depth: native sources & binding</summary><div class="group-content native-field-depth">
+  <p class="control-note">Current native sources, with an optional Central binding document for a supplied owner. Buffered native playback: 8,192 samples per block, 500 ms initial device lead, 500 ms lookahead ceiling.</p>
   <label class="control"><span>Central binding source</span><input name="native-path" type="text" spellcheck="false" placeholder="Work/…/native-binding.json"></label>
   <div class="ni-row"><button type="button" class="secondary" data-native="source">Read binding</button><button type="button" class="secondary" data-native="connect" disabled>Connect muted</button></div><output data-native-source>No source selected.</output>
   <div class="ni-row"><button type="button" class="secondary" data-native="hold">Hold</button><button type="button" class="secondary" data-native="resume">Resume</button></div>
@@ -97,7 +105,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   <label class="control"><span>Presentation units per metre</span><input name="native-scale" type="number" min="0.000001" max="1000000" step="any" value="400"></label>
   <div class="ni-row"><button type="button" class="secondary" data-native="scale">Override presentation scale</button><button type="button" class="secondary" data-native="follow">Follow binding scale</button></div>
   <details><summary>Native domain controls</summary>
-   <p class="control-note">For a supplied (non-scene) owner: these replace its basis. Source generations, continuous time and presentation remain separate.</p>
+   <p class="control-note">The carrier, row, transcription and per-mode damping controls below replace a supplied owner’s complete basis and are disabled for a Scene owner. Source generations, continuous time and presentation remain separate.</p>
    <label class="control"><span>M1 carrier tick (0–11)</span><input name="native-tick" type="number" min="0" max="11" step="1" value="0"></label>
    <button type="button" class="secondary" data-native="tick">Apply native carrier tick</button>
    <label class="control"><span>M1 harmonic row (0–11)</span><input name="native-row" type="number" min="0" max="11" step="1" value="0"></label>
@@ -107,6 +115,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    <label class="control"><span>M2 material mode</span><select name="native-mode"></select></label>
    <label class="control"><span>Damping (s⁻¹)</span><input name="native-damping" type="number" min="0" step="any" value="0"></label>
    <button type="button" class="secondary" data-native="damping">Apply native damping</button>
+   <p class="control-note">Independent phase is available on either the Scene or supplied owner. Ordinary Scene Play also exposes both circles.</p>
    <label class="control"><span>Native clock axis</span><select name="native-axis"><option value="0">Inscription</option><option value="1">Lensing</option></select></label>
    <label class="control"><span>Exact whole turns</span><input name="native-turns" type="text" inputmode="numeric" value="0" spellcheck="false"></label>
    <label class="control"><span>Half-degrees (0–719)</span><input name="native-phase" type="number" min="0" max="719" step="1" value="0"></label>
@@ -125,7 +134,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const style=document.createElement('style');style.textContent=`.native-field-panel{font:12px/1.5 var(--sans,system-ui)}.ni{display:grid;gap:4px}.ni h4{font:italic 16px/1.3 var(--serif,Georgia,serif);font-weight:400;margin:0 0 10px}.ni-block{border-top:1px solid var(--line);padding:14px 0 6px}.ni-status{display:block;font-size:10px;color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}.ni-open{width:100%;margin:4px 0 8px}.ni-kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 12px;font-size:10px}.ni-kv dt{color:var(--muted)}.ni-kv dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.ni-voices{width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums;margin-bottom:10px}.ni-voices caption{text-align:left;color:var(--muted);font-size:9px;padding-bottom:4px}.ni-voices th,.ni-voices td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--line);font-weight:400}.ni-voices th:first-child,.ni-voices td:last-child{text-align:left}.ni-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:0 0 10px}.ni-row>button{flex:1}.ni-label{font-size:10px;margin:6px 0 6px}.ni-seg{flex-wrap:wrap;margin-bottom:10px}.ni-seg button{flex:1 0 auto;min-width:34px;font-variant-numeric:tabular-nums}.ni-seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}.ni-refusal{font-size:10px;line-height:1.6;border-left:2px solid var(--accent);padding:4px 8px;margin:4px 0 10px;background:var(--wash)}.ni-effects table{width:100%;border-collapse:collapse;font-size:9px;line-height:1.45}.ni-effects th,.ni-effects td{text-align:left;vertical-align:top;padding:5px 4px;border-bottom:1px solid var(--line);font-weight:400;overflow-wrap:anywhere}.ni-effects th{color:var(--muted)}.ni-effects tr.ni-declared td{background:var(--wash)}.ni-badge{display:inline-block;font-size:8px;letter-spacing:.06em;border:1px solid var(--line);border-radius:3px;padding:0 4px;margin-left:4px;color:var(--accent)}.ni-policy{font-size:10px;line-height:1.6;margin:10px 0}.ni pre,.native-field-depth pre{font:10px/1.4 monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto}.native-field-depth output{display:block;overflow-wrap:anywhere;font-size:10px}.ni [data-ni-v="level"],.ni [data-ni-v="scale"]{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}`;
  const domainView=new NativeDomainView();
  document.head.append(style);document.body.append(domainView.element);
- let domainStamp="",effectsStamp="",busy=false,composing=false,source:{path:string;revision:string;sampleRate:number}|null=null,depthMuted=true;
+ let axisError="",domainStamp="",effectsStamp="",busy=false,composing=false,source:{path:string;revision:string;sampleRate:number}|null=null,depthMuted=true;
  const query=<T extends HTMLElement>(selector:string)=>panel.querySelector<T>(selector)!;
  const setText=(key:string,text:string)=>{const node=query(`[data-ni-v="${key}"]`);if(node.textContent!==text)node.textContent=text;};
  const press=(group:string,value:string|null)=>{for(const b of panel.querySelectorAll<HTMLButtonElement>(`[data-ni-set="${group}"]`)){const on=String(b.dataset.value===value);if(b.getAttribute('aria-pressed')!==on)b.setAttribute('aria-pressed',on);}};
@@ -170,8 +179,21 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   // The stage overlay is the supplied-owner reading; the scene surface reads here.
   domainView.update(instrument?null:reading.domain,reading.presented_clock,reading.status,reading.native?.presented?.generation);
   const live=!!instrument&&(reading.status==='following'||reading.status==='held');
-  for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni-set],[data-ni="step"],[data-ni="strike"],[data-ni="restore-opening"]'))b.disabled=!live||(busy&&b.dataset.niSet!=='cadence')||(reducedMotion&&b.dataset.niSet==='cadence'&&Number(b.dataset.value)>1);
+  let axes:ReturnType<typeof nativeSceneAxes>|null=null;
+  try{if(instrument?.influence&&!instrument.influence_stale&&reading.native?.available)axes=nativeSceneAxes(reading.presented_clock);}catch{/* No phase is invented for a refused reading. */}
+  for(const axis of [0,1] as const){
+   const phase=axes?.[axis===0?'inscription':'lensing'];
+   const turns=query<HTMLInputElement>(`[data-ni-axis-turns="${axis}"]`),half=query<HTMLInputElement>(`[data-ni-axis-half="${axis}"]`);
+   turns.disabled=half.disabled=busy||!live||!phase;
+   if(query(`[data-ni-axis-row="${axis}"]`).dataset.edited!=='true'){turns.value=phase?.turns??'';half.value=phase?String(phase.half_degrees):'';}
+   query(`[data-ni-axis-reading="${axis}"]`).textContent=phase?`${phase.turns} turns + ${phase.half_degrees}/2° · presented native cursor`:'Native phase unavailable.';
+  }
+  query('[data-ni-axis-error]').hidden=!axisError;query('[data-ni-axis-error]').textContent=axisError;
+  const damping=query<HTMLInputElement>('[data-ni-damping]');damping.disabled=!live||busy;
+  if(document.activeElement!==damping&&instrument?.influence?.material)damping.value=String(instrument.influence.material.damping_per_second);
+  for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni-set],[data-ni="step"],[data-ni="strike"],[data-ni="set-damping"],[data-ni="restore-opening"],[data-ni="set-axis"]'))b.disabled=!live||(busy&&b.dataset.niSet!=='cadence')||(reducedMotion&&b.dataset.niSet==='cadence'&&Number(b.dataset.value)>1);
   for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni="sound"],[data-ni="hold"],[data-ni="resume"],[data-ni="checkpoint"],[data-ni="restore"],[data-ni="follow-scale"],[data-ni="raw"]'))b.disabled=!reading.lease||reading.status==='unavailable';
+  for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni="set-axis"]'))b.disabled||=!axes;
   query<HTMLButtonElement>('[data-ni="close"]').disabled=!reading.lease&&reading.status!=='unavailable';
   query<HTMLButtonElement>('[data-ni="restore-opening"]').disabled||=!instrument?.opening_event_available;
   if(instrument){
@@ -208,6 +230,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   query<HTMLButtonElement>('[data-native="connect"]').disabled=busy||!source||!['manual','unavailable'].includes(reading.status)||!!reading.lease;
   for(const command of ['resume','mute','scale','follow','operate','inspect','row','tick','transcription','damping','axis'])query<HTMLButtonElement>(`[data-native="${command}"]`).disabled=busy||!reading.lease||reading.status==='unavailable';
   for(const input of panel.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>('.native-field-depth input,.native-field-depth select,.native-field-depth textarea'))input.disabled=busy;
+  if(instrument)for(const command of ['row','tick','transcription','damping'])query<HTMLButtonElement>(`[data-native="${command}"]`).disabled=true;
  };
  // Returned values replace the stage's status line, never a raw dump.
  const fail=(error:unknown)=>{controller.reason=controller.status==='following'||controller.status==='held'?controller.reason:String(error instanceof Error?error.message:error);};
@@ -236,8 +259,13 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if(op==='open')return open('now');
    if(op==='open-default')return open('none');
    if(op==='open-dated'){const epoch=query<HTMLInputElement>('[name="ni-epoch"]').value.trim();if(!epoch){controller.reason='Name a dated sky epoch first';update();return;}return open({epoch});}
+   if(op==='set-axis'){
+    const axis=Number(button.dataset.niAxis),turns=query<HTMLInputElement>(`[data-ni-axis-turns="${axis}"]`).value.trim(),value=query<HTMLInputElement>(`[data-ni-axis-half="${axis}"]`).value.trim();
+    axisError='';return run(async()=>{try{await controller.setAxis(axis as 0|1,{turns,half_degrees:value?Number(value):NaN});query(`[data-ni-axis-row="${axis}"]`).dataset.edited='false';}catch(error){axisError=String(error instanceof Error?error.message:error);throw error;}});
+   }
    if(op==='step')return run(()=>controller.m1Advance(1));
    if(op==='strike')return run(()=>controller.strike());
+   if(op==='set-damping'){const value=query<HTMLInputElement>('[data-ni-damping]').value.trim();if(!value)return run(()=>Promise.reject(new Error('Enter a damping value first.')));const submitted=Number(value);return run(()=>controller.setDamping(submitted));}
    if(op==='restore-opening')return run(()=>controller.restoreOpening());
    if(op==='sound')return run(()=>controller.setMuted(!controller.reading.muted));
    if(op==='resume')return run(async()=>{await controller.resume();onResumeApplication();});
@@ -276,21 +304,21 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    else if(operation==='transcription')await controller.editBasis({kind:'transcription',rna:submitted["native-rna"]==='true'});
    else if(operation==='damping')await controller.editBasis({kind:'damping',mode_ref:submitted["native-mode"],per_second:Number(submitted["native-damping"])});
    else if(operation==='axis'){
-    const turns=submitted["native-turns"].trim(),half_degrees=Number(submitted["native-phase"]);
-    if(!/^(0|-?[1-9][0-9]*)$/.test(turns)||BigInt(turns)<-(1n<<63n)||BigInt(turns)>(1n<<63n)-1n||!Number.isInteger(half_degrees)||half_degrees<0||half_degrees>719)throw new Error('Native phase requires exact i64 turns and 0–719 half-degrees');
-    await controller.operate({operation:'set-axis',axis:Number(submitted["native-axis"]),phase:{turns,half_degrees}});
+    const turns=submitted["native-turns"].trim(),value=submitted["native-phase"].trim();
+    await controller.setAxis(Number(submitted["native-axis"]) as 0|1,{turns,half_degrees:value?Number(value):NaN});
    }
    else if(operation==='inspect')query('pre[data-native-sources]').textContent=JSON.stringify(await controller.inspectSources(),null,2);
   });
  };
  const range=(event:Event)=>{
+  const axisRow=(event.target as HTMLElement).closest<HTMLElement>('[data-ni-axis-row]');if(axisRow)axisRow.dataset.edited='true';
   const input=(event.target as HTMLElement).closest<HTMLInputElement>('input[data-ni-range]');if(!input)return;
   try{if(input.dataset.niRange==='level')controller.setLevel(Number(input.value));else if(controller.reading.lease)controller.setScale(Number(input.value));}catch(error){fail(error);}update();
  };
  const modeChange=()=>{const reading=controller.reading,ref=query<HTMLSelectElement>('[name="native-mode"]').value;query<HTMLInputElement>('[name="native-damping"]').value=String(reading.domain?.m2.modes.find(mode=>mode.ref===ref)?.damping_per_second??0);};
  query('[name="native-mode"]').addEventListener('change',modeChange);
  panel.addEventListener('click',click);panel.addEventListener('input',range);
- controller.onChange=update;
+ controller.onChange=()=>{update();onNativeChanged?.();};
  const visibility=()=>{if(document.hidden)controller.hold('document hidden');};
  document.addEventListener('visibilitychange',visibility);
  const pagehide=()=>{void controller.dispose();};window.addEventListener('pagehide',pagehide);

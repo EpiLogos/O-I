@@ -1,0 +1,399 @@
+{
+  "schema": "epi.native-source-succession/v1",
+  "standing": "Exact committed D30 source succession plus independently qualified current-census receipt-only successor; actual native tests/build/whole receiving/installation remain required",
+  "prior_source_cut": "ec33764868b22e98cd6ebff8f6565097f67bdb03",
+  "current_source_cut": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+  "current_source_tree": "b8fdc00fc958387901b1f466228d7fd373357a5d",
+  "prior_template": {
+    "path": "expectation-template.json",
+    "bytes": 30779,
+    "sha256": "98d9ed07dbfe9212f9eedff6583c894d074d89f3d96d08d9b07d82e35c89f845"
+  },
+  "constructor_source_locks": {
+    "prior": [
+      {
+        "path": "crates/ql-cli/src/nara_command.rs",
+        "bytes": 31489,
+        "sha256": "d225e4829f2f6bf15462f25af2e818a3bdec0b085d0c150f7d8829a37ad74f9e",
+        "git_blob": "eefcb05eb30d2d0e97ea9975a850480accc07172"
+      },
+      {
+        "path": "crates/ql-mef/src/continuous/coupled.rs",
+        "bytes": 25319,
+        "sha256": "569cca8fca3a008018547b9fa4566c613eccfb7e0e8d0f7f246beca5c2af1557",
+        "git_blob": "fe5c731d3f1f651a6e1c61e5f75a3edbf200ed1c"
+      },
+      {
+        "path": "crates/ql-mef/src/continuous/scene_field.rs",
+        "bytes": 47830,
+        "sha256": "8ddb192aa9f3aeaeb5ec0b544c3b4677ec121b95df582a92d69604fab5c5ce46",
+        "git_blob": "d8de2274716eb8b1c2f00144f7d59ea0701a4efc"
+      },
+      {
+        "path": "crates/ql-mef/src/m2.rs",
+        "bytes": 33283,
+        "sha256": "21782cd444ec1d56f4c80f08d16a2b464de8987cf948f8ca729a1e542071887f",
+        "git_blob": "a4a215b1f4b66e3a87a061d73e3f4d81373d2516"
+      },
+      {
+        "path": "crates/ql-mef/src/m2_engine.rs",
+        "bytes": 21603,
+        "sha256": "b22c97f69fd2653f83404a39fdd63cdeff0ae1df4340386b1156a01c1a75e529",
+        "git_blob": "2f3cc60f57639abaf8a49ab65c1fce270f95b877"
+      },
+      {
+        "path": "crates/ql-mef/src/m_ledger.rs",
+        "bytes": 43475,
+        "sha256": "b022aef662a61de1ab87207bc160e038118c88fb5c2ddcecceae0ce7a4250b95",
+        "git_blob": "2fdfd4eba9a1d170f9cd06cf4b2cb95124d2feb5"
+      },
+      {
+        "path": "crates/ql-mef/src/m_tree.rs",
+        "bytes": 22152,
+        "sha256": "c1b65a51bf675656f9b38a3fd66fa685b3fd9a20a696b765ac1aeee5960fb09a",
+        "git_blob": "9e62998b864b18f3af15f7c33e33443e2b18c1de"
+      },
+      {
+        "path": "crates/ql-mef/src/scene.rs",
+        "bytes": 28288,
+        "sha256": "bda0a8558135ac5fb864f60706f39148df883fcc35547348dc8254fb1b5da7e2",
+        "git_blob": "7b454d46075d7928c73a83146b094b578dfc78d7"
+      },
+      {
+        "path": "docs/kernel-rebuild/K8-SKY-CONTRACT.md",
+        "bytes": 11763,
+        "sha256": "febd6ffe8e0328853f79e67b73d5a8dc6e06ef6f2ac01533c0b57317f407ee5c",
+        "git_blob": "613f2cb3ce534c39de0ca134f78a0eec09462c7a"
+      },
+      {
+        "path": "fixtures/kernel/bimba-content-v1.json",
+        "bytes": 39532230,
+        "sha256": "151a9af230c7fe5b50519e5dfb9c8b01f7d80b0b98765f78736d3d21d1b6320a",
+        "git_blob": "da627dc642462cc18538cc6ae07fe52bbcbace02"
+      },
+      {
+        "path": "fixtures/kernel/m-ledger-v1.json",
+        "bytes": 4266927,
+        "sha256": "cea0ff2565dca9dff0c439614c431ebe0cd3b0814b923d2766fad685010fbfef",
+        "git_blob": "072d1b941a4ece45f9b5e47bbf26c2e60a6cd2c8"
+      },
+      {
+        "path": "fixtures/kernel/m-tree-v1.json",
+        "bytes": 8373272,
+        "sha256": "2108875cd4c7bf1bc7c6ae2f8ecd9fad24a4de6392edac6083f0a69d0880f8fc",
+        "git_blob": "6883176eeb90779a5aaef29fda0e06c87b311b23"
+      },
+      {
+        "path": "fixtures/kernel/m2-retained-c-v1.json",
+        "bytes": 24809,
+        "sha256": "7d78cd7b64cb2d6d9af64ea7165f7b51c80535999a3e9326f114d45c642a8188",
+        "git_blob": "b08ef22a3df3320bf1a14e30046f627393dc56e1"
+      },
+      {
+        "path": "providers/sky/kerykeion_snapshot.py",
+        "bytes": 29617,
+        "sha256": "e57b14706d09df33999092932252538296f306f4e60fe9b7cecad75589a12d8e",
+        "git_blob": "54d10e9bbfbe7f66c3afce4bd00210eca4c48e54"
+      },
+      {
+        "path": "providers/sky/requirements.txt",
+        "bytes": 38,
+        "sha256": "36390dc8e2bfb16b6bb91168bda5b6cfd2676382754cf881b4754ba98257e56a",
+        "git_blob": "9fe7dd0c586f00085597d1446cea2b5e4fb80920"
+      },
+      {
+        "path": "scripts/generate-m-tree.py",
+        "bytes": 18562,
+        "sha256": "2a1047516cf75325df57f38ea18e641b0764de9311e877f7980d308a5c34fcd2",
+        "git_blob": "bbd0ece1779a360c07350aaf2ffb4b4090f552f8"
+      },
+      {
+        "path": "scripts/oi-source-install.sh",
+        "bytes": 3931,
+        "sha256": "8175608b6f7e2b80953ac994d66318fd2fb3e8b078b48323c1e2cd7eec025ca8",
+        "git_blob": "7c29afc5ae0487ded658ef5408a3cadc421db955"
+      },
+      {
+        "path": "vendor/epi-kernel/reference/include/m2.h",
+        "bytes": 23040,
+        "sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8",
+        "git_blob": "05698bf83d1f34092f0d4979cd90495471fb3148"
+      }
+    ],
+    "current": [
+      {
+        "path": "crates/ql-cli/src/nara_command.rs",
+        "bytes": 31489,
+        "sha256": "d225e4829f2f6bf15462f25af2e818a3bdec0b085d0c150f7d8829a37ad74f9e",
+        "git_blob": "eefcb05eb30d2d0e97ea9975a850480accc07172"
+      },
+      {
+        "path": "crates/ql-mef/src/continuous/coupled.rs",
+        "bytes": 25319,
+        "sha256": "569cca8fca3a008018547b9fa4566c613eccfb7e0e8d0f7f246beca5c2af1557",
+        "git_blob": "fe5c731d3f1f651a6e1c61e5f75a3edbf200ed1c"
+      },
+      {
+        "path": "crates/ql-mef/src/continuous/scene_field.rs",
+        "bytes": 49002,
+        "sha256": "a980d17b276ffd0f8243c8d34c3df8185f52fd3e9008962dd582fd4a3f738ade",
+        "git_blob": "fa931cf304a8a384c38e81c8640e46bab3403f40"
+      },
+      {
+        "path": "crates/ql-mef/src/m2.rs",
+        "bytes": 33283,
+        "sha256": "21782cd444ec1d56f4c80f08d16a2b464de8987cf948f8ca729a1e542071887f",
+        "git_blob": "a4a215b1f4b66e3a87a061d73e3f4d81373d2516"
+      },
+      {
+        "path": "crates/ql-mef/src/m2_engine.rs",
+        "bytes": 21603,
+        "sha256": "b22c97f69fd2653f83404a39fdd63cdeff0ae1df4340386b1156a01c1a75e529",
+        "git_blob": "2f3cc60f57639abaf8a49ab65c1fce270f95b877"
+      },
+      {
+        "path": "crates/ql-mef/src/m_ledger.rs",
+        "bytes": 43475,
+        "sha256": "b022aef662a61de1ab87207bc160e038118c88fb5c2ddcecceae0ce7a4250b95",
+        "git_blob": "2fdfd4eba9a1d170f9cd06cf4b2cb95124d2feb5"
+      },
+      {
+        "path": "crates/ql-mef/src/m_tree.rs",
+        "bytes": 22152,
+        "sha256": "c1b65a51bf675656f9b38a3fd66fa685b3fd9a20a696b765ac1aeee5960fb09a",
+        "git_blob": "9e62998b864b18f3af15f7c33e33443e2b18c1de"
+      },
+      {
+        "path": "crates/ql-mef/src/scene.rs",
+        "bytes": 28288,
+        "sha256": "bda0a8558135ac5fb864f60706f39148df883fcc35547348dc8254fb1b5da7e2",
+        "git_blob": "7b454d46075d7928c73a83146b094b578dfc78d7"
+      },
+      {
+        "path": "docs/kernel-rebuild/K8-SKY-CONTRACT.md",
+        "bytes": 11763,
+        "sha256": "febd6ffe8e0328853f79e67b73d5a8dc6e06ef6f2ac01533c0b57317f407ee5c",
+        "git_blob": "613f2cb3ce534c39de0ca134f78a0eec09462c7a"
+      },
+      {
+        "path": "fixtures/kernel/bimba-content-v1.json",
+        "bytes": 39532230,
+        "sha256": "151a9af230c7fe5b50519e5dfb9c8b01f7d80b0b98765f78736d3d21d1b6320a",
+        "git_blob": "da627dc642462cc18538cc6ae07fe52bbcbace02"
+      },
+      {
+        "path": "fixtures/kernel/m-ledger-v1.json",
+        "bytes": 4266927,
+        "sha256": "cea0ff2565dca9dff0c439614c431ebe0cd3b0814b923d2766fad685010fbfef",
+        "git_blob": "072d1b941a4ece45f9b5e47bbf26c2e60a6cd2c8"
+      },
+      {
+        "path": "fixtures/kernel/m-tree-v1.json",
+        "bytes": 8373272,
+        "sha256": "2108875cd4c7bf1bc7c6ae2f8ecd9fad24a4de6392edac6083f0a69d0880f8fc",
+        "git_blob": "6883176eeb90779a5aaef29fda0e06c87b311b23"
+      },
+      {
+        "path": "fixtures/kernel/m2-retained-c-v1.json",
+        "bytes": 24809,
+        "sha256": "7d78cd7b64cb2d6d9af64ea7165f7b51c80535999a3e9326f114d45c642a8188",
+        "git_blob": "b08ef22a3df3320bf1a14e30046f627393dc56e1"
+      },
+      {
+        "path": "providers/sky/kerykeion_snapshot.py",
+        "bytes": 29617,
+        "sha256": "e57b14706d09df33999092932252538296f306f4e60fe9b7cecad75589a12d8e",
+        "git_blob": "54d10e9bbfbe7f66c3afce4bd00210eca4c48e54"
+      },
+      {
+        "path": "providers/sky/requirements.txt",
+        "bytes": 38,
+        "sha256": "36390dc8e2bfb16b6bb91168bda5b6cfd2676382754cf881b4754ba98257e56a",
+        "git_blob": "9fe7dd0c586f00085597d1446cea2b5e4fb80920"
+      },
+      {
+        "path": "scripts/generate-m-tree.py",
+        "bytes": 18562,
+        "sha256": "2a1047516cf75325df57f38ea18e641b0764de9311e877f7980d308a5c34fcd2",
+        "git_blob": "bbd0ece1779a360c07350aaf2ffb4b4090f552f8"
+      },
+      {
+        "path": "scripts/oi-source-install.sh",
+        "bytes": 3931,
+        "sha256": "8175608b6f7e2b80953ac994d66318fd2fb3e8b078b48323c1e2cd7eec025ca8",
+        "git_blob": "7c29afc5ae0487ded658ef5408a3cadc421db955"
+      },
+      {
+        "path": "vendor/epi-kernel/reference/include/m2.h",
+        "bytes": 23040,
+        "sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8",
+        "git_blob": "05698bf83d1f34092f0d4979cd90495471fb3148"
+      }
+    ]
+  },
+  "consumer_sources": [
+    {
+      "path": "crates/ql-mef/src/continuous/scene_field.rs",
+      "prior": {
+        "path": "crates/ql-mef/src/continuous/scene_field.rs",
+        "bytes": 47830,
+        "sha256": "8ddb192aa9f3aeaeb5ec0b544c3b4677ec121b95df582a92d69604fab5c5ce46",
+        "git_blob": "d8de2274716eb8b1c2f00144f7d59ea0701a4efc"
+      },
+      "current": {
+        "path": "crates/ql-mef/src/continuous/scene_field.rs",
+        "bytes": 49002,
+        "sha256": "a980d17b276ffd0f8243c8d34c3df8185f52fd3e9008962dd582fd4a3f738ade",
+        "git_blob": "fa931cf304a8a384c38e81c8640e46bab3403f40"
+      }
+    },
+    {
+      "path": "crates/ql-mef/src/continuous/host.rs",
+      "prior": {
+        "path": "crates/ql-mef/src/continuous/host.rs",
+        "bytes": 14221,
+        "sha256": "7042c5ead4ace06862fe228db50a314ba3da3c1352a3046d47e04f6e100bb25a",
+        "git_blob": "0cda0867af3ae4c91b0ebb6441a17324a44ed12e"
+      },
+      "current": {
+        "path": "crates/ql-mef/src/continuous/host.rs",
+        "bytes": 14653,
+        "sha256": "ba4abe19bc8c5ba4dc1bf32b784a4186b22b807939ab03b05742de63246160af",
+        "git_blob": "25a4352fd96c57ad2ba5d76b6559a4606ef37abd"
+      }
+    },
+    {
+      "path": "adapters/retained-field/instrument-session.mjs",
+      "prior": {
+        "path": "adapters/retained-field/instrument-session.mjs",
+        "bytes": 18721,
+        "sha256": "760cbf97f1e5bacfe962768031b8ae50596ce9e13f06e9fda47cdf1d11735234",
+        "git_blob": "d5d2cc4f4b12f7eb0756c0a218e0909d2c2dd9b5"
+      },
+      "current": {
+        "path": "adapters/retained-field/instrument-session.mjs",
+        "bytes": 18775,
+        "sha256": "e6f9dbf2230e409eefe664afca1c1dfb6944f8afefa08c1c930b00d324d2fe48",
+        "git_blob": "dcf2f6a7d2747977d43a381f90b2a24e1dffdac8"
+      }
+    },
+    {
+      "path": "crates/ql-mef/tests/scene_instrument.rs",
+      "prior": {
+        "path": "crates/ql-mef/tests/scene_instrument.rs",
+        "bytes": 10863,
+        "sha256": "7476493955b5e046ed7ddeb7921664aa7bb47a70f7c008fd5401f162749b43d6",
+        "git_blob": "c38a5e74145cde9a90640014a35cc1babfdc9f81"
+      },
+      "current": {
+        "path": "crates/ql-mef/tests/scene_instrument.rs",
+        "bytes": 18628,
+        "sha256": "ba466e95e6d972cdbbe6610e4cd2bba9101488f5212c02c3c032073e426971ac",
+        "git_blob": "fd98fb064255cf175dc62035418d7f0f1cefe955"
+      }
+    }
+  ],
+  "current_template_metadata_delta": [
+    {
+      "pointer": "/expected_native_owner_sources/field/revision",
+      "prior": "sha256:8ddb192aa9f3aeaeb5ec0b544c3b4677ec121b95df582a92d69604fab5c5ce46",
+      "current": "sha256:a980d17b276ffd0f8243c8d34c3df8185f52fd3e9008962dd582fd4a3f738ade"
+    },
+    {
+      "pointer": "/source_locks/2/sha256",
+      "prior": "8ddb192aa9f3aeaeb5ec0b544c3b4677ec121b95df582a92d69604fab5c5ce46",
+      "current": "a980d17b276ffd0f8243c8d34c3df8185f52fd3e9008962dd582fd4a3f738ade"
+    },
+    {
+      "pointer": "/semantic_metadata_transition/derivation_sources/5/sha256",
+      "prior": "8ddb192aa9f3aeaeb5ec0b544c3b4677ec121b95df582a92d69604fab5c5ce46",
+      "current": "a980d17b276ffd0f8243c8d34c3df8185f52fd3e9008962dd582fd4a3f738ade"
+    }
+  ],
+  "source_meaning": {
+    "scene_field": "Adds explicit finite declared damping continuation through native ReplaceModes(false); unchanged constructor/M1/clock/form/shape/nine ordered mode sources. Its material-policy timing disclosure now states resident-mode continuation.",
+    "host": "Routes set-damping only to provider-composed Scene owner and includes current event/influence in determinant ACK; supplied owner refuses.",
+    "adapter": "Recognises set-damping as a changing native mode-generation operation and accepts the explicit operation; three copied adapter files remain native-owner copies, separately qualified by current provenance.",
+    "tests": "Real-worker native tests predict matching EventIdentity profile/M2/M3 generation successor before admission, exact zero-elapsed amplitude/shape/clock/form invariance, nine complex decays and strict invalid/supplied refusal. Test source qualification does not assert execution."
+  },
+  "preservation": {
+    "original_archive_sha256": "b173b96c51bdf964e131c36da1cd171e97e077c340c4b6b36116c52f46093461",
+    "original_template_sha256": "98d9ed07dbfe9212f9eedff6583c894d074d89f3d96d08d9b07d82e35c89f845",
+    "constructor_source_lock_paths_unchanged": true,
+    "world_16_keys_14_semantic_fields_unchanged": true,
+    "all_62001_buffer_samples_and_signed_zero_policy_unchanged": true,
+    "historical_world_and_ledger_source_refs_unchanged": true,
+    "two_ledger_revision_predictions_unchanged": true,
+    "saved_occasion_sky_admission_and_nine_driver_sources_unchanged": true
+  },
+  "required_execution": [
+    "Build all five actual current QL companions with the canonical source installer and qualify exact output/toolchain/process custody.",
+    "QL_FIELD_WORKER=<actual built worker> cargo test --locked -p ql-mef --test scene_instrument -- --ignored --test-threads=1",
+    "Run unchanged full production whole-world assertions and joined D30 damping/Save/reopen/Return/new-process gates with this reviewed current expectation.",
+    "Run actual current source-manifest negatives; reject original Ec-only template against QL47 and substituted/missing succession consumer source custody.",
+    "Managed Mac installed replay, audio/hearing and human Recognition remain separately pending."
+  ],
+  "executed_native_or_browser": false,
+  "installed_acceptance": false,
+  "H": false,
+  "current_census_receipt_only_succession": {
+    "schema": "epi.current-census-receipt-only-source-succession/v1",
+    "prior_source_cut": "47ee9c57f39011b7953152f91e6900625627991c",
+    "prior_source_tree": "e23d89e0f534e5aa249ae14eb51acee119e0afb9",
+    "current_source_cut": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+    "current_source_tree": "b8fdc00fc958387901b1f466228d7fd373357a5d",
+    "prior_reviewed_template_manifest": {
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/source-review/d30-hosted-template-succession-proposal/manifest.json",
+      "bytes": 15299,
+      "sha256": "66c5972c62d0d331797e0b0253d443c839c9b48fc77d94e0cca83631158a0a04"
+    },
+    "prior_independent_source_review": {
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/source-review/d30-template-and-census-source-review-01.json",
+      "bytes": 8673,
+      "sha256": "c259f88c1d92847488089b0372cc1e62ad37f54e4eed8ed775bf6ab0bd420838"
+    },
+    "changed_paths": [
+      "fixtures/kernel/k8-census-receipt-v1.json"
+    ],
+    "changed_json_pointers": [
+      "/inventory_sha256"
+    ],
+    "receipt": {
+      "path": "fixtures/kernel/k8-census-receipt-v1.json",
+      "prior": {
+        "bytes": 769,
+        "sha256": "f8812b04d23deaf42757d87c7c58f46d65f4ce80e7ad5a60aaa9de75eb86ab54",
+        "git_blob": "24b280132cf19b2861035b2c9e5254d9b61837ed",
+        "inventory_sha256": "5f61ebc341824b9c195f40bccc553772f785c45922b847c8771c0b8b089ebd3c"
+      },
+      "current": {
+        "bytes": 769,
+        "sha256": "cccacbf8b2bcc377ee2467d3d17aca6e2fbced43f897c003e13ecebe8d3caac9",
+        "git_blob": "9346cf433eaf2865c4927c87998c90db1d29830a",
+        "inventory_sha256": "a27651a182ce8529a80fd41c3777a74dcbc97d23bc7384f256a0e91f0916d029"
+      }
+    },
+    "hosted_current_inventory": {
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/source-review/d30-scene-damping-proposal/root-integration-01/source-inventory/inventory.json",
+      "bytes": 1078323,
+      "sha256": "f9677de0dd2e283d8887b9cbbbe0a416ea7735216ef6049b366ac44024bf5620"
+    },
+    "hosted_current_receipt": {
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/source-review/d30-scene-damping-proposal/root-integration-01/source-inventory/receipt.json",
+      "bytes": 769,
+      "sha256": "cccacbf8b2bcc377ee2467d3d17aca6e2fbced43f897c003e13ecebe8d3caac9"
+    },
+    "hosted_archive": {
+      "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/fresh-execution-2026-10-01/source-review/d30-scene-damping-proposal/root-integration-01/source-inventory/actual47-hosted.zip",
+      "bytes": 66147,
+      "sha256": "f5b812c7a40a0087c9912c15e41fa20e1bfbca1180a1fecfbe910b5250c9b040"
+    },
+    "constructor_lock_count": 18,
+    "consumer_lock_count": 4,
+    "all_locked_source_bytes_and_blob_ids_unchanged": true,
+    "native_or_browser_executed_for_successor": false,
+    "historical_proof_retargeted": false,
+    "installed_acceptance": false,
+    "H": false
+  }
+}

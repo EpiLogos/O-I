@@ -26,6 +26,7 @@ import {ActStrip} from "../expression/ActStrip";
 import {consumeExpressionRequest, getExpressionSelectionState, registerExpressionCentre, subscribeExpressionSelection} from "./selection";
 import {useKernel} from "../kernel/KernelProvider";
 import {useEpiLens} from "../workspace/lens";
+import {useSituation} from "../context/SituationContext";
 import {
   hostedAppUrl,
   CAPTURE_INSERTION_EVENT,INSERT_SOURCE_EVENT,postSourceInsertion,
@@ -53,6 +54,9 @@ import {chatProvisionTarget} from "../agent/chat/firstSend";
 
 export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, readTechne, techneWorld, refreshToken, followsOwnRef = false, entryInstrument, project}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>; /** A changed token re-opens `deepLink` in place (refresh, no reload): an act performed elsewhere moved the kernel document. */ refreshToken?: number; /** A fixed act host (Factory Live, a Run page) presents its own Expression and is never the Expressions centre a navigator row opens into. */ followsOwnRef?: boolean; entryInstrument?: 'nara'; project?: string}) {
   const kernel = useKernel();
+  const epiLens = useEpiLens();
+  const situation = useSituation();
+  const epiOn = situation ? situation.workspace.world === "epi-logos" : epiLens.on;
   const [src, setSrc] = useState<string | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
   const [reason, setReason] = useState<string | undefined>();
@@ -70,7 +74,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   // this track exists to prevent. A mount-time capture is a boot-time hint
   // only; the application applies it after its own boot recovery and is
   // free to ignore it.
-  const [bootQuery] = useState(() => (`?mode=${mode}${deepLink ? `&expression=${encodeURIComponent(deepLink)}` : ""}${entryInstrument === 'nara' ? '&nara=1' : ''}`));
+  const [bootQuery] = useState(() => (`?mode=${mode}${deepLink ? `&expression=${encodeURIComponent(deepLink)}` : ""}${entryInstrument === 'nara' ? '&nara=1' : ''}${epiOn ? '&world=epi-logos' : ''}`));
 
   useEffect(() => {
     let alive = true;
@@ -192,11 +196,10 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   // binding's kind IS the cut — the Technē centre presents this application
   // in its deep state, the Expressions centre in its lived state. Each
   // centre's instance parks suspended in the warm park across switches.
-  const epiLens = useEpiLens();
   useEffect(() => {
     const node = frame.current;
-    return node ? postHostMode(node, mode, epiLens.on ? "epi-logos" : undefined) : undefined;
-  }, [mode, src, epiLens.on]);
+    return node ? postHostMode(node, mode, epiOn ? "epi-logos" : undefined) : undefined;
+  }, [mode, src, epiOn]);
 
   // The Technē cut's summon answer: a constellation constructed in the Wiki
   // opens IN this same living field, not a second renderer and not the panel's

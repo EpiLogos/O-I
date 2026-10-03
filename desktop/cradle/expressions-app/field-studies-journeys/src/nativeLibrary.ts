@@ -11,18 +11,16 @@
  * shared scope, private payload excluded), §32 (single-line scene rows,
  * bounded +N, no uncontrolled wrap/overflow).
  *
- * GAP (own the gaps): neither collectionsProvider.ts nor
- * nativeExpressionsProvider.ts (desktop/cradle/src/library) discloses a
- * per-Expression scene list on this cut — `scenes` on an entry is therefore
- * routinely absent. sceneStripHTML renders that absence honestly rather
- * than inventing scene rows; see the session Return for the exact owner
- * this belongs to. */
+ * Scenes are read by the native owner from the live document or exact saved
+ * file. An unavailable scene list stays undisclosed; no rows are invented. */
 import {esc,icon} from './icons.js';
 
 export interface NativeLibrarySceneRef {scene_ref:string;title:string}
+export interface NativeLibraryFileBasis {location:{schema:'central.path-ref/v1';ref:string;root:string;path:string};revision:string;expression_ref:string}
 export interface NativeLibraryEntry {
   ref:string;title:string;owner:string;scope:'local'|'shared';
   revision?:string;project?:string;expressionRef?:string;
+  savedFile?:NativeLibraryFileBasis;
   scenes?:NativeLibrarySceneRef[];collections?:string[];
   collectionMemberships?:{title:string;group:string;manifest_path:string}[];
   /** Named explicitly rather than inferred from scope alone — a personal
@@ -105,12 +103,12 @@ function sceneStripHTML(entryRef:string,scenes?:NativeLibrarySceneRef[]):string 
 }
 
 function entryRowHTML(entry:NativeLibraryEntry):string {
-  const location=entry.expressionRef??entry.ref;
-  const search=[entry.title,entry.project,location,...(entry.collections??[])].filter(Boolean).join(' ').toLowerCase();
+  const location=entry.savedFile?.location.path??entry.expressionRef??entry.ref;
+  const search=[entry.title,entry.project,location,entry.ref,entry.expressionRef,...(entry.collections??[])].filter(Boolean).join(' ').toLowerCase();
   return `<div class="oi-lib-native-row" data-starting-card data-search="${esc(search)}">
     <div class="oi-lib-native-main"><strong>${esc(entry.title)}</strong><span class="oi-lib-native-path">${esc(location)}</span>${entry.collections?.length?`<span class="oi-lib-native-collections">${esc(entry.collections.join(', '))}</span>`:''}</div>
     ${sceneStripHTML(entry.ref,entry.scenes)}
-    <button type="button" class="icon-button" data-native-open="${esc(entry.ref)}" aria-label="Open ${esc(entry.title)}" title="Open ${esc(entry.title)}">${icon('arrowRight')}</button>
+    <button type="button" class="icon-button" data-native-open="${esc(entry.ref)}" ${entry.savedFile?`data-native-file="${esc(JSON.stringify(entry.savedFile))}"`:''} aria-label="Open ${esc(entry.title)}" title="Open ${esc(entry.title)}">${icon('arrowRight')}</button>
   </div>`;
 }
 
@@ -128,7 +126,7 @@ export type NativeLibraryState =
   |{state:'absent'}
   |{state:'error';reason:string}
   |{state:'empty'}
-  |{state:'ready';entries:NativeLibraryEntry[]};
+  |{state:'ready';entries:NativeLibraryEntry[];coverage?:{provider:string;state:string;reason?:string}[]};
 
 /** The Central section body: Project → (bound overview Expression /
  * collection member) → Scene strip → native collections, grouped and
@@ -139,8 +137,10 @@ export function nativeLibrarySectionBodyHTML(state:NativeLibraryState):string {
   if(state.state==='empty')return `<p class="oi-lib-note">No native Projects, Expressions or collections are reachable from this instance yet.</p>`;
   const eligible=eligibleForScope(state.entries,'local');
   const {catalogue}=catalogueAndGallery(eligible);
-  if(!catalogue.length)return `<p class="oi-lib-note">No native Projects, Expressions or collections are reachable from this instance yet.</p>`;
-  return groupByProject(catalogue).map(projectGroupHTML).join('');
+  const incomplete=(state.coverage??[]).filter(row=>row.state!=='complete');
+  const disclosures=incomplete.map(row=>`<p class="oi-lib-note" role="status">${esc(row.reason??`${row.provider} is ${row.state}`)}</p>`).join('');
+  if(!catalogue.length)return disclosures||`<p class="oi-lib-note">No native Projects, Expressions or collections are reachable from this instance yet.</p>`;
+  return groupByProject(catalogue).map(projectGroupHTML).join('')+disclosures;
 }
 
 export function nativeLibrarySectionHTML(state:NativeLibraryState):string {

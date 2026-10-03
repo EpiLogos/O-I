@@ -151,6 +151,18 @@ export class ListingStore {
     this.emit();
   }
 
+  /** Replay loss has no trustworthy changed-path list. Invalidate the
+   * existing workspace cache and orphan every acquisition in flight. */
+  invalidateAll() {
+    this.inflight.clear();
+    this.loading = false;
+    for (const [path, held] of this.workspace) {
+      this.generations.set(path, ++this.generationCounter);
+      this.workspace.set(path, {status: "pending", reading: held.reading, rev: held.rev + 1});
+    }
+    this.emit();
+  }
+
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);

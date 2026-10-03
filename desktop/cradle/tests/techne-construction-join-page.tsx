@@ -28,6 +28,7 @@ import '../src/rest.css';
 import '../src/cradle.css';
 import '../src/knowledge/knowledge.css';
 window.__OI_KERNEL_BRIDGE__ = new URLSearchParams(location.search).get('bridge') ?? '';
+const singleRecoveryHost = new URLSearchParams(location.search).get('single-recovery-host') === '1';
 const mode = new URLSearchParams(location.search).get('mode') === 'expressions' ? 'expressions' : 'techne';
 // The composition root records every summon into the store, naming the
 // presented centre — the field's mode gate and the named target, not this
@@ -43,7 +44,7 @@ function App() {
       <KnowledgeSurface binding={{id: 'native-wiki-join', kind: 'knowledge', title: 'Alpha', project: 'Notes', address: {kind: 'source', value: 'source:a'}, view: {knowledgePlane: 'page'}}} onOpen={async () => {throw new Error('This proof follows source navigation inside the production Wiki.');}}/>
     </div>
     <div data-host="presented" style={{flex: 1, minWidth: 0, display: 'flex'}} data-host-mode={mode}><PointCloudHost mode={mode} bindingId="techne-presented"/></div>
-    {mode === 'techne' && <div data-host="concealed" style={{display: 'none'}}><PointCloudHost mode="techne" bindingId="techne-concealed"/></div>}
+    {mode === 'techne' && !singleRecoveryHost && <div data-host="concealed" style={{display: 'none'}}><PointCloudHost mode="techne" bindingId="techne-concealed"/></div>}
   </main>;
 }
 createRoot(document.getElementById('root')!).render(<KernelProvider><VisualsProvider><ExpressionStageProvider><App/></ExpressionStageProvider></VisualsProvider></KernelProvider>);

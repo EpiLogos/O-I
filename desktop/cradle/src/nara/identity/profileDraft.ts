@@ -84,6 +84,7 @@ export function profileFromDraft(draft: IdentityDraft): IdentityProfile {
       method: r.method, route: r.route, data};
   }
   const hasPlace = Object.values(draft.place).some(value => value.trim() !== '');
+  if (hasPlace && !draft.place.source.trim()) throw new Error('Enter the source of the birthplace coordinates before calculating.');
   return {schema: 'ql.nara-identity-profile/v1', person_ref: draft.person_ref, nara_ref: draft.nara_ref,
     ...(draft.encoding_policy ? {encoding_policy: structuredClone(draft.encoding_policy)} : {}),
     ...(draft.composition_policy ? {composition_policy: draft.composition_policy} : {}),

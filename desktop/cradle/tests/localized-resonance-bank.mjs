@@ -1,14 +1,16 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
+import {spawnSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
 import {build} from 'esbuild';
 import {fileURLToPath} from 'node:url';
 
 // Compile the real production modules in memory. No mock resonator, copied
 // oscillator arithmetic, semantic constitution or persisted test scene.
 const engine = fileURLToPath(new URL('../expressions-app/src/engine/', import.meta.url));
-const bundle = await build({stdin: {contents: `export * from './LocalizedResonanceBank'; export * from './cymaticResonator'; export {MAX_FORMATIONS} from './fieldModel';`, resolveDir: engine}, bundle: true, platform: 'node', format: 'esm', write: false});
-const {LocalizedResonanceBank, CymaticResonator, DEFAULT_RESONATOR_PARAMS, MAX_FORMATIONS} = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
-const driver = (entityId, frequencyHz, dimension = '2D') => ({entityId, position: [0, 0, 0], frequencyHz, params: {...DEFAULT_RESONATOR_PARAMS, dimension}});
+const bundle = await build({stdin: {contents: `export * from './LocalizedResonanceBank'; export * from './cymaticResonator'; export {MAX_FORMATIONS} from './fieldModel'; export {projectNativePlanetaryResonanceDrivers} from '../../field-studies-journeys/src/naraEvidenceField';`, resolveDir: engine}, bundle: true, platform: 'node', format: 'esm', write: false});
+const {LocalizedResonanceBank, CymaticResonator, DEFAULT_RESONATOR_PARAMS, MAX_FORMATIONS, projectNativePlanetaryResonanceDrivers} = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
+const driver = (entityId, frequencyHz, dimension = '2D', driverRef) => ({...(driverRef ? {driverRef} : {}), entityId, position: [0, 0, 0], frequencyHz, params: {...DEFAULT_RESONATOR_PARAMS, dimension}});
 const vectors = frame => [Array.from(frame.re), Array.from(frame.im)];
 
 test('distinct localized drivers equal the retained physical owners in both supported dimensions', () => {
@@ -87,4 +89,37 @@ test('driver capacity follows the existing formation budget without a second sem
   bank.configure(drivers); assert.equal(bank.step(0).length, MAX_FORMATIONS);
   assert.throws(() => bank.configure([...drivers, driver('excess', 148)]));
   assert.equal(bank.step(0).length, MAX_FORMATIONS);
+});
+
+test('independent driver identities may share one target entity without sharing modal state', () => {
+  const bank = new LocalizedResonanceBank();
+  const moon = driver('ajna', 210, '2D', 'native-planet:moon');
+  const neptune = driver('ajna', 211.44, '2D', 'native-planet:neptune');
+  bank.configure([moon, neptune]);
+  let frames;
+  for (let i = 0; i < 30; i++) frames = bank.step(1 / 60);
+  assert.equal(frames.length, 2);
+  assert.deepEqual(frames.map(frame => frame.entityId), ['ajna', 'ajna']);
+  assert.deepEqual(frames.map(frame => frame.driverRef), ['native-planet:moon', 'native-planet:neptune']);
+  assert.notDeepEqual(vectors(frames[0]), vectors(frames[1]));
+  assert.throws(() => bank.configure([moon, {...neptune, driverRef: moon.driverRef}]));
+  assert.deepEqual(bank.step(0).map(frame => frame.driverRef), ['native-planet:moon', 'native-planet:neptune']);
+});
+
+const nativeInputs=[process.env.OI_TEST_PROFILE_A,process.env.OI_TEST_PROFILE_B];
+test('actual qualified native A/B readings retain nine voices over seven centre targets', {skip:!process.env.OI_TEST_QL_BIN||nativeInputs.some(value=>!value)}, () => {
+  for(const [index,path] of nativeInputs.entries()){
+    const child=spawnSync(process.env.OI_TEST_QL_BIN,['nara','calculate','-','--json'],{input:readFileSync(path),encoding:'utf8',timeout:180000,maxBuffer:16*1024*1024,env:process.env});
+    assert.equal(child.status,0,child.stderr||String(child.error));
+    const reading=JSON.parse(child.stdout),natal=reading.natal_composition,bindings=Array.from({length:7},(_,ordinal)=>({ordinal,entityId:`centre:${ordinal}`}));
+    const drivers=projectNativePlanetaryResonanceDrivers(natal,natal.presentation_partition,bindings,`controlled-source:${index}`);
+    assert.equal(drivers.length,9);assert.equal(new Set(drivers.map(value=>value.driverRef)).size,9);assert.equal(new Set(drivers.map(value=>value.entityId)).size,7);
+    assert.deepEqual(drivers.filter(value=>value.entityId==='centre:5').map(value=>value.frequencyHz),[210,211]);
+    assert.deepEqual(drivers.filter(value=>value.entityId==='centre:6').map(value=>value.frequencyHz),[126,140]);
+    assert.equal(natal.planetary_contributions.find(value=>value.body==='Uranus').receiving_centre_ordinal,null);
+    const params={...DEFAULT_RESONATOR_PARAMS},bank=new LocalizedResonanceBank();
+    bank.configure(drivers.map(value=>({driverRef:value.driverRef,entityId:value.entityId,frequencyHz:value.frequencyHz,
+      position:[0,0,0],params:{...params,driveStrength:params.driveStrength*value.driveShare}})));
+    const frames=bank.step(1/60);assert.equal(frames.length,9);assert.equal(new Set(frames.map(value=>value.driverRef)).size,9);
+  }
 });

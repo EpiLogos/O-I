@@ -1,7 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {EditorView} from '@codemirror/view';
-import {KernelProvider} from '../src/kernel/KernelProvider';
+import {KernelProvider,useKernel} from '../src/kernel/KernelProvider';
 import {FileSurface} from '../src/files/FileSurface';
 import {FlowSurface} from '../src/flow/FlowSurface';
 import {ContextTray} from '../src/context/ContextTray';
@@ -21,6 +21,7 @@ const binding=location.search.includes('flow')?flowBinding:sample;
 // Only fixture controls live here. FileSurface, editor, Context, owner client and
 // the session CAS/send machine are the actual production implementations.
 function Probe({withAgent}:{withAgent:boolean}){
+ const kernel=useKernel();
  const session=useEncounterSession(withAgent?{project:'demo',ref:'agent-session/test',space:'session-space/test'}:undefined);
  useEffect(()=>{window.canvasTest={
   select(start:number,end:number){const host=document.querySelector('.cm-content');const editor=host?EditorView.findFromDOM(host as HTMLElement):null;if(!editor)throw new Error('Editor not mounted');editor.dispatch({selection:{anchor:start,head:end}});editor.focus();},
@@ -28,7 +29,8 @@ function Probe({withAgent}:{withAgent:boolean}){
   change(text:string){session?.actions.change(text);},
   async send(){await session?.actions.send();},
   session(){return session?.state;},
- };},[session]);
+  kernel(){return {snapshot:kernel.snapshot,receipts:kernel.receipts,readModelEpoch:kernel.readModelEpoch};},
+ };},[session,kernel]);
  return <aside className="agent-layer" aria-label="Agent Context" style={{width:'310px',overflow:'auto',padding:'16px',boxSizing:'border-box'}}>{withAgent?<><div style={{display:'flex',justifyContent:'flex-end'}}><ContextPreparationButton project="demo" session="agent-session/test"/></div><ContextCanvas dataPlane="context" project="demo" session="agent-session/test"/></>:<PreparedContextView project="demo"/>}</aside>;
 }
 function App(){const [withAgent,setWithAgent]=useState(!location.search.includes('noagent'));return <KernelProvider><button id="toggle-agent" onClick={()=>setWithAgent(x=>!x)}>Toggle companion</button><main style={{display:'flex',height:'calc(100vh - 36px)',minHeight:0}}><div data-binding-id={binding.id} style={{flex:1,minWidth:0,display:'flex',flexDirection:'column'}}><>{binding.kind==="flow"?<FlowSurface binding={binding}/>:<FileSurface binding={binding}/>}</></div><Probe withAgent={withAgent}/></main><ContextTray bindings={{[binding.id]:binding}} accompanying={withAgent?{project:'demo',ref:'agent-session/test',space:'session-space/test'}:undefined}/></KernelProvider>;}

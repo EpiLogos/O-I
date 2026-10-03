@@ -361,7 +361,7 @@ function validateJourney(value) {
     }
     if (s.research !== void 0) validateResearchMaterial(s.research, eids);
     for (const t of s.text) {
-      if (!safeId(t.id) || !str(t.kicker, 300) || !str(t.title, 300) || !str(t.italic, 300) || !str(t.body) || !finite(t.x, -0.5, 1.5) || !finite(t.y, -0.5, 1.5) || !finite(t.width, 60, 1e3) || !finite(t.size, 14, 150) || !["left", "center", "right"].includes(t.align) || typeof t.visible !== "boolean") throw new Error("Invalid page text.");
+      if (!safeId(t.id) || !str(t.kicker, 300) || !str(t.title, 300) || !str(t.italic, 300) || !str(t.body) || !finite(t.x, -0.5, 1.5) || !finite(t.y, -0.5, 1.5) || !finite(t.width, 60, 1e3) || !finite(t.size, 14, 150) || t.bodySize !== void 0 && !finite(t.bodySize, 8, 72) || !["left", "center", "right"].includes(t.align) || typeof t.visible !== "boolean") throw new Error("Invalid page text.");
       validateRoleSlot({ role: t.role });
     }
     if (s.semanticField) {

@@ -44,11 +44,24 @@ pub mod dictation;
 pub mod encounter;
 pub mod events;
 pub mod expression;
+mod expression_act_storage;
 pub mod expression_act_store;
 pub mod expression_asset;
 pub mod expression_blueprint;
 pub mod expression_carrier;
+pub mod expression_file;
 pub mod expression_material;
+pub mod expression_performance;
+pub mod expression_performance_act;
+pub mod expression_performance_assets;
+pub mod expression_performance_codec;
+pub mod expression_performance_delivery;
+pub mod expression_performance_management;
+pub mod expression_performance_reader;
+pub mod expression_performance_recording;
+pub mod expression_performance_reservation;
+pub mod expression_performance_source_asset;
+pub mod expression_performance_storage;
 pub mod expression_profile;
 pub mod expression_recovery;
 pub mod expression_scene;
@@ -1569,6 +1582,7 @@ impl Kernel {
                 return Err("This native host has reached its Nara context bound".into());
             }
             if let Some(current) = completed.current_candidate {
+                current.retain(&completed.project)?;
                 self.nara_voice
                     .invalidate_expression(&binding.expression_ref);
                 self.nara_contexts
@@ -1664,6 +1678,7 @@ impl Kernel {
             if self.nara_contexts.len() >= 64 && !self.nara_contexts.contains_key(&key) {
                 return Err("This native host has reached its Nara context bound".into());
             }
+            pin.retain(&completed.project)?;
             let entry = self.nara_contexts.entry(key).or_default();
             if entry.personal_current.as_ref().map(|old| old.context()) != Some(pin.context()) {
                 self.nara_voice

@@ -23,7 +23,7 @@
  * entries a provider itself disclosed as "local" (its own nested subset) or
  * "shared" — never widened, never guessed.
  */
-import type {KernelTransportStatus} from "../kernel/types";
+import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import type {LibraryItem, LibraryScopeId} from "./scope";
 import type {LibraryProvider} from "./providers";
 import {collectionsProvider} from "./collectionsProvider";
@@ -33,6 +33,7 @@ import {kernelOp} from "../kernel/bridge";
 export interface LibraryReadingEntry {
   ref: string; title: string; kind: LibraryItem["kind"]; owner: string; scope: "local" | "shared";
   revision?: string; project?: string; expressionRef?: string;
+  savedFile?: {location: CentralLocation; revision: string; expression_ref: string};
   scenes?: {scene_ref: string; title: string}[];
   collections?: string[];
   collectionMemberships?: {title: string; group: string; manifest_path: string}[];
@@ -44,6 +45,8 @@ export interface LibraryReadingRequest {scope?: "local" | "shared"}
 const sanitize = (item: LibraryItem): LibraryReadingEntry => ({
   ref: item.ref, title: item.title, kind: item.kind, owner: item.owner, scope: item.scope,
   revision: item.revision, project: item.project, expressionRef: item.expressionRef,
+  ...(item.provider === "expression-material" && item.sourceLocation && item.revision && item.expressionRef
+    ? {savedFile: {location: item.sourceLocation, revision: item.revision, expression_ref: item.expressionRef}} : {}),
   collections: item.nativeCollections,
   collectionMemberships: item.collectionMemberships?.map(m => ({title: m.title, group: m.group, manifest_path: m.manifest_path})),
 });
@@ -54,6 +57,16 @@ export async function expressionScenes(transport: KernelTransportStatus, express
   const result = await kernelOp(transport, {op: "expression", request: {operation: "inspect", expression_ref}} as never) as {error?: string; outcome?: {result?: string; data?: {document?: {expression_ref?: string; scenes?: {scene_ref: string; title?: string}[]}}}};
   const document = result.outcome?.result === "expression" ? result.outcome.data?.document : undefined;
   if (!document || document.expression_ref !== expression_ref || !Array.isArray(document.scenes)) throw new Error(result.error ?? "The Expression owner returned no Scenes");
+  return document.scenes.map(scene => ({scene_ref: scene.scene_ref, title: typeof scene.title === "string" && scene.title.trim() ? scene.title : "Untitled Scene"}));
+}
+/** Saved material may be absent from the live index after restart. Inspect its
+ * exact file through the native decoder; discovery never inserts a document. */
+async function savedExpressionScenes(transport: KernelTransportStatus, file: NonNullable<LibraryReadingEntry["savedFile"]>): Promise<{scene_ref: string; title: string}[]> {
+  const result = await kernelOp(transport, {op: "expression", request: {operation: "inspect_file", location: file.location, expected_file_revision: file.revision}});
+  const data = result.outcome?.result === "expression" ? result.outcome.data as {state?: string; document?: {expression_ref?: string; scenes?: {scene_ref: string; title?: string}[]}; file?: {revision?: string; location?: CentralLocation}} : undefined;
+  const document = data?.document;
+  const location = data?.file?.location;
+  if (result.error || data?.state !== "ready" || !document || document.expression_ref !== file.expression_ref || !Array.isArray(document.scenes) || data?.file?.revision !== file.revision || !location || location.schema !== file.location.schema || location.ref !== file.location.ref || location.root !== file.location.root || location.path !== file.location.path) throw new Error(result.error ?? "The saved Expression file changed or did not return exact Scenes");
   return document.scenes.map(scene => ({scene_ref: scene.scene_ref, title: typeof scene.title === "string" && scene.title.trim() ? scene.title : "Untitled Scene"}));
 }
 /** `providers` is injectable (tests exercise this adapter against a
@@ -89,7 +102,7 @@ export async function readLibrary(
   await Promise.all(Array.from({length: Math.min(4, targets.length)}, async () => {
     while (next < targets.length && !effectiveSignal.aborted) {
       const entry = targets[next++];
-      try { entry.scenes = await read(entry.expressionRef ?? entry.ref); } catch { /* undisclosed, not empty */ }
+      try { entry.scenes = entry.savedFile ? await savedExpressionScenes(transport, entry.savedFile) : await read(entry.expressionRef ?? entry.ref); } catch { /* undisclosed, not empty */ }
     }
   }));
   return {entries, coverage: results.map(result => result.coverage)};

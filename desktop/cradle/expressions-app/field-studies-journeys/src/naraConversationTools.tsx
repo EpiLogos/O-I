@@ -236,7 +236,7 @@ export const NaraVoiceTools = forwardRef<NaraVoiceHandle, VoiceProps>(function N
   </section>;
 });
 
-interface ReturnProps extends BasisProps {answerBlockId: number | null}
+interface ReturnProps extends BasisProps {answerBlockId: number | null;acceptKeptAnswer:(receipt:NonNullable<InstrumentReturnState['expression']>)=>Promise<void>}
 export function NaraAnswerReturnTools(props: ReturnProps) {
   const [review, setReview] = useState<InstrumentReturnState | null>(null), [flow, setFlow] = useState<InstrumentReturnState['flow']>();
   const [field, setField] = useState(''), [busy, setBusy] = useState(''), [error, setError] = useState(''), [notice, setNotice] = useState('');
@@ -280,6 +280,17 @@ export function NaraAnswerReturnTools(props: ReturnProps) {
     setReview({...review, retained: result.retained});
     setNotice(result.retained.already ? 'This exact answer is already kept in the Flow.' : 'Kept in the Flow with its original agent and identity basis.');
   });
+  const keepExpression=()=>void run('Keeping the completed answer in this Expression…',async check=>{
+    if(!review)throw Error('Read the completed native answer first.');
+    const result=await call({operation:'return_expression',basis:basis(),role:props.role,review_ref:review.review_ref});check();
+    if(!result.expression)throw Error('No native answer-world receipt was returned.');
+    setReview({...review,expression:result.expression});
+    if(result.expression.state!=='saved'){setNotice('Kept in the native world; same-file save remains unconfirmed. '+(result.expression.error??''));return;}
+    await props.acceptKeptAnswer(result.expression);
+    // Receiving the native revision can remount this review. The stored
+    // reading list below supplies the durable ordinary Read action.
+    setNotice('Kept and saved in this Expression with its original source.');
+  });
   const proposeDay = () => void run('Sending the quotation for review…', async check => {
     if (!review || !field) throw Error('Choose a native Day field.');
     const result = await call({operation: 'return_day', basis: basis(), role: props.role, review_ref: review.review_ref, field_id: field}); check();
@@ -292,12 +303,14 @@ export function NaraAnswerReturnTools(props: ReturnProps) {
   });
   const original = record(review?.answer?.original_basis), context = record(original.context), source = record(original.identity_source), selected = record(original.selected);
   if (!props.visible || viewKey !== key) return null;
-  return <section className="nara-conversation-tool nara-answer-return" aria-label="Keep this answer">
+  return <section className="nara-conversation-tool nara-answer-return" aria-label="Keep this answer" data-native-answer-block-id={props.answerBlockId}>
     <div className="nara-personal-actions"><button type="button" disabled={props.disabled || !props.visible || !props.basis || !!busy || props.answerBlockId === null} onClick={inspect}>{review ? 'Read destinations again' : 'Keep this answer'}</button>
       {review && <button type="button" disabled={!!busy} onClick={() => {setReview(null); setFlow(undefined); setField('');}}>Close</button>}</div>
     {review && <div className="nara-return-review">
       <p>Keep an attributed quotation. Its original person, Expression and selected centre stay attached.</p>
       <details className="nara-personal-depth"><summary>Review the answer and its source</summary><blockquote>{review.answer?.text}</blockquote><dl><dt>Question</dt><dd>{review.answer?.question}</dd><dt>Selected reference</dt><dd>{valueText(selected.title ?? selected.subject_ref ?? selected.relation_ref)}</dd><dt>Person</dt><dd>{valueText(context.subject_ref)}</dd><dt>Source revision</dt><dd>{valueText(source.revision)}</dd><dt>Native session</dt><dd>{valueText(context.agent_session_ref)}</dd></dl></details>
+      <div className="nara-personal-actions"><button type="button" disabled={!!busy||props.disabled||!!review.expression} onClick={keepExpression}>Keep in this Expression</button></div>
+      {review.expression&&<p role="status">{review.expression.state==='saved'?'Saved in this personal world. Choose Read under Kept answers.':'Native answer kept; file save remains unconfirmed.'}</p>}
       <div className="nara-return-destinations"><div>
         <label className="nara-personal-input"><span>Keep in a Flow</span><select disabled={!!busy || props.disabled} value={flow?.ref ?? ''} onChange={event => chooseFlow(event.target.value)}><option value="">Choose an existing Flow</option>{review.flows?.map(row => <option key={row.ref} value={row.ref}>{row.name}</option>)}</select></label>
         {flow && <p className="nara-personal-muted">{flow.title} · {flow.entries} {flow.entries === 1 ? 'entry' : 'entries'}. One attributed answer will be retained.</p>}
@@ -312,4 +325,28 @@ export function NaraAnswerReturnTools(props: ReturnProps) {
     {(busy || notice) && <p className="nara-tool-status" role="status">{busy || notice}</p>}
     {error && <p className="nara-personal-error" role="alert">{error}</p>}
   </section>;
+}
+
+/** Stored quotations remain ordinary native material after restart. Reading
+ * them does not acquire, resume or invoke a provider. */
+export function NaraKeptAnswerTools(props:BasisProps&{readKeptAnswer:(answer:NonNullable<InstrumentReturnState['kept']>)=>Promise<void>}){
+ const [records,setRecords]=useState<NonNullable<InstrumentReturnState['expressions']>>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const generation=useRef(0),pending=useRef(false),key=keyFor(props);
+ useEffect(()=>{const at=++generation.current;setRecords([]);setError('');setBusy(false);pending.current=false;
+  if(props.visible&&props.basis)void naraInstrumentRequest({operation:'return_expression_list',basis:props.basis,role:props.role}).then(value=>{
+   if(at===generation.current&&value.schema==='oi.nara-instrument-return/v1')setRecords(value.expressions??[]);
+  }).catch(failure=>{if(at===generation.current)setError(message(failure));});
+  return()=>{generation.current++;};
+ },[key]);
+ const read=async(ref:string)=>{if(pending.current||props.disabled||!props.basis)return;pending.current=true;setBusy(true);setError('');const at=generation.current;
+  try{const value=await naraInstrumentRequest({operation:'return_expression_read',basis:props.basis,role:props.role,answer_ref:ref});
+   if(at!==generation.current)return;if(value.schema!=='oi.nara-instrument-return/v1'||!value.kept)throw Error('The native stored answer could not be read.');await props.readKeptAnswer(value.kept);
+  }catch(failure){if(at===generation.current)setError(message(failure));}finally{if(at===generation.current){pending.current=false;setBusy(false);}}
+ };
+ if(!props.visible)return null;
+ return <section className="nara-conversation-tool" aria-label="Kept answers"><h3>Kept in this Expression</h3>
+  {records.map(r=><div key={r.answer_ref} data-kept-answer-ref={r.answer_ref}><p>{r.role==='epii'?'Epii':'Nara'} · {r.question}</p><button type="button" disabled={busy||props.disabled} onClick={()=>void read(r.answer_ref)}>Read answer</button>
+   <details><summary>Original answer source</summary><pre>{JSON.stringify(r,null,2)}</pre><p>This is an attributed historical answer. Reading it does not compute a new current or claim Recognition.</p></details></div>)}
+  {!records.length&&!error&&<p>No native answer has been kept here.</p>}{error&&<p role="alert">{error}</p>}
+ </section>;
 }

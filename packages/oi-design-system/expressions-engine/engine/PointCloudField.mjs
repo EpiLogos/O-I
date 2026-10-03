@@ -134,12 +134,19 @@ class PointCloudField {
   particleGeometry;
   particleMaterial;
   particlePoints;
+  /** Project draw membership of the native node pool. The independently
+   * admitted connection tail, resident medium and clock remain intact. */
+  setNodePoolVisibility(visible) {
+    this.particleMaterial.uniforms.uNodePoolVisible.value = visible ? 1 : 0;
+  }
   // Animation & Clock (the ONE clock: simTime)
   clock;
   animFrameId = null;
   isDestroyed = false;
   simTime = 0;
   seedGeneration = 0;
+  stationaryAdmissionRevision = 0;
+  lastStationaryAdmission = "";
   // Field-level manual morph scrub (entities with sequence.advance === 'off')
   morphProgress = 0;
   // Composition state derived per frame (no timers)
@@ -169,7 +176,7 @@ class PointCloudField {
   setLocalizedResonanceProjection(value) {
     if (value) {
       const q = value.orientation, norm = Math.hypot(q.w, q.x, q.y, q.z);
-      if (!value.scope || !Number.isFinite(norm) || Math.abs(norm - 1) > 1e-6 || value.drivers.length > MAX_FORMATIONS || new Set(value.drivers.map((d) => d.entityId)).size !== value.drivers.length || value.drivers.some((d) => !d.entityId || !Number.isFinite(d.frequencyHz) || d.frequencyHz <= 0 || !Number.isFinite(d.driveShare) || d.driveShare < 0))
+      if (!value.scope || !Number.isFinite(norm) || Math.abs(norm - 1) > 1e-6 || value.drivers.length > MAX_FORMATIONS || new Set(value.drivers.map((d) => d.driverRef ?? d.entityId)).size !== value.drivers.length || value.drivers.some((d) => !d.entityId || d.driverRef !== void 0 && !d.driverRef.trim() || !Number.isFinite(d.frequencyHz) || d.frequencyHz <= 0 || !Number.isFinite(d.driveShare) || d.driveShare < 0))
         throw Error("Invalid localized resonance admission");
     }
     if (value?.scope !== this.localizedProjection?.scope) this.localizedBank.configure([]);
@@ -198,6 +205,7 @@ class PointCloudField {
       const pose = this.lastPoses.find((p) => p.entityId === driver.entityId);
       if (!pose) throw Error("A localized resonance driver has no current evaluated entity");
       return {
+        ...driver.driverRef === void 0 ? {} : { driverRef: driver.driverRef },
         entityId: driver.entityId,
         frequencyHz: driver.frequencyHz,
         position: [pose.x, pose.y, pose.z],
@@ -355,6 +363,7 @@ class PointCloudField {
    * count, then re-bakes and reseeds. Camera, grid, pins and config all persist.
    */
   rebuildParticleSystem() {
+    const nodePoolVisible = this.particleMaterial?.uniforms.uNodePoolVisible.value ?? 1;
     const hostSize = this.hosted ? this.renderer.getSize(new THREE.Vector2()) : null;
     const width = hostSize?.x ?? (this.canvas.clientWidth || window.innerWidth);
     const height = hostSize?.y ?? (this.canvas.clientHeight || window.innerHeight);
@@ -366,6 +375,7 @@ class PointCloudField {
     this.simulator = new GPGPUSimulator(this.renderer, this.config.particleCount);
     this.initEntities(true);
     this.initParticlePipeline(width, height, dpr);
+    this.particleMaterial.uniforms.uNodePoolVisible.value = nodePoolVisible;
     this.resonatorActive = false;
     this.updateConfig({});
   }
@@ -466,7 +476,9 @@ class PointCloudField {
         uEditSelected: { value: new Float32Array(MAX_FORMATIONS) },
         uEntityCount: { value: 0 },
         uConnectionStart: { value: 1e30 },
+        uNodePoolVisible: { value: 1 },
         uConnectionMetadata: { value: this.entities.noiseTexture },
+        uConnectionRestOpacity: { value: 1 },
         uEntityBounds: { value: new Float32Array(MAX_FORMATIONS) },
         uEntityTint: { value: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Color("#ffffff")) },
         uEntityTintWeight: { value: new Float32Array(MAX_FORMATIONS) },
@@ -1202,9 +1214,10 @@ class PointCloudField {
       connections: { ...this.entities.connections.inspect(), nodeFormations: this.entities.getPartitions().length, maxNodeFormations: MAX_FORMATIONS },
       drive: this.lastDrive,
       composition: this.getCompositionTelemetry(),
-      localizedResonance: this.localizedFrames.map((f) => ({ entityId: f.entityId, frequencyHz: f.frequencyHz, position: f.position, params: f.params, re: Array.from(f.re), im: Array.from(f.im) })),
+      localizedResonance: this.localizedFrames.map((f) => ({ ...f.driverRef === void 0 ? {} : { driverRef: f.driverRef }, entityId: f.entityId, frequencyHz: f.frequencyHz, position: f.position, params: f.params, re: Array.from(f.re), im: Array.from(f.im) })),
       positions: [],
-      velocities: []
+      velocities: [],
+      targets: []
     };
     if (readParticles) {
       const n = this.simulator.texWidth * this.simulator.texHeight * 4;
@@ -1213,6 +1226,7 @@ class PointCloudField {
       this.renderer.readRenderTargetPixels(this.simulator.currentVelTarget, 0, 0, this.simulator.texWidth, this.simulator.texHeight, v);
       result.positions = Array.from(p.subarray(0, this.simulator.particleCount * 4));
       result.velocities = Array.from(v.subarray(0, this.simulator.particleCount * 4));
+      result.targets = Array.from(this.entities.buildSeed().subarray(0, this.simulator.particleCount * 4));
     }
     return result;
   }
@@ -1227,7 +1241,9 @@ class PointCloudField {
     };
   }
   /** Editing decoration only. Neither GPU state nor the stored configuration is touched. */
-  setNativeConnections(bindings, selected = []) {
+  setNativeConnections(bindings, selected = [], restOpacity = 1) {
+    if (!Number.isFinite(restOpacity) || restOpacity < 0.01 || restOpacity > 1) throw new Error("Connection presentation opacity must be within 0.01\u20131.");
+    this.particleMaterial.uniforms.uConnectionRestOpacity.value = restOpacity;
     this.entities.connections.configure(bindings, selected, this.simulator.particleCount);
     this.entities.layout(this.config.entities || []);
   }
@@ -1438,6 +1454,37 @@ class PointCloudField {
   seedCurrentTargets() {
     this.seedGeneration++;
     this.simulator.seedInitialState(this.entities.buildSeed());
+  }
+  /** A renderer-local CAS fence; the caller owns semantic/source qualification. */
+  stationaryFormationAdmissionState() {
+    return { revision: this.stationaryAdmissionRevision, partition_signature: JSON.stringify({
+      particleCount: this.simulator.particleCount,
+      texWidth: this.simulator.texWidth,
+      texHeight: this.simulator.texHeight,
+      partitions: this.entities.getPartitions(),
+      bakes: this.entities.bakeGeneration,
+      formations: this.formations(),
+      simTime: this.simTime
+    }) };
+  }
+  admitStationaryFormations(request) {
+    const actual = this.stationaryFormationAdmissionState();
+    if (!request || request.expected_revision !== actual.revision || request.partition_signature !== actual.partition_signature || typeof request.source_revision !== "string" || !request.source_revision.trim() || request.source_revision.length > 1024 || !Array.isArray(request.entity_ids) || !request.entity_ids.length || request.entity_ids.length > MAX_FORMATIONS || new Set(request.entity_ids).size !== request.entity_ids.length) throw Error("Stale or invalid stationary formation admission.");
+    const enabled = new Set(this.formations().map((entity) => entity.id)), partitions = this.entities.getPartitions();
+    const ranges = request.entity_ids.map((id) => {
+      const partition = partitions.find((value) => value.entityId === id);
+      if (typeof id !== "string" || !enabled.has(id) || !partition || partition.end <= partition.start) {
+        throw Error("The stationary receiving body is missing, disabled or empty.");
+      }
+      return { start: partition.start, end: partition.end };
+    }).sort((a, b) => a.start - b.start);
+    const key = JSON.stringify([request.source_revision, request.partition_signature, [...request.entity_ids].sort()]);
+    if (key === this.lastStationaryAdmission) throw Error("This stationary source revision is already received.");
+    this.simulator.admitStationaryPositions(this.entities.buildSeed(), ranges);
+    this.stationaryAdmissionRevision++;
+    this.lastStationaryAdmission = key;
+    this.particleMaterial.uniforms.uPositionTexture.value = this.simulator.currentPosTarget.texture;
+    this.renderer.render(this.scene, this.camera);
   }
   getTransportState() {
     return { version: 1, simTime: this.simTime, theta: this.torPhaseAcc, phi: this.polPhaseAcc, lanes: [...this.automationRt.lanes].map(([id, v]) => [id, { ...v }]) };
