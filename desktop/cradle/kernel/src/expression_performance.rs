@@ -106,7 +106,10 @@ pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
         }
         Value::Object(v) => {
             for (key, x) in v {
-                if ["__proto__", "constructor", "prototype"].contains(&key.as_str()) {
+                if ["__proto__", "prototype"].contains(&key.as_str())
+                    || (key == "constructor"
+                        && !crate::expression_performance_source_asset::native_constructor_metadata(v))
+                {
                     return Err("unsafe performance native reading key".into());
                 }
                 safe(x, depth + 1)?;

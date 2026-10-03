@@ -220,7 +220,9 @@ pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
         Value::Object(values) => {
             for (key, v) in values {
                 if key.contains('\0')
-                    || ["__proto__", "constructor", "prototype"].contains(&key.as_str())
+                    || ["__proto__", "prototype"].contains(&key.as_str())
+                    || (key == "constructor"
+                        && !crate::expression_performance_source_asset::native_constructor_metadata(values))
                 {
                     return Err("Unsafe Act storage key".into());
                 }

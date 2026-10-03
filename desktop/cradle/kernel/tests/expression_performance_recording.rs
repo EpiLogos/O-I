@@ -816,11 +816,11 @@ fn full_workload(source_required: bool) {
     kernel.attach_act_store(&home).unwrap();
     invoke(
         &mut kernel,
-        json!({"operation":"create","expression_ref":"expression:actual-native-recorded/current","title":"Actual retained physical performance","actor":"agent:retained-workload"}),
+        json!({"operation":"create","expression_ref":"expression:actual-native-recorded-current","title":"Actual retained physical performance","actor":"agent:retained-workload"}),
         false,
     );
     let mut document: Document = serde_json::from_value(invoke(&mut kernel,
-        json!({"operation":"inspect","expression_ref":"expression:actual-native-recorded/current"}), false)["document"].clone()).unwrap();
+        json!({"operation":"inspect","expression_ref":"expression:actual-native-recorded-current"}), false)["document"].clone()).unwrap();
     invoke(
         &mut kernel,
         json!({"operation":"edit","expression_ref":document.expression_ref,
@@ -1701,7 +1701,7 @@ fn genuine_recorded_passage_professional_edits_use_native_act_restore_file_and_c
     }
     fn document(kernel: &mut Kernel) -> Document {
         serde_json::from_value(invoke(kernel,
-            json!({"operation":"inspect","expression_ref":"expression:professional-native/current"}),
+            json!({"operation":"inspect","expression_ref":"expression:professional-native-current"}),
             false)["document"].clone()).unwrap()
     }
     fn passage(
@@ -1780,7 +1780,7 @@ fn genuine_recorded_passage_professional_edits_use_native_act_restore_file_and_c
     kernel.attach_act_store(&home).unwrap();
     invoke(
         &mut kernel,
-        json!({"operation":"create","expression_ref":"expression:professional-native/current",
+        json!({"operation":"create","expression_ref":"expression:professional-native-current",
         "title":"Professional retained native passage","actor":"agent:professional-native"}),
         false,
     );

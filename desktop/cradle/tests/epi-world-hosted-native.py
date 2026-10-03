@@ -962,7 +962,9 @@ class Replay:
         require(file_ref(baseline_ref['path']) == baseline_ref
                 and baseline['schema'] == 'epi.hosted-native-selected-admission/v1'
                 and baseline['document'] == setup_document
-                and baseline['file'] == {'location': setup_reading['location'], 'revision': setup_reading['revision']}
+                and baseline['file'] == {'location': setup_reading['location'], 'revision': setup_reading['revision'],
+                                         'expression_ref': setup_document['expression_ref'],
+                                         'document_revision': setup_document['revision']}
                 and baseline['content_sha256'] == hashlib.sha256(setup_reading['content'].encode()).hexdigest()
                 and baseline['content_bytes'] == len(setup_reading['content'].encode()),
                 'The selection baseline must be the full actual ordinary-admission native save/readback')

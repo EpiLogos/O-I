@@ -44,7 +44,7 @@ fn native_act(
     kernel.attach_act_store(&home).unwrap();
     invoke(
         &mut kernel,
-        json!({"operation":"create","expression_ref":"expression:native-delivery/current",
+        json!({"operation":"create","expression_ref":"expression:native-delivery-current",
         "title":"Actual retained delivery","actor":"agent:native-delivery"}),
         false,
     );
@@ -53,7 +53,7 @@ fn native_act(
             invoke(
                 kernel,
                 json!({"operation":"inspect",
-            "expression_ref":"expression:native-delivery/current"}),
+            "expression_ref":"expression:native-delivery-current"}),
                 false,
             )["document"]
                 .clone(),
@@ -817,6 +817,32 @@ fn genuine_activated_world_personal_shared_delivery_preserves_original_episode_a
             actual["source_assets"]["current_receiving"]["source_payload_context"]["private"],
             json!(*kind != "world")
         );
+        // Exercise the actual three producer payloads: the native constructor
+        // tag remains literal data; executable-shaped/reserved keys still fail
+        // at the receiving guard before any source witness is consulted.
+        for path in ["/receiving_source_inputs", "/current_receiving/source_inputs"] {
+            for constructor in [Value::Null, json!("unknown-route"), json!({"call": "native-world"})] {
+                let mut changed = actual["source_assets"].clone();
+                changed.pointer_mut(path).unwrap()["constructor"] = constructor;
+                assert!(NativePerformanceSourceAsset::from_native(&performance.bases[0], changed)
+                    .unwrap_err().contains("unsafe performance native reading key"));
+            }
+            for key in ["__proto__", "prototype", "unexpected_field"] {
+                let mut changed = actual["source_assets"].clone();
+                changed.pointer_mut(path).unwrap().as_object_mut().unwrap()
+                    .insert(key.into(), json!("native-world"));
+                assert!(NativePerformanceSourceAsset::from_native(&performance.bases[0], changed)
+                    .unwrap_err().contains("unsafe performance native reading key"));
+            }
+            let mut changed = actual["source_assets"].clone();
+            changed.pointer_mut(path).unwrap()["schema"] = json!("unqualified-inputs/v1");
+            assert!(NativePerformanceSourceAsset::from_native(&performance.bases[0], changed)
+                .unwrap_err().contains("unsafe performance native reading key"));
+        }
+        let mut misplaced = actual["source_assets"].clone();
+        misplaced["constructor"] = json!("native-world");
+        assert!(NativePerformanceSourceAsset::from_native(&performance.bases[0], misplaced)
+            .unwrap_err().contains("unsafe performance native reading key"));
         let (act, document, _) = native_act(
             &performance,
             vec![PerformanceOperation::Seek { sample: Counter(0) }],

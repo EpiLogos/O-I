@@ -101,7 +101,7 @@ fn create(kernel: &mut Kernel) -> Document {
     request(
         kernel,
         "expression",
-        json!({"operation":"create","expression_ref":"expression:retained-source/current",
+        json!({"operation":"create","expression_ref":"expression:retained-source-current",
         "title":"Retained original native source","actor":"agent:source-asset-proof"}),
     );
     document(kernel)
@@ -110,7 +110,7 @@ fn document(kernel: &mut Kernel) -> Document {
     let result = request(
         kernel,
         "expression",
-        json!({"operation":"inspect","expression_ref":"expression:retained-source/current"}),
+        json!({"operation":"inspect","expression_ref":"expression:retained-source-current"}),
     );
     serde_json::from_value(result["document"].clone()).unwrap()
 }
@@ -269,16 +269,27 @@ fn source_loss_drift_wrong_instance_and_version_downgrade_refuse_lossless_replay
 
 fn source_work() -> (Performance, Value) {
     let (mut full, actual) = prepared();
-    let sin = scalar(
-        full.bases[0].audio_determination["notes"][0]["phase_sin"]
-            .as_f64()
-            .unwrap(),
-    );
-    let cos = scalar(
-        full.bases[0].audio_determination["notes"][0]["phase_cos"]
-            .as_f64()
-            .unwrap(),
-    );
+    let preparation = &actual["native_preparation"];
+    assert_eq!(preparation["determination"], full.bases[0].audio_determination);
+    let note: oi_cradle_kernel::expression_performance_management::NativeNoteTarget =
+        serde_json::from_value(preparation["notes"][0].clone()).unwrap();
+    let basis = &full.bases[0];
+    let pitch = &full.pitches[0];
+    assert_eq!(note.identity.instance, basis.identity.instance_ref);
+    assert_eq!(note.identity.event, basis.identity.event_ref);
+    assert_eq!(note.identity.subject, basis.identity.subject_ref);
+    assert_eq!(note.identity.m1_revision, basis.identity.m1_revision);
+    assert_eq!(note.identity.m2_generation, basis.identity.m2_generation);
+    assert_eq!(note.key, pitch.key);
+    assert_eq!(note.source_coordinate, pitch.source_coordinate);
+    assert_eq!(note.source_face == 1, pitch.source_prime);
+    assert_eq!(note.pitch_class, pitch.pitch_class);
+    assert_eq!(note.register_octave, pitch.register);
+    assert_eq!(note.hertz, pitch.hertz);
+    assert_eq!(note.fundamental_hz, pitch.fundamental_hz);
+    assert_eq!(note.tuning_ref, pitch.tuning_ref);
+    let sin = note.phase_sin;
+    let cos = note.phase_cos;
     let mut events = Vec::new();
     // 45k authored native operands: 24 independent simultaneous touches, exact
     // current native carrier phase, no fabricated application receipts.

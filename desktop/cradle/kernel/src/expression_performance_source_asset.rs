@@ -10,6 +10,23 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 pub const SCHEMA: &str = "oi.expression-performance-source-asset/v1";
+
+/// This native producer uses `constructor` as a literal source-route tag,
+/// never an executable or a JavaScript object constructor. Keep its complete
+/// payload, while admitting no other use of that key through file/Act custody.
+pub(crate) fn native_constructor_metadata(object: &serde_json::Map<String, Value>) -> bool {
+    const KEYS: [&str; 9] = [
+        "schema", "constructor", "world_request", "identity_profile", "natal",
+        "sky", "original_occasion", "calibration", "return_context",
+    ];
+    object.len() == KEYS.len()
+        && KEYS.iter().all(|key| object.contains_key(*key))
+        && object["schema"] == "ql.native-performance-receiving-source-inputs/v1"
+        && object["constructor"].as_str().is_some_and(|tag| {
+            ["native-world", "native-protected", "explicit-reference-world"].contains(&tag)
+        })
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct NativePerformanceSourceAsset {

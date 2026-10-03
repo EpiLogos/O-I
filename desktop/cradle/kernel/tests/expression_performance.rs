@@ -538,7 +538,7 @@ fn kernel_world(k: &mut oi_cradle_kernel::Kernel, input: Value) -> Result<Value,
 fn document(k: &mut oi_cradle_kernel::Kernel) -> Value {
     kernel_expression(
         k,
-        serde_json::json!({"operation":"inspect","expression_ref":"expression:retained/current"}),
+        serde_json::json!({"operation":"inspect","expression_ref":"expression:retained-current"}),
     )
     .unwrap()["document"]
         .clone()
@@ -562,7 +562,7 @@ fn actual_scene_act_file_edition_restart_seek_and_continue_preserve_the_complete
     );
     let mut k = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
     k.attach_act_store(&home).unwrap();
-    kernel_expression(&mut k,json!({"operation":"create","expression_ref":"expression:retained/current","title":"Retained native musical work","actor":"agent:retained-performance-test"})).unwrap();
+    kernel_expression(&mut k,json!({"operation":"create","expression_ref":"expression:retained-current","title":"Retained native musical work","actor":"agent:retained-performance-test"})).unwrap();
     let old = document(&mut k);
     assert!(old["scenes"][0].get("performance").is_none());
     let legacy: Document = serde_json::from_value(old.clone()).unwrap();
@@ -570,9 +570,9 @@ fn actual_scene_act_file_edition_restart_seek_and_continue_preserve_the_complete
         expression_file::decode(&expression_file::encode(&legacy).unwrap()).unwrap(),
         legacy
     );
-    let admitted=kernel_world(&mut k,json!({"operation":"act_perform","act_ref":"act:retained-performance","expression_ref":"expression:retained/current","expected_revision":1,
+    let admitted=kernel_world(&mut k,json!({"operation":"act_perform","act_ref":"act:retained-performance","expression_ref":"expression:retained-current","expected_revision":1,
         "actor":"agent:retained-performance-test","summary":"Record native source-qualified work","activity_ref":"agent-session/direct:retained-performance",
-        "changes":[{"change":"scene_performance_set","scene_ref":"expression:retained/current:scene:main","performance":p}]})).unwrap();
+        "changes":[{"change":"scene_performance_set","scene_ref":"expression:retained-current:scene:main","performance":p}]})).unwrap();
     assert_eq!(admitted["act"]["sequence"][0]["kind"], "edition");
     let initial = document(&mut k);
     let revision = initial["revision"].as_u64().unwrap();
@@ -585,8 +585,8 @@ fn actual_scene_act_file_edition_restart_seek_and_continue_preserve_the_complete
     let edit = PerformanceOperation::Record {
         events: vec![note(3, 240, 2, 1), off(4, 400, 2)],
     };
-    kernel_world(&mut k,json!({"operation":"act_perform","act_ref":"act:retained-performance","expression_ref":"expression:retained/current","expected_revision":revision,
-        "actor":"agent:retained-performance-test","summary":"Continue native performance","changes":[{"change":"scene_performance_edit","scene_ref":"expression:retained/current:scene:main","operations":[edit]}]})).unwrap();
+    kernel_world(&mut k,json!({"operation":"act_perform","act_ref":"act:retained-performance","expression_ref":"expression:retained-current","expected_revision":revision,
+        "actor":"agent:retained-performance-test","summary":"Continue native performance","changes":[{"change":"scene_performance_edit","scene_ref":"expression:retained-current:scene:main","operations":[edit]}]})).unwrap();
     let continued = document(&mut k);
     assert_eq!(
         continued["scenes"][0]["performance"]["pages"][0]["events"]
@@ -596,14 +596,14 @@ fn actual_scene_act_file_edition_restart_seek_and_continue_preserve_the_complete
         4
     );
     let before = document(&mut k);
-    assert_eq!(kernel_expression(&mut k,json!({"operation":"edit","expression_ref":"expression:retained/current","expected_revision":revision,"actor":"agent:retained-performance-test",
-        "changes":[{"change":"scene_performance_clear","scene_ref":"expression:retained/current:scene:main"}]})).unwrap()["state"], "revision_conflict");
+    assert_eq!(kernel_expression(&mut k,json!({"operation":"edit","expression_ref":"expression:retained-current","expected_revision":revision,"actor":"agent:retained-performance-test",
+        "changes":[{"change":"scene_performance_clear","scene_ref":"expression:retained-current:scene:main"}]})).unwrap()["state"], "revision_conflict");
     assert_eq!(
         document(&mut k),
         before,
         "stale CAS cannot alter retained physical material"
     );
-    assert_eq!(kernel_expression(&mut k,json!({"operation":"close","expression_ref":"expression:retained/current","actor":"agent:retained-performance-test"})).unwrap()["state"],"dirty","dirty close must preserve work");
+    assert_eq!(kernel_expression(&mut k,json!({"operation":"close","expression_ref":"expression:retained-current","actor":"agent:retained-performance-test"})).unwrap()["state"],"dirty","dirty close must preserve work");
     let document_typed: Document = serde_json::from_value(continued.clone()).unwrap();
     let encoded = expression_file::encode(&document_typed).unwrap();
     let reopened = expression_file::decode(&encoded).unwrap();
@@ -752,10 +752,16 @@ fn actual_fifteen_minute_asset_history_shares_pages_preserves_undo_and_detects_m
     let part = corrupted
         .parts
         .iter_mut()
-        .find(|p| matches!(p.part, PerformancePart::EventPage(_)))
+        .find(|p| matches!(p.part, PerformancePart::EventPage(_) | PerformancePart::EncodedEventPage(_)))
         .unwrap();
-    if let PerformancePart::EventPage(p) = &mut part.part {
-        p.events.remove(0);
+    match &mut part.part {
+        PerformancePart::EventPage(p) => { p.events.remove(0); }
+        PerformancePart::EncodedEventPage(p) => {
+            let mut page = p.read::<EventPage>().unwrap();
+            page.events.remove(0);
+            *p = oi_cradle_kernel::expression_performance_codec::EncodedPage::from_value(&page).unwrap();
+        }
+        _ => unreachable!(),
     }
     assert!(PerformancePartCatalog::read(corrupted).is_err());
     let mut privacy = stored;
@@ -769,9 +775,9 @@ fn actual_file_and_indexed_document_editions_preserve_full_material_without_expa
     };
     let full = fifteen_minute_work();
     let mut k = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
-    kernel_expression(&mut k,json!({"operation":"create","expression_ref":"expression:retained/current","title":"Full musical work","actor":"agent:retained-performance-test"})).unwrap();
-    kernel_expression(&mut k,json!({"operation":"edit","expression_ref":"expression:retained/current","expected_revision":1,"actor":"agent:retained-performance-test",
-        "changes":[{"change":"scene_performance_set","scene_ref":"expression:retained/current:scene:main","performance":full}]})).unwrap();
+    kernel_expression(&mut k,json!({"operation":"create","expression_ref":"expression:retained-current","title":"Full musical work","actor":"agent:retained-performance-test"})).unwrap();
+    kernel_expression(&mut k,json!({"operation":"edit","expression_ref":"expression:retained-current","expected_revision":1,"actor":"agent:retained-performance-test",
+        "changes":[{"change":"scene_performance_set","scene_ref":"expression:retained-current:scene:main","performance":full}]})).unwrap();
     let native: Document = serde_json::from_value(document(&mut k)).unwrap();
     let encoded = expression_file::encode(&native).unwrap();
     assert!(encoded.len() <= expression_file::FILE_BYTES);
@@ -838,7 +844,7 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
     assert!(!home.exists(), "preserve prior native evidence");
     let mut kernel = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
     kernel.attach_act_store(&home).unwrap();
-    kernel_expression(&mut kernel,json!({"operation":"create","expression_ref":"expression:retained/current",
+    kernel_expression(&mut kernel,json!({"operation":"create","expression_ref":"expression:retained-current",
         "title":"Complete fifteen-minute physical musical act","actor":"agent:retained-performance-test"})).unwrap();
     let mut first = None;
     let mut last_act = None;
@@ -869,9 +875,9 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
         };
         let revision = document(&mut kernel)["revision"].as_u64().unwrap();
         let result = kernel_world(&mut kernel,json!({"operation":"act_retained_perform","act_ref":"act:fifteen-minute-native",
-            "expression_ref":"expression:retained/current","expected_revision":revision,"expected_act_revision":expected_act_revision,
+            "expression_ref":"expression:retained-current","expected_revision":revision,"expected_act_revision":expected_act_revision,
             "summary":"Retain complete physical performance","actor":"agent:retained-performance-test",
-            "changes":[{"change":"scene_performance_set","scene_ref":"expression:retained/current:scene:main","performance":recorded}]})).unwrap();
+            "changes":[{"change":"scene_performance_set","scene_ref":"expression:retained-current:scene:main","performance":recorded}]})).unwrap();
         assert_eq!(result["state"], "act_running");
         assert_eq!(
             result["act"]["sequence"].as_array().unwrap().len(),
@@ -953,9 +959,9 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
         .unwrap();
     let revision = document(&mut restarted)["revision"].as_u64().unwrap();
     let result=kernel_world(&mut restarted,json!({"operation":"act_retained_perform","act_ref":"act:fifteen-minute-native",
-        "expression_ref":"expression:retained/current","expected_revision":revision,"expected_act_revision":expected_act_revision,"summary":"Continue complete work",
+        "expression_ref":"expression:retained-current","expected_revision":revision,"expected_act_revision":expected_act_revision,"summary":"Continue complete work",
         "actor":"agent:retained-performance-test","changes":[{"change":"scene_performance_edit",
-            "scene_ref":"expression:retained/current:scene:main","operations":[{"operation":"seek","sample":"43199999"}]}]})).unwrap();
+            "scene_ref":"expression:retained-current:scene:main","operations":[{"operation":"seek","sample":"43199999"}]}]})).unwrap();
     assert_eq!(result["act"]["sequence"].as_array().unwrap().len(), 181);
     let continued: Document = serde_json::from_value(document(&mut restarted)).unwrap();
     assert_eq!(
@@ -997,9 +1003,9 @@ fn legacy_complete_editions_remain_v1_and_explicit_migration_restitutes_exact_do
     assert!(!home.exists());
     let mut kernel = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
     kernel.attach_act_store(&home).unwrap();
-    kernel_expression(&mut kernel,json!({"operation":"create","expression_ref":"expression:retained/current","title":"Legacy complete Editions","actor":"agent:retained-performance-test"})).unwrap();
+    kernel_expression(&mut kernel,json!({"operation":"create","expression_ref":"expression:retained-current","title":"Legacy complete Editions","actor":"agent:retained-performance-test"})).unwrap();
     let p = empty();
-    let result=kernel_world(&mut kernel,json!({"operation":"act_perform","act_ref":"act:explicit-migration","expression_ref":"expression:retained/current","expected_revision":1,"summary":"Exact legacy document","actor":"agent:retained-performance-test","changes":[{"change":"scene_performance_set","scene_ref":"expression:retained/current:scene:main","performance":p}]})).unwrap();
+    let result=kernel_world(&mut kernel,json!({"operation":"act_perform","act_ref":"act:explicit-migration","expression_ref":"expression:retained-current","expected_revision":1,"summary":"Exact legacy document","actor":"agent:retained-performance-test","changes":[{"change":"scene_performance_set","scene_ref":"expression:retained-current:scene:main","performance":p}]})).unwrap();
     let original = document(&mut kernel);
     assert_eq!(result["act"]["sequence"][0]["edition"], original);
     assert!(result["act"].get("material_contract").is_none());
@@ -1032,7 +1038,7 @@ fn legacy_complete_editions_remain_v1_and_explicit_migration_restitutes_exact_do
         json!({"operation":"act_inspect","act_ref":"act:explicit-migration"})
     )
     .is_err());
-    assert!(kernel_world(&mut kernel,json!({"operation":"act_perform","act_ref":"act:explicit-migration","expression_ref":"expression:retained/current","expected_revision":original["revision"],"summary":"Must use retained transaction","actor":"agent:retained-performance-test","changes":[{"change":"rename","title":"Refuse legacy shortcut"}]})).is_err());
+    assert!(kernel_world(&mut kernel,json!({"operation":"act_perform","act_ref":"act:explicit-migration","expression_ref":"expression:retained-current","expected_revision":original["revision"],"summary":"Must use retained transaction","actor":"agent:retained-performance-test","changes":[{"change":"rename","title":"Refuse legacy shortcut"}]})).is_err());
     assert_eq!(document(&mut kernel), original);
     // Same native store reload and exact selected Document restitution survive
     // restart; no migration writes to the selected Expression or source.
@@ -1055,7 +1061,7 @@ fn legacy_full_history_budget_refuses_without_auto_handles_or_expression_mutatio
     let full = fifteen_minute_work();
     let mut kernel =
         oi_cradle_kernel::Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
-    kernel_expression(&mut kernel,json!({"operation":"create","expression_ref":"expression:retained/current","title":"Legacy history bound","actor":"agent:retained-performance-test"})).unwrap();
+    kernel_expression(&mut kernel,json!({"operation":"create","expression_ref":"expression:retained-current","title":"Legacy history bound","actor":"agent:retained-performance-test"})).unwrap();
     let mut refused = false;
     for attempt in 0..8 {
         if attempt > 0 {
@@ -1064,7 +1070,7 @@ fn legacy_full_history_budget_refuses_without_auto_handles_or_expression_mutatio
         let before = document(&mut kernel);
         let result = kernel_world(
             &mut kernel,
-            json!({"operation":"act_perform","act_ref":"act:legacy-expanded","expression_ref":"expression:retained/current","expected_revision":before["revision"],"summary":"Legacy complete history","actor":"agent:retained-performance-test","changes":[{"change":"scene_performance_set","scene_ref":"expression:retained/current:scene:main","performance":full}]}),
+            json!({"operation":"act_perform","act_ref":"act:legacy-expanded","expression_ref":"expression:retained-current","expected_revision":before["revision"],"summary":"Legacy complete history","actor":"agent:retained-performance-test","changes":[{"change":"scene_performance_set","scene_ref":"expression:retained-current:scene:main","performance":full}]}),
         );
         match result {
             Ok(value) => {

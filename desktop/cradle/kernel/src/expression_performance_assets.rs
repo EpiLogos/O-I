@@ -472,6 +472,20 @@ impl PerformancePartCatalog {
             PerformancePart::EncodedEventPage(encoded)
         })
     }
+    fn event_page_part(&self, page: EventPage, recorded: bool) -> Result<PerformancePart, String> {
+        if recorded {
+            return self.encoded_part(&page, false);
+        }
+        // Authored and recorded histories share the same native custody bound.
+        // Use the existing lossless codec where it actually saves bytes; keep
+        // old raw parts readable and leave the decoded-page bound unchanged.
+        if encoded(&page)? > crate::expression_performance_codec::MAX_DECODED_BYTES {
+            return Ok(PerformancePart::EventPage(page));
+        }
+        let packed = self.encoded_part(&page, false)?;
+        let plain = PerformancePart::EventPage(page);
+        Ok(if encoded(&packed)? < encoded(&plain)? { packed } else { plain })
+    }
     /// Canonical power-of-two left subtree keeps append-only indexes persistent:
     /// all full prior subtrees are shared; only the right path changes.
     fn index(&mut self, parts: &[(String, u32)], kind: &str) -> Result<(String, u32), String> {
@@ -554,13 +568,7 @@ impl PerformancePartCatalog {
                 p.pages
                     .iter()
                     .cloned()
-                    .map(|page| {
-                        if p.native_recordings.is_empty() {
-                            Ok(PerformancePart::EventPage(page))
-                        } else {
-                            self.encoded_part(&page, false)
-                        }
-                    })
+                    .map(|page| self.event_page_part(page, !p.native_recordings.is_empty()))
                     .collect::<Result<Vec<_>, String>>()?,
             ),
             (

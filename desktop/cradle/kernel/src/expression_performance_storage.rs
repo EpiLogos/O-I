@@ -249,7 +249,9 @@ fn safe_storage(value: &Value, depth: usize) -> Result<(), String> {
         Value::Object(o) => {
             for (k, v) in o {
                 if k.contains('\0')
-                    || ["__proto__", "constructor", "prototype"].contains(&k.as_str())
+                    || ["__proto__", "prototype"].contains(&k.as_str())
+                    || (k == "constructor"
+                        && !crate::expression_performance_source_asset::native_constructor_metadata(o))
                 {
                     return Err("unsafe native performance file key".into());
                 }
