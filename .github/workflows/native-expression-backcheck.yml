@@ -432,7 +432,11 @@ jobs:
 
   epi-whole:
     name: Complete controlled Epi world / source-built hosted Linux
-    needs: [embedded, native-kernel-regressions]
+    # This is independent whole-experience evidence, not installation authority.
+    # The full native job remains mandatory for workflow success and the Mac
+    # candidate still requires both native and embedded floors. A native failure
+    # must retain this actual encounter instead of skipping its independent proof.
+    needs: [embedded]
     runs-on: ubuntu-latest
     timeout-minutes: 95
     env:
