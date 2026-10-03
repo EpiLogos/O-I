@@ -134,7 +134,7 @@ pub(super) fn read_selected_scene(
         }
     }
     let sequence = READ_SEQUENCE
-        .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
+        .try_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
         .map_err(|_| "Native selected Scene read sequence exhausted")?;
     let receipt_ref = format!(
         "native-scene-read:{}:{}:{sequence}",

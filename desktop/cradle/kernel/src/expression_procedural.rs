@@ -3697,7 +3697,7 @@ impl Runtime {
                 {
                     continue;
                 }
-                let occurrence = retained_text(contribution, "occurrence_ref")?;
+                retained_text(contribution, "occurrence_ref")?;
                 let current_basis = source_current_output_basis(document, contribution)?;
                 let mut generated_basis = contribution["generated_basis"].clone();
                 if let Some(scene) = generated_basis["scene"].as_object_mut() {
@@ -4756,7 +4756,7 @@ impl Application {
         };
         let observed = changed
             .as_ref()
-            .ok_or("Actual Source edit returned no native change")
+            .ok_or_else(|| "Actual Source edit returned no native change".to_string())
             .and_then(|actual| self.finish_scene_edit_receipt(ticket, &document, actual));
         let observation = match observed {
             Ok(observation) => observation,

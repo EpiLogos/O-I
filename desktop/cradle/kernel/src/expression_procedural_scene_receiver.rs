@@ -314,7 +314,7 @@ impl Application {
         let mut entropy = [0u8; 16];
         getrandom::fill(&mut entropy).map_err(|error| error.to_string())?;
         let generation = NEXT_CONSTRUCTION
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |current| {
+            .try_update(Ordering::Relaxed, Ordering::Relaxed, |current| {
                 current.checked_add(1)
             })
             .map_err(|_| "Scene construction generation exhausted")?;

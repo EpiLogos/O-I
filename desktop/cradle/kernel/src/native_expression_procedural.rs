@@ -38,7 +38,7 @@ pub(crate) fn execute_stateless(
     let executables = compose_executables(false)?;
     let now = unix_ms()?;
     let serial = SEQUENCE
-        .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
+        .try_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
         .map_err(|_| "Native Source sequence exhausted")?;
     let file = PrivateFile::create(
         &format!("{verb}-{}-{now}-{serial}.json", std::process::id()),
@@ -211,7 +211,7 @@ impl Prepared {
         let executables = compose_executables(false)?;
         let now = unix_ms()?;
         let serial = SEQUENCE
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
+            .try_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
             .map_err(|_| "Procedural source request sequence exhausted")?;
         let token = format!("procedure-{}-{now}-{serial}", std::process::id());
         let payload = self
