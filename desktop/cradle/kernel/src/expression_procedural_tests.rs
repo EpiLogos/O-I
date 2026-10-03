@@ -6172,14 +6172,13 @@ fn a06_a10_a16_distinct_native_peer_cardinality_refuses_before_source_qualificat
                     .split('.')
                     .fold(&template, |body, key| &body[key]);
                 assert!(authored.as_f64().is_some_and(f64::is_finite));
-                let suffix = if *parameter == "force_strength" {
-                    "forces.strength"
-                } else if *parameter == "force_spin" {
-                    "forces.spin"
-                } else if *parameter == "force_radius" {
-                    "forces.radius"
-                } else {
-                    property
+                // Registry control keys x/y/z name the native Parameter;
+                // the authored material path above remains position.x/y/z.
+                let suffix = match *parameter {
+                    "force_strength" => "forces.strength",
+                    "force_spin" => "forces.spin",
+                    "force_radius" => "forces.radius",
+                    _ => *parameter,
                 };
                 let target = format!("entity:{}:{suffix}", reference.replace(':', "%3A"));
                 controls.push(json!({"address":address,"procedure_ref":"procedure:independent:basis","parameter":parameter,
