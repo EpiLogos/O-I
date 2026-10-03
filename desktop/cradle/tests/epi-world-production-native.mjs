@@ -82,15 +82,15 @@ const check=(value,label)=>{assert.ok(value,label);receipt.checks.push(label);co
 const artifact=(name,value)=>{json(name,value);receipt.artifacts.push(name);};
 const retainStage=label=>{receipt.current_stage=label;(receipt.stage_events??=[]).push({stage:label,phase,at:new Date().toISOString(),completed_checks:receipt.checks.length,issued_requests:receipt.issued_requests.length,response_arrivals:receipt.operations.length,request_failures:receipt.request_failures.length});json('receipt.json',receipt);console.log('STAGE',label);};
 const summarizeRequest=q=>({op:q?.op,operation:q?.request?.operation,expression_ref:q?.request?.expression_ref,coordinate_ref:q?.request?.coordinate_ref??q?.request?.request?.coordinate_ref});
-async function op(request){
- const response=await fetch(config.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});
+async function op(request,signal){
+ const response=await fetch(config.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal});
  const raw=await response.text(),body=JSON.parse(raw);
  const rows=receipt.direct_operations??=[];const evidence=`direct-native-operation-${rows.length+1}.json`,rawEvidence=`direct-native-operation-${rows.length+1}.raw.json`;
  writeFileSync(resolve(out,rawEvidence),raw);receipt.artifacts.push(rawEvidence);
  artifact(evidence,{request,response:body});rows.push({...summarizeRequest(request),evidence,raw_response:{artifact:rawEvidence,bytes:Buffer.byteLength(raw),sha256:sha(raw)}});json('receipt.json',receipt);
  if(body.ok!==true)throw Error(JSON.stringify(body));return body.outcome;
 }
-async function nativeDocument(ref){const outcome=await op({op:'expression',request:{operation:'inspect',expression_ref:ref}});assert.ok(outcome.data?.document,'Actual Expression owner inspect must return a document');return outcome.data.document;}
+async function nativeDocument(ref,signal){const outcome=await op({op:'expression',request:{operation:'inspect',expression_ref:ref}},signal);assert.ok(outcome.data?.document,'Actual Expression owner inspect must return a document');return outcome.data.document;}
 async function clickActualBody(entityRef){
  const choice=await frame.evaluate(({ref,scale})=>{
   const f=window.__FIELD_STUDIES__,state=f.inspect(true),record=f.epiWorld(),partition=state.partitions.find(p=>p.entityId===ref);
@@ -613,20 +613,54 @@ try{
   assert.equal(custody.world,resolve(custody.owned_output_root,'world'));assert.equal(custody.native_process.url,config.bridge);
   assert.equal(custody.source_cuts.oi.cut,config.binaries.oi.source_cut);assert.equal(custody.source_cuts.ql.cut,config.binaries.quaternal_logic.source_cut);
   assert.equal(custody.all_five.sha256,config.binaries.quaternal_logic.manifest.sha256);assert.deepEqual(custody.identity_ref,{path:resolve(config.identity_files[0]),...hashFileReadOnly(resolve(config.identity_files[0]))});
-  const working=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
+  let working=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
   assert.ok(!working.busy&&!working.pending&&!working.failed&&working.file,'The actual ordinary admitted file must be clean/current');
-  const document=await nativeDocument(working.native_ref),saved=await savedFile(working,'selection-ordinary-admitted');
+  let document=await nativeDocument(working.native_ref);const saved=await savedFile(working,'selection-ordinary-admitted');
   assert.deepEqual(document,saved,'Selection starts only on a complete actual native save/file admission');
   assert.equal(document.expression_ref,custody.expression_ref);assert.equal(document.selection.scene_ref,document.expression_ref+':scene:personal');
   const records=document.scenes.filter(scene=>scene.presentation?.scene?.epiWorld);assert.equal(records.length,1);
   const carrier=records[0].presentation.scene.epiWorld,target=carrier.receiving.personal.locus_entity_ref;
+  let admissionFile='selection-ordinary-admitted-file.json';
+  if(config.stage==='selected-conversation-setup'){
+   // Ordinary file admission preserves its saved body selection. Explicitly
+   // choose this inquiry's canonical hub; do not rewrite a saved centre's
+   // subject or silently turn file loading into a focus operation.
+   phase='ordinary canonical personal hub focus and same-file save';
+   const before=structuredClone(document),beforeFile=structuredClone(working.file);
+   artifact('selection-preserved-saved-arrival.json',{document:before,file:beforeFile,source_file:'selection-ordinary-admitted-file.json'});
+   await frame.locator('[data-epi-body]').selectOption(target);
+   const deadline=Date.now()+30000;let focused;
+   for(;;){
+    const current=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
+    const remaining=deadline-Date.now();
+    assert.ok(remaining>0,'The ordinary canonical hub choice must receive its actual native focus acknowledgement in30s');
+    const readback=await nativeDocument(document.expression_ref,AbortSignal.timeout(remaining));
+    assert.ok(Date.now()<deadline,'A late native reply cannot qualify the original30s focus admission');
+    if(!current.busy&&!current.pending&&!current.failed&&current.revision===readback.revision&&readback.selection.entity_ref===target){focused=readback;break;}
+    await new Promise(resolve=>setTimeout(resolve,100));
+   }
+   const expected=structuredClone(before);
+   assert.ok(focused.revision===before.revision||focused.revision===before.revision+1,'Only the ordinary native focus revision may advance');
+   expected.revision=focused.revision;expected.selection={scene_ref:before.selection.scene_ref,entity_ref:target};
+   assert.deepEqual(focused,expected,'Canonical hub focus preserves every other actual body/source/person/occasion/material/history value');
+   artifact('selection-explicit-native-focus.json',{before,after:focused,allowed_delta:['revision','selection'],operation:'ordinary Choose a body control'});
+   await action('save');await readyCurrent(identities[0].reading.person_ref);
+   working=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
+   assert.ok(!working.busy&&!working.pending&&!working.failed&&working.file,'The ordinary hub focus save must be acknowledged/current');
+   assert.deepEqual(working.file.location,beforeFile.location,'Hub focus saves the same actual file');
+   if(before.selection.entity_ref!==target)assert.notEqual(working.file.revision,beforeFile.revision,'Changed hub focus must advance the actual same-file CAS');
+   document=await nativeDocument(working.native_ref);
+   assert.deepEqual(document,focused,'Ordinary Save preserves the complete acknowledged focus document');
+   assert.deepEqual(await savedFile(working,'selection-ordinary-focused'),document,'The saved hub basis is admitted by the actual native file decoder');
+   admissionFile='selection-ordinary-focused-file.json';
+  }
   assert.equal(document.selection.entity_ref,target);assert.equal(document.entities[target].subject.subject_ref,'ql:m-coordinate:bimba:M4.4.4.4');
   assert.equal(carrier.person_ref,identities[0].reading.person_ref);assert.equal(carrier.identity_source.source_ref,identities[0].source.source_ref);
   assert.deepEqual(document.scenes.map(scene=>scene.entity_refs.length),[32,9,7],'Selection setup cannot omit any original cosmic/personal/branch members');
-  const file=JSON.parse(readFileSync(resolve(out,'selection-ordinary-admitted-file.json'),'utf8'));
+  const file=JSON.parse(readFileSync(resolve(out,admissionFile),'utf8'));
   const admission={schema:'epi.hosted-native-selected-admission/v1',expression_ref:document.expression_ref,file:working.file,document,
    content_sha256:file.content_sha256,content_bytes:file.content_bytes,owner_decode:file.owner_decode,
-   source_evidence_ref:{path:resolve(out,'selection-ordinary-admitted-file.json'),...hashFileReadOnly(resolve(out,'selection-ordinary-admitted-file.json'))},
+   source_evidence_ref:{path:resolve(out,admissionFile),...hashFileReadOnly(resolve(out,admissionFile))},
    standing:'Actual ordinary producer admission/native save/file decoder; no model body/provider/whole proof'};
   json('selection-native-admission.json',admission);
   const admissionRef={path:resolve(out,'selection-native-admission.json'),...hashFileReadOnly(resolve(out,'selection-native-admission.json'))};

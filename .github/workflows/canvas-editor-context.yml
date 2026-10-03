@@ -9,6 +9,10 @@ on:
       - 'desktop/cradle/tests/situation-frame.test.mjs'
       - 'desktop/cradle/kernel/**'
       - 'desktop/cradle/package*.json'
+      - 'scripts/prepare-retained-performance-fixture.py'
+      - 'scripts/retained-performance-ci-environment.py'
+      - 'scripts/retained-performance-environment-regressions.py'
+      - 'desktop/cradle/tests/fixtures/retained-performance/source-owner.json'
       - '.github/workflows/canvas-editor-context.yml'
 permissions:
   contents: read
@@ -100,6 +104,12 @@ jobs:
             --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
             --output "$RUNNER_TEMP/retained-performance" --timeout-seconds 900 \
             > "$RUNNER_TEMP/retained-performance/result.json"
+          python3 scripts/retained-performance-environment-regressions.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" \
+            > "$RUNNER_TEMP/retained-performance/publication-counterproof.json" \
+            2> "$RUNNER_TEMP/retained-performance/publication-counterproof.log"
           python3 scripts/retained-performance-ci-environment.py \
             --result "$RUNNER_TEMP/retained-performance/result.json" \
             --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \

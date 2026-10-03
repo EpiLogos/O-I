@@ -304,6 +304,8 @@ export function createEpiWorldProduction(port:EpiProductionPort){
   // while its attached durable file still stands on an earlier revision.
   const file=await port.persist(`epi-world-${record.world.instance_ref.slice('expression:epi-'.length)}.expression.json`);
   if(file.expression_ref!==record.world.instance_ref||!file.revision)throw Error('The personal reception was not saved to its native material file.');
+  // The acknowledged file ends the recovery operation's progress notice.
+  port.status('');
   return{record:held,current,identity};
  }
  return{construct,pin,rebind,read:readEpiWorldRecord};

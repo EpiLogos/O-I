@@ -29,6 +29,37 @@ KEYS = frozenset({
 })
 DIRECTORIES = frozenset(key for key in KEYS if key.endswith("DIRECTORY") or key.endswith("HOME"))
 
+def required_fixture_paths() -> set[str]:
+    """Exact outputs of the preparer's admitted native command family.
+
+    Both complete 180-edition workloads are required. The SourceForm workload
+    also carries its original source and opening checkpoint. Count admission
+    must not discard those bodies to fit a guessed combined inventory budget.
+    Optional offline outputs are absent at the preparer's actual command arity.
+    """
+    paths = {
+        "retained-performance-fixture.json", "retained-source-performance-fixture.json",
+        "retained-performance-context-fixture.json", "retained-performance-checkpoint-fixture.json",
+        "retained-performance-management-fixture.json",
+        "native-packets/baseline.packet.json", "native-packets/baseline.basis.json",
+    }
+    paths.update("current-receiving/" + kind + ".source-performance.json" for kind in ("world", "personal", "shared"))
+    paths.update("native-management/" + name for name in (
+        "baseline.pending.management.json", "baseline.basis.json", "baseline.applied-events.json",
+        "baseline.input-journal.json", "baseline.current.management.json", "manifest.json"))
+    paths.update("native-managed-order/" + kind + "." + name for kind in ("release", "panic") for name in (
+        "restore.json", "restored-history.json", "restored-checkpoint.json", "original-queued-checkpoint.json",
+        "original-score-admission.json", "pending-checkpoint.json", "score-admissions.json", "checkpoint.json",
+        "history.json", "basis.json", "continued-checkpoint.json"))
+    paths.update("native-score-reservations/" + name for name in (
+        "cancel.before.json", "cancel.after.json", "cancel.ack.json", "lost.before.json", "lost.after.json", "basis.json"))
+    for family in ("native-retained-workload", "native-retained-source-workload"):
+        paths.update(family + "/" + name for name in ("basis.json", "manifest.json"))
+        paths.update(family + "/edition-" + str(index) + "." + suffix
+            for index in range(1, 181) for suffix in ("history.json", "checkpoint.json"))
+    paths.update("native-retained-source-workload/" + name for name in ("source-performance.json", "initial.checkpoint.json"))
+    return paths
+
 def inside(raw: str, root: Path) -> Path:
     if not isinstance(raw, str) or not raw or len(raw) > 4096 or any(c in raw for c in "\r\n\x00"):
         raise ValueError("native fixture path is invalid")
@@ -80,8 +111,14 @@ def verified_environment(result: Path, expected: str, output_root: Path) -> dict
         if not log.is_file():
             raise ValueError("actual producer original log missing")
     records = receipt.get("fixtures")
-    if not isinstance(records, list) or not records or len(records) > 768:
-        raise ValueError("actual native fixture inventory absent/excessive")
+    required = required_fixture_paths()
+    if not isinstance(records, list) or len(records) != len(required):
+        raise ValueError("actual native fixture inventory membership differs")
+    if any(not isinstance(item, dict) for item in records):
+        raise ValueError("actual native fixture inventory entry differs")
+    declared = [inside(item.get("path"), run) for item in records]
+    if len(set(declared)) != len(declared) or {path.relative_to(run).as_posix() for path in declared} != required:
+        raise ValueError("actual native fixture inventory membership differs")
     inventory: set[Path] = set()
     for item in records:
         if not isinstance(item, dict):

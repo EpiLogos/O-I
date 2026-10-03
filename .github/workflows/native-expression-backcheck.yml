@@ -17,6 +17,10 @@ on:
       - 'packages/oi-design-system/expressions-engine/shell/**'
       - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
       - 'scripts/vendor-expressions-engine.mjs'
+      - 'scripts/prepare-retained-performance-fixture.py'
+      - 'scripts/retained-performance-ci-environment.py'
+      - 'scripts/retained-performance-environment-regressions.py'
+      - 'desktop/cradle/tests/fixtures/retained-performance/source-owner.json'
       - 'packages/oi-design-system/expressions-engine/oi/**'
       - '.github/workflows/native-expression-backcheck.yml'
   workflow_dispatch:
@@ -97,6 +101,12 @@ jobs:
             --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
             --output "$RUNNER_TEMP/retained-performance" --timeout-seconds 900 \
             > "$RUNNER_TEMP/retained-performance/result.json"
+          python3 scripts/retained-performance-environment-regressions.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" \
+            > "$RUNNER_TEMP/retained-performance/publication-counterproof.json" \
+            2> "$RUNNER_TEMP/retained-performance/publication-counterproof.log"
           python3 scripts/retained-performance-ci-environment.py \
             --result "$RUNNER_TEMP/retained-performance/result.json" \
             --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
