@@ -4,20 +4,35 @@
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::sync::OnceLock;
 
 pub const SCHEMA: &str = "oi.expression-performance-page-codec/v1";
 pub const MAX_DECODED_BYTES: usize = 4 * 1024 * 1024;
 const WINDOW: usize = 65535;
 const MIN_MATCH: usize = 8;
 const MAX_CHAIN: usize = 32;
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct EncodedPage {
     schema: String,
     decoded_bytes: u32,
     decoded_sha256: String,
     payload: String,
+    // Native bytes are private and immutable. Only this owner can qualify the
+    // canonical stream. Serde never imports the qualification, and no expanded
+    // body/page is retained by the cache. Clones preserve the same actual bytes.
+    #[serde(skip)]
+    canonical: OnceLock<()>,
 }
+impl PartialEq for EncodedPage {
+    fn eq(&self, other: &Self) -> bool {
+        self.schema == other.schema
+            && self.decoded_bytes == other.decoded_bytes
+            && self.decoded_sha256 == other.decoded_sha256
+            && self.payload == other.payload
+    }
+}
+impl Eq for EncodedPage {}
 fn hash(bytes: &[u8]) -> String {
     format!("sha256:{:x}", Sha256::digest(bytes))
 }
@@ -105,6 +120,7 @@ impl EncodedPage {
             decoded_bytes: bytes.len() as u32,
             decoded_sha256: hash(&bytes),
             payload: STANDARD.encode(encode(&bytes)),
+            canonical: OnceLock::from(()),
         })
     }
     pub fn bytes(&self) -> Result<Vec<u8>, String> {
@@ -154,10 +170,17 @@ impl EncodedPage {
                 _ => return Err("unknown performance page token".into()),
             }
         }
-        if out.len() != limit || hash(&out) != self.decoded_sha256 || encode(&out) != stream {
+        if out.len() != limit || hash(&out) != self.decoded_sha256 {
+            return Err("performance page decoded length/hash differs".into());
+        }
+        if self.canonical.get().is_none() && encode(&out) != stream {
             return Err("performance page decoded length/hash/canonical stream differs".into());
         }
+        let _ = self.canonical.set(());
         Ok(out)
+    }
+    pub(crate) fn decoded_digest(&self) -> &str {
+        &self.decoded_sha256
     }
     pub fn read<T: serde::de::DeserializeOwned + Serialize>(&self) -> Result<T, String> {
         let bytes = self.bytes()?;
@@ -166,5 +189,42 @@ impl EncodedPage {
             return Err("performance page typed defaults/canonical bytes differ".into());
         }
         Ok(typed)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn canonical_requalification_is_private_and_imported_alternative_stream_refuses() {
+        let value = serde_json::json!({"samples":["0","128","48000","18446744073709551615"],"receipts":vec![serde_json::json!({"kind":5,"requested_sample":"48000","value":0.12345678901234567});128]});
+        let raw = serde_json::to_vec(&value).unwrap();
+        let page = EncodedPage::from_value(&value).unwrap();
+        let original = serde_json::to_vec(&page).unwrap();
+        assert_eq!(page.bytes().unwrap(), raw);
+        let imported: EncodedPage = serde_json::from_slice(&original).unwrap();
+        assert!(imported.canonical.get().is_none());
+        assert_eq!(imported.bytes().unwrap(), raw);
+        assert!(imported.canonical.get().is_some());
+        assert_eq!(imported.clone().bytes().unwrap(), raw);
+        assert_eq!(serde_json::to_vec(&imported).unwrap(), original);
+        assert_eq!(imported, page);
+        let mut alternate = serde_json::to_value(&page).unwrap();
+        let mut stream = Vec::new();
+        literals(&mut stream, &raw);
+        assert_ne!(stream, encode(&raw));
+        alternate["payload"] = serde_json::json!(STANDARD.encode(&stream));
+        let alternate: EncodedPage = serde_json::from_value(alternate).unwrap();
+        assert!(alternate.canonical.get().is_none());
+        assert!(alternate.bytes().unwrap_err().contains("canonical stream"));
+        let mut supplied_cache = serde_json::to_value(&page).unwrap();
+        supplied_cache["canonical"] = serde_json::json!(true);
+        assert!(serde_json::from_value::<EncodedPage>(supplied_cache).is_err());
+        let mut wrong = serde_json::to_value(&page).unwrap();
+        wrong["decoded_sha256"] = serde_json::json!(hash(b"different"));
+        assert!(serde_json::from_value::<EncodedPage>(wrong)
+            .unwrap()
+            .bytes()
+            .is_err());
     }
 }

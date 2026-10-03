@@ -376,10 +376,12 @@ impl<'de> Deserialize<'de> for PerformancePartCatalog {
         Self::read_value(Value::deserialize(d)?).map_err(serde::de::Error::custom)
     }
 }
+#[derive(Clone)]
 struct Walk {
     items: u32,
     bytes: u32,
     private: bool,
+    depth: usize,
 }
 impl PerformancePartCatalog {
     /// Canonical qualification precedes typed default expansion. Each value
@@ -435,6 +437,40 @@ impl PerformancePartCatalog {
             self.parts.insert(reference.clone(), Arc::new(part));
         }
         Ok(reference)
+    }
+    // Existing immutable encoded parts may be reused only after exact original
+    // canonical bytes equal the newly validated native value. No imported digest
+    // is authority, no expanded part is cached, and collisions refuse atomically.
+    fn encoded_part<T: Serialize + ?Sized>(
+        &self,
+        value: &T,
+        checkpoint: bool,
+    ) -> Result<PerformancePart, String> {
+        crate::expression_act_storage::measure(
+            value,
+            crate::expression_performance_codec::MAX_DECODED_BYTES,
+        )?;
+        let raw = serde_json::to_vec(value).map_err(|e| e.to_string())?;
+        let address = format!("sha256:{:x}", Sha256::digest(&raw));
+        for part in self.parts.values() {
+            let encoded = match (part.as_ref(), checkpoint) {
+                (PerformancePart::EncodedCheckpoint(encoded), true)
+                | (PerformancePart::EncodedEventPage(encoded), false) => encoded,
+                _ => continue,
+            };
+            if encoded.decoded_digest() == address {
+                if encoded.bytes()? != raw {
+                    return Err("native encoded part canonical-byte collision".into());
+                }
+                return Ok(part.as_ref().clone());
+            }
+        }
+        let encoded = crate::expression_performance_codec::EncodedPage::from_value(value)?;
+        Ok(if checkpoint {
+            PerformancePart::EncodedCheckpoint(encoded)
+        } else {
+            PerformancePart::EncodedEventPage(encoded)
+        })
     }
     /// Canonical power-of-two left subtree keeps append-only indexes persistent:
     /// all full prior subtrees are shared; only the right path changes.
@@ -522,8 +558,7 @@ impl PerformancePartCatalog {
                         if p.native_recordings.is_empty() {
                             Ok(PerformancePart::EventPage(page))
                         } else {
-                            crate::expression_performance_codec::EncodedPage::from_value(&page)
-                                .map(PerformancePart::EncodedEventPage)
+                            self.encoded_part(&page, false)
                         }
                     })
                     .collect::<Result<Vec<_>, String>>()?,
@@ -538,10 +573,7 @@ impl PerformancePartCatalog {
                         if p.native_recordings.is_empty() {
                             Ok(PerformancePart::Checkpoint(Box::new(checkpoint)))
                         } else {
-                            crate::expression_performance_codec::EncodedPage::from_value(
-                                &checkpoint,
-                            )
-                            .map(PerformancePart::EncodedCheckpoint)
+                            self.encoded_part(&checkpoint, true)
                         }
                     })
                     .collect::<Result<Vec<_>, String>>()?,
@@ -611,6 +643,7 @@ impl PerformancePartCatalog {
         path: &mut BTreeSet<String>,
         used: &mut BTreeSet<String>,
         out: &mut Option<Vec<Value>>,
+        summaries: &mut BTreeMap<String, Walk>,
     ) -> Result<Walk, String> {
         if path.len() > 32 || !path.insert(reference.into()) {
             return Err("cyclic/deep native performance part index".into());
@@ -625,6 +658,19 @@ impl PerformancePartCatalog {
         };
         if index.kind() != kind {
             return Err("native performance index kind mismatch".into());
+        }
+        // Metadata is qualified only within this whole-catalog validation. An
+        // immutable subtree was already fully visited in this same transaction;
+        // its descendants are in `used`. Selected material restitution never
+        // takes this summary path, and cached depth preserves the original bound.
+        if out.is_none() {
+            if let Some(summary) = summaries.get(reference) {
+                if path.len().checked_add(summary.depth).is_none_or(|n| n > 33) {
+                    return Err("cyclic/deep native performance part index".into());
+                }
+                path.remove(reference);
+                return Ok(summary.clone());
+            }
         }
         let result = match index {
             PartIndex::Leaf {
@@ -649,6 +695,7 @@ impl PerformancePartCatalog {
                     items: 1,
                     bytes: *expanded_bytes,
                     private,
+                    depth: 0,
                 }
             }
             PartIndex::Branch {
@@ -658,8 +705,8 @@ impl PerformancePartCatalog {
                 expanded_bytes,
                 ..
             } => {
-                let l = self.walk(left, kind, path, used, out)?;
-                let r = self.walk(right, kind, path, used, out)?;
+                let l = self.walk(left, kind, path, used, out, summaries)?;
+                let r = self.walk(right, kind, path, used, out, summaries)?;
                 let count = l
                     .items
                     .checked_add(r.items)
@@ -676,10 +723,14 @@ impl PerformancePartCatalog {
                     items: count,
                     bytes,
                     private: l.private || r.private,
+                    depth: 1 + l.depth.max(r.depth),
                 }
             }
         };
         path.remove(reference);
+        if out.is_none() {
+            summaries.insert(reference.into(), result.clone());
+        }
         Ok(result)
     }
     fn validate_storage(&self) -> Result<(), String> {
@@ -687,6 +738,7 @@ impl PerformancePartCatalog {
             return Err("native performance part/manifest budget exceeded".into());
         }
         let mut used = BTreeSet::new();
+        let mut summaries = BTreeMap::new();
         let mut bytes = 0usize;
         for (r, p) in &self.parts {
             p.validate()?;
@@ -734,6 +786,7 @@ impl PerformancePartCatalog {
                     &mut BTreeSet::new(),
                     &mut used,
                     &mut None,
+                    &mut summaries,
                 )?;
                 let expanded = w
                     .bytes
@@ -805,6 +858,7 @@ impl PerformancePartCatalog {
                 &mut BTreeSet::new(),
                 &mut BTreeSet::new(),
                 &mut values,
+                &mut BTreeMap::new(),
             )?;
             if w.items != r.items || w.bytes.checked_add(2) != Some(r.expanded_bytes) {
                 return Err("native performance index changed".into());

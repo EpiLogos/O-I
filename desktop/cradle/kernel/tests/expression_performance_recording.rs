@@ -600,6 +600,29 @@ fn actual_native_receipts_are_atomic_lossless_scene_parts_and_survive_authored_e
     assert_eq!(saved.snapshot().schema, RECORDING_CATALOG_SCHEMA);
     let reopened = PerformancePartCatalog::read(saved.snapshot()).unwrap();
     assert_eq!(&reopened.restore(0).unwrap(), next);
+    // Imported wire cannot carry native qualification. Cold reopen repeats the
+    // original full codec/type/source qualification and preserves exact bytes.
+    let wire = serde_json::to_vec(&saved).unwrap();
+    let cold: PerformancePartCatalog = serde_json::from_slice(&wire).unwrap();
+    assert_eq!(serde_json::to_vec(&cold).unwrap(), wire);
+    assert_eq!(&cold.restore(0).unwrap(), next);
+    // Identical native material shares immutable encoded pages/indexes while
+    // retaining both actual editions. No expanded checkpoint/page is cached.
+    let repeated = cold.appended(next).unwrap();
+    assert_eq!(repeated.manifests().len(), 2);
+    assert_eq!(repeated.unique_parts(), cold.unique_parts());
+    assert_eq!(&repeated.restore(0).unwrap(), next);
+    assert_eq!(&repeated.restore(1).unwrap(), next);
+    let repeated_wire = serde_json::to_vec(&repeated).unwrap();
+    let imported: PerformancePartCatalog = serde_json::from_slice(&repeated_wire).unwrap();
+    assert_eq!(serde_json::to_vec(&imported).unwrap(), repeated_wire);
+    assert_eq!(&imported.restore(1).unwrap(), next);
+    let mut changed_privacy = repeated.snapshot();
+    changed_privacy.manifests[1].private_context = true;
+    assert!(
+        PerformancePartCatalog::read(changed_privacy).is_err(),
+        "a reused subtree cannot bypass independent edition privacy validation"
+    );
     let original_event = next.events().nth(2).unwrap().clone();
     let mut replacement = original_event.clone();
     replacement.4 = EventAction::Parameter(0, scalar(0.6), None);
