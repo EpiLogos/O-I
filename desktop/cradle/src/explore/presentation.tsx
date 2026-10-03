@@ -19,6 +19,7 @@ import {useVisuals} from "../visuals/ParticleExpression";
 import {expressionRenderConfig} from "../expression/engineProjection";
 import type {StageScene} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 import type {ExpressionDocument} from "../expression/types";
+import {paintText} from "@epilogos/oi-design-system/expressions-engine/shell/capture.mjs";
 // @ts-ignore -- the bounded live-embedding law (ES2 anti-recursion).
 import {tryAdmitLive,onLiveEmbeddingReleased} from "../expression/embedding.mjs";
 // @ts-ignore -- the language-neutral shared-field contracts are the executable spec.
@@ -28,8 +29,9 @@ import {LIVE_RENDERER_REF,validateExpressionComposition} from "../../../../share
 import {RunExpressionBody as FactoryRunExpression} from "../contributions/factory/RunExpressionBody";
 // @ts-ignore -- names resolve only against the supplied owner reading.
 import {subjectLabel,referenceLabels} from "../../../../shared-field/presentation-text.mjs";
-// @ts-ignore -- portable HTML helpers carry no owner process or node runtime.
-import {escapeHtml} from "../../../../shared-field/html-material.mjs";
+// @ts-ignore -- producer freshness is the shared reading, not renderer state.
+import {activityReading} from "../../../../shared-field/activity-liveness.mjs";
+import type {HostedEntry} from "../knowledge/shared-field";
 
 export interface PresentationBinding {binding_ref:string;component_ref:string;contribution_ref?:string;surface_ref?:string;projection_ref?:string;subject_ref?:string;portable_renderer?:string;props:Record<string,unknown>;fallback:Record<string,unknown>;provenance:Array<Record<string,unknown>>}
 export interface PresentationRegion {region_ref:string;role:string;label?:string;bindings:PresentationBinding[]}
@@ -39,7 +41,8 @@ export interface WorldPresentation {schema:"oi.world-presentation/v1";presentati
  * window's stage; `preview` shows exactly what a client WITHOUT the live
  * renderer receives (the explicit fallback) and names live eligibility. */
 export type ExpressionHosting="stage"|"preview";
-interface RendererProps {binding:PresentationBinding;presentationRef:string;onOpenRef?:(ref:string)=>void;hosting:ExpressionHosting;subjects?:{ref:string;label?:string;title?:string;legacySummary?:string}[]}
+type ProducerBinding={state:"bound";entry:HostedEntry;liveness_rows:unknown[];field_ref:string}|{state:"unavailable";activity_ref:string|null;reason:string};
+interface RendererProps {binding:PresentationBinding;presentationRef:string;onOpenRef?:(ref:string)=>void;hosting:ExpressionHosting;subjects?:{ref:string;label?:string;title?:string;legacySummary?:string}[];context?:ReactNode;onSelectSubject?:(ref:string)=>void;activity?:ProducerBinding}
 type Renderer=(props:RendererProps)=>ReactNode;
 
 const textProp=(value:unknown,fallback="")=>typeof value==="string"?value:fallback;
@@ -185,19 +188,52 @@ type HostablePresentation=StagePresentation&{setContainer?:(container:HTMLElemen
  * for this placement — a live slot was taken, or the placement resolves to a
  * visible portal with the owner-stated reason. */
 type EmbeddingReceipt={admitted:boolean;reason?:string};
+type NativeScene=StageScene&{text:Array<{id:string;visible:boolean;x:number;y:number;width:number;size:number;align:"left"|"center"|"right";kicker:string;title:string;italic:string;body:string}>};
+
+/** The native instrument paints its own authored text. Repaint only on
+ * material or viewport change; a heartbeat never allocates another canvas. */
+function NativeExpressionText({scene}:{scene:NativeScene}) {
+  const canvas=useRef<HTMLCanvasElement>(null);
+  useLayoutEffect(()=>{
+    const target=canvas.current,host=target?.parentElement;if(!target||!host)return;
+    const paint=()=>{
+      const {width,height}=host.getBoundingClientRect();if(!width||!height)return;
+      const ratio=window.devicePixelRatio||1;
+      const pixelWidth=Math.round(width*ratio),pixelHeight=Math.round(height*ratio);
+      if(target.width!==pixelWidth)target.width=pixelWidth;
+      if(target.height!==pixelHeight)target.height=pixelHeight;
+      const context=target.getContext("2d");if(!context)return;
+      context.setTransform(ratio,0,0,ratio,0,0);context.clearRect(0,0,width,height);
+      paintText(context,scene,width,height);
+    };
+    const observer=new ResizeObserver(paint);observer.observe(host);paint();
+    return()=>observer.disconnect();
+  },[scene]);
+  return <><canvas ref={canvas} className="world-expression__text" aria-hidden="true"/>
+    <div className="world-expression__accessible-text">{scene.text.filter(layer=>layer.visible).map(layer=><article key={layer.id} data-material-text-ref={layer.id}>
+      {layer.kicker&&<small>{layer.kicker}</small>}{layer.title&&<strong>{layer.title}</strong>}{layer.italic&&<em>{layer.italic}</em>}{layer.body&&<p>{layer.body}</p>}
+    </article>)}</div></>;
+}
 
 /** The living body (WORLD-PRESENTATION.md "Expression Field renderer
  * relation"): the same subject/Expression/revision whether the live
  * renderer is admitted or the explicit fallback renders. Renderer pixels
  * are presentation; the refs on the element are the semantic address. */
-function ExpressionBody({binding,presentationRef,hosting,onOpenRef}:RendererProps) {
+function ExpressionBody({binding,presentationRef,hosting,onOpenRef,context,onSelectSubject,activity}:RendererProps) {
   const stage=useExpressionStage();const {snapshot:visuals}=useVisuals();
   const rendererAdmitted=hosting==="stage"&&visuals.enabled&&!stage.error;
   const resolved=useMemo<Resolved|{state:"malformed";reason:string}>(()=>{
     try{return resolveExpressionPresentation(binding,{renderer_ref:LIVE_RENDERER_REF,available:rendererAdmitted,focus:false,capture:false}) as Resolved;}
     catch(cause){return {state:"malformed",reason:String(cause instanceof Error?cause.message:cause)};}
   },[binding,rendererAdmitted]);
-  const composition=useMemo(()=>bindingComposition(binding),[binding]);
+  // Observation cursors include presence/liveness. They are not material
+  // revisions: retain this placement's one configuration while the exact
+  // carried material and declared Expression identity stay the same. Compare
+  // bytes as well as revision so an inconsistent same-revision payload never
+  // silently reuses an older body.
+  const materialBytes=JSON.stringify(binding.props.composition);
+  const expressionBytes=JSON.stringify(binding.props.expression);
+  const composition=useMemo(()=>bindingComposition(binding),[presentationRef,binding.subject_ref,materialBytes,expressionBytes]);
   const authoredScene=composition?.scenes.find(scene=>scene.scene_ref===composition.selection.scene_ref)?.presentation?.scene as (StageScene&{text:Array<{id:string;visible:boolean;x:number;y:number;width:number;size:number;align:"left"|"center"|"right";kicker:string;title:string;italic:string;body:string}>})|undefined;
   const config=useMemo(()=>composition?expressionRenderConfig(composition):null,[composition]);
   const latestMaterial=useRef({composition,config});latestMaterial.current={composition,config};
@@ -208,7 +244,19 @@ function ExpressionBody({binding,presentationRef,hosting,onOpenRef}:RendererProp
   const inline=useRef<HTMLDivElement>(null);const presentation=useRef<HostablePresentation|null>(null);
   const placement=useRef<HTMLElement>(null);
   const [visible,setVisible]=useState(false);
+  const [now,setNow]=useState(()=>Date.now());
+  // Age the one retained heartbeat even when a stopped producer causes no
+  // subscription update. This clock owns no document, material or GPU buffer.
+  useEffect(()=>{
+    if(activity?.state!=="bound"||hosting!=="stage"||!visible)return;
+    setNow(Date.now());
+    const timer=setInterval(()=>setNow(Date.now()),1000);
+    return()=>clearInterval(timer);
+  },[activity?.state==="bound"?activity.entry.ref:undefined,hosting,visible]);
+  const producer=activity?.state==="bound"?activityReading({...activity,liveness_rows:activity.liveness_rows.filter((row):row is object=>typeof row==="object"&&row!==null&&!Array.isArray(row)),now_ms:now}) as {activity_ref:string;liveness:string;owner_state:string|null;owner_revision:number|null}:activity?{activity_ref:activity.activity_ref,liveness:"unavailable",owner_state:null,owner_revision:null}:undefined;
+  const producerHeld=Boolean(producer&&(producer.liveness!=="live"||producer.owner_state!=="running"));
   const [leaseEpoch,setLeaseEpoch]=useState(0);
+  const waitingForEmbedding=useRef(false);
   const placementId=useId();
   const id=`explore:${presentationRef}:${binding.binding_ref}:${placementId}`;
   useLayoutEffect(()=>{
@@ -217,15 +265,16 @@ function ExpressionBody({binding,presentationRef,hosting,onOpenRef}:RendererProp
     const observer=new ResizeObserver(measure);observer.observe(element);measure();
     return()=>observer.disconnect();
   },[resolved.state]);
-  useEffect(()=>onLiveEmbeddingReleased(()=>{if(!presentation.current)setLeaseEpoch(epoch=>epoch+1);}),[]);
+  useEffect(()=>onLiveEmbeddingReleased(()=>{if(waitingForEmbedding.current)setLeaseEpoch(epoch=>epoch+1);}),[]);
   useEffect(()=>{
+    waitingForEmbedding.current=false;
     if(resolved.state!=="live"||!visible)return;
     const material=latestMaterial.current;
     if(!material.composition||!material.config){setLiveError("The carried composition is not admissible on this client");return;}
     // One law guards every live placement: same-expression same-host — or a
     // depth beyond the budget — resolves to a portal, never another engine.
     const embedding=tryAdmitLive(expression.expression_ref) as {admitted:boolean;resolution:{mode:string;reason?:string};release?:()=>void};
-    if(!embedding.admitted){setPortal({admitted:false,reason:embedding.resolution.reason});return;}
+    if(!embedding.admitted){waitingForEmbedding.current=true;setPortal({admitted:false,reason:embedding.resolution.reason});return()=>{waitingForEmbedding.current=false;};}
     setPortal(undefined);
     try{
       const handle=stage.present({id,plane:"overlay",recipe:"",config:material.config,appearance:authoredScene?"authored":"host",sceneRef:material.composition.selection.scene_ref}) as HostablePresentation|null;
@@ -234,15 +283,16 @@ function ExpressionBody({binding,presentationRef,hosting,onOpenRef}:RendererProp
       if(typeof handle.setContainer==="function")handle.setContainer(inline.current);
       setLive(false);setLiveError(undefined);
       void handle.ready().then(()=>{if(presentation.current===handle)setLive(true);}).catch(cause=>{if(presentation.current===handle){setLive(false);setLiveError(String(cause));}});
-    }catch(cause){setLive(false);setLiveError(String(cause instanceof Error?cause.message:cause));}
-    return()=>{embedding.release?.();presentation.current?.release();presentation.current=null;setLive(false);};
-  },[resolved.state,id,stage,visible,leaseEpoch]);
+    }catch(cause){embedding.release?.();presentation.current?.release();presentation.current=null;setLive(false);setLiveError(String(cause instanceof Error?cause.message:cause));}
+    return()=>{waitingForEmbedding.current=false;embedding.release?.();presentation.current?.release();presentation.current=null;setLive(false);};
+  },[resolved.state,id,stage,visible,leaseEpoch,composition?.expression_ref]);
   useEffect(()=>{
     const handle=presentation.current;
     if(handle&&composition&&config)handle.updateConfig(config,composition.selection.scene_ref,composition.selection.entity_ref?[composition.selection.entity_ref]:[]);
   },[composition,config]);
+  useEffect(()=>{presentation.current?.setPaused(producerHeld);},[producerHeld,live,composition?.expression_ref]);
   useLayoutEffect(()=>{const handle=presentation.current;if(handle&&typeof handle.setContainer==="function")handle.setContainer(inline.current);});
-  if(resolved.state==="malformed")return <article className="world-component world-component--fallback" role="alert" data-expression-state="malformed"><div className="world-component__eyebrow">Expression unavailable</div><h3>{subjectLabel(binding.fallback,"Expression")}</h3><p>This publication cannot be presented here.</p><details><summary>Source details</summary><p>{resolved.reason}</p></details></article>;
+  if(resolved.state==="malformed")return <article className="world-component world-component--fallback" role="alert" data-expression-state="malformed"><div className="world-component__eyebrow">Expression unavailable</div><h3>{subjectLabel(binding.fallback,"Expression")}</h3><p>This publication cannot be presented here.</p><details><summary>Source details</summary><p>{resolved.reason}</p></details>{context&&<details><summary>Undertaking details</summary>{context}</details>}</article>;
   const expression=resolved.expression;
   const attributes={"data-expression-ref":expression.expression_ref,"data-expression-revision":expression.expression_revision,"data-subject-ref":binding.subject_ref,"data-live-renderer":expression.live_renderer_ref} as const;
   // ES2 anti-recursion: the same Expression is already live on this host (or
@@ -252,24 +302,29 @@ function ExpressionBody({binding,presentationRef,hosting,onOpenRef}:RendererProp
     return <section ref={placement} className="world-component world-component--expression world-expression__portal" {...attributes} data-expression-state="portal" data-portal-reason={portal.reason}>
       <div className="world-component__eyebrow">Live elsewhere on this surface</div>
       <h3>{subjectLabel(binding.fallback,"Expression")}</h3>
-      <p>This Expression is already open in this window.</p><details><summary>Source details</summary><p>{portal.reason} · {expression.expression_ref} · revision {expression.expression_revision}</p></details>
+      <p>This Expression is already open in this window.</p><details><summary>Source details</summary><p>{portal.reason} · {expression.expression_ref} · revision {expression.expression_revision}</p></details>{context&&<details className="world-expression__edition-context"><summary>Undertaking details</summary>{context}</details>}
     </section>;
   }
   if(resolved.state==="live"&&!liveError){
-    return <section ref={placement} className="world-component world-component--expression" {...attributes} data-expression-state="live" data-expression-hosting={typeof presentation.current?.setContainer==="function"?"element":"window-stage"}>
+    return <section ref={placement} className="world-component world-component--expression" {...attributes} data-expression-state="live" data-activity-ref={producer?.activity_ref} data-producer-liveness={producer?.liveness} data-owner-state={producer?.owner_state} data-owner-revision={producer?.owner_revision} data-expression-hosting={typeof presentation.current?.setContainer==="function"?"element":"window-stage"}>
       <div ref={inline} className="world-expression__live" aria-label={`Live Expression ${subjectLabel(binding.props,subjectLabel(binding.fallback,"Untitled Expression"))}`} data-rendered={live} onClick={event=>{
         const hit=presentation.current?.hitTest(event.clientX,event.clientY);
         if(hit?.kind==="entity"){
           const entity=composition?.entities[hit.entity_ref];
-          if(entity?.subject)onOpenRef?.(entity.subject.subject_ref);
+          if(entity?.subject){(onSelectSubject??onOpenRef)?.(entity.subject.subject_ref);}
         }
       }}>
         {!live&&<p role="status">Presenting on the stage…</p>}
-        {authoredScene?.text.filter(layer=>layer.visible).map(layer=><article key={layer.id} className="world-expression__inscription" data-material-text-ref={layer.id} style={{left:`${layer.x*100}%`,top:`${layer.y*100}%`,width:`min(${layer.width}px, 85%)`,fontSize:layer.size,textAlign:layer.align}}>
-          {layer.kicker&&<small>{layer.kicker}</small>}{layer.title&&<strong>{layer.title}</strong>}{layer.italic&&<em>{layer.italic}</em>}{layer.body&&<p>{layer.body}</p>}
-        </article>)}
+        {authoredScene&&<NativeExpressionText scene={authoredScene as unknown as NativeScene}/>}
+        {producer&&<div className="world-expression__producer" role="status" aria-live="polite">
+          <strong>{producer.liveness==="live"?(producer.owner_state==="running"?"Shared work is live":producer.owner_state==="completed"?"Work returned":"Work is held"):producer.liveness==="stale"?"The producer has stopped responding":producer.liveness==="disconnected"?"The producer is disconnected":producer.liveness==="unavailable"?"The shared activity is unavailable":"Saved activity"}</strong>
+          {producerHeld&&<span>The last reading remains here.</span>}
+        </div>}
       </div>
-      <footer className="world-expression__meta"><span>Live</span><details><summary>Source details</summary><p>{expression.live_renderer_ref} · {expression.expression_ref} · revision {expression.expression_revision}</p></details></footer>
+      <nav className="world-expression__navigation" aria-label="Within this Expression">
+        <details><summary>People and work</summary><div>{Object.values(composition?.entities??{}).filter(entity=>entity.subject).map(entity=><button type="button" key={entity.entity_ref} data-entity-ref={entity.entity_ref} data-subject-ref={entity.subject!.subject_ref} onClick={()=>{(onSelectSubject??onOpenRef)?.(entity.subject!.subject_ref);}}>{entity.title}</button>)}</div></details>
+        {binding.subject_ref&&<button type="button" onClick={()=>{(onSelectSubject??onOpenRef)?.(binding.subject_ref!);}}>Undertaking details</button>}
+      </nav>
     </section>;
   }
   const fallback=resolved.state==="fallback"?resolved.fallback:(binding.props.expression as {representations?:Array<{kind:string;representation:{ref:string;revision:string;availability:string};href?:string;html?:string}>}|undefined)?.representations?.find(item=>item.representation.availability==="available"&&((item.kind==="html"&&item.html)||((item.kind==="image"||item.kind==="video")&&item.href)));
@@ -277,19 +332,14 @@ function ExpressionBody({binding,presentationRef,hosting,onOpenRef}:RendererProp
   if(fallback){
     const href=safeMedia(fallback.href);
     const originalHtml=fallback.kind==="html"&&typeof fallback.html==="string"?fallback.html:undefined;
-    const generatedHeader=`<p>Frozen reading of ${escapeHtml(expression.expression_ref)} at revision ${expression.expression_revision}. The live Expression renders where the renderer is admitted.</p>`;
-    // Only this native producer's deterministic metadata header changes in
-    // retained editions. Authored inscriptions, prose and code stay verbatim,
-    // and the complete original publication remains available below.
-    const frozenHtml=originalHtml&&composition&&fallback.representation.ref===`${expression.expression_ref}:frozen:${expression.expression_revision}`&&originalHtml.includes(`<h1>${escapeHtml(composition.title)}</h1>${generatedHeader}`)?originalHtml.replace(generatedHeader,`<p>Saved presentation of ${escapeHtml(composition.title)}.</p>`):originalHtml;
     return <figure className="world-component world-component--expression" {...attributes} data-expression-state="fallback" data-fallback-kind={fallback.kind} data-fallback-ref={fallback.representation.ref}>
       {fallback.kind==="image"&&href&&<img src={href} alt={textProp(binding.fallback.title,"Expression capture")}/>}
       {fallback.kind==="video"&&href&&<video src={href} controls preload="metadata"/>}
-      {frozenHtml&&<iframe className="world-expression__frozen" title={subjectLabel(binding.fallback,"Saved Expression")} sandbox="" srcDoc={frozenHtml}/>}
-      <figcaption><span>Saved Expression</span><details><summary>Presentation details</summary><p>{fallback.kind} · {fallback.representation.ref} · {fallback.representation.revision} · {reason}</p>{originalHtml&&<details><summary>Original published HTML</summary><pre>{originalHtml}</pre></details>}</details></figcaption>
+      {originalHtml&&<iframe className="world-expression__frozen" title={subjectLabel(binding.fallback,"Saved Expression")} sandbox="" srcDoc={originalHtml}/>}
+      <figcaption><span>Saved Expression</span><details><summary>Presentation details</summary><p>{fallback.kind} · {fallback.representation.ref} · {fallback.representation.revision} · {reason}</p>{originalHtml&&<details><summary>Original published HTML</summary><pre>{originalHtml}</pre></details>}</details></figcaption>{context&&<details className="world-expression__edition-context"><summary>Undertaking details</summary>{context}</details>}
     </figure>;
   }
-  return <article className="world-component world-component--fallback" {...attributes} data-expression-state="unavailable"><div className="world-component__eyebrow">Expression unavailable</div><h3>{subjectLabel(binding.fallback,"Untitled Expression")}</h3><p>No saved presentation is available here.</p><details><summary>Presentation details</summary><p>{reason}</p></details></article>;
+  return <article className="world-component world-component--fallback" {...attributes} data-expression-state="unavailable"><div className="world-component__eyebrow">Expression unavailable</div><h3>{subjectLabel(binding.fallback,"Untitled Expression")}</h3><p>No saved presentation is available here.</p><details><summary>Presentation details</summary><p>{reason}</p></details>{context&&<details className="world-expression__edition-context"><summary>Undertaking details</summary>{context}</details>}</article>;
 }
 
 export const portablePresentationRenderers:Record<string,Renderer>={
@@ -325,15 +375,16 @@ export function presentationThemeStyle(presentation:WorldPresentation):CSSProper
   return style as CSSProperties;
 }
 
-export function WorldPresentationView({presentation,onOpenRef,hosting="stage",subjects=[]}:{presentation:WorldPresentation;onOpenRef?:(ref:string)=>void;hosting?:ExpressionHosting;subjects?:{ref:string;label?:string;title?:string}[]}) {
-  const expressionBody=presentation.regions.some(region=>region.bindings.some(binding=>(binding.portable_renderer??binding.component_ref)==="oi.presentation/expression/v1"));
+export function WorldPresentationView({presentation,onOpenRef,hosting="stage",subjects=[],context,onSelectSubject,activity}:{presentation:WorldPresentation;onOpenRef?:(ref:string)=>void;hosting?:ExpressionHosting;subjects?:{ref:string;label?:string;title?:string}[];context?:ReactNode;onSelectSubject?:RendererProps["onSelectSubject"];activity?:ProducerBinding}) {
+  const expressionBindings=presentation.regions.flatMap(region=>region.bindings).filter(binding=>(binding.portable_renderer??binding.component_ref)==="oi.presentation/expression/v1");
+  const expressionBody=expressionBindings.length===1;
   const entitySubjects=presentation.regions.flatMap(region=>region.bindings).flatMap(binding=>Object.values(bindingComposition(binding)?.entities??{})).filter(entity=>entity.subject).map(entity=>({ref:entity.subject!.subject_ref,title:entity.title,legacySummary:`${entity.subject!.presentation_role??'thing'} · ${entity.subject!.native_owner??'native owner'}`}));
   const namedSubjects=[...subjects.map(subject=>({...subject,legacySummary:entitySubjects.find(entity=>entity.ref===subject.ref)?.legacySummary})),...entitySubjects];
-  return <article className={`world-presentation${expressionBody?" world-presentation--expression":""}`} data-presentation-ref={presentation.presentation_ref} data-presentation-revision={presentation.revision} data-world-ref={presentation.world_ref} style={presentationThemeStyle(presentation)}>
-    <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">{expressionBody?"Expression":"Shared page"}</div><h1>{subjectLabel(presentation,"Untitled page")}</h1></div>{presentation.summary&&<p>{presentation.summary}</p>}</header>
-    {presentation.regions.map(region=><section key={region.region_ref} className="world-region" data-region-ref={region.region_ref} data-region-role={region.role}>
+  const regions=<>{presentation.regions.map(region=><section key={region.region_ref} className="world-region" data-region-ref={region.region_ref} data-region-role={region.role}>
       {region.label&&<div className="world-region__label">{region.label}</div>}
-      <div className="world-region__components">{region.bindings.map(binding=>{const key=binding.portable_renderer??binding.component_ref;const Renderer=portablePresentationRenderers[key]??Fallback;return <div key={binding.binding_ref} className="world-binding" data-binding-ref={binding.binding_ref} data-component-ref={binding.component_ref} data-renderer-key={key} data-renderer-available={Boolean(portablePresentationRenderers[key])}><Renderer binding={binding} presentationRef={presentation.presentation_ref} onOpenRef={onOpenRef} hosting={hosting} subjects={namedSubjects}/></div>;})}</div>
-    </section>)}
+      <div className="world-region__components">{region.bindings.filter(binding=>!expressionBody||binding!==expressionBindings[0]).map(binding=>{const key=binding.portable_renderer??binding.component_ref;const Renderer=portablePresentationRenderers[key]??Fallback;return <div key={binding.binding_ref} className="world-binding" data-binding-ref={binding.binding_ref} data-component-ref={binding.component_ref} data-renderer-key={key} data-renderer-available={Boolean(portablePresentationRenderers[key])}><Renderer binding={binding} presentationRef={presentation.presentation_ref} onOpenRef={onOpenRef} hosting={hosting} subjects={namedSubjects}/></div>;})}</div>
+    </section>)}</>;
+  return <article className={`world-presentation${expressionBody?" world-presentation--expression":""}`} data-presentation-ref={presentation.presentation_ref} data-presentation-revision={presentation.revision} data-world-ref={presentation.world_ref} style={presentationThemeStyle(presentation)}>
+    {expressionBody?<ExpressionBody binding={expressionBindings[0]} presentationRef={presentation.presentation_ref} onOpenRef={onOpenRef} hosting={hosting} subjects={namedSubjects} onSelectSubject={onSelectSubject} activity={activity} context={<>{regions}{context}</>}/>:<><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Shared page</div><h1>{subjectLabel(presentation,"Untitled page")}</h1></div>{presentation.summary&&<p>{presentation.summary}</p>}</header>{regions}{context}</>}
   </article>;
 }

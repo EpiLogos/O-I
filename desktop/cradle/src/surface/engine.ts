@@ -327,8 +327,12 @@ export function closeSurface(state: LayoutState, id: SurfaceId): LayoutState {
   // retain their binding and re-open stack, including unsaved-draft identity.
   const blank = state.surfaces[id]?.kind === "blank";
   const closedStack = [...state.closedStack.filter(old => old !== id), ...(!blank ? [id] : [])];
-  const surfaces = blank ? { ...state.surfaces } : state.surfaces;
+  // Recovery keeps the same native subject and draft identity, but a closed
+  // file's next presentation is a new opening. Copying its binding retires
+  // any unconsumed, object-scoped delivery from the previous native read.
+  const surfaces = blank || state.surfaces[id]?.kind === "file" ? { ...state.surfaces } : state.surfaces;
   if (blank) delete surfaces[id];
+  else if (state.surfaces[id]?.kind === "file") surfaces[id] = { ...state.surfaces[id] };
   return withRoot({ ...state, surfaces, closedStack }, root);
 }
 

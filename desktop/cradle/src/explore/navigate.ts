@@ -10,7 +10,7 @@ import type {DepthState} from "./PresentationBody";
 export type Visit={query:string;selected?:string;depth?:DepthState};
 export type Travel={schema:string;visits:Visit[];index:number};
 
-export interface PresentationMeta {world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number}
+export interface PresentationMeta {native_session?:{ref:string;project:string;source_world_ref:string};world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number}
 
 export const TRAVEL_EVENT="oi:explore-navigate";
 export function loadTravel():Travel {

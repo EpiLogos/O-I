@@ -68,6 +68,32 @@ test('the rest of the constellation round-trips by ref: presentation, terminal, 
   assert.equal(browser.browser.url, 'https://example.test');
 });
 
+test('a shared participant restores its native session in the same Context plane by qualified address', () => {
+  const nativeSession = {
+    ref: 'agent-session/direct-bcd57cbdda4560c6f035152d8e97d193de4535c81b38196403367dae2cf4d763',
+    project: 'SharedInquiry', source_world_ref: 'world:shared-expression:bea',
+  };
+  const binding = {
+    id: 'ws:shared-bo-context', kind: 'presentation', title: 'Bo',
+    ref: 'world:shared-expression:bea/' + nativeSession.ref,
+    presentation: {world_ref: 'world:shared-expression:ann', native_session: nativeSession},
+    view: {encounterPlane: 'Context'},
+  };
+  const restored = validBinding(JSON.parse(JSON.stringify(binding)));
+  assert.deepEqual(restored.presentation.native_session, nativeSession);
+  assert.deepEqual(restored.view, {encounterPlane: 'Context'});
+  const polluted = validBinding({...binding, presentation: {...binding.presentation,
+    native_session: {...nativeSession, context: {items: ['private material']}, journal: [{text: 'a copied reply'}]},
+    composition: {entities: []},
+  }});
+  assert.deepEqual(polluted.presentation, binding.presentation, 'workspace persistence carries addresses, never owner material');
+  assert.equal(validBinding({...binding, presentation: {...binding.presentation,
+    native_session: {...nativeSession, source_world_ref: undefined}}}), null,
+  'a native session without its source World cannot restore');
+  const plain = validBinding({...binding, presentation: {world_ref: 'world:shared-expression:ann'}});
+  assert.equal(plain.view, undefined, 'a plain presentation does not acquire a session plane');
+});
+
 test('a pane tree restores: groups, splits, weights; unknown tabs refuse the group; lone split children normalise', () => {
   const surfaces = Object.fromEntries([sourceTab(), knowledgePage(), { id: 'ws:pres', kind: 'presentation', title: 'P', ref: 'expression:e', presentation: { world_ref: 'w' } }].map((b) => [b.id, b]));
   const tree = {

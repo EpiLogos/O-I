@@ -750,7 +750,6 @@
     }
    ],
    "key_literals": [
-    "oi-cradle.draft.v1:${…}",
     "oi-cradle.file-caret:${…}",
     "oi-cradle.file-scroll:${…}",
     "oi:file-draft-changed",
@@ -1879,41 +1878,42 @@
      "owner": "src/workspace/drafts.ts",
      "receiver": "localStorage",
      "method": "getItem",
-     "key": "key(ref)",
+     "key": "key",
      "basis": [
-      "key = (ref: string) => `oi-cradle.draft.v1:${ref}`"
+      "draftStorageKey = {\n    if (!owner?.root || !owner.device || !owner.inode || !ref)\n        return undefined;\n    return `oi-cradle.draft.v2:${JSON.stringify([owner.root, owner.device, owner.inode, ref])}`;\n}"
      ]
     },
     {
      "owner": "src/workspace/drafts.ts",
      "receiver": "localStorage",
      "method": "removeItem",
-     "key": "key(ref)",
+     "key": "key",
      "basis": [
-      "key = (ref: string) => `oi-cradle.draft.v1:${ref}`"
+      "draftStorageKey = {\n    if (!owner?.root || !owner.device || !owner.inode || !ref)\n        return undefined;\n    return `oi-cradle.draft.v2:${JSON.stringify([owner.root, owner.device, owner.inode, ref])}`;\n}"
      ]
     },
     {
      "owner": "src/workspace/drafts.ts",
      "receiver": "localStorage",
      "method": "setItem",
-     "key": "key(ref)",
+     "key": "key",
      "basis": [
-      "key = (ref: string) => `oi-cradle.draft.v1:${ref}`"
+      "draftStorageKey = {\n    if (!owner?.root || !owner.device || !owner.inode || !ref)\n        return undefined;\n    return `oi-cradle.draft.v2:${JSON.stringify([owner.root, owner.device, owner.inode, ref])}`;\n}"
      ]
     }
    ],
    "key_literals": [
-    "oi-cradle.draft.v1:${…}"
+    "oi-cradle.draft.v2:${…}",
+    "oi-cradle.draft/v2"
    ],
    "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
-   "rationale": "Shared source working-copy recovery with base revision and acknowledgment, not authoritative source bytes.",
+   "rationale": "Working-copy recovery is qualified by the actual native root, device, inode and source ref. Browser acknowledgment never grants source authority or power-loss durability; legacy v1 records are not adopted.",
    "keys": [
     {
-     "family": "key(ref)",
+     "family": "draftStorageKey(owner, ref)",
      "classification": "device-draft",
-     "rationale": "Shared source working-copy recovery with base revision and acknowledgment, not authoritative source bytes.",
-     "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+     "rationale": "Working-copy recovery is qualified by the actual native root, device, inode and source ref. Browser acknowledgment never grants source authority or power-loss durability; legacy v1 records are not adopted.",
+     "review": "Native Central recognition qualifies retention; source writes retain their native CAS boundary."
     }
    ]
   },

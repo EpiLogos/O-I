@@ -11,6 +11,76 @@ use serde_json::{json, Value};
 const RUN: &str = "expression:run";
 
 #[test]
+fn reviewed_cast_correction_is_revision_checked_and_retains_direct_identity() {
+    let home = std::env::temp_dir().join(format!("oi-act-cast-{}", std::process::id()));
+    let mut first = kernel();
+    first.attach_act_store(&home).unwrap();
+    expression(&mut first, json!({"operation":"create","expression_ref":RUN,"title":"Shared work","actor":"human:ann"})).unwrap();
+    let old = world(&mut first, json!({"operation":"act_open","act_ref":"act:cast-correction","expression_ref":RUN,"mode":"expressions","actor":"human:ann",
+        "instrument_ref":"agent-session/direct-original","subject_ref":"work:shared",
+        "cast":[{"role":"reviewer","participant_ref":"agent:bo"},{"role":"bo","participant_ref":"world:bea/agent:bo"}]})).unwrap()["act"].clone();
+    let revision = old["revision"].as_u64().unwrap();
+    for basis in [None, Some(1)] {
+        assert!(world(&mut first, json!({"operation":"act_open","act_ref":"act:absent-correction","expression_ref":RUN,"mode":"expressions","actor":"human:ann",
+            "replace_cast":true,"cast":[],"expected_act_revision":basis})).is_err());
+    }
+    let acts = world(&mut first, json!({"operation":"act_list"})).unwrap();
+    assert!(
+        !acts["acts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|a| a["act_ref"] == "act:absent-correction"),
+        "an absent correction cannot create another Act"
+    );
+    let replacement = json!([{"role":"bo","participant_ref":"world:bea/agent:bo","label":"Bo"}]);
+    let request = |basis| {
+        json!({"operation":"act_open","act_ref":"act:cast-correction","expression_ref":RUN,"mode":"expressions","actor":"human:ann",
+        "replace_cast":true,"cast":replacement,"expected_act_revision":basis})
+    };
+    assert!(
+        world(&mut first, request(None::<u64>)).is_err(),
+        "cast replacement requires an explicit revision"
+    );
+    let stale = world(&mut first, request(Some(revision + 1))).unwrap();
+    assert_eq!(stale["state"], "act_revision_conflict");
+    let unchanged = world(
+        &mut first,
+        json!({"operation":"act_inspect","act_ref":"act:cast-correction"}),
+    )
+    .unwrap()["act"]
+        .clone();
+    assert_eq!(
+        unchanged, old,
+        "a refused replacement changes no native state"
+    );
+    let corrected = world(&mut first, request(Some(revision))).unwrap()["act"].clone();
+    assert_eq!(corrected["cast"], replacement);
+    for key in [
+        "act_ref",
+        "mode",
+        "instrument_ref",
+        "subject_ref",
+        "sequence",
+    ] {
+        assert_eq!(corrected[key], old[key], "cast correction preserves {key}");
+    }
+    let mut fresh = kernel();
+    fresh.attach_act_store(&home).unwrap();
+    let retained = world(
+        &mut fresh,
+        json!({"operation":"act_inspect","act_ref":"act:cast-correction"}),
+    )
+    .unwrap()["act"]
+        .clone();
+    assert_eq!(
+        retained, corrected,
+        "a fresh body reads the same corrected Act"
+    );
+    std::fs::remove_dir_all(home).unwrap();
+}
+
+#[test]
 fn performed_editions_replay_after_restart_without_repeating_native_operations() {
     let home = std::env::temp_dir().join(format!(
         "oi-act-edition-{}-{}",
@@ -1098,4 +1168,28 @@ fn distinct_native_text_events_keep_each_acceptance() {
         "world:bea/agent-session/same-local-name"
     );
     assert_eq!(sequence[3]["event_basis"]["occurrence"], "cursor:8");
+}
+
+#[test]
+fn native_act_material_preserves_paragraphs_and_tabs_with_strict_identity() {
+    let mut k = setup();
+    open_act(&mut k, "act:paragraphs");
+    select_handoff(&mut k, "act:paragraphs", "main");
+    let body = "Read the owner's receipt first.\n\nAuthor\tProposal\nBea\tRetain and rebase.";
+    let applied = world(&mut k, json!({"operation":"act_text","act_ref":"act:paragraphs","actor":"human:bea","role":"caption","text":body})).unwrap();
+    assert_eq!(applied["presented"], true);
+    let current = doc(&mut k, RUN);
+    assert!(current["scenes"][0]["presentation"]["scene"]["text"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|layer| layer["body"] == body));
+    let revision = current["revision"].clone();
+    for (actor, text) in [
+        ("human:bea\nother", body),
+        ("human:bea", "invalid\0material"),
+    ] {
+        assert!(world(&mut k, json!({"operation":"act_text","act_ref":"act:paragraphs","actor":actor,"role":"caption","text":text})).is_err());
+        assert_eq!(doc(&mut k, RUN)["revision"], revision);
+    }
 }

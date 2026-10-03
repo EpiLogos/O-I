@@ -412,8 +412,55 @@ mod tests {
         assert!(catalogue
             .products
             .iter()
-            .filter(|product| product.id != "quaternal-logic")
+            .filter(|product| !matches!(product.id.as_str(), "quaternal-logic" | "ai-kit"))
             .all(|product| product.source_install.companions.is_empty()));
+    }
+
+    #[test]
+    fn aikit_declares_its_native_package_companions() {
+        let catalogue = product_command_catalogue_from_json(
+            crate::catalog_source::embedded_catalogue_json(),
+            "test-embedded",
+        )
+        .unwrap();
+        let install = &catalogue.resolve("aikit").unwrap().source_install;
+        assert_eq!(
+            install.build,
+            vec![
+                "cargo",
+                "build",
+                "--locked",
+                "--release",
+                "-p",
+                "aikit-cli",
+                "--bins"
+            ]
+        );
+        assert_eq!(install.executable_path, "target/release/aikit");
+        let companions = install
+            .companions
+            .iter()
+            .map(|companion| {
+                (
+                    companion.executable.as_str(),
+                    companion.executable_path.as_str(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            companions,
+            vec![
+                ("aikit-session-space", "target/release/aikit-session-space"),
+                (
+                    "aikit-explain-history",
+                    "target/release/aikit-explain-history"
+                ),
+                (
+                    "aikit-knowledge-living",
+                    "target/release/aikit-knowledge-living"
+                ),
+            ]
+        );
     }
 
     #[test]

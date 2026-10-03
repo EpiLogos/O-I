@@ -183,10 +183,14 @@
             "--release",
             "-p",
             "aikit-cli",
-            "--bin",
-            "aikit"
+            "--bins"
           ],
-          "executable_path": "target/release/aikit"
+          "executable_path": "target/release/aikit",
+          "companions": [
+            {"executable":"aikit-session-space","executable_path":"target/release/aikit-session-space"},
+            {"executable":"aikit-explain-history","executable_path":"target/release/aikit-explain-history"},
+            {"executable":"aikit-knowledge-living","executable_path":"target/release/aikit-knowledge-living"}
+          ]
         },
         "version_manifest": "crates/aikit-cli/Cargo.toml"
       },

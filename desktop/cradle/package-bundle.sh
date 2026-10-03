@@ -20,7 +20,7 @@
 # ~/Applications/O-I.app contract). --dry-run validates everything that does
 # not need a real build.
 #
-# Usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR]
+# Usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR] [--footprint PATH]
 #   --dry-run       print the planned steps and validate contract data, no writes
 #   --skip-build    adopt an existing Tauri build output (already built once)
 set -euo pipefail
@@ -30,6 +30,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 OUT_DIR="${REPO_ROOT}/desktop/cradle/dist"
 DRY_RUN=0
 SKIP_BUILD=0
+FOOTPRINT_OVERRIDE=""
 
 log() { printf 'package-bundle: %s\n' "$*"; }
 die() { printf 'package-bundle: error: %s\n' "$*" >&2; exit 1; }
@@ -39,13 +40,14 @@ while [ "$#" -gt 0 ]; do
     --dry-run) DRY_RUN=1 ;;
     --skip-build) SKIP_BUILD=1 ;;
     --out) [ "$#" -ge 2 ] || die "--out requires a directory"; OUT_DIR="$2"; shift ;;
-    *) die "unknown option '$1' (usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR])" ;;
+    --footprint) [ "$#" -ge 2 ] || die "--footprint requires a file"; FOOTPRINT_OVERRIDE="$2"; shift ;;
+    *) die "unknown option '$1' (usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR] [--footprint PATH])" ;;
   esac
   shift
 done
 
 TAURI_DIR="${REPO_ROOT}/desktop/cradle/src-tauri"
-FOOTPRINT="${REPO_ROOT}/desktop/install-footprint.json"
+FOOTPRINT="${FOOTPRINT_OVERRIDE:-${REPO_ROOT}/desktop/install-footprint.json}"
 
 # ---------------------------------------------------------------------------
 # Contract data and host checks (also exercised by --dry-run)
@@ -116,14 +118,15 @@ build_shared_field_client() {
 }
 
 if [ "${SKIP_BUILD}" -eq 0 ]; then
+  # The native Direct producer reuses Factory's checked owner seam. Its
+  # locked desktop imports must exist before the installed client is bundled.
+  npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
   build_shared_field_client
   if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
     log "building the cradle web bundle and native shell (macOS .app)"
-    npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
     (cd "${REPO_ROOT}/desktop/cradle" && npx tauri build --bundles app)
   else
     log "building the cradle web bundle and native shell (this needs the Tauri linux system packages)"
-    npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
     (cd "${REPO_ROOT}/desktop/cradle" && npx tauri build)
   fi
 fi
@@ -136,6 +139,9 @@ if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
   [ -d "${MACOS_APP_PATH}" ] && MACOS_APP="${MACOS_APP_PATH}"
   [ -n "${MACOS_APP}" ] || die "no .app found at ${MACOS_APP_PATH}; run the tauri build first (or drop --skip-build)"
   [ -f "${MACOS_APP}/Contents/Resources/shared-field/field-client.sh" ] || die "${MACOS_APP} carries no shared-field/ client resource; the installed Explore would have no SharedField client"
+  # A linker-signed executable does not seal the surrounding resources.
+  # Signing belongs to the native bundler; adoption never repairs its payload.
+  codesign --verify --deep --strict "${MACOS_APP}" || die "native macOS app signature is invalid; rebuild with the intended Tauri signing identity"
 else
   for candidate in "${TARGET_ROOT}"/release/bundle/appimage/*.AppImage; do
     if [ -f "${candidate}" ]; then APPIMAGE="${candidate}"; break; fi
@@ -151,6 +157,7 @@ mkdir -p "${BUNDLE_ROOT}/app"
 
 if [ -n "${MACOS_APP}" ]; then
   cp -R "${MACOS_APP}" "${BUNDLE_ROOT}/app/O-I.app"
+  codesign --verify --deep --strict "${BUNDLE_ROOT}/app/O-I.app" || die "staged macOS app signature changed during adoption"
 else
   cp "${APPIMAGE}" "${BUNDLE_ROOT}/app/oi-cradle.AppImage"
 fi
@@ -162,15 +169,16 @@ fi
 cp "${TAURI_DIR}/icons/icon.png" "${BUNDLE_ROOT}/app/icon.png"
 cp "${FOOTPRINT}" "${BUNDLE_ROOT}/footprint.json"
 SOURCE_REVISION="$(git -C "${REPO_ROOT}" rev-parse HEAD 2>/dev/null || echo unknown)"
-python3 - "$VERSION" "$TARGET" "$SOURCE_REVISION" > "${BUNDLE_ROOT}/BUNDLE.json" <<'JSON'
+python3 - "$VERSION" "$TARGET" "$SOURCE_REVISION" "$FOOTPRINT" > "${BUNDLE_ROOT}/BUNDLE.json" <<'JSON'
 import datetime, json, sys
-version, target, revision = sys.argv[1], sys.argv[2], sys.argv[3]
+version, target, revision, footprint_path = sys.argv[1:]
+app_id = json.load(open(footprint_path))["app_id"]
 print(json.dumps({
     "schema": "oi.desktop-bundle/v1",
     "name": f"oi-cradle-{version}-{target}.tar.gz",
     "version": version,
     "target": target,
-    "app_id": "org.epilogos.oi.cradle",
+    "app_id": app_id,
     "source_revision": revision,
     "created_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "app_entry": "app/O-I.app" if target == "aarch64-apple-darwin" else "app/oi-cradle.AppImage",

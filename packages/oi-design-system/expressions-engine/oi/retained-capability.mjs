@@ -67,6 +67,10 @@ return class RetainedProductionAdapter extends ProductionAdapter {
     for (const listener of this.recoveryListeners) listener("restored");
   };
 
+  hasNativeField() {
+    return Boolean(this.retained?.external || super.hasNativeField());
+  }
+
   configuration(frame) {
     const { toolbelt, propertyTracks, ...renderScene } = frame.scene;
     const sig = frame.authoringRevision === undefined ? JSON.stringify(renderScene) : frame.scene.id + ":" + frame.authoringRevision;

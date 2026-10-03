@@ -58,7 +58,7 @@ assert.match(cards[2].props.title,/^Unnamed subject \d+$/,'A missing human name 
 for(const subject of bound)assert.ok(cards.some(card=>card.subject_ref===subject.ref&&card.props.refs.includes(subject.ref)),'Publication retains each exact native binding');
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
+const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false,hmr:false},logLevel:'error'});
 server.middlewares.use('/presentation-native/input',(_request,response)=>{response.setHeader('content-type','application/json');response.end(JSON.stringify({presentation:bundle.presentation,document:readback}));});
 server.middlewares.use('/presentation-native',async(_request,response)=>{response.setHeader('content-type','text/html');response.end(await server.transformIndexHtml('/presentation-native','<!doctype html><html><body class="oi-desktop"><div id="root"></div><script type="module" src="/tests/presentation-readable-native-page.tsx"></script></body></html>'));});
 let checks=0;
@@ -71,7 +71,8 @@ try{
   const context=await browser.newContext({viewport:{width:1200,height:900}});
   await context.addInitScript(endpoint=>{if(window.top!==window)return;window.__OI_KERNEL_BRIDGE__=endpoint;localStorage.setItem('oi-cradle.visuals.v1',JSON.stringify({enabled:false,welcomeEnabled:false}));},bridge);
   const page=await context.newPage(),errors=[],failedRequests=[],errorDetails=[];let phase='initial reading';page.on('pageerror',error=>{errors.push(error.message);errorDetails.push({phase,message:error.message,stack:error.stack});});page.on('requestfailed',request=>failedRequests.push({phase,url:request.url(),error:request.failure()}));
-  try{await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});await page.getByRole('heading',{name:guide.title,exact:true}).first().waitFor();}
+  const frame=page.frameLocator('iframe.world-expression__frozen');
+  try{await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});await frame.getByRole('heading',{name:document.title,exact:true}).waitFor();}
   catch(error){
    if(process.env.OI_PRESENTATION_EVIDENCE){await writeFile(`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}-failure.json`,JSON.stringify({error:String(error),errors,failedRequests,html:await page.content()},null,2));await page.screenshot({path:`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}-failure.png`,fullPage:true});}
    throw error;
@@ -87,9 +88,13 @@ try{
   let announced=await page.locator('body').ariaSnapshot();
   for(const identity of [ref,...bound.map(subject=>subject.ref),document.scenes[0].scene_ref])check(!text.includes(identity),`${name}: ordinary text/announced names do not substitute canonical identity for meaning`);
   for(const identity of [ref,...bound.map(subject=>subject.ref),document.scenes[0].scene_ref])check(!announced.includes(identity),`${name}: default accessibility tree does not announce canonical identities`);
-  check(text.includes(guide.title)&&text.includes(longTitle),`${name}: native names and long title survive default reading`);
+  const undertaking=page.locator('.world-expression__edition-context');
+  check(await undertaking.getAttribute('open')===null,`${name}: saved edition starts with its own body and closed undertaking depth`);
+  await undertaking.locator(':scope > summary').click();
+  await page.getByRole('heading',{name:guide.title,exact:true}).first().waitFor();
+  text=await visibleText();
+  check(text.includes(guide.title)&&text.includes(longTitle),`${name}: deliberately opened undertaking depth retains the native names and full title`);
   check(/Unnamed subject \d+/.test(text),`${name}: missing native human name has a truthful numbered state`);
-  const frame=page.frameLocator('iframe.world-expression__frozen');await frame.getByRole('heading',{name:document.title,exact:true}).waitFor();
   check(!(await frame.locator('body').innerText()).includes(ref),`${name}: saved frame contains readable generated chrome`);
   const frameNames=await frame.locator('body').ariaSnapshot();
   for(const identity of [ref,...bound.map(subject=>subject.ref)])check(!frameNames.includes(identity),`${name}: saved-frame accessibility names do not announce canonical identities`);
@@ -100,8 +105,11 @@ try{
   await page.getByRole('button',{name:'Back to shared work'}).click();
   await nativeCard.locator('details').first().locator('summary').click();
   check((await nativeCard.innerText()).includes(guide.ref),`${name}: deliberate disclosure recovers the original identity`);
-  phase='reopening';await page.reload();await page.getByRole('heading',{name:guide.title,exact:true}).first().waitFor();
-  text=await visibleText();check(!text.includes(guide.ref)&&text.includes(guide.title),`${name}: reopened reading starts with human names and closed source details`);
+  phase='reopening';await page.reload();await frame.getByRole('heading',{name:document.title,exact:true}).waitFor();
+  check(await undertaking.getAttribute('open')===null,`${name}: reopened saved edition retains its body and closed undertaking depth`);
+  text=await visibleText();check(!text.includes(guide.ref),`${name}: reopened reading keeps source details closed`);
+  await undertaking.locator(':scope > summary').click();
+  text=await visibleText();check(!text.includes(guide.ref)&&text.includes(guide.title),`${name}: reopened deliberate depth retains the native human name`);
   announced=await page.locator('body').ariaSnapshot();check(!announced.includes(guide.ref)&&announced.includes(guide.title),`${name}: reopened accessibility tree retains names and closed source details`);
   const retained=await native({operation:'inspect',expression_ref:ref});check(JSON.stringify(retained)===JSON.stringify(readback),`${name}: reading/opening/reopening did not change native source`);
   if(errors.length&&process.env.OI_PRESENTATION_EVIDENCE){await writeFile(`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}-failure.json`,JSON.stringify({errors,errorDetails,failedRequests,html:await page.content()},null,2));await page.screenshot({path:`${process.env.OI_PRESENTATION_EVIDENCE}/native-readable-${name}-failure.png`,fullPage:true});}

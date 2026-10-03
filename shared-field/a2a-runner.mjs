@@ -43,11 +43,19 @@ export async function runA2aExchange(request, { fetch_impl = globalThis.fetch } 
 }
 
 if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  let deliveryAttempted = false;
   try {
-    const difference = await runA2aExchange(JSON.parse(await readStdin()));
+    const difference = await runA2aExchange(JSON.parse(await readStdin()), {
+      fetch_impl: (url, init) => {
+        // The owner floor performs card/authority checks before its one POST.
+        // A lost POST response cannot establish that the peer did no work.
+        if (init?.method === 'POST') deliveryAttempted = true;
+        return globalThis.fetch(url, init);
+      },
+    });
     process.stdout.write(`${JSON.stringify(difference)}\n`);
   } catch (error) {
-    process.stdout.write(`${JSON.stringify({ a2aError: error instanceof Error ? error.message : String(error) })}\n`);
+    process.stdout.write(`${JSON.stringify({ a2aError: error instanceof Error ? error.message : String(error), kind: deliveryAttempted ? 'outcome_unknown' : 'refused', delivery_attempted: deliveryAttempted })}\n`);
     process.exitCode = 1;
   }
 }

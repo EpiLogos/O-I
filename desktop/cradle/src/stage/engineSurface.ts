@@ -40,15 +40,13 @@
  */
 import { ProductionAdapter, type RetainedTargetPort } from "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs";
 import { nativeSnapshotToJourney, type NativeConfig, type StageScene } from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
-import { stageCentre, stageScale } from "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs";
+import { unproject, cameraForSceneView } from "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs";
 import type { EngineCommand, EngineFrame } from "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs";
 import { stageRecipe, stageSequence, type StageSequence } from "./recipes";
 
 export type ExpressionHit =
   | {kind:"entity";entity_ref:string;distance:number}
   | {kind:"relation";binding_ref:string;from_entity_ref:string;to_entity_ref:string;relation:{ref:string;revision:string};distance:number};
-
-const WORLD_SCALE = 400; // the instrument's stage unit (nativeParameters.ts)
 
 /** The only K8-facing capability of a stage surface. It deliberately has no
  * renderer, step, reseed, scene, recipe or document mutation method. */
@@ -117,7 +115,7 @@ interface Playback {
 
 /** Unthemed recipe material and explicitly host-themed document material
  * are retained separately. Native instrument configs have neither override. */
-interface ActivePresentation { id: string; scene: StageScene; revision: number; recipe?: NativeConfig; hostMaterial?: NativeConfig; appearance?: StageAppearance }
+interface ActivePresentation { id: string; scene: StageScene; revision: number; recipe?: NativeConfig; hostMaterial?: NativeConfig; appearance?: StageAppearance; authoredView?: boolean }
 
 export class EngineSurface {
   readonly canvas: HTMLCanvasElement;
@@ -176,13 +174,17 @@ export class EngineSurface {
       const element = this.element;
       const width = element ? element.clientWidth : window.innerWidth;
       const height = element ? element.clientHeight : window.innerHeight;
-      const origin = stageCentre(width, height);
-      const camera=element?ELEMENT_CAMERA_2D:CAMERA_2D;
-      const scale = (stageScale(width, height) * camera.zoom) / WORLD_SCALE;
+      const camera=this.presentationCamera(width,height);
       const localX = element ? event.clientX - element.getBoundingClientRect().left : event.clientX;
       const localY = element ? event.clientY - element.getBoundingClientRect().top : event.clientY;
       if (element && (localX < 0 || localY < 0 || localX > width || localY > height)) { leave(); return; }
-      this.pointer = { active: true, world: { x: (localX - origin.x) / scale, y: -(localY - origin.y) / scale, z: 0 } };
+      try {
+        this.pointer = { active: true, world: unproject(localX,localY,camera,width,height) };
+      } catch {
+        // An authored side view may not intersect the pointer's XY plane.
+        // Keep its camera and projected hit-test; release the plane force.
+        leave();
+      }
     };
     const leave = () => { this.pointer = { active: false, world: this.pointer.world }; };
     pointerTarget.addEventListener("pointermove", move as EventListener, { passive: true });
@@ -263,7 +265,7 @@ export class EngineSurface {
     const correspondence = (config as {oiExpressionBindings?: {relations?: unknown[]}})?.oiExpressionBindings;
     this.adapter.setExpressionBindings?.(correspondence?.relations ?? []);
     if (appearance !== "authored") this.activateHostMaterial(id, config as NativeConfig, sceneRef, appearance);
-    else this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef));
+    else this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef),Boolean((config as NativeConfig).authoringView));
     this.wake();
   }
 
@@ -565,7 +567,7 @@ export class EngineSurface {
     this.canvas.remove();
   }
 
-  private activate(id: string, scene: StageScene) { this.active = { id, scene, revision: ++this.revision }; }
+  private activate(id: string, scene: StageScene, authoredView=false) { this.active = { id, scene, revision: ++this.revision, authoredView }; }
   /** Authored recipe material on the host's ground. The unthemed recipe is
    * kept so overlays and re-theming compose on the authored config. */
   private activateRecipe(id: string, recipe: NativeConfig, sceneId?: string, appearance: StageAppearance = "host") {
@@ -611,9 +613,17 @@ export class EngineSurface {
     return this.active;
   }
   private sceneFrom(config: NativeConfig, id?: string): StageScene {
-    const scene = nativeSnapshotToJourney({ config }).scenes[0]!;
+    const scene = nativeSnapshotToJourney({ config, ...(config.authoringView?{authoringView:config.authoringView}:{}) }).scenes[0]!;
     if (id !== undefined) scene.id = id;
     return scene;
+  }
+  /** Authored Expressions carry their camera through the same native Scene
+   * import used by the instrument. Element placement is not a second fit. */
+  private presentationCamera(width:number,height:number):EngineFrame["camera"] {
+    const active=this.active;
+    const basis=active?.authoredView||active?.recipe?.authoringView||active?.hostMaterial?.authoringView;
+    if(!basis)return this.element?ELEMENT_CAMERA_2D:CAMERA_2D;
+    return cameraForSceneView(active!.scene.view,width,height);
   }
   private rejectReady(id: string | null, reason: Error) {
     for (const waiter of this.readyWaiters) if (id === null || waiter.id === id) {
@@ -728,7 +738,7 @@ export class EngineSurface {
     } else { width = window.innerWidth; height = window.innerHeight; }
     try {
       this.adapter.resize(width, height, window.devicePixelRatio || 1);
-      this.adapter.render({ scene: this.active!.scene, authoringRevision: this.active!.revision, simTime: 0, delta, params: {}, camera: this.element?ELEMENT_CAMERA_2D:CAMERA_2D, pointer: this.pointer, selectedIds: this.selectedIds, scaffold: "off" });
+      this.adapter.render({ scene: this.active!.scene, authoringRevision: this.active!.revision, simTime: 0, delta, params: {}, camera: this.presentationCamera(width,height), pointer: this.pointer, selectedIds: this.selectedIds, scaffold: "off" });
       for (const command of this.pendingCommands.splice(0)) this.adapter.command(command);
       this.frames++;
       this.renderedId = this.active!.id;

@@ -19,6 +19,8 @@ globalThis.localStorage = {
 
 const { decodeLayoutProgressive, stageCheckpoint, commitCheckpoint, lastKnownGood } = await import('../src/workspace/checkpoints.ts');
 const { writeDraft, readDraft, writeDraftIntent, acknowledgeDraft, readDurableDraft, clearSavedDraft } = await import('../src/workspace/drafts.ts');
+// Algorithm fixture only; actual native recognition is tested separately.
+const draftOwner = {root: "/algorithm-fixture", device: "fixture", inode: "fixture"};
 const { preservePresentation, latestRecovery, listRecovery } = await import('../src/workspace/recovery.ts');
 
 const systemTab = (id) => ({ id, kind: 'system', title: `System ${id}` });
@@ -119,35 +121,35 @@ test('C20: stage→crash without commit leaves the previous slot as last-known-g
 
 test('C18: an intent draft reads as unacknowledged until it is acknowledged', () => {
   const draft = { content: 'held words', base_revision: 'rev-1', saved_content: 'canon' };
-  writeDraftIntent('ref-a', draft);
-  let durable = readDurableDraft('ref-a');
+  writeDraftIntent(draftOwner, 'ref-a', draft);
+  let durable = readDurableDraft(draftOwner, 'ref-a');
   assert.equal(durable.acknowledged, false, 'an intent is not a vouch');
   assert.equal(durable.draft.content, 'held words');
-  acknowledgeDraft('ref-a', draft);
-  durable = readDurableDraft('ref-a');
+  acknowledgeDraft(draftOwner, 'ref-a', draft);
+  durable = readDurableDraft(draftOwner, 'ref-a');
   assert.equal(durable.acknowledged, true);
   assert.deepEqual(durable.draft, draft);
 });
 
 test('C18: the ordinary write stays acknowledged-by-write; clear removes both layers', () => {
   const draft = { content: 'x', base_revision: 'r', saved_content: 's' };
-  writeDraft('ref-b', draft);
-  assert.equal(readDurableDraft('ref-b').acknowledged, true, 'writeDraft keeps today\'s acknowledged-by-write semantics');
-  assert.deepEqual(readDraft('ref-b'), draft);
-  writeDraftIntent('ref-c', draft);
-  const plain = readDraft('ref-c');
+  writeDraft(draftOwner, 'ref-b', draft);
+  assert.equal(readDurableDraft(draftOwner, 'ref-b').acknowledged, true, 'writeDraft keeps today\'s acknowledged-by-write semantics');
+  assert.deepEqual(readDraft(draftOwner, 'ref-b'), draft);
+  writeDraftIntent(draftOwner, 'ref-c', draft);
+  const plain = readDraft(draftOwner, 'ref-c');
   assert.equal(plain.content, 'x', 'readDraft stays the plain reader over an intent record');
   assert.equal(plain.base_revision, 'r');
   assert.equal(plain.saved_content, 's');
   assert.equal(plain.acknowledged, false, 'the durability field rides the record');
-  writeDraft('ref-c', plain); // the ordinary round-trip
-  assert.equal(readDurableDraft('ref-c').acknowledged, false, 'an ordinary round-trip preserves the standing');
-  clearSavedDraft('ref-c', 'x');
-  assert.equal(readDurableDraft('ref-c'), null, 'one record: clearing removes intent and acknowledged together');
-  clearSavedDraft('ref-b', 'other');
-  assert.equal(readDurableDraft('ref-b').draft.content, 'x', 'the content guard still protects the draft');
-  clearSavedDraft('ref-b', 'x');
-  assert.equal(readDurableDraft('ref-b'), null);
+  writeDraft(draftOwner, 'ref-c', plain); // the ordinary round-trip
+  assert.equal(readDurableDraft(draftOwner, 'ref-c').acknowledged, false, 'an ordinary round-trip preserves the standing');
+  clearSavedDraft(draftOwner, 'ref-c', 'x');
+  assert.equal(readDurableDraft(draftOwner, 'ref-c'), null, 'one record: clearing removes intent and acknowledged together');
+  clearSavedDraft(draftOwner, 'ref-b', 'other');
+  assert.equal(readDurableDraft(draftOwner, 'ref-b').draft.content, 'x', 'the content guard still protects the draft');
+  clearSavedDraft(draftOwner, 'ref-b', 'x');
+  assert.equal(readDurableDraft(draftOwner, 'ref-b'), null);
 });
 
 test('recovery retention keeps the newest five, newest first, and dedup still holds', () => {

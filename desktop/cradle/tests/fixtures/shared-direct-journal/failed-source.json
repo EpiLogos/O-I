@@ -1,0 +1,18 @@
+{
+  "standing": "Actual native remote Direct turn failed with provider quota; three unmodified native events retained. Controlled users; observation-only replay, no new provider/tool effects or installed/two-human claim.",
+  "source_capture_sha256": "3464e2b55b73d3dfcef252f7e8ab297025902a7b757c7645f4e1130b0792b215",
+  "source_ref": "central:now:control:root:9c24d9730a0c7855754f550ba7cc6d8769920fd6f61857a3b8f9d00892241d05#native-gateway-episode/plain-v4-real-agent-first-journal.json",
+  "excerpt_sha256": "eb1410133d2cfd33326151aa34f10896e65a9a90d5a72e4a355c4d2f60ad523d",
+  "world_ref": "world:shared-expression:bea",
+  "workcell_ref": "workcell:omarchy",
+  "agent_ref": "agent:expressed-9abe707e870547cc93e72a09d94ad142",
+  "human_ref": "human:controlled:bea",
+  "agent_session": "agent-session/direct-bcd57cbdda4560c6f035152d8e97d193de4535c81b38196403367dae2cf4d763",
+  "from": 3028,
+  "to": 3056,
+  "selection": "Unmodified actual user-message3028, provider Failed3055 and matching TurnEnded3056. Omitted context delivery and provider retry status records remain in the complete29-event source capture.",
+  "events": 3,
+  "participant_ref": "participant:shared-continuation:bo",
+  "human_participant_ref": "participant:shared-continuation:bea",
+  "owner_generation": "oi:native-owner-generation:75ee55fe68412ab165fb73462018ab5ac99af62adf621d91"
+}

@@ -1,5 +1,6 @@
 import {kernelOp} from "../kernel/bridge";
 import type {CentralLocation, KernelTransportStatus, NativeDirectory, NativeFileBytes, NativeFileReading} from "../kernel/types";
+import {throwNativeFailure} from "../kernel/nativeFailure";
 /** `fresh` bypasses the kernel's short-horizon read cache for this one
  * listing — the explicit refresh affordance, not an ordinary expansion. */
 export async function listFiles(transport:KernelTransportStatus,path:string,fresh=false):Promise<NativeDirectory> {
@@ -30,6 +31,7 @@ export interface FilePreview {revision:string;expected_revision:string;content:s
 export async function fileOperation<T>(transport:KernelTransportStatus,location:CentralLocation,request:FileRequest):Promise<T> {
  const result=await kernelOp(transport,{op:"file_operation",location,request});
  if(result.error||result.outcome?.result!=="file_operation")throw new Error(result.error??"Central did not return a file operation");
+ throwNativeFailure(result.outcome.data);
  return result.outcome.data as T;
 }
 

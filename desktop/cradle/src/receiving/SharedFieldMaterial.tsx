@@ -3,7 +3,7 @@ import {createProjection,withdrawProjection} from "../../../../shared-field/inde
 import {createA2aBinding,createA2aPresence} from "../../../../shared-field/a2a.mjs";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
-import {hostedPublicationArgs,sharedField,type SharedFieldHostedResult,type SharedFieldStatus} from "../knowledge/shared-field";
+import {hostedPublicationArgs,nativeSharedReading,sharedField,type SharedFieldHostedResult,type SharedFieldStatus} from "../knowledge/shared-field";
 import "./receiving.css";
 /** Shared Field material for the OPEN document (Wave 7). Publication is the
  * owner's portable projection contract — this strip composes and withdraws
@@ -182,7 +182,7 @@ export function SharedFieldMaterial({sourceRef}:{sourceRef:string}) {
     message:{message_id:messageId,text:a2aText,purpose:"desktop-a2a-exchange"},
    }});
    if(routed.error||routed.outcome?.result!=="a2a_exchange_difference")throw new Error(routed.error??"The A2A exchange could not be routed through the kernel.");
-   const difference=routed.outcome.data as unknown as Record<string,unknown>&{exchange_ref:string;transport_result:{kind:string;ref:string};transport_provenance?:{agent_card?:{name?:string;version?:string}}};
+   const difference=nativeSharedReading<Record<string,unknown>&{exchange_ref:string;transport_result:{kind:string;ref:string};transport_provenance?:{agent_card?:{name?:string;version?:string}}}>(routed.outcome.data);
    setA2aDifference(difference);setError(undefined);
   }catch(err){setError(String(err));}
   finally{setA2aBusy(false);}

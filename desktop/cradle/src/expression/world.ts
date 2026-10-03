@@ -98,7 +98,7 @@ export type WorldRequest =
  | {operation:"whole_rebase";whole_ref:string;expected_basis_revision:string;basis:ReadingRef;members:WholeMember[];relations:WholeRelation[];actor:string;activity_ref?:string}
  /* Mode-spanning act + reusable material (EXPRESSION-ACT-MATERIAL-V1 §4). */
  | {operation:"material_list";kind?:ReuseKind;association?:MaterialAssociation;register?:string}
- | ({operation:"act_open";act_ref:string;expression_ref:string;mode:ActMode;actor:string;summary?:string;cast?:CastMember[];subject_ref?:string;instrument_ref?:string;selection?:string;bindings?:ActBindings}&ActGuard)
+ | ({operation:"act_open";act_ref:string;expression_ref:string;mode:ActMode;actor:string;summary?:string;cast?:CastMember[];replace_cast?:boolean;subject_ref?:string;instrument_ref?:string;selection?:string;bindings?:ActBindings}&ActGuard)
  /** Scene change: `material` names a Scene (or an Expression-level state).
   * Object-local state change: `role` + `state` and no Scene — the role's
   * occupant takes that character state's `self` material. */

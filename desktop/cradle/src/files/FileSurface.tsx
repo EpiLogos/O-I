@@ -6,9 +6,9 @@ const MaterialSurface=lazy(()=>import("../material/MaterialSurface").then((modul
 import {useKernel} from "../kernel/KernelProvider";
 import type {NativeFileReading} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
-import {readDraft,writeDraft,clearSavedDraft,type HeldDraft} from "../workspace/drafts";
+import {readDraft,writeDraft,clearSavedDraft,draftStorageKey,type HeldDraft} from "../workspace/drafts";
 import {lastFileReading,fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
-import {acquireFileReading,peekFileReading,invalidateFile} from "./resources";
+import {acquireFileReading,peekFileReading,invalidateFile,takeOpeningFileReading} from "./resources";
 import {detectFormat} from "../material/detect";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 import {hasLegacyDeviceCopy,recoverLegacyDeviceCopy} from "./legacyRecovery";
@@ -26,7 +26,10 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   if(!forceSource&&format!=="text"){
     return <Suspense fallback={null}><MaterialSurface binding={binding} format={format}/></Suspense>;
   }
-  const {transport}=useKernel();
+  const {transport,draftOwner:activeDraftOwner,currentDraftOwner}=useKernel();
+  const draftOwner=activeDraftOwner?.root===binding.location?.root?activeDraftOwner:undefined;
+  const recognizedFileOwner=()=>{const owner=currentDraftOwner();return owner?.root===binding.location?.root?owner:undefined;};
+  const hasCurrentOwner=()=>!!draftOwner&&draftStorageKey(draftOwner,binding.ref??"")===draftStorageKey(currentDraftOwner(),binding.ref??"");
   const [reading,setReading]=useState<NativeFileReading>();
   const [draft,setDraft]=useState<HeldDraft>();const held=useRef(draft);held.current=draft;
   const [legacyRecoverable,setLegacyRecoverable]=useState(false);
@@ -36,12 +39,12 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   // inactive tab — defers its seed and its owner revalidation until the
   // person actually presents it. The latch only ever turns on, so a live
   // editor's concealment never defers anything.
-  const [presentedNow,setPresentedNow]=useState(true);
+  const [everPresented,setEverPresented]=useState(false);
   const shellRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
     const wrapper=shellRef.current?.closest('.surface-retained');
-    if(!wrapper)return;
-    const sync=()=>setPresentedNow(!wrapper.hasAttribute('hidden'));
+    if(!wrapper){setEverPresented(true);return;}
+    const sync=()=>{if(!wrapper.hasAttribute('hidden'))setEverPresented(true);};
     sync();
     const observer=new MutationObserver(sync);
     observer.observe(wrapper,{attributes:true,attributeFilter:['hidden']});
@@ -53,7 +56,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   const [caret,setCaret]=useState({line:1,column:1,selected:false});
   const dirty=!!draft&&draft.content!==draft.saved_content;
   const conflict=!!reading&&!!draft&&reading.revision!==draft.base_revision&&dirty;
-  const writable=reading?.operations?.write.available===true;
+  const writable=!!draftOwner&&reading?.operations?.write.available===true;
   // The scroll/caret restore used after both the seeded open and a fresh
   // read — the same localStorage view state, applied once the editor exists.
   const restoreView=()=>{requestAnimationFrame(()=>{try{if(body.current){if(scroll.current)scroll.current.scrollTop=Number(localStorage.getItem(scrollKey)??0);const caret=JSON.parse(localStorage.getItem(caretKey)??"null");if(caret&&Number.isInteger(caret.start)&&Number.isInteger(caret.end))body.current.setSelectionRange(caret.start,caret.end,caret.direction);}}catch{}});};
@@ -64,7 +67,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     try{
       const recovery=await lastFileReading(transport,binding.location);if(!live())return;
       const retained=recovery.retained?.reading;
-      if(retained){setReading(retained);setDraft(held.current??readDraft(binding.ref!)??{content:retained.content,saved_content:retained.content,base_revision:retained.revision});}
+      if(retained){setReading(retained);setDraft(held.current??readDraft(recognizedFileOwner(),binding.ref!)??{content:retained.content,saved_content:retained.content,base_revision:retained.revision});}
       setLegacyRecoverable(recovery.migration_allowed&&!!binding.ref&&hasLegacyDeviceCopy(binding.ref));
     }catch(error){if(live())setError(`${String(reason)} · ${String(error)}`);}
   };
@@ -75,11 +78,11 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     // resident for peers), then acquire through it.
     invalidateFile(binding.location);
     const value=await acquireFileReading(transport,binding.location).catch(async error=>{await recover(error);throw error;});setReading(value);setLegacyRecoverable(false);setError(undefined);
-    const local=preserve?(held.current??readDraft(binding.ref!)):undefined;
+    const local=preserve?(held.current??readDraft(recognizedFileOwner(),binding.ref!)):undefined;
     if(!local||local.content===local.saved_content){setDraft({content:value.content,saved_content:value.content,base_revision:value.revision});}
     else setDraft(local);
-    window.dispatchEvent(new CustomEvent("oi:file-reading-changed",{detail:{ref:binding.ref,reading:value}}));
-    window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref}}));
+    window.dispatchEvent(new CustomEvent("oi:file-reading-changed",{detail:{ref:binding.ref,root:binding.location.root,reading:value}}));
+    window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref,root:binding.location.root}}));
     return value;
   };
   useEffect(()=>{
@@ -88,7 +91,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     // editor holds every owner I/O — the seed and the forced revalidation —
     // until first presentation, which re-runs this effect exactly as a
     // fresh open.
-    if(!presentedNow) return;
+    if(!everPresented) return;
     if(!binding.location){setError("The saved file location is unavailable");setPending(false);return;}
     // Cache-first open (WF2): show the resident reading immediately —
     // presentation only, never authority — then keep today's owner
@@ -96,21 +99,21 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     // The seed keeps the document readable while the check runs (drafting
     // continues on the seeded basis; the CAS still guards the write), so
     // only the not-yet-established round trip stays pending.
-    const resident=peekFileReading(binding.location);
+    const resident=peekFileReading(transport,binding.location);
     if(resident&&binding.ref){
-      setReading(resident);setDraft(readDraft(binding.ref)??{content:resident.content,saved_content:resident.content,base_revision:resident.revision});restoreView();
+      setReading(resident);setDraft(held.current&&held.current.content!==held.current.saved_content?held.current:readDraft(recognizedFileOwner(),binding.ref)??{content:resident.content,saved_content:resident.content,base_revision:resident.revision});restoreView();
       setPending(false);
     }
     // Force the owner round trip through the shared seam: the entry the seed
     // came from must not answer the revalidation too. When the open path's
     // read is genuinely still in flight this joins it instead of reloading —
     // one owner round trip for admission, renderer and editor.
-    invalidateFile(binding.location);
-    void acquireFileReading(transport,binding.location).then(value=>{
-      if(!live)return;setReading(value);setDraft(readDraft(binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
+    const opening=takeOpeningFileReading(binding,transport,binding.location);
+    void (opening?Promise.resolve(opening):acquireFileReading(transport,binding.location)).then(value=>{
+      if(!live)return;setReading(value);setDraft(held.current&&held.current.content!==held.current.saved_content?held.current:readDraft(recognizedFileOwner(),binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
       restoreView();
     }).catch(error=>recover(error,()=>live)).finally(()=>{if(live)setPending(false);});
-    const sync=(event:StorageEvent)=>{if(event.key===`oi-cradle.draft.v1:${binding.ref}`){const saved=readDraft(binding.ref!);if(saved)setDraft(saved);}};
+    const sync=(event:StorageEvent)=>{const owner=recognizedFileOwner();if(event.key===draftStorageKey(owner,binding.ref!)){const saved=readDraft(owner,binding.ref!);if(saved){held.current=saved;setDraft(saved);}}};
     // A file changed outside the app is picked up when the window comes back to
     // the person, so re-reading is not a control they have to find. The held
     // draft is preserved; only the canonical layer is refreshed.
@@ -119,9 +122,14 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     document.addEventListener('visibilitychange',reread);
     window.addEventListener('storage',sync);
     return()=>{live=false;window.removeEventListener('focus',reread);document.removeEventListener('visibilitychange',reread);window.removeEventListener('storage',sync);};
-  },[binding.ref,presentedNow]);
+  },[binding.ref,binding.location?.root,binding.location?.path,everPresented,transport,currentDraftOwner]);
+  useEffect(()=>{
+    if(!draftOwner||!binding.ref||!reading||held.current&&held.current.content!==held.current.saved_content)return;
+    const retained=readDraft(draftOwner,binding.ref);
+    if(retained&&retained.content!==retained.saved_content){held.current=retained;setDraft(retained);}
+  },[draftOwner,binding.ref,reading]);
   const perform=async(run:()=>Promise<void>)=>{setPending(true);setError(undefined);try{await run();}catch(error){setError(String(error));}finally{setPending(false);}};
-  const change=(content:string)=>{if(!draft)return;const next={...draft,content};setDraft(next);try{writeDraft(binding.ref!,next);window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref}}));}catch{setError("Typing remains open, but this device could not retain the draft. Keep this view open.");}};
+  const change=(content:string)=>{if(!draft)return;const next={...draft,content};held.current=next;setDraft(next);try{writeDraft(draftOwner,binding.ref!,next);window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref,root:binding.location?.root}}));}catch{setError("Typing remains open, but this device could not retain the draft. Keep this view open.");}};
   // ⌘S reaches save() twice for one keystroke — TextEditor's CodeMirror
   // `Mod-s` keymap AND the scroll pane's onKeyDown both call it. A second
   // write launched with the same base revision would land as a conflict
@@ -130,17 +138,23 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   const savingRef=useRef(false);
   const save=()=>perform(async()=>{
     if(savingRef.current||!draft||!binding.location)return;
+    if(!writable||!hasCurrentOwner())throw Error("The active source owner is unavailable. Your draft remains open; wait for recognition before saving.");
     savingRef.current=true;
+    const submitted=draft;
     try{
       const result=await fileOperation<FileMutation>(transport,binding.location,{action:"write",expected_revision:draft.base_revision,content:draft.content});
       if(result.outcome==="conflict"){setReading(result.current);setError("The file changed. Your draft is retained; compare the current file before applying it.");return;}
-      clearSavedDraft(binding.ref!,draft.content);held.current=undefined;await read(false);setHistory(undefined);setPreview(undefined);
+      clearSavedDraft(draftOwner,binding.ref!,submitted.content);
+      const unchanged=held.current?.content===submitted.content&&held.current?.base_revision===submitted.base_revision;
+      if(unchanged)held.current=undefined;
+      await read(!unchanged);setHistory(undefined);setPreview(undefined);
     }finally{savingRef.current=false;}
   });
   const loadHistory=(before?:number)=>perform(async()=>{const next=await fileOperation<FileHistory>(transport,binding.location!,{action:"history",limit:30,before});setHistory(previous=>before&&previous?{...next,entries:[...previous.entries,...next.entries]}:next);});
   const compare=(revision:string)=>perform(async()=>{setPreview(await fileOperation<FilePreview>(transport,binding.location!,{action:"recovery_preview",expected_revision:reading!.revision,revision}));});
   const restore=()=>perform(async()=>{
     if(!preview||dirty)return;
+    if(!hasCurrentOwner()||!reading?.operations?.restore.available)throw Error("The active source owner is unavailable. Wait for recognition before restoring a revision.");
     const result=await fileOperation<FileMutation>(transport,binding.location!,{action:"restore",expected_revision:preview.expected_revision,revision:preview.revision});
     if(result.outcome==="conflict"){setReading(result.current);setError("The file changed after this preview. Read and compare it again.");return;}
     held.current=undefined;await read(false);setPreview(undefined);setHistory(undefined);
@@ -154,15 +168,15 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   });
   const updateCaret=()=>{const el=body.current;if(!el)return;const before=el.value.slice(0,el.selectionStart),lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});try{localStorage.setItem(caretKey,JSON.stringify({start:el.selectionStart,end:el.selectionEnd,direction:el.selectionDirection}));}catch{}};
   const extension=binding.location?.path.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";const json=extension==="json";
-  const formatJson=()=>{if(!draft)return;try{change(`${JSON.stringify(JSON.parse(draft.content),null,2)}\n`);setError(undefined);}catch{setError("JSON could not be formatted because it is not valid.");}};
+  const formatJson=()=>{if(!draft||pending||savingRef.current||!writable||!hasCurrentOwner())return;try{change(`${JSON.stringify(JSON.parse(draft.content),null,2)}\n`);setError(undefined);}catch{setError("JSON could not be formatted because it is not valid.");}};
   return <div ref={shellRef} style={{display:"contents"}}><EditorFrame className="native-file-surface" label={`File ${binding.title}`}
-    toolbar={<>{leadingTools}<EditorCommands editor={body} markdown={markdown} readOnly={!writable||pending}/>{json&&<EditorButton onClick={formatJson} disabled={!writable}>Format JSON</EditorButton>}</>}
+    toolbar={<>{leadingTools}<EditorCommands editor={body} markdown={markdown} readOnly={!writable||pending}/>{json&&<EditorButton onClick={formatJson} disabled={!writable||pending}>Format JSON</EditorButton>}</>}
     footer={<><span className="editor-path" title={`Central / ${binding.location?.path}`}>Central / {binding.location?.path}</span>{reading&&<span>Ln {caret.line}, Col {caret.column}</span>}<span>{error&&reading?"Last reading":dirty?"Unsaved":writable?"Saved":"Read only"}</span>{reading?.operations?.history.available&&<button onClick={()=>void loadHistory()} disabled={pending}>History</button>}{writable&&<button onClick={()=>void save()} disabled={pending||!dirty||conflict}>Save ⌘S</button>}</>}
   >
     {error&&<p role="alert" className="source-note">{error}</p>}
     {legacyRecoverable&&<p className="source-note">A previous device copy remains. Recover it as a separate, unverified draft. <button disabled={pending} onClick={()=>void recoverDeviceCopy()}>Recover previous device copy</button></p>}
     {pending&&!reading&&<Loading label="Reading file…" scope="surface"/>}
-    {conflict&&<section className="file-conflict" aria-label="File conflict"><p>Current file differs from your draft’s basis.</p><textarea readOnly aria-label="Current file" value={reading!.content}/><button disabled={pending} onClick={()=>{const next={...draft!,base_revision:reading!.revision,saved_content:reading!.content};setDraft(next);try{writeDraft(binding.ref!,next);window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref}}));}catch{setError("Could not retain the updated draft basis.");}}}>Use current revision as draft basis</button></section>}
+    {conflict&&<section className="file-conflict" aria-label="File conflict"><p>Current file differs from your draft’s basis.</p><textarea readOnly aria-label="Current file" value={reading!.content}/><button disabled={pending||!writable} onClick={()=>{if(!hasCurrentOwner()){setError("The active source owner is unavailable. Your draft remains open.");return;}const next={...draft!,base_revision:reading!.revision,saved_content:reading!.content};setDraft(next);try{writeDraft(draftOwner,binding.ref!,next);window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref,root:binding.location?.root}}));}catch{setError("Could not retain the updated draft basis.");}}}>Use current revision as draft basis</button></section>}
     {history&&<section className="file-history" aria-label="File history"><button onClick={()=>{setHistory(undefined);setPreview(undefined);}}>Close history</button>{history.entries.length===0&&<p>No changes recorded by Central.</p>}{history.entries.map(entry=><div key={entry.cursor}><span>{entry.actor} · {entry.actor_kind}</span><button onClick={()=>void compare(entry.previous_revision)} disabled={pending}>Compare before change {entry.cursor}</button><button onClick={()=>void compare(entry.revision)} disabled={pending}>Compare change {entry.cursor}</button></div>)}{history.more&&<button disabled={pending} onClick={()=>void loadHistory(history.next_before??undefined)}>Earlier changes</button>}</section>}
     {preview&&<section className="file-recovery" aria-label="File recovery preview"><label>Current<textarea aria-label="Current recovery basis" readOnly value={preview.current_content}/></label><label>Recovery<textarea aria-label="Recovery content" readOnly value={preview.content}/></label><button disabled={pending||dirty||!reading?.operations?.restore.available} onClick={()=>void restore()}>Restore this revision</button>{dirty&&<p>Save or resolve the open draft before restoring a revision.</p>}<button onClick={()=>setPreview(undefined)}>Close preview</button></section>}
     {reading&&draft&&<div className="source-editor-scroll" ref={scroll} onScroll={event=>{try{localStorage.setItem(scrollKey,String(event.currentTarget.scrollTop));}catch{}}} onKeyDown={event=>{if((event.metaKey||event.ctrlKey)&&event.code==="KeyS"){event.preventDefault();void save();}}}><div className="source-editor-body"><TextEditor ref={body} binding={binding} sourceRevision={draft.base_revision} workingCopy={dirty} aria-label={`${writable?"Editing":"Reading"} ${binding.title}`} readOnly={!writable||pending} value={draft.content} onChange={change} onSelect={updateCaret} onSave={()=>void save()}/></div></div>}

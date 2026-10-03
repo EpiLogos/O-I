@@ -1,6 +1,7 @@
 import {useEffect,useRef} from "react";
 import type {SurfaceBinding} from "../surface/types";
 import {AddressedComposer} from "./AddressedComposer";
+import {PreparedContextView} from "../context/PreparedContextView";
 import {EncounterView} from "./EncounterView";
 import {deliveriesOf,expressionReadingOf,nowRefsOf,taskBasisWithoutNow,useEncounterSession,type EncounterExpressionReading} from "./session";
 export type {EncounterExpressionReading} from "./session";
@@ -13,13 +14,13 @@ export type {EncounterExpressionReading} from "./session";
  * project + agent-session ref, so a centre tab and the accompanying panel
  * showing the same session share one network observer and one draft. */
 export function EncounterSurface({binding,onView,presentation="tab",onExpression,concealed=false,sourceWorldRef}:{binding:SurfaceBinding;onView:(view:NonNullable<SurfaceBinding["view"]>)=>void;presentation?:"tab"|"side"|"full";onExpression?:(reading:EncounterExpressionReading)=>void;concealed?:boolean;sourceWorldRef?:string}) {
- const session=useEncounterSession(binding.project!==undefined&&binding.ref?{project:binding.project,ref:binding.ref,space:binding.encounter?.space,sourceWorldRef}:undefined);
+ const session=useEncounterSession(binding.project!==undefined&&binding.ref?{project:binding.project,ref:binding.ref,space:binding.encounter?.space,sourceWorldRef:sourceWorldRef??binding.encounter?.sourceWorldRef}:undefined);
  const state=session?.state;
  const expression=useRef(onExpression);expression.current=onExpression;
  useEffect(()=>{expression.current?.(expressionReadingOf(state));},[state?.status,state?.reading,state?.pending]);
  if(!session||!state)return <section hidden={concealed} className="encounter" data-presentation={presentation} aria-label="Encounter"><p className="encounter-unbound oi-note" role="status">This conversation names no project or session ref, so there is nothing to read.</p></section>;
  const {actions}=session;
- return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void actions.permission(id,decision)} reading={state.reading} status={state.status} draft={state.draft} pending={state.busy} error={state.error} providers={state.providers} onProvider={provider=>void actions.connect(provider)} onDraft={actions.change} onSend={()=>void actions.send()} onCancel={actions.cancel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} readJournal={actions.readJournal} space={state.space??binding.encounter?.space} deliveries={deliveriesOf(state)}
+ return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void actions.permission(id,decision)} reading={state.reading} status={state.status} preparedContext={state.reading?.actions?.some(action=>action.ref==="aikit.encounter.context"&&action.enabled)?<PreparedContextView project={binding.project} session={binding.ref} sourceWorldRef={sourceWorldRef??binding.encounter?.sourceWorldRef}/>:undefined} draft={state.draft} pending={state.busy} error={state.error} providers={state.providers} onProvider={provider=>void actions.connect(provider)} onDraft={actions.change} onSend={()=>void actions.send()} onCancel={actions.cancel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} readJournal={actions.readJournal} space={state.space??binding.encounter?.space} deliveries={deliveriesOf(state)}
   nowRefs={nowRefsOf(state)}
   taskBasisWithoutNow={taskBasisWithoutNow(state)}
   resume={state.resume} onReconnect={provider=>void actions.reconnect(provider)}

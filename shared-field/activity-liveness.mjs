@@ -25,6 +25,36 @@ export const FACTORY_RUN_READING_CONTRACT = 'factory.run-reading/v1';
 /** Three producer intervals at the producer's 10 s default. */
 export const DEFAULT_STALE_AFTER_MS = 30_000;
 
+/** Resolve the activity explicitly named by this shared stage. Neither a
+ * nearby activity nor a matching display name can supply producer truth.
+ * The caller supplies only its authorised hosted snapshot.
+ * @param {{expression_ref:string,expression_revision:number,presentation_ref:string,presentation_revision:number,world_ref:string,field_ref:string|null,activity_ref?:string,stages?:Array<Record<string,any>>,entries?:Array<Record<string,any>>}} input
+ */
+export function expressionActivity({ expression_ref, expression_revision, presentation_ref, presentation_revision, world_ref, field_ref, activity_ref, stages = [], entries = [] }) {
+  const unbound = { state: 'unbound' };
+  if (!expression_ref || !presentation_ref || !world_ref || !field_ref) return unbound;
+  const known = activity_ref || entries.some(entry => entry.kind === 'activity' && entry.world_ref === world_ref && entry.meta?.expression_ref === expression_ref);
+  const loci = stages.filter(row => row?.field_ref === field_ref && row.contract?.subject_ref === expression_ref);
+  const unavailable = reason => ({ state: 'unavailable', activity_ref: activity_ref ?? null, reason });
+  const matches = loci.filter(row => {
+    const stage = row.contract;
+    return row.state === 'open' && stage?.schema === 'oi.shared-stage/v1'
+      && stage.state === row.state && stage.field_ref === row.field_ref
+      && stage.shared_stage_ref === row.stage_ref && stage.revision === row.revision
+      && stage.subject_ref === row.subject_ref && stage.presenter_ref === row.presenter_ref
+      && stage.subject_ref === expression_ref && stage.expression?.ref === expression_ref && stage.expression.revision === expression_revision
+      && stage.presentation?.ref === presentation_ref && stage.presentation.revision === presentation_revision && stage.causal?.kind === 'activity';
+  });
+  if (matches.length !== 1) return known || loci.some(row => row.contract?.causal?.kind === 'activity')
+    ? unavailable('The shared activity locus is unavailable or ambiguous') : unbound;
+  const ref = matches[0].contract.causal.ref;
+  if (activity_ref && activity_ref !== ref) return unavailable('The stage addresses another activity');
+  const activity = entries.find(entry => entry.kind === 'activity' && entry.ref === ref && entry.world_ref === world_ref);
+  if (!activity || typeof ref !== 'string' || !ref.startsWith(`${world_ref}/`)) return unavailable('The source activity is unavailable');
+  if (activity.meta?.expression_ref !== undefined && activity.meta.expression_ref !== expression_ref) return unavailable('The activity addresses another Expression');
+  return { state: 'bound', entry: activity };
+}
+
 const LOCAL_PATH = /^(?:\/|~\/|[A-Za-z]:\\)|\/(?:Users|home)\//;
 
 function record(value, name) {

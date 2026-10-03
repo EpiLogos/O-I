@@ -50,15 +50,29 @@ impl Request {
 }
 
 pub fn call(cwd: &Path, request: &Request) -> Result<Value, String> {
-    let data = crate::knowledge::run(cwd, &request.args()?).map_err(|error| match error {
-        crate::knowledge::CallError::Unavailable { detail } => {
-            format!("AIKit is unavailable: {detail}")
-        }
-        crate::knowledge::CallError::Refused { message } => message,
-        crate::knowledge::CallError::Malformed { detail } => detail,
-    })?;
+    let args = request.args()?;
+    let operation = format!("aikit {}", args.join(" "));
+    let effect = if request.mutation().is_some() {
+        crate::knowledge::Effect::MayMutate
+    } else {
+        crate::knowledge::Effect::ReadOnly
+    };
+    let data = match crate::knowledge::run_effect(cwd, &args, effect) {
+        Ok(data) => data,
+        Err(error) => return Ok(crate::knowledge::failure_reading(&operation, error)),
+    };
     if let Some((action, routine_ref)) = request.mutation() {
-        validate_return(action, routine_ref, &data)?;
+        if let Err(detail) = validate_return(action, routine_ref, &data) {
+            return Ok(crate::knowledge::failure_reading(
+                &operation,
+                crate::knowledge::CallError::OutcomeUnknown {
+                    detail,
+                    child_pid: None,
+                    cleanup: None,
+                    native: Some(data),
+                },
+            ));
+        }
     }
     Ok(data)
 }

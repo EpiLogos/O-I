@@ -4,17 +4,19 @@ import test from 'node:test';
 import {createServer} from 'vite';
 
 test('retained native shared material keeps its actual correspondence in the render config',async()=>{
-  const server=await createServer({server:{middlewareMode:true},appType:'custom'});
+  const server=await createServer({server:{middlewareMode:true,hmr:false},appType:'custom'});
   try {
     const {expressionRenderConfig}=await server.ssrLoadModule('/src/expression/engineProjection.ts');
     const {nativeExport}=await server.ssrLoadModule('../../packages/oi-design-system/expressions-engine/shell/nativeBridge.mjs');
     for(const name of ['shared-continuation','shared-factory-source']) {
       const receipt=JSON.parse(readFileSync(new URL('./fixtures/shared-native-expressions/'+name+'.json',import.meta.url),'utf8'));
       const doc=receipt.composition,scene=doc.scenes.find(s=>s.scene_ref===doc.selection.scene_ref);
-      const native=nativeExport(scene.presentation.scene).config;
+      const emitted=nativeExport(scene.presentation.scene);
+      const native={...emitted.config,authoringView:emitted.authoringView};
       const config=expressionRenderConfig(doc);
       const {oiExpressionBindings,...material}=config;
       assert.deepEqual(material,native,'the native source owns every material byte');
+      assert.deepEqual(material.authoringView,scene.presentation.scene.view,'the native authored camera reaches the actual renderer');
       assert.equal(oiExpressionBindings.expression_ref,doc.expression_ref);
       assert.equal(oiExpressionBindings.scene_ref,scene.scene_ref);
       assert.ok(oiExpressionBindings.relations.length>0,'the actual undertaking has visible relations');
@@ -29,7 +31,7 @@ test('retained native shared material keeps its actual correspondence in the ren
 });
 
 test('the native required-body removal retains the identity while withholding absent-endpoint correspondence',async()=>{
-  const server=await createServer({server:{middlewareMode:true},appType:'custom'});
+  const server=await createServer({server:{middlewareMode:true,hmr:false},appType:'custom'});
   try {
     const {expressionRenderConfig}=await server.ssrLoadModule('/src/expression/engineProjection.ts');
     const receipt=JSON.parse(readFileSync(new URL('./fixtures/shared-native-expressions/shared-required-body-removed.json',import.meta.url),'utf8'));

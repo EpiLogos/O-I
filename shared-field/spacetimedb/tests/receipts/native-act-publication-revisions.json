@@ -1,0 +1,82 @@
+{
+  "before": {
+    "schema": "oi.explore-entry/v1",
+    "ref": "world:shared-expression:ann/act:shared-continuation-20260930",
+    "kind": "activity",
+    "world_ref": "world:shared-expression:ann",
+    "label": "Shared guide\u2019s live native act",
+    "summary": "Both native agents\u2019 Returns now develop the one shared guide, with explicit source and contribution relations",
+    "revision": "16",
+    "aliases": [
+      "act:shared-continuation-20260930"
+    ],
+    "provenance": [
+      {
+        "kind": "native-expressive-act",
+        "ref": "act:shared-continuation-20260930",
+        "source_system": "o-i",
+        "revision": "12"
+      }
+    ],
+    "locators": [],
+    "meta": {
+      "native_owner": "o-i",
+      "activity_kind": "expression-act",
+      "native_activity_ref": "act:shared-continuation-20260930",
+      "expression_ref": "expression:shared-continuation-20260930",
+      "owner_revision": 16,
+      "owner_state": "running",
+      "state": "running",
+      "liveness": "live",
+      "purpose_summary": "Keep every proposal attributable while revising the shared guide",
+      "source_world_ref": "world:shared-expression:ann",
+      "source_ref": "act:shared-continuation-20260930",
+      "source_revision": "16"
+    }
+  },
+  "after": {
+    "schema": "oi.explore-entry/v1",
+    "ref": "world:shared-expression:ann/act:shared-continuation-20260930",
+    "kind": "activity",
+    "world_ref": "world:shared-expression:ann",
+    "label": "Shared guide\u2019s live native act",
+    "summary": "Both native agents\u2019 Returns now develop the one shared guide, with explicit source and contribution relations",
+    "revision": "29",
+    "aliases": [
+      "act:shared-continuation-20260930"
+    ],
+    "provenance": [
+      {
+        "kind": "native-expressive-act",
+        "ref": "act:shared-continuation-20260930",
+        "source_system": "o-i",
+        "revision": "29"
+      }
+    ],
+    "locators": [],
+    "meta": {
+      "native_owner": "o-i",
+      "activity_kind": "expression-act",
+      "native_activity_ref": "act:shared-continuation-20260930",
+      "expression_ref": "expression:shared-continuation-20260930",
+      "owner_revision": 29,
+      "owner_state": "running",
+      "state": "running",
+      "liveness": "live",
+      "purpose_summary": "Keep every proposal attributable while revising the shared guide",
+      "source_world_ref": "world:shared-expression:ann",
+      "source_ref": "act:shared-continuation-20260930",
+      "source_revision": "29"
+    }
+  },
+  "basis": {
+    "kind": "actual-authorised-native-Act-publications",
+    "source_snapshots": [
+      "live-producer-hosted-snapshot.json",
+      "producer-source-live-snapshot.json"
+    ],
+    "native_owner": "o-i",
+    "controlled_user_evidence": true,
+    "two_human_experience": false
+  }
+}

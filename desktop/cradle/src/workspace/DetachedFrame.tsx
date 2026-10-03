@@ -19,6 +19,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import {FileSurface} from "../files/FileSurface";
 import {SourceSurface} from "../surface/SourceSurface";
 import type {SurfaceBinding} from "../surface/types";
+import type {PresentationMeta} from "../explore/navigate";
 import "./shell.css";
 declare global { interface Window { __OI_DETACHED__?: boolean } }
 export function DetachedFrame() {
@@ -117,7 +118,7 @@ export function DetachedFrame() {
     });
   },[]);
   useEffect(()=>{const key=(e:KeyboardEvent)=>{if(matchesSearchLeader(e,leader.current.current)){e.preventDefault();setSearchOpen(true);return;}if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.code==="KeyD"){e.preventDefault();redock();}};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key);},[redock]);
-  const navigate=async(address:KnowledgeAddress,title:string,project?:string,placement?:"tab"|"page"|"window",graphOrigin?:string)=>{
+  const navigate=async(address:KnowledgeAddress|undefined,title:string,project?:string,placement?:"tab"|"page"|"window",graphOrigin?:string,presentation?:{ref:string;meta:PresentationMeta;sidebar?:boolean})=>{
     if(!record)throw new Error("Detached workspace is unavailable");
     const request_id=crypto.randomUUID();
     let cleanup=()=>{};let timer:ReturnType<typeof setTimeout>|undefined;
@@ -129,14 +130,14 @@ export function DetachedFrame() {
         }).then(unlisten=>{
           cleanup=unlisten;
           timer=setTimeout(()=>reject(new Error("Workspace navigation has not been confirmed. Check the main window before retrying.")),30000);
-          void emitTo("main","oi:window-navigate",{workspace_id:record.workspace_id,address,title,project,placement,graphOrigin,request_id,origin:getCurrentWindow().label}).catch(reject);
+          void emitTo("main","oi:window-navigate",{workspace_id:record.workspace_id,...(presentation?{presentation}:{address}),title,project,placement,graphOrigin,request_id,origin:getCurrentWindow().label}).catch(reject);
         }).catch(reject);
       });
       await result;
     }finally{if(timer)clearTimeout(timer);cleanup();}
   };
   return <div className="desktop-shell detached-shell"><header className="desktop-bar"><strong className="desktop-brand">O-I</strong><span>{record?.binding.title}</span><button onClick={redock} disabled={redocking}>{redocking?"Re-docking…":"Re-dock"}</button></header>{error&&<p role="alert">{error} {!record&&<button onClick={()=>setLoadAttempt(n=>n+1)} disabled={loading}>Retry opening surface</button>}</p>}
-    <main ref={bodyRef} className="desktop-centre"><Suspense fallback={null}>{record?.binding.kind==="object"?<ObjectSurface binding={record.binding}/>:record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="draft"?<DraftSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="explore"||record?.binding.kind==="presentation"?<ExploreSurface key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</Suspense></main>
+    <main ref={bodyRef} className="desktop-centre"><Suspense fallback={null}>{record?.binding.kind==="object"?<ObjectSurface binding={record.binding}/>:record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="draft"?<DraftSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="explore"||record?.binding.kind==="presentation"?<ExploreSurface key={record.binding.id} binding={record.binding} onView={(_id,view)=>void updateView(view)} onOpenPresentation={(ref,title,meta)=>navigate(undefined,title,undefined,undefined,undefined,{ref,meta})} onOpenSubjectSidebar={(ref,title,meta)=>navigate(undefined,title,undefined,undefined,undefined,{ref,meta,sidebar:true})}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</Suspense></main>
     {searchOpen&&<SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={record?.binding.project} onClose={()=>setSearchOpen(false)} onOpen={navigate}/>}
   </div>;
 }

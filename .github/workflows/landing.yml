@@ -22,6 +22,12 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 2a604574774c41921003ed99a2eed73b4c9f4266
+          path: .native-owner/Central
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -38,11 +44,22 @@ jobs:
           workspaces: |
             cli
             desktop/cradle/kernel
+            .native-owner/Central
       - name: Install the browser engines used by the declared landing gates
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           cd desktop/cradle
           npx playwright install --with-deps chromium webkit
+      - name: Build the actual editor source owners
+        run: |
+          mkdir -p "$RUNNER_TEMP/landing-native"
+          git -C .native-owner/Central rev-parse HEAD | tee "$RUNNER_TEMP/landing-native/Central.revision"
+          test "$(cat "$RUNNER_TEMP/landing-native/Central.revision")" = 2a604574774c41921003ed99a2eed73b4c9f4266
+          python3 desktop/cradle/tests/wiki-native-binaries.py \
+            --target OI_BIN cli/Cargo.toml oi \
+            --target OI_CENTRAL_CTRL_BIN .native-owner/Central/ctrl/Cargo.toml ctrl \
+            --target OI_KERNEL_BIN desktop/cradle/kernel/Cargo.toml walk-bridge \
+            --receipt "$RUNNER_TEMP/landing-native/binaries.json"
       - name: Run the complete native landing tier at the exact candidate
         run: node gates/run.mjs landing --keep-going --json
       - name: Confirm the receipt covers the complete clean candidate
@@ -69,5 +86,6 @@ jobs:
           path: |
             gates/receipts/
             desktop/cradle/tests/artifacts/
+            ${{ runner.temp }}/landing-native
           retention-days: 14
           if-no-files-found: error

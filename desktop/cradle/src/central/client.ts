@@ -3,6 +3,7 @@ import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import type {DayReading} from "../day/client";
 import {validateNow,type NowListing} from "../receiving/now";
 import {validateDocumentBasis} from "./dayForm";
+import {throwNativeFailure} from "../kernel/nativeFailure";
 
 export type CentralRequest =
  | {kind:"inspect"}
@@ -68,6 +69,7 @@ export function validateDayOpen(value:unknown,project:string|null):DayOpen {
 export async function central<T=unknown>(transport:KernelTransportStatus,project:string|null,request:CentralRequest):Promise<T> {
  const result=await kernelOp(transport,{op:"central",project,request});
  if(result.error||result.outcome?.result!=="central_reading")throw new Error(result.error??"Central did not return its native reading");
+ throwNativeFailure(result.outcome.data);
  return result.outcome.data as T;
 }
 export async function readGround(transport:KernelTransportStatus,project:string|null):Promise<CentralGroundReading>{return validateGround(await central(transport,project,{kind:"inspect"}),project);}

@@ -89,6 +89,26 @@ jobs:
           echo "$RUNNER_TEMP/readable-native-bin" >> "$GITHUB_PATH"
           echo "OI_CTRL_BIN=$RUNNER_TEMP/readable-native-bin/ctrl" >> "$GITHUB_ENV"
           echo "OI_WALK_BRIDGE=$RUNNER_TEMP/readable-native-bin/walk-bridge" >> "$GITHUB_ENV"
+      - name: Prove cache continuity and file-write invalidation through the actual Central owner
+        shell: bash
+        run: |
+          set -euo pipefail
+          for native_case in a_repeated_directory_read_serves_from_the_cache_and_a_fresh_read_bypasses_it a_file_write_invalidates_the_parent_listing_by_name a_changed_file_write_discloses_one_file_changed_receipt the_world_mapping_is_cached_until_a_fresh_browse_is_demanded; do
+            cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --lib "tests::$native_case" -- --exact --ignored --nocapture \
+              2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/$native_case.log"
+          done
+      - name: Prove Agent definition, acceptance, preparation and later continuation through actual native owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --test agent_definition_gate -- --ignored --nocapture \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/agent-definition-native.log"
+      - name: Prove first Expression save and revision-safe continuation through the actual Central owner
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --test wiki_expression_save first_expression_save_uses_the_selected_directory_not_the_default_project -- --exact --ignored --nocapture \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/expression-save-native.log"
       - name: Build the locked production frontend
         shell: bash
         run: |

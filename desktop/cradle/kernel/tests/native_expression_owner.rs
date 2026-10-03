@@ -1,14 +1,11 @@
-//! Real QL C/Rust/C++ owner through the production manager. Only Central's file
-//! disclosure is controlled; the domain engine and process lifetime are real.
+//! Real Central file disclosure and QL C/Rust/C++ owners through the production
+//! manager, in a private initialized World with captured native input.
 #![cfg(unix)]
-#[path = "support/stub.rs"]
-mod stub;
 use oi_cradle_kernel::{
     native_expression::{Manager, Request},
     CentralClient,
 };
 use serde_json::{json, Value};
-use std::os::unix::fs::PermissionsExt;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -54,9 +51,13 @@ fn state(reply: &Value) -> Value {
 }
 
 #[test]
-#[ignore = "requires explicitly built OI_QL_FIELD_HOST_BIN, OI_QL_FIELD_WORKER_BIN and NATIVE_EXPRESSION_INPUT"]
+#[ignore = "requires explicitly built OI_CENTRAL_CTRL_BIN, OI_QL_FIELD_HOST_BIN, OI_QL_FIELD_WORKER_BIN and NATIVE_EXPRESSION_INPUT"]
 fn real_native_owner_admission_effects_refusals_restart_and_release() {
-    for name in ["OI_QL_FIELD_HOST_BIN", "OI_QL_FIELD_WORKER_BIN"] {
+    for name in [
+        "OI_CENTRAL_CTRL_BIN",
+        "OI_QL_FIELD_HOST_BIN",
+        "OI_QL_FIELD_WORKER_BIN",
+    ] {
         let path = PathBuf::from(std::env::var_os(name).expect(name));
         assert!(
             path.is_absolute() && path.is_file(),
@@ -76,6 +77,12 @@ fn real_native_owner_admission_effects_refusals_restart_and_release() {
                 .as_nanos()
         )));
     fs::create_dir(&scratch.0).unwrap();
+    let client = CentralClient::with(
+        PathBuf::from(std::env::var_os("OI_CENTRAL_CTRL_BIN").unwrap()),
+        Some(scratch.0.clone()),
+        String::new(),
+    );
+    client.run("central.init", json!({"project":null})).unwrap();
     let config = json!({"schema":"oi.native-expression-binding/v1",
       "host":{"instance_ref":"controlled:oi-native-test", "basis":input["basis"], "field":input["field"]},
       "presentation":{"units_per_metre":400,"slots_a":[0,0,0,0],"slots_b":[0,0,0,0]}});
@@ -84,27 +91,37 @@ fn real_native_owner_admission_effects_refusals_restart_and_release() {
         serde_json::to_vec(&config).unwrap(),
     )
     .unwrap();
-    let script = scratch.0.join("central-test-fixture.py");
-    fs::write(&script,r#"#!/usr/bin/env python3
-import json,pathlib,sys
-root=pathlib.Path(__file__).parent
-content=(root/'binding.json').read_text()
-def location(path):return {'schema':'central.path-ref/v1','ref':'controlled:path:'+path,'root':'controlled:central-root','path':path}
-action=sys.argv[-2]
-if action=='central.files.list':
- data={'schema':'central.directory-reading/v1','location':location('.'),'entries':[{'name':'binding.json','location':location('binding.json'),'kind':'file','byte_len':len(content.encode()),'retrieval_allowed':True}],'automatic_agent_or_model_invocation':False}
-elif action=='central.files.read':
- data={'schema':'central.file-reading/v1','location':location('binding.json'),'revision':'controlled:r1','byte_len':len(content.encode()),'content_encoding':'utf-8','content':content,'project':None,'source':None,'automatic_agent_or_model_invocation':False}
-else:raise RuntimeError('Unexpected Central action '+action)
-print(json.dumps({'ok':True,'data':data}))
-"#).unwrap();
-    fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
-    stub::settle_stub(&script);
-    let client = CentralClient::with(script, Some(scratch.0.clone()), String::new());
+    let disclosed = oi_cradle_kernel::files::list(&client, "").unwrap();
+    let location = &disclosed
+        .entries
+        .iter()
+        .find(|entry| entry.name == "binding.json")
+        .unwrap()
+        .location;
+    let reading = oi_cradle_kernel::files::read(&client, location).unwrap();
+    assert_eq!(
+        serde_json::from_str::<Value>(&reading.content).unwrap(),
+        config
+    );
+    assert!(!reading.revision.is_empty());
     let mut manager = Manager::default();
+    // Actual owner disclosure admits the root binding. Absolute, parent and
+    // dot paths remain refused, rather than redirected into that World.
+    for path in ["/binding.json", "../binding.json", "./binding.json"] {
+        assert!(manager
+            .apply(
+                &client,
+                Request::Open {
+                    path: path.into(),
+                    expected_revision: reading.revision.clone(),
+                },
+            )
+            .unwrap_err()
+            .contains("relative Central path"));
+    }
     let open = || Request::Open {
         path: "binding.json".into(),
-        expected_revision: "controlled:r1".into(),
+        expected_revision: reading.revision.clone(),
     };
     assert!(manager
         .apply(
@@ -126,7 +143,7 @@ print(json.dumps({'ok':True,'data':data}))
         .apply(&client, open())
         .unwrap_err()
         .contains("owner_busy"));
-    assert_eq!(opened["source"]["revision"], "controlled:r1");
+    assert_eq!(opened["source"]["revision"], reading.revision);
     let inspected = exchange(
         &mut manager,
         &client,
@@ -296,9 +313,10 @@ print(json.dumps({'ok':True,'data':data}))
         .unwrap();
     timings.sort_by(f64::total_cmp);
     let report = json!({"schema":"oi.native-expression-native-acceptance/v1","pass":true,
-        "standing":"real QL C/Rust/C++ through production process manager; controlled Central disclosure and captured sky/geometry inputs; not live ephemeris or measured acoustics",
+        "standing":"real Central disclosure and QL C/Rust/C++ through production process manager; private initialized World and captured sky/geometry inputs; not live ephemeris or measured acoustics",
+        "central_source":{"location":reading.location,"revision":reading.revision},
         "input":input_path,"platform":std::env::consts::OS,"open_ms":open_ms,"close_ms":close_ms,"read_samples":timings.len(),"read_p50_ms":timings[12],"read_p95_ms":timings[22],
-        "same_source_original_preserved":true,"native_pcm_nonzero":true,"native_targets_changed":true,"native_m1_replace_effect":true,"native_m3_transcription_effect":true,"one_owner":true,"refusals_unchanged":true,"restart_not_rewind":true});
+        "same_source_original_preserved":true,"native_pcm_nonzero":true,"native_targets_changed":true,"native_m1_replace_effect":true,"native_m3_transcription_effect":true,"one_owner":true,"refusals_unchanged":true,"fresh_owner_reopens_original_source":true});
     println!("{report}");
     if let Some(path) = std::env::var_os("NATIVE_EXPRESSION_NATIVE_RECEIPT") {
         let path = Path::new(&path);

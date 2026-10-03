@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { activityEdition, activityReading, replayActivity, ACTIVITY_EDITION_SCHEMA } from './activity-liveness.mjs';
+import { activityEdition, activityReading, expressionActivity, replayActivity, ACTIVITY_EDITION_SCHEMA } from './activity-liveness.mjs';
+import { createSharedStage, closeSharedStage } from './shared-stage.mjs';
 
 const WORLD = 'world:central:project:O-I';
 const RUN = 'run:01TESTRUN0000000000000000';
@@ -11,6 +12,24 @@ const microsAt = (ms) => String(BigInt(ms) * 1000n);
 
 const entry = (liveness = 'live') => ({ ref: ACTIVITY, kind: 'activity', world_ref: WORLD, label: 'Factory run', revision: '6', meta: { standing: 'activity', state: 'seeded', run_ref: RUN, liveness, participants: [] } });
 const row = (heartbeatMs, extra = {}) => ({ activity_key: `${FIELD}|${ACTIVITY}`, field_ref: FIELD, activity_ref: ACTIVITY, producer_participant_ref: 'participant:owner', producer_identity: 'c200', owner_state: 'running', owner_revision: 7, observed_at_micros: microsAt(NOW - 60_000), heartbeat_at_micros: microsAt(heartbeatMs), ...extra });
+
+test('a shared Expression joins only its exact admitted stage, material revisions and qualified activity', () => {
+  const expression = 'expression:continuation', presentation = 'presentation:continuation';
+  const contract = createSharedStage({shared_stage_ref:'stage:continuation',field_ref:FIELD,presenter_ref:'participant:owner',subject_ref:expression,expression:{ref:expression,revision:4},presentation:{ref:presentation,revision:6},causal:{kind:'activity',ref:ACTIVITY},provenance:[{kind:'native-act',ref:ACTIVITY,source_system:'factory',revision:'7'}]});
+  const stage = {stage_ref:contract.shared_stage_ref,field_ref:FIELD,subject_ref:expression,presenter_ref:contract.presenter_ref,state:contract.state,revision:contract.revision,contract};
+  const activity = {...entry(),meta:{...entry().meta,expression_ref:expression}};
+  const args = {expression_ref:expression,expression_revision:4,presentation_ref:presentation,presentation_revision:6,world_ref:WORLD,field_ref:FIELD,activity_ref:ACTIVITY,stages:[stage],entries:[activity]};
+  const joined = expressionActivity(args);
+  assert.equal(joined.state,'bound');assert.equal(joined.entry,activity);
+  for (const delta of [{expression_revision:5},{presentation_revision:7},{world_ref:'world:another'},{field_ref:'oi:field:neighbour'},{activity_ref:`${WORLD}/run:OTHER`}]) assert.equal(expressionActivity({...args,...delta}).state,'unavailable');
+  for (const key of ['revision','subject_ref','presenter_ref']) assert.equal(expressionActivity({...args,stages:[{...stage,[key]:key==='revision'?2:'other'}]}).state,'unavailable');
+  const closed = closeSharedStage(contract,{expected_revision:contract.revision});
+  for (const stages of [[],[stage,stage],[{...stage,state:closed.state,revision:closed.revision,contract:closed}]]) assert.equal(expressionActivity({...args,stages}).state,'unavailable');
+  // Even a withdrawn activity/stage retains the publication's explicit
+  // binding; it cannot silently become an ordinary free-running Expression.
+  assert.equal(expressionActivity({...args,stages:[],entries:[]}).state,'unavailable');
+  assert.equal(expressionActivity({...args,activity_ref:undefined,stages:[],entries:[]}).state,'unbound');
+});
 
 // Mirrors `factory development run <state> <run> --json` (factory.run-reading/v1) field-for-field.
 const runReading = () => ({

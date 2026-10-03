@@ -22,13 +22,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
           fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 2a604574774c41921003ed99a2eed73b4c9f4266
+          path: .native-owner/Central
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli -> target
+            desktop/cradle/kernel -> target
+            .native-owner/Central -> target
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Tested source identity
-        run: git rev-parse HEAD | tee source-head.txt
+        env:
+          EXPECTED_SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD | tee source-head.txt
+          test "$(cat source-head.txt)" = "$EXPECTED_SOURCE_REVISION"
       - name: Install locked dependencies
         working-directory: desktop/cradle
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -55,13 +74,22 @@ jobs:
       - name: Install browser
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium
+      - name: Build the actual editor source owners
+        run: |
+          mkdir -p "$RUNNER_TEMP/canvas-native"
+          git -C .native-owner/Central rev-parse HEAD | tee "$RUNNER_TEMP/canvas-native/Central.revision"
+          test "$(cat "$RUNNER_TEMP/canvas-native/Central.revision")" = 2a604574774c41921003ed99a2eed73b4c9f4266
+          python3 desktop/cradle/tests/wiki-native-binaries.py \
+            --target OI_BIN cli/Cargo.toml oi \
+            --target OI_CENTRAL_CTRL_BIN .native-owner/Central/ctrl/Cargo.toml ctrl \
+            --target OI_KERNEL_BIN desktop/cradle/kernel/Cargo.toml walk-bridge \
+            --receipt "$RUNNER_TEMP/canvas-native/binaries.json"
       - name: Production editor selection and send interaction
         working-directory: desktop/cradle
         run: set -o pipefail; node tests/canvas-editor-browser.mjs 2>&1 | tee ../../canvas-browser.log
       - name: Production bundle
         working-directory: desktop/cradle
         run: set -o pipefail; npx vite build 2>&1 | tee ../../canvas-build.log
-      - uses: dtolnay/rust-toolchain@1.98.0
       - name: Kernel adapter compatibility
         run: set -o pipefail; cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets 2>&1 | tee canvas-kernel.log
       - name: Existing experience-source integrity
@@ -77,4 +105,5 @@ jobs:
             canvas-*.log
             desktop/canvas-*.log
             desktop/cradle/tests/artifacts/canvas-editor
+            ${{ runner.temp }}/canvas-native
           retention-days: 7

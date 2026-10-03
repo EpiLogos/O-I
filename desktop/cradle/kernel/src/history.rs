@@ -48,7 +48,7 @@ pub fn read(
         Some(project)
     };
     client.source_read(project, source_ref)?;
-    let value = client.run("projectcentral.change.horizon", json!({"project": project}))?;
+    let value = client.run_read("projectcentral.change.horizon", json!({"project": project}))?;
     let horizon: Horizon =
         serde_json::from_value(value).map_err(|error| OwnerCallError::Malformed {
             detail: format!("decode Central source history: {error}"),

@@ -46,6 +46,8 @@ import {centreBindingOf, ModeCentreBody, StageCentreMark, warmWorkspaceTrees} fr
 import {PRESENTED_EDITOR} from "./surface/presented";
 import {type HostedAppState} from "./expressions/hostedApp";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
+import {NativeOwnerFailure,nativeFailureReading,throwNativeFailure} from "./kernel/nativeFailure";
+import {RawDisclosure} from "./shared/contributionPresentation";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
  * localStorage and restored on load (map §5 U0.3b). Zero surfaces =
@@ -74,12 +76,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, 
 // mounting point).
 import { TechneSummonSurface } from "./library/techneSummon";
 import { readFile } from "./files/client";
-import { acquireFileReading, acquireFileBytes, applyReceipt } from "./files/resources";
+import { acquireFileReading, acquireFileBytes, applyReceipt, offerOpeningFileReading, offerOpeningFileBytes } from "./files/resources";
 import { applyWikiProjectionReceipt } from "./techne/wikiProjectionStore";
 import { detectFormat } from "./material/detect";
-import type { CentralLocation, NativeFileReading } from "./kernel/types";
+import type { CentralLocation, NativeFileReading, NativeFileBytes } from "./kernel/types";
 import { WorldNavigator } from "./surfaces/navigator/WorldNavigator";
-import { readDraft } from "./workspace/drafts";
 import { DesktopShell } from "./workspace/DesktopShell";
 import { Glyph } from "./workspace/Glyph";
 import { useWorkspaces } from "./workspace/store";
@@ -237,7 +238,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // basis invalidates its cached reading and re-projects (its own dedupe).
   useEffect(() => {
     for (const receipt of kernel.receipts) {
-      applyReceipt(receipt);
+      applyReceipt(kernel.transport, receipt);
       applyWikiProjectionReceipt(receipt, kernel.transport);
     }
   }, [kernel.receipts, kernel.transport]);
@@ -259,7 +260,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         : await acquireFileReading(kernel.transport, location);
       const opened = await kernel.apply({ op: "surface_open", surface_id: binding.id, kind: "file", source_ref: reading.location.ref, title: binding.title });
       if (opened?.result !== "surface_opened") throw new Error("Central file surface could not be opened");
-      workspaceRef.current.replaceSurface(workspaceId, { ...binding, pending: undefined, ref: reading.location.ref, title: binding.title, location: reading.location });
+      const completed:SurfaceBinding={ ...binding, pending: undefined, ref: reading.location.ref, title: binding.title, location: reading.location };
+      if(isBinary)offerOpeningFileBytes(completed,kernel.transport,reading.location,reading as NativeFileBytes);
+      else offerOpeningFileReading(completed,kernel.transport,reading.location,reading as NativeFileReading);
+      workspaceRef.current.replaceSurface(workspaceId,completed);
     } catch (error) {
       setSurfaceErrors(held => ({ ...held, [binding.id]: error instanceof Error ? error.message : String(error) }));
       workspaceRef.current.replaceSurface(workspaceId, { ...binding, pending: false });
@@ -390,9 +394,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         // route) the kernel serves the held buffer here instead of re-reading
         // through the project-scoped source route, which cannot serve it.
         const sourceOpened = await kernel.apply({ op: "source_open", source_ref: binding.ref, project: binding.project });
+        if (sourceOpened?.result !== "source_opened") throwNativeFailure(kernel.lastOpError());
         if (sourceOpened?.result !== "source_opened") throw new Error("Central did not return this source's reading");
-        const draft = readDraft(binding.ref);
-        if (draft) await kernel.apply({ op: "source_restore", source_ref: binding.ref, ...draft });
       }
       if (activeBindingId(stateRef.current) === binding.id && stateRef.current.surfaces[binding.id]?.ref === binding.ref && (kernel.transport.kind!=="tauri" || document.hasFocus())) await kernel.surfaceFocus(binding.id);
       setSurfaceErrors(held => {
@@ -400,7 +403,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         const next = { ...held }; delete next[binding.id]; return next;
       });
     } catch (reason) {
-      setSurfaceErrors(held => ({ ...held, [binding.id]: reason instanceof Error ? reason.message : String(reason) }));
+      setSurfaceErrors(held => ({ ...held, [binding.id]: reason instanceof NativeOwnerFailure ? JSON.stringify(reason.reading) : reason instanceof Error ? reason.message : String(reason) }));
     } finally {
       pendingMount.current.delete(binding.id);
     }
@@ -677,6 +680,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         const binding:SurfaceBinding={id, kind:"source", ref:textReading.source.ref,title:textReading.source.path.split("/").pop()??title,project:textReading.project?.name,location:reading.location};
         if(opts?.onOpened){
           const opened=await kernel.apply({op:"source_open",source_ref:binding.ref!,project:binding.project});
+          if(opened?.result!=="source_opened")throwNativeFailure(kernel.lastOpError());
           if(opened?.result!=="source_opened")throw Error("Central did not return the bound source reading.");
           const surface=await kernel.apply({op:"surface_open",surface_id:id,kind:"source",source_ref:binding.ref,title:binding.title});
           if(surface?.result!=="surface_opened")throw Error("The bound source Surface could not be opened.");
@@ -690,6 +694,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       const opened = await kernel.apply({op:"surface_open",surface_id:id,kind:"file",source_ref:ref,title});
       if(opened?.result!=="surface_opened")throw new Error("Central file surface could not be opened");
       const binding:SurfaceBinding={id,kind:"file",ref,title,project:textReading?.project?.name,location:reading.location};
+      if(isBinaryMaterial)offerOpeningFileBytes(binding,kernel.transport,reading.location,reading as NativeFileBytes);
+      else offerOpeningFileReading(binding,kernel.transport,reading.location,reading as NativeFileReading);
       if(!temporary)workspace.replaceSurface(originWorkspaceId,binding);admitted=true;
       if (!temporary&&stillAtFile()) setState(s => activateInHostCanvas(s, id));
       await opts?.onOpened?.(binding);
@@ -699,7 +705,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // The pending tab becomes the failure's place (BOOT-09): the location
       // is kept, the error overlay + Retry render where the tab is, and
       // Retry re-acquires through the ordinary mount path.
-      setSurfaceErrors(held => ({ ...held, [id]: error instanceof Error ? error.message : String(error) }));
+      setSurfaceErrors(held => ({ ...held, [id]: error instanceof NativeOwnerFailure ? JSON.stringify(error.reading) : error instanceof Error ? error.message : String(error) }));
       workspace.replaceSurface(originWorkspaceId, {id, kind: "file", title, location});
       if(opts?.onOpened)throw error;
     }
@@ -851,7 +857,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const openPresentation = async (ref:string,title:string,meta:PresentationMeta,intoArg?: "side") => {
     const into = intoArg ?? personCanvasAsk();
     // Single-host law: one presentation per canvas — activate, move, or open there.
-    const twins=twinsByCanvas(b=>b.kind==="presentation"&&b.ref===ref);
+    const twins=twinsByCanvas(b=>b.kind==="presentation"&&b.ref===ref&&JSON.stringify(b.presentation?.native_session)===JSON.stringify(meta.native_session));
     const twinSide=twins.side; const twinTree=twins.tree;
     if(into==="side"){
       if(twinSide){setState(s=>activateInHostCanvas(s,twinSide.id));return;}
@@ -872,6 +878,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     }
     setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction({...s,surfaces:{...s.surfaces,[binding.id]:binding}},"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
   };
+  /** Expression selection uses the existing Context pane canvas. The same
+   * binding retains the ordinary move, pop-out, detach and re-dock grammar. */
+  const openSubjectSidebar = async (ref:string,title:string,meta:PresentationMeta) => {
+    await openPresentation(ref,title,meta,"side");
+    setState(s=>({...s,rightDepth:"panel",panelPlanes:{...s.panelPlanes,[s.mode??"base"]:"context"}}));
+  };
+  const openPresentationRef=useRef(openPresentation);openPresentationRef.current=openPresentation;
+  const openSubjectSidebarRef=useRef(openSubjectSidebar);openSubjectSidebarRef.current=openSubjectSidebar;
   const openExploreRef=useRef(openExplore);openExploreRef.current=openExplore;
   useEffect(()=>{
     const open=(event:Event)=>{const d=(event as CustomEvent<{ref?:string;title?:string}|undefined>).detail;void openExploreRef.current(d?.ref?{ref:d.ref,title:d.title}:undefined).catch(e=>setWindowError(String(e)));};
@@ -1614,14 +1628,19 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         try { const {invoke}=await import("@tauri-apps/api/core"); await invoke("window_focus_main"); }
         catch (reason) { setWindowError(`The view returned; focus the main window to continue: ${String(reason)}`); }
       });
-      const b=await listen<{workspace_id:string;address:KnowledgeAddress;title:string;project?:string;placement?:"tab"|"page"|"window";graphOrigin?:string;request_id?:string;origin?:string}>("oi:window-navigate",async e=>{
+      const b=await listen<{workspace_id:string;address?:KnowledgeAddress;presentation?:{ref:string;meta:PresentationMeta;sidebar?:boolean};title:string;project?:string;placement?:"tab"|"page"|"window";graphOrigin?:string;request_id?:string;origin?:string}>("oi:window-navigate",async e=>{
         workspaceRef.current.activate(e.payload.workspace_id);
         await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
         let error:string|undefined;
         try {
-          await openKnowledgeRef.current(e.payload.address,e.payload.title,e.payload.project,e.payload.placement,e.payload.graphOrigin);
+          const {presentation,address}=e.payload;
+          if(presentation){
+            await (presentation.sidebar?openSubjectSidebarRef.current:openPresentationRef.current)(presentation.ref,e.payload.title,presentation.meta);
+          }else if(address){
+            await openKnowledgeRef.current(address,e.payload.title,e.payload.project,e.payload.placement,e.payload.graphOrigin);
+          }else throw Error("The detached window supplied no navigation subject.");
           const {invoke}=await import("@tauri-apps/api/core");
-          if(!await invoke("window_focus_subject",{reference:e.payload.address.value}))await invoke("window_focus_main");
+          if(!await invoke("window_focus_subject",{reference:presentation?.ref??address!.value}))await invoke("window_focus_main");
         }catch(reason){error=String(reason);setWindowError(error);}
         if(e.payload.request_id&&e.payload.origin){const {emitTo}=await import("@tauri-apps/api/event");await emitTo(e.payload.origin,"oi:window-navigate-result",{request_id:e.payload.request_id,error});}
       });
@@ -1957,6 +1976,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         openSource={source=>void openSource(source,undefined,"side").catch(report)}
         openKnowledge={(address,title,project,placement,graphOrigin)=>openKnowledge(address,title,project,placement,graphOrigin,"side")}
         openPresentation={(ref,title,meta)=>openPresentation(ref,title,meta,"side")}
+        openSubjectSidebar={openSubjectSidebar}
         openExplore={select=>openExplore(select,"side")}
         onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}
         openEncounter={row=>openEncounter(row,"side").catch(report)}
@@ -2078,6 +2098,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
             openSource={openSource}
             openKnowledge={openKnowledge}
             openPresentation={openPresentation}
+            openSubjectSidebar={openSubjectSidebar}
             openExplore={openExplore}
             openEncounter={row=>openEncounter(row).catch(report)}
             factoryCentre={factoryCentre}
@@ -2132,6 +2153,7 @@ function RestPane({ children }: { children: ReactNode }) {
  * path into Workbench's own pane tree. Renders nothing while that surface
  * is not the active tab of its pane (a background tab is not mounted). */
 function SurfaceErrorOverlay({ surfaceId, error, onRetry }: { surfaceId: string; error: string; onRetry: () => void }) {
+  const nativeFailure = nativeFailureReading(error);
   const [host, setHost] = useState<HTMLElement | null>(null);
   useEffect(() => {
     const locate = () => {
@@ -2155,7 +2177,8 @@ function SurfaceErrorOverlay({ surfaceId, error, onRetry }: { surfaceId: string;
     // workspace messaging, not one tab's material): the named state, the
     // owner's words verbatim, and the one real next action.
     <div role="alert" className="surface-open-failure">
-      <p>This binding could not be opened: {error}</p>
+      <p>This binding could not be opened: {nativeFailure ? new NativeOwnerFailure(nativeFailure).message : error}</p>
+      {nativeFailure && <RawDisclosure value={nativeFailure} label="Inspect the native source reading failure"/>}
       <button className="oi-action" onClick={onRetry}>Retry</button>
     </div>,
     host,

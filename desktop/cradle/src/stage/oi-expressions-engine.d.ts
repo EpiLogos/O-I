@@ -20,6 +20,7 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs" 
   }
   /** The instrument's stage law: the centre and scale every projection uses. */
   export function defaultCamera(): Camera;
+  export function cameraForSceneView(view: unknown, width: number, height: number): Camera;
   export function unproject(x: number, y: number, camera: Camera, width: number, height: number, plane?: Camera["plane"], depth?: number): Vec3;
   export function stageCentre(width: number, height: number): { x: number; y: number };
   export function stageScale(width: number, height: number): number;
@@ -196,4 +197,8 @@ declare module "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs" {
 
 declare module "@epilogos/oi-design-system/expressions-engine/engine/fieldModel.mjs" {
   export const MAX_FORMATIONS: number;
+}
+
+declare module "@epilogos/oi-design-system/expressions-engine/shell/capture.mjs" {
+  export function paintText(context: CanvasRenderingContext2D, scene: unknown, width: number, height: number): void;
 }

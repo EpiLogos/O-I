@@ -1,4 +1,6 @@
 import { schema, table, t, SenderError } from 'spacetimedb/server';
+import { tupleKey, hasLiteralTuple } from './tuple-keys';
+import { nativeActEntryUpdateFailure } from './native-act-entry';
 
 const CONTACT_WINDOW_MICROS = 60_000_000n;
 const CONTACT_LIMIT_PER_WINDOW = 3;
@@ -720,15 +722,15 @@ function requireJsonStringArray(value: string, name: string, maxItems = 32): str
 }
 
 function authorityKey(fieldRef: string, participantRef: string): string {
-  return `${fieldRef}|${participantRef}`;
+  return tupleKey(fieldRef, participantRef);
 }
 
 function presenceKey(fieldRef: string, participantRef: string): string {
-  return `${fieldRef}|${participantRef}`;
+  return tupleKey(fieldRef, participantRef);
 }
 
 function followKey(stageRef: string, followerParticipantRef: string): string {
-  return `${stageRef}|${followerParticipantRef}`;
+  return tupleKey(stageRef, followerParticipantRef);
 }
 
 /* The server checks the stage contract's shape, currentness and attribution;
@@ -797,23 +799,187 @@ function requireStageEdits(
 }
 
 function audienceKey(fieldRef: string, participantRef: string): string {
-  return `${fieldRef}|${participantRef}`;
+  return tupleKey(fieldRef, participantRef);
 }
 
 function contactPolicyKey(fieldRef: string, blockerParticipantRef: string, blockedParticipantRef: string): string {
-  return `${fieldRef}|${blockerParticipantRef}|${blockedParticipantRef}`;
+  return tupleKey(fieldRef, blockerParticipantRef, blockedParticipantRef);
 }
 
 function contactRateKey(fieldRef: string, initiatorParticipantRef: string): string {
-  return `${fieldRef}|${initiatorParticipantRef}`;
+  return tupleKey(fieldRef, initiatorParticipantRef);
 }
 
 function contributionRateKey(fieldRef: string, originRef: string): string {
-  return fingerprintString(`${fieldRef}\u001f${originRef}`);
+  return tupleKey(fieldRef, originRef);
 }
 
 function exchangeUseKey(grantRef: string, operationId: string): string {
-  return `exchange-use:${fingerprintString(`${grantRef}\u001f${operationId}`)}`;
+  return tupleKey(grantRef, operationId);
+}
+
+/* A physical key is never admission. Literal indexed relations also recover
+ * retained pre-v2 rows without interpreting their lossy keys. Duplicate native
+ * tuples are a conflict, not permission to choose one authority/history. */
+class NativeTupleConflict extends SenderError {}
+
+function findLiteralTuple(
+  backing: any, keyColumn: string, key: string,
+  scopeColumn: string, scope: string,
+  expected: Readonly<Record<string, string | number>>
+): any {
+  const indexed = backing[keyColumn].find(key);
+  if (indexed && !hasLiteralTuple(indexed, expected)) throw new NativeTupleConflict('Stored tuple key conflicts with its literal native identity');
+  let found = indexed;
+  for (const row of backing[scopeColumn].filter(scope)) {
+    if (!hasLiteralTuple(row, expected)) continue;
+    if (found && found[keyColumn] !== row[keyColumn]) throw new NativeTupleConflict('Duplicate stored native tuple requires owner reconciliation');
+    found = row;
+  }
+  return found;
+}
+
+/* An ambiguous private relation confers no read eligibility. Keep unrelated
+ * public/owned fields usable; storage/runtime failures still surface. Mutation
+ * and migration retain the explicit conflict from the strict resolver. */
+function readEligibleTuple(resolve: () => any): any {
+  try {
+    return resolve();
+  } catch (error) {
+    if (error instanceof NativeTupleConflict) return undefined;
+    throw error;
+  }
+}
+
+function persistentAuthorityForRead(ctx: any, fieldRef: string, participantRef: string, identity: any): any {
+  const grant = readEligibleTuple(() => participantAuthorityRow(ctx, fieldRef, participantRef));
+  return grant && !grant.revoked && grant.expiresAtMicros === 0n && grant.actorIdentity.isEqual(identity)
+    ? grant : undefined;
+}
+
+/* Reducers are database transactions: rekey and update one exact native row
+ * together. This preserves its policy/history while ending the old writer. */
+function publishTupleRow(backing: any, keyColumn: string, existing: any, next: any): void {
+  if (existing && existing[keyColumn] === next[keyColumn]) {
+    backing[keyColumn].update(next);
+    return;
+  }
+  if (backing[keyColumn].find(next[keyColumn])) fail('Tuple publication destination already exists');
+  if (existing) backing[keyColumn].delete(existing[keyColumn]);
+  backing.insert(next);
+}
+
+function participantAuthorityRow(ctx: any, fieldRef: string, participantRef: string): any {
+  return findLiteralTuple(ctx.db.fieldAuthority, 'authorityKey', authorityKey(fieldRef, participantRef),
+    'fieldRef', fieldRef, { fieldRef, participantRef });
+}
+
+function participantReadRow(ctx: any, fieldRef: string, participantRef: string): any {
+  return findLiteralTuple(ctx.db.fieldReadGrant, 'audienceKey', audienceKey(fieldRef, participantRef),
+    'fieldRef', fieldRef, { fieldRef, participantRef });
+}
+
+function participantPresenceRow(ctx: any, fieldRef: string, participantRef: string): any {
+  return findLiteralTuple(ctx.db.fieldPresence, 'presenceKey', presenceKey(fieldRef, participantRef),
+    'fieldRef', fieldRef, { fieldRef, participantRef });
+}
+
+function participantFollowRow(ctx: any, fieldRef: string, stageRef: string, followerParticipantRef: string): any {
+  return findLiteralTuple(ctx.db.stageFollower, 'followKey', followKey(stageRef, followerParticipantRef),
+    'stageRef', stageRef, { fieldRef, stageRef, followerParticipantRef });
+}
+
+function contactPolicyRow(ctx: any, fieldRef: string, blockerParticipantRef: string, blockedParticipantRef: string): any {
+  return findLiteralTuple(ctx.db.contactPolicy, 'policyKey', contactPolicyKey(fieldRef, blockerParticipantRef, blockedParticipantRef),
+    'fieldRef', fieldRef, { fieldRef, blockerParticipantRef, blockedParticipantRef });
+}
+
+function exchangeUseRow(ctx: any, grantRef: string, operationId: string): any {
+  return findLiteralTuple(ctx.db.exchangeUse, 'useKey', exchangeUseKey(grantRef, operationId),
+    'grantRef', grantRef, { grantRef, operationId });
+}
+
+function activityLivenessRow(ctx: any, fieldRef: string, activityRef: string): any {
+  return findLiteralTuple(ctx.db.activityLivenessBacking, 'activityKey', activityKey(fieldRef, activityRef),
+    'fieldRef', fieldRef, { fieldRef, activityRef });
+}
+
+function requireRecoverablePresenceClaim(presence: any, claim: any): void {
+  if (claim.presenceKey !== presence.presenceKey || typeof claim.connectionRef !== 'string' || claim.connectionRef === '') {
+    fail('Stored presence claim has an unavailable native relation');
+  }
+  if (presence.presenceKey !== presenceKey(presence.fieldRef, presence.participantRef)
+      && (presence.fieldRef.includes('|') || presence.participantRef.includes('|'))) {
+    fail('Legacy presence claim has ambiguous participant ancestry; reconcile its native connected body before migration');
+  }
+}
+
+function rekeyPresenceClaims(ctx: any, existing: any, nextPresenceKey: string): void {
+  if (!existing || existing.presenceKey === nextPresenceKey) return;
+  const claims = Array.from(ctx.db.fieldPresenceConnection.presenceKey.filter(existing.presenceKey)) as any[];
+  for (const claim of claims) {
+    requireRecoverablePresenceClaim(existing, claim);
+    const claimKey = tupleKey(nextPresenceKey, claim.connectionRef);
+    if (ctx.db.fieldPresenceConnection.claimKey.find(claimKey)) fail('Presence claim rekey destination already exists');
+  }
+  for (const claim of claims) {
+    const next = { ...claim, presenceKey: nextPresenceKey, claimKey: tupleKey(nextPresenceKey, claim.connectionRef) };
+    publishTupleRow(ctx.db.fieldPresenceConnection, 'claimKey', claim, next);
+  }
+}
+
+/* Structural cutover of the existing backing rows, never a new state store.
+ * Preflight every destination before changing any row. The native reducer
+ * transaction preserves all non-key bytes, policies, budgets and attribution. */
+function reconcileFieldTupleKeys(ctx: any, fieldRef: string): void {
+  const plans: { backing: any; keyColumn: string; row: any; next: any; primaryColumn?: string }[] = [];
+  const collect = (backing: any, keyColumn: string, columns: string[], primaryColumn?: string) => {
+    const seen = new Set<string>();
+    for (const row of backing.fieldRef.filter(fieldRef)) {
+      const parts = columns.map(column => {
+        if (typeof row[column] !== 'string') fail('Stored native tuple has an unavailable literal identity');
+        return row[column] as string;
+      });
+      const key = tupleKey(...parts);
+      if (seen.has(key)) fail('Duplicate stored native tuple requires owner reconciliation before migration');
+      seen.add(key);
+      const destination = backing[keyColumn].find(key);
+      if (destination && destination[keyColumn] !== row[keyColumn]) fail('Tuple migration destination already exists');
+      if (key !== row[keyColumn]) plans.push({ backing, keyColumn, row, next: { ...row, [keyColumn]: key }, primaryColumn });
+    }
+  };
+  collect(ctx.db.fieldAuthority, 'authorityKey', ['fieldRef', 'participantRef']);
+  collect(ctx.db.fieldReadGrant, 'audienceKey', ['fieldRef', 'participantRef']);
+  collect(ctx.db.fieldPresence, 'presenceKey', ['fieldRef', 'participantRef']);
+  collect(ctx.db.stageFollower, 'followKey', ['stageRef', 'followerParticipantRef']);
+  collect(ctx.db.contactPolicy, 'policyKey', ['fieldRef', 'blockerParticipantRef', 'blockedParticipantRef']);
+  collect(ctx.db.contactRate, 'rateKey', ['fieldRef', 'initiatorParticipantRef']);
+  collect(ctx.db.contributionIngressRate, 'rateKey', ['fieldRef', 'originRef']);
+  collect(ctx.db.activityLivenessBacking, 'activityKey', ['fieldRef', 'activityRef']);
+  collect(ctx.db.exchangeUse, 'useKey', ['grantRef', 'operationId']);
+  collect(ctx.db.contributionIngressBacking, 'ingressKey',
+    ['fieldRef', 'contributorParticipantRef', 'sourceKind', 'transportProvider', 'transportMessageId'], 'rowId');
+
+  const claimKeys = new Set<string>();
+  for (const presence of ctx.db.fieldPresence.fieldRef.filter(fieldRef)) {
+    const nextPresenceKey = presenceKey(fieldRef, presence.participantRef);
+    for (const claim of ctx.db.fieldPresenceConnection.presenceKey.filter(presence.presenceKey)) {
+      requireRecoverablePresenceClaim(presence, claim);
+      const claimKey = tupleKey(nextPresenceKey, claim.connectionRef);
+      if (claimKeys.has(claimKey)) fail('Duplicate native presence connection requires owner reconciliation');
+      claimKeys.add(claimKey);
+      const destination = ctx.db.fieldPresenceConnection.claimKey.find(claimKey);
+      if (destination && destination.claimKey !== claim.claimKey) fail('Presence claim migration destination already exists');
+      if (claim.claimKey !== claimKey || claim.presenceKey !== nextPresenceKey) {
+        plans.push({ backing: ctx.db.fieldPresenceConnection, keyColumn: 'claimKey', row: claim,
+          next: { ...claim, claimKey, presenceKey: nextPresenceKey } });
+      }
+    }
+  }
+  for (const plan of plans) {
+    if (plan.primaryColumn) plan.backing[plan.primaryColumn].update(plan.next);
+    else publishTupleRow(plan.backing, plan.keyColumn, plan.row, plan.next);
+  }
 }
 
 function isFieldOwner(ctx: any, fieldRef: string): boolean {
@@ -851,7 +1017,10 @@ function requireContactDecision(decision: string): void {
 
 function privateReadCallerGrants(ctx: any): any[] {
   return Array.from(ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)).filter(
-    (grant: any) => !grant.revoked && grant.expiresAtMicros === 0n
+    (grant: any) => {
+      const current = persistentAuthorityForRead(ctx, grant.fieldRef, grant.participantRef, ctx.sender);
+      return current?.authorityKey === grant.authorityKey && !grant.revoked && grant.expiresAtMicros === 0n;
+    }
   );
 }
 
@@ -873,6 +1042,8 @@ function callerOwnsPersistentParticipantGrant(ctx: any, fieldRef: string, partic
 function callerHasExplicitFieldRead(ctx: any, fieldRef: string): boolean {
   for (const readGrant of ctx.db.fieldReadGrant.actorIdentity.filter(ctx.sender)) {
     if (readGrant.fieldRef !== fieldRef) continue;
+    const current = readEligibleTuple(() => participantReadRow(ctx, fieldRef, readGrant.participantRef));
+    if (current?.audienceKey !== readGrant.audienceKey) continue;
     if (callerOwnsPersistentParticipantGrant(ctx, fieldRef, readGrant.participantRef)) return true;
   }
   return false;
@@ -902,6 +1073,8 @@ function visibleFieldRows(ctx: any): any[] {
     if (row?.visibility === 'restricted') rows.set(row.fieldRef, row);
   }
   for (const readGrant of ctx.db.fieldReadGrant.actorIdentity.filter(ctx.sender)) {
+    const current = readEligibleTuple(() => participantReadRow(ctx, readGrant.fieldRef, readGrant.participantRef));
+    if (current?.audienceKey !== readGrant.audienceKey) continue;
     const row = ctx.db.sharedFieldBacking.fieldRef.find(readGrant.fieldRef);
     if (row?.visibility === 'private' && callerOwnsPersistentParticipantGrant(ctx, readGrant.fieldRef, readGrant.participantRef)) {
       rows.set(row.fieldRef, row);
@@ -1207,7 +1380,15 @@ export const field_presence = spacetimedb.view(
     const rows: any[] = [];
     for (const field of visibleFieldRows(ctx)) {
       for (const row of ctx.db.fieldPresence.fieldRef.filter(field.fieldRef)) {
-        if (Array.from(ctx.db.fieldPresenceConnection.presenceKey.filter(row.presenceKey)).some((claim: any) => identityStillOwnsParticipant(ctx, row.fieldRef, row.participantRef, claim.actorIdentity))) rows.push(row);
+        const current = readEligibleTuple(() => participantPresenceRow(ctx, row.fieldRef, row.participantRef));
+        if (current?.presenceKey !== row.presenceKey) continue;
+        // ViewCtx has no clock. Finite authority is reducer-only, as with
+        // protected audience reads, until provider-timed expiry is proven.
+        if (row.presenceKey !== presenceKey(row.fieldRef, row.participantRef)
+            && (row.fieldRef.includes('|') || row.participantRef.includes('|'))) continue;
+        if (Array.from(ctx.db.fieldPresenceConnection.presenceKey.filter(row.presenceKey)).some((claim: any) =>
+          typeof claim.connectionRef === 'string' && claim.connectionRef !== ''
+          && persistentAuthorityForRead(ctx, row.fieldRef, row.participantRef, claim.actorIdentity))) rows.push(row);
       }
     }
     return rows;
@@ -1225,6 +1406,8 @@ export const activity_liveness = spacetimedb.view(
     for (const field of visibleFieldRows(ctx)) {
       const owner = ctx.db.fieldOwner.fieldRef.find(field.fieldRef);
       for (const row of ctx.db.activityLivenessBacking.fieldRef.filter(field.fieldRef)) {
+        const current = readEligibleTuple(() => activityLivenessRow(ctx, row.fieldRef, row.activityRef));
+        if (current?.activityKey !== row.activityKey) continue;
         const entry = ctx.db.exploreEntryBacking.semanticRef.find(row.activityRef);
         if (!entry || entry.fieldRef !== row.fieldRef || entry.kind !== 'activity') continue;
         if (!callerCanSeeExploreEntry(ctx, entry)) continue;
@@ -1545,8 +1728,8 @@ export const field_day = spacetimedb.view(
 );
 
 function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles: string[]): any {
-  const key = authorityKey(fieldRef, participantRef);
-  const grant = ctx.db.fieldAuthority.authorityKey.find(key);
+  const grant = participantAuthorityRow(ctx, fieldRef, participantRef);
+  const key = grant?.authorityKey;
   if (!grant) fail(`No authority grant for Participant ${participantRef}`);
 
   let callerOwnsGrant = false;
@@ -1575,7 +1758,7 @@ function requireAdmissionAuthority(ctx: any, fieldRef: string, admissionParticip
 }
 
 function requirePersistentParticipantAuthority(ctx: any, fieldRef: string, participantRef: string): any {
-  const grant = ctx.db.fieldAuthority.authorityKey.find(authorityKey(fieldRef, participantRef));
+  const grant = participantAuthorityRow(ctx, fieldRef, participantRef);
   if (!grant || grant.revoked || grant.expiresAtMicros !== 0n) {
     fail(`Participant ${participantRef} requires persistent authority for protected read audience`);
   }
@@ -1583,7 +1766,7 @@ function requirePersistentParticipantAuthority(ctx: any, fieldRef: string, parti
 }
 
 function authorityForContactRecipient(ctx: any, fieldRef: string, participantRef: string): any {
-  const grant = ctx.db.fieldAuthority.authorityKey.find(authorityKey(fieldRef, participantRef));
+  const grant = participantAuthorityRow(ctx, fieldRef, participantRef);
   if (!grant || grant.revoked || !grant.contactable) fail(`Recipient Participant ${participantRef} is not contactable`);
   if (grant.expiresAtMicros !== 0n && nowMicros(ctx) >= grant.expiresAtMicros) {
     fail(`Recipient Participant ${participantRef} is not contactable`);
@@ -1593,7 +1776,7 @@ function authorityForContactRecipient(ctx: any, fieldRef: string, participantRef
 
 
 function requireLiveParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles?: string[]): any {
-  const grant = ctx.db.fieldAuthority.authorityKey.find(authorityKey(fieldRef, participantRef));
+  const grant = participantAuthorityRow(ctx, fieldRef, participantRef);
   if (!grant || grant.revoked) fail(`Participant ${participantRef} has no live field authority`);
   if (grant.expiresAtMicros !== 0n && nowMicros(ctx) >= grant.expiresAtMicros) {
     fail(`Authority for Participant ${participantRef} is expired`);
@@ -1603,7 +1786,9 @@ function requireLiveParticipantAuthority(ctx: any, fieldRef: string, participant
 }
 
 function identityStillOwnsParticipant(ctx: any, fieldRef: string, participantRef: string, identity: any): boolean {
-  const key = authorityKey(fieldRef, participantRef);
+  const grant = participantAuthorityRow(ctx, fieldRef, participantRef);
+  if (!grant) return false;
+  const key = grant.authorityKey;
   for (const row of ctx.db.fieldAuthority.actorIdentity.filter(identity)) {
     if (row.authorityKey === key && !row.revoked && (row.expiresAtMicros === 0n || nowMicros(ctx) < row.expiresAtMicros)) return true;
   }
@@ -1611,7 +1796,9 @@ function identityStillOwnsParticipant(ctx: any, fieldRef: string, participantRef
 }
 
 function callerIsLiveParticipant(ctx: any, fieldRef: string, participantRef: string): boolean {
-  const key = authorityKey(fieldRef, participantRef);
+  const grant = participantAuthorityRow(ctx, fieldRef, participantRef);
+  if (!grant) return false;
+  const key = grant.authorityKey;
   for (const row of ctx.db.fieldAuthority.actorIdentity.filter(ctx.sender)) {
     if (row.authorityKey === key && !row.revoked && (row.expiresAtMicros === 0n || nowMicros(ctx) < row.expiresAtMicros)) return true;
   }
@@ -1637,7 +1824,7 @@ function requireExchangeProtocol(protocol: string): void {
 
 function requireExchangePolicyClear(ctx: any, fieldRef: string, initiatorRef: string, counterpartyRef: string): void {
   for (const [blocker, blocked] of [[initiatorRef, counterpartyRef], [counterpartyRef, initiatorRef]]) {
-    const row = ctx.db.contactPolicy.policyKey.find(contactPolicyKey(fieldRef, blocker, blocked));
+    const row = contactPolicyRow(ctx, fieldRef, blocker, blocked);
     if (row && (row.mode === 'blocked' || row.mode === 'muted')) {
       fail(`Exchange relation is ${row.mode} by ${blocker}`);
     }
@@ -1789,7 +1976,7 @@ function validateContributionContract(ctx: any, fieldRef: string, contributorPar
 function enforceContributionRate(ctx: any, fieldRef: string, originRef: string, payloadBytes: number): void {
   const now = nowMicros(ctx);
   const key = contributionRateKey(fieldRef, originRef);
-  const current = ctx.db.contributionIngressRate.rateKey.find(key);
+  const current = findLiteralTuple(ctx.db.contributionIngressRate, 'rateKey', key, 'fieldRef', fieldRef, { fieldRef, originRef });
   if (!current || now - current.windowStartedMicros >= CONTRIBUTION_WINDOW_MICROS) {
     const next = {
       rateKey: key,
@@ -1799,16 +1986,16 @@ function enforceContributionRate(ctx: any, fieldRef: string, originRef: string, 
       count: 1,
       bytes: BigInt(payloadBytes),
     };
-    if (current) ctx.db.contributionIngressRate.rateKey.update(next);
-    else ctx.db.contributionIngressRate.insert(next);
+    publishTupleRow(ctx.db.contributionIngressRate, 'rateKey', current, next);
     return;
   }
   if (current.count >= CONTRIBUTION_LIMIT_PER_WINDOW) fail(`Contribution rate limit exceeded for ${originRef} in ${fieldRef}`);
   if (current.bytes + BigInt(payloadBytes) > BigInt(CONTRIBUTION_BYTES_PER_WINDOW)) {
     fail(`Contribution byte budget exceeded for ${originRef} in ${fieldRef}`);
   }
-  ctx.db.contributionIngressRate.rateKey.update({
+  publishTupleRow(ctx.db.contributionIngressRate, 'rateKey', current, {
     ...current,
+    rateKey: key,
     count: current.count + 1,
     bytes: current.bytes + BigInt(payloadBytes),
   });
@@ -1842,10 +2029,19 @@ function ingressContribution(ctx: any, input: {
   for (const row of ctx.db.contributionIngressBacking.claimedContributionRef.filter(contributionRef)) {
     if (row.fieldRef !== input.fieldRef) fail('Contribution claimed semantic ref is already associated with another SharedField');
   }
-  const ingressKey = fingerprintString(`${input.fieldRef}\u001f${input.contributorParticipantRef}\u001f${input.sourceKind}\u001f${input.transportProvider}\u001f${input.transportMessageId}`);
-  const existing = ctx.db.contributionIngressBacking.ingressKey.find(ingressKey);
+  const transportTuple = {
+    fieldRef: input.fieldRef, contributorParticipantRef: input.contributorParticipantRef,
+    sourceKind: input.sourceKind, transportProvider: input.transportProvider,
+    transportMessageId: input.transportMessageId,
+  };
+  const ingressKey = tupleKey(...Object.values(transportTuple));
+  const existing = findLiteralTuple(ctx.db.contributionIngressBacking, 'ingressKey', ingressKey,
+    'fieldRef', input.fieldRef, transportTuple);
   if (existing) {
-    if (existing.payloadFingerprint === validated.fingerprint && existing.contractJson === input.contractJson) return;
+    if (existing.payloadFingerprint === validated.fingerprint && existing.contractJson === input.contractJson) {
+      if (existing.ingressKey !== ingressKey) ctx.db.contributionIngressBacking.rowId.update({ ...existing, ingressKey });
+      return;
+    }
     fail('Contribution transport replay key conflicts with a different payload');
   }
   enforceContributionOutstanding(ctx, input.fieldRef, input.contributorParticipantRef);
@@ -1963,7 +2159,7 @@ function contactContract(row: any): string {
 function enforceContactRate(ctx: any, fieldRef: string, initiatorParticipantRef: string): void {
   const now = nowMicros(ctx);
   const key = contactRateKey(fieldRef, initiatorParticipantRef);
-  const current = ctx.db.contactRate.rateKey.find(key);
+  const current = findLiteralTuple(ctx.db.contactRate, 'rateKey', key, 'fieldRef', fieldRef, { fieldRef, initiatorParticipantRef });
   if (!current || now - current.windowStartedMicros >= CONTACT_WINDOW_MICROS) {
     const next = {
       rateKey: key,
@@ -1972,14 +2168,13 @@ function enforceContactRate(ctx: any, fieldRef: string, initiatorParticipantRef:
       windowStartedMicros: now,
       count: 1,
     };
-    if (current) ctx.db.contactRate.rateKey.update(next);
-    else ctx.db.contactRate.insert(next);
+    publishTupleRow(ctx.db.contactRate, 'rateKey', current, next);
     return;
   }
   if (current.count >= CONTACT_LIMIT_PER_WINDOW) {
     fail(`Contact rate limit exceeded for ${initiatorParticipantRef} in ${fieldRef}`);
   }
-  ctx.db.contactRate.rateKey.update({ ...current, count: current.count + 1 });
+  publishTupleRow(ctx.db.contactRate, 'rateKey', current, { ...current, rateKey: key, count: current.count + 1 });
 }
 
 export const put_shared_field = spacetimedb.reducer(
@@ -2003,6 +2198,16 @@ export const put_shared_field = spacetimedb.reducer(
       ownerIdentity: ctx.sender,
       createdAtMicros: nowMicros(ctx),
     });
+  }
+);
+
+/** Owner-authorised structural migration of one retained field. No grant,
+ * use budget, native reference, revision, payload or tool effect is replayed. */
+export const reconcile_field_tuple_keys = spacetimedb.reducer(
+  { fieldRef: t.string() },
+  (ctx, args) => {
+    requireFieldOwner(ctx, args.fieldRef);
+    reconcileFieldTupleKeys(ctx, args.fieldRef);
   }
 );
 
@@ -2061,9 +2266,8 @@ export const grant_participant_authority = spacetimedb.reducer(
       expiresAtMicros: args.ttlSeconds === 0 ? 0n : now + BigInt(args.ttlSeconds) * 1_000_000n,
       grantedAtMicros: now,
     };
-    const existing = ctx.db.fieldAuthority.authorityKey.find(row.authorityKey);
-    if (existing) ctx.db.fieldAuthority.authorityKey.update(row);
-    else ctx.db.fieldAuthority.insert(row);
+    const existing = participantAuthorityRow(ctx, args.fieldRef, args.participantRef);
+    publishTupleRow(ctx.db.fieldAuthority, 'authorityKey', existing, row);
   }
 );
 
@@ -2072,21 +2276,21 @@ export const revoke_participant_authority = spacetimedb.reducer(
   (ctx, args) => {
     requireFieldOwner(ctx, args.fieldRef);
     const key = authorityKey(args.fieldRef, args.participantRef);
-    const existing = ctx.db.fieldAuthority.authorityKey.find(key);
+    const existing = participantAuthorityRow(ctx, args.fieldRef, args.participantRef);
     if (!existing) fail(`No authority grant for Participant ${args.participantRef}`);
     terminateExchangeForParticipant(ctx, args.fieldRef, args.participantRef, 'revoked');
-    const presence = ctx.db.fieldPresence.presenceKey.find(presenceKey(args.fieldRef, args.participantRef));
+    const presence = participantPresenceRow(ctx, args.fieldRef, args.participantRef);
     if (presence) ctx.db.fieldPresence.presenceKey.delete(presence.presenceKey);
-    for (const claim of ctx.db.fieldPresenceConnection.presenceKey.filter(presenceKey(args.fieldRef, args.participantRef))) {
+    for (const claim of ctx.db.fieldPresenceConnection.presenceKey.filter(presence?.presenceKey ?? presenceKey(args.fieldRef, args.participantRef))) {
       ctx.db.fieldPresenceConnection.claimKey.delete(claim.claimKey);
     }
     for (const follow of ctx.db.stageFollower.followerParticipantRef.filter(args.participantRef)) {
       if (follow.fieldRef === args.fieldRef) ctx.db.stageFollower.followKey.delete(follow.followKey);
     }
-    ctx.db.fieldAuthority.authorityKey.delete(key);
+    ctx.db.fieldAuthority.authorityKey.delete(existing.authorityKey);
     withdrawParticipantFieldTime(ctx, args.fieldRef, args.participantRef);
-    const readKey = audienceKey(args.fieldRef, args.participantRef);
-    if (ctx.db.fieldReadGrant.audienceKey.find(readKey)) ctx.db.fieldReadGrant.audienceKey.delete(readKey);
+    const readGrant = participantReadRow(ctx, args.fieldRef, args.participantRef);
+    if (readGrant) ctx.db.fieldReadGrant.audienceKey.delete(readGrant.audienceKey);
   }
 );
 
@@ -2103,9 +2307,8 @@ export const grant_field_read = spacetimedb.reducer(
       actorIdentity: authority.actorIdentity,
       grantedAtMicros: nowMicros(ctx),
     };
-    const existing = ctx.db.fieldReadGrant.audienceKey.find(row.audienceKey);
-    if (existing) ctx.db.fieldReadGrant.audienceKey.update(row);
-    else ctx.db.fieldReadGrant.insert(row);
+    const existing = participantReadRow(ctx, args.fieldRef, args.participantRef);
+    publishTupleRow(ctx.db.fieldReadGrant, 'audienceKey', existing, row);
   }
 );
 
@@ -2113,8 +2316,8 @@ export const revoke_field_read = spacetimedb.reducer(
   { fieldRef: t.string(), participantRef: t.string() },
   (ctx, args) => {
     requireFieldOwner(ctx, args.fieldRef);
-    const key = audienceKey(args.fieldRef, args.participantRef);
-    if (ctx.db.fieldReadGrant.audienceKey.find(key)) ctx.db.fieldReadGrant.audienceKey.delete(key);
+    const existing = participantReadRow(ctx, args.fieldRef, args.participantRef);
+    if (existing) ctx.db.fieldReadGrant.audienceKey.delete(existing.audienceKey);
   }
 );
 
@@ -2196,6 +2399,7 @@ export const request_exchange = spacetimedb.reducer(
     const existing = ctx.db.exchangeRequest.requestRef.find(args.requestRef);
     if (existing) {
       const exact = existing.fieldRef === args.fieldRef
+        && existing.initiatorActorIdentity.isEqual(ctx.sender)
         && existing.initiatorParticipantRef === args.initiatorParticipantRef
         && existing.counterpartyParticipantRef === args.counterpartyParticipantRef
         && existing.purpose === args.purpose
@@ -2327,9 +2531,17 @@ export const consume_exchange = spacetimedb.reducer(
       protocol: args.protocol, bindingRef: args.bindingRef, bindingRevision: args.bindingRevision,
       mode: args.mode, purpose: args.purpose, scopeJson: args.scopeJson,
     }));
-    const existingUse = ctx.db.exchangeUse.useKey.find(useKey);
+    const existingUse = exchangeUseRow(ctx, grant.grantRef, args.operationId);
     if (existingUse) {
-      if (existingUse.demandFingerprint !== demandFingerprint) fail('Exchange operation replay key conflicts with a different demand');
+      if (!hasLiteralTuple(existingUse, {
+        grantRef: grant.grantRef, operationId: args.operationId, fieldRef: args.fieldRef,
+        counterpartyParticipantRef: args.counterpartyParticipantRef,
+        protocol: args.protocol, bindingRef: args.bindingRef, bindingRevision: args.bindingRevision,
+        mode: args.mode, purpose: args.purpose, scopeJson: args.scopeJson,
+      }) || !ctx.sender.isEqual(existingUse.actorIdentity)) {
+        fail('Exchange operation replay conflicts with its exact native demand or actor');
+      }
+      if (existingUse.useKey !== useKey) publishTupleRow(ctx.db.exchangeUse, 'useKey', existingUse, { ...existingUse, useKey });
       return;
     }
     if (grant.state !== 'active') fail(`Exchange grant is ${grant.state}`);
@@ -2397,7 +2609,7 @@ export const ingest_authorized_exchange_contribution = spacetimedb.reducer(
     if (!grant || grant.fieldRef !== args.fieldRef) fail('Returned material does not reference a valid Exchange grant in this SharedField');
     if (grant.counterpartyParticipantRef !== args.contributorParticipantRef) fail('Returned material contributor does not match Exchange counterparty');
     if (grant.protocol !== args.sourceKind) fail('Returned material source kind does not match Exchange protocol');
-    const use = ctx.db.exchangeUse.useKey.find(exchangeUseKey(args.grantRef, args.operationId));
+    const use = exchangeUseRow(ctx, args.grantRef, args.operationId);
     if (!use || use.grantRef !== args.grantRef || use.operationId !== args.operationId) fail('Returned material has no matching consumed Exchange operation');
     if (!CONTRIBUTION_TRANSPORTS.has(args.sourceKind)) fail(`Unsupported mediated Contribution source kind: ${args.sourceKind}`);
     ingressContribution(ctx, {
@@ -2680,8 +2892,12 @@ export const put_explore_entry = spacetimedb.reducer(
     requireFieldOwner(ctx, args.fieldRef);
     requireContributionExploreEligible(ctx, args.fieldRef, args.semanticRef);
     const existing = ctx.db.exploreEntryBacking.semanticRef.find(args.semanticRef);
+    if (existing && existing.fieldRef !== args.fieldRef) fail('Explore entry cannot move between SharedFields');
+    const nativeActFailure = nativeActEntryUpdateFailure(
+      existing ? parseStoredJson(existing.entryJson, 'Explore entry') : null, entry,
+    );
+    if (nativeActFailure) fail(nativeActFailure);
     if (existing) {
-      if (existing.fieldRef !== args.fieldRef) fail('Explore entry cannot move between SharedFields');
       ctx.db.exploreEntryBacking.rowId.update({ ...existing, ...args });
     } else {
       ctx.db.exploreEntryBacking.insert({ rowId: 0n, ...args });
@@ -2788,9 +3004,7 @@ export const request_contact = spacetimedb.reducer(
     requireParticipantAuthority(ctx, args.fieldRef, args.initiatorParticipantRef, ['contact', 'contributor']);
     authorityForContactRecipient(ctx, args.fieldRef, args.recipientParticipantRef);
 
-    const policy = ctx.db.contactPolicy.policyKey.find(
-      contactPolicyKey(args.fieldRef, args.recipientParticipantRef, args.initiatorParticipantRef)
-    );
+    const policy = contactPolicyRow(ctx, args.fieldRef, args.recipientParticipantRef, args.initiatorParticipantRef);
     if (policy && (policy.mode === 'muted' || policy.mode === 'blocked')) {
       fail(`Contact origin is ${policy.mode} by recipient`);
     }
@@ -2863,9 +3077,9 @@ export const set_contact_policy = spacetimedb.reducer(
     requireParticipantInField(ctx, args.blockedParticipantRef, args.fieldRef);
     requireParticipantAuthority(ctx, args.fieldRef, args.blockerParticipantRef, ['observer', 'contact', 'contributor']);
     const key = contactPolicyKey(args.fieldRef, args.blockerParticipantRef, args.blockedParticipantRef);
-    const existing = ctx.db.contactPolicy.policyKey.find(key);
+    const existing = contactPolicyRow(ctx, args.fieldRef, args.blockerParticipantRef, args.blockedParticipantRef);
     if (args.mode === 'clear') {
-      if (existing) ctx.db.contactPolicy.policyKey.delete(key);
+      if (existing) ctx.db.contactPolicy.policyKey.delete(existing.policyKey);
       return;
     }
     const row = {
@@ -2876,8 +3090,7 @@ export const set_contact_policy = spacetimedb.reducer(
       mode: args.mode,
       updatedAtMicros: nowMicros(ctx),
     };
-    if (existing) ctx.db.contactPolicy.policyKey.update(row);
-    else ctx.db.contactPolicy.insert(row);
+    publishTupleRow(ctx.db.contactPolicy, 'policyKey', existing, row);
     terminateExchangeBetween(ctx, args.fieldRef, args.blockerParticipantRef, args.blockedParticipantRef);
   }
 );
@@ -2903,11 +3116,15 @@ export const enter_field = spacetimedb.reducer(
       enteredAtMicros: now,
       updatedAtMicros: now,
     };
-    const existing = ctx.db.fieldPresence.presenceKey.find(row.presenceKey);
-    if (existing) ctx.db.fieldPresence.presenceKey.update({ ...existing, state, actorIdentity: ctx.sender, updatedAtMicros: now });
-    else ctx.db.fieldPresence.insert(row);
-    const claim = {claimKey: JSON.stringify([row.presenceKey, connectionRef]), presenceKey: row.presenceKey, connectionRef, actorIdentity: ctx.sender};
-    if (!ctx.db.fieldPresenceConnection.claimKey.find(claim.claimKey)) ctx.db.fieldPresenceConnection.insert(claim);
+    const existing = participantPresenceRow(ctx, args.fieldRef, args.participantRef);
+    rekeyPresenceClaims(ctx, existing, row.presenceKey);
+    publishTupleRow(ctx.db.fieldPresence, 'presenceKey', existing,
+      existing ? { ...existing, ...row, enteredAtMicros: existing.enteredAtMicros } : row);
+    const claim = {claimKey: tupleKey(row.presenceKey, connectionRef), presenceKey: row.presenceKey, connectionRef, actorIdentity: ctx.sender};
+    const heldClaim = findLiteralTuple(ctx.db.fieldPresenceConnection, 'claimKey', claim.claimKey,
+      'presenceKey', row.presenceKey, { presenceKey: row.presenceKey, connectionRef });
+    if (heldClaim && !ctx.sender.isEqual(heldClaim.actorIdentity)) fail('Presence connection claim belongs to another native actor');
+    publishTupleRow(ctx.db.fieldPresenceConnection, 'claimKey', heldClaim, claim);
   }
 );
 
@@ -2917,9 +3134,9 @@ export const leave_field = spacetimedb.reducer(
   { fieldRef: t.string(), participantRef: t.string() },
   (ctx, args) => {
     requireParticipantAuthority(ctx, args.fieldRef, args.participantRef, ['observer', 'contact', 'contributor']);
-    const presence = ctx.db.fieldPresence.presenceKey.find(presenceKey(args.fieldRef, args.participantRef));
+    const presence = participantPresenceRow(ctx, args.fieldRef, args.participantRef);
     if (presence) ctx.db.fieldPresence.presenceKey.delete(presence.presenceKey);
-    for (const claim of ctx.db.fieldPresenceConnection.presenceKey.filter(presenceKey(args.fieldRef, args.participantRef))) {
+    for (const claim of ctx.db.fieldPresenceConnection.presenceKey.filter(presence?.presenceKey ?? presenceKey(args.fieldRef, args.participantRef))) {
       ctx.db.fieldPresenceConnection.claimKey.delete(claim.claimKey);
     }
     for (const follow of ctx.db.stageFollower.followerParticipantRef.filter(args.participantRef)) {
@@ -2953,7 +3170,7 @@ export const client_disconnected = spacetimedb.clientDisconnected((ctx) => {
 const ACTIVITY_STATE_PATTERN = /^[a-z][a-z0-9_-]{0,63}$/;
 
 function activityKey(fieldRef: string, activityRef: string): string {
-  return `${fieldRef}|${activityRef}`;
+  return tupleKey(fieldRef, activityRef);
 }
 
 function callerConnection(ctx: any): string {
@@ -2962,13 +3179,8 @@ function callerConnection(ctx: any): string {
 
 function activityProducerStillAuthorised(ctx: any, row: any): boolean {
   if (row.producerParticipantRef === '') return false;
-  const key = authorityKey(row.fieldRef, row.producerParticipantRef);
-  for (const grant of ctx.db.fieldAuthority.actorIdentity.filter(row.producerIdentity)) {
-    if (grant.authorityKey !== key || grant.revoked) continue;
-    if (grant.expiresAtMicros !== 0n && nowMicros(ctx) >= grant.expiresAtMicros) continue;
-    if (grant.role === 'contributor' || grant.role === 'admitter') return true;
-  }
-  return false;
+  const grant = persistentAuthorityForRead(ctx, row.fieldRef, row.producerParticipantRef, row.producerIdentity);
+  return Boolean(grant && (grant.role === 'contributor' || grant.role === 'admitter'));
 }
 
 /* Only the field owner, or a caller bound to a live contributor/admitter
@@ -3000,7 +3212,7 @@ export const put_activity_liveness = spacetimedb.reducer(
     }
     const now = nowMicros(ctx);
     const key = activityKey(args.fieldRef, args.activityRef);
-    const existing = ctx.db.activityLivenessBacking.activityKey.find(key);
+    const existing = activityLivenessRow(ctx, args.fieldRef, args.activityRef);
     if (existing) {
       // A non-owner may only continue its own account: the producing
       // identity, or the same Participant it is bound to (authority checked
@@ -3029,8 +3241,7 @@ export const put_activity_liveness = spacetimedb.reducer(
       observedAtMicros: changed ? now : existing.observedAtMicros,
       heartbeatAtMicros: now,
     };
-    if (existing) ctx.db.activityLivenessBacking.activityKey.update(row);
-    else ctx.db.activityLivenessBacking.insert(row);
+    publishTupleRow(ctx.db.activityLivenessBacking, 'activityKey', existing, row);
   }
 );
 
@@ -3039,7 +3250,7 @@ export const put_activity_liveness = spacetimedb.reducer(
 export const clear_activity_liveness = spacetimedb.reducer(
   { fieldRef: t.string(), activityRef: t.string() },
   (ctx, args) => {
-    const existing = ctx.db.activityLivenessBacking.activityKey.find(activityKey(args.fieldRef, args.activityRef));
+    const existing = activityLivenessRow(ctx, args.fieldRef, args.activityRef);
     if (!existing) return;
     if (!ctx.sender.isEqual(existing.producerIdentity) && !isFieldOwner(ctx, args.fieldRef)) {
       fail('Only the producing identity or the field owner may clear activity liveness');
@@ -3089,11 +3300,11 @@ export const open_shared_stage = spacetimedb.reducer(
 export const advance_shared_stage = spacetimedb.reducer(
   { fieldRef: t.string(), stageRef: t.string(), actorParticipantRef: t.string(), expectedRevision: t.u64(), contractJson: t.string() },
   (ctx, args) => {
+    requireParticipantInField(ctx, args.actorParticipantRef, args.fieldRef);
+    requireParticipantAuthority(ctx, args.fieldRef, args.actorParticipantRef, ['contributor']);
     const stage = ctx.db.sharedStageBacking.stageRef.find(args.stageRef);
     if (!stage || stage.fieldRef !== args.fieldRef) fail(`Unknown Shared Stage ${args.stageRef} in SharedField ${args.fieldRef}`);
     if (stage.state !== 'open') fail(`Shared Stage ${args.stageRef} is ${stage.state}`);
-    requireParticipantInField(ctx, args.actorParticipantRef, args.fieldRef);
-    requireParticipantAuthority(ctx, args.fieldRef, args.actorParticipantRef, ['contributor']);
     if (stage.revision !== args.expectedRevision) {
       fail(`Shared Stage moved on: stage is at revision ${stage.revision}, writer expected ${args.expectedRevision}`);
     }
@@ -3119,15 +3330,27 @@ export const advance_shared_stage = spacetimedb.reducer(
 
 /* Closing stops the stage: the View drops it, follower relations end, and
  * every participant keeps their own local view and field membership. The
- * current presenter or the field owner may close. */
+ * bound current presenter or the field owner may close. An owner without a
+ * bound Participant is attributed by the existing empty owner sentinel,
+ * never by another Participant's name. */
 export const close_shared_stage = spacetimedb.reducer(
   { fieldRef: t.string(), stageRef: t.string(), actorParticipantRef: t.string(), expectedRevision: t.u64(), contractJson: t.string() },
   (ctx, args) => {
+    const owner = isFieldOwner(ctx, args.fieldRef);
+    if (args.actorParticipantRef !== '') requireParticipantInField(ctx, args.actorParticipantRef, args.fieldRef);
+    let closingParticipantRef = '';
+    if (owner) {
+      if (args.actorParticipantRef !== '' && callerIsLiveParticipant(ctx, args.fieldRef, args.actorParticipantRef)) {
+        closingParticipantRef = args.actorParticipantRef;
+      }
+    } else {
+      requireParticipantAuthority(ctx, args.fieldRef, args.actorParticipantRef, ['contributor']);
+      closingParticipantRef = args.actorParticipantRef;
+    }
     const stage = ctx.db.sharedStageBacking.stageRef.find(args.stageRef);
     if (!stage || stage.fieldRef !== args.fieldRef) fail(`Unknown Shared Stage ${args.stageRef} in SharedField ${args.fieldRef}`);
     if (stage.state !== 'open') fail(`Shared Stage ${args.stageRef} is already ${stage.state}`);
-    if (args.actorParticipantRef !== stage.presenterRef) requireFieldOwner(ctx, args.fieldRef);
-    requireParticipantInField(ctx, args.actorParticipantRef, args.fieldRef);
+    if (!owner && closingParticipantRef !== stage.presenterRef) fail('Only the bound presenter or the field owner may close a Shared Stage');
     if (stage.revision !== args.expectedRevision) {
       fail(`Shared Stage moved on: stage is at revision ${stage.revision}, closer expected ${args.expectedRevision}`);
     }
@@ -3145,7 +3368,7 @@ export const close_shared_stage = spacetimedb.reducer(
       state: 'closed',
       contractJson: args.contractJson,
       updatedAtMicros: nowMicros(ctx),
-      updatedByParticipantRef: args.actorParticipantRef,
+      updatedByParticipantRef: closingParticipantRef,
     });
     for (const follow of ctx.db.stageFollower.stageRef.filter(args.stageRef)) {
       ctx.db.stageFollower.followKey.delete(follow.followKey);
@@ -3159,11 +3382,11 @@ export const close_shared_stage = spacetimedb.reducer(
 export const follow_shared_stage = spacetimedb.reducer(
   { fieldRef: t.string(), stageRef: t.string(), followerParticipantRef: t.string() },
   (ctx, args) => {
+    requireParticipantInField(ctx, args.followerParticipantRef, args.fieldRef);
+    requireParticipantAuthority(ctx, args.fieldRef, args.followerParticipantRef, ['observer', 'contact', 'contributor']);
     const stage = ctx.db.sharedStageBacking.stageRef.find(args.stageRef);
     if (!stage || stage.fieldRef !== args.fieldRef) fail(`Unknown Shared Stage ${args.stageRef} in SharedField ${args.fieldRef}`);
     if (stage.state !== 'open') fail(`Shared Stage ${args.stageRef} is ${stage.state}; there is no open stage to follow`);
-    requireParticipantInField(ctx, args.followerParticipantRef, args.fieldRef);
-    requireParticipantAuthority(ctx, args.fieldRef, args.followerParticipantRef, ['observer', 'contact', 'contributor']);
     const now = nowMicros(ctx);
     const row = {
       followKey: followKey(args.stageRef, args.followerParticipantRef),
@@ -3174,9 +3397,8 @@ export const follow_shared_stage = spacetimedb.reducer(
       followedAtRevision: stage.revision,
       followedAtMicros: now,
     };
-    const existing = ctx.db.stageFollower.followKey.find(row.followKey);
-    if (existing) ctx.db.stageFollower.followKey.update(row);
-    else ctx.db.stageFollower.insert(row);
+    const existing = participantFollowRow(ctx, args.fieldRef, args.stageRef, args.followerParticipantRef);
+    publishTupleRow(ctx.db.stageFollower, 'followKey', existing, row);
   }
 );
 
@@ -3186,8 +3408,8 @@ export const unfollow_shared_stage = spacetimedb.reducer(
   { fieldRef: t.string(), stageRef: t.string(), followerParticipantRef: t.string() },
   (ctx, args) => {
     requireParticipantAuthority(ctx, args.fieldRef, args.followerParticipantRef, ['observer', 'contact', 'contributor']);
-    const key = followKey(args.stageRef, args.followerParticipantRef);
-    if (ctx.db.stageFollower.followKey.find(key)) ctx.db.stageFollower.followKey.delete(key);
+    const existing = participantFollowRow(ctx, args.fieldRef, args.stageRef, args.followerParticipantRef);
+    if (existing) ctx.db.stageFollower.followKey.delete(existing.followKey);
   }
 );
 

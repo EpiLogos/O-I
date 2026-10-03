@@ -32,6 +32,34 @@ struct Record {
     act: Act,
 }
 
+const RECORD_BOUND: &str =
+    "Act record exceeds its 4 MiB bound; retain this Act and continue in a successor Act";
+
+/// Serialization borrows the native Act and enforces the wire bound while
+/// writing. A refused record never allocates an unbounded complete encoding.
+#[derive(Serialize)]
+struct BorrowedRecord<'a> {
+    schema: &'static str,
+    act: &'a Act,
+}
+struct RecordBytes {
+    bytes: Vec<u8>,
+    exceeded: bool,
+}
+impl Write for RecordBytes {
+    fn write(&mut self, input: &[u8]) -> std::io::Result<usize> {
+        if input.len() > MAX_RECORD_BYTES as usize - self.bytes.len() {
+            self.exceeded = true;
+            return Err(std::io::Error::other(RECORD_BOUND));
+        }
+        self.bytes.extend_from_slice(input);
+        Ok(input.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 /// The CAS outcome of a write.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Written {
@@ -49,15 +77,25 @@ pub struct ActStore {
 
 impl ActStore {
     pub(crate) fn encoded_record(act: &Act) -> Result<Vec<u8>, String> {
-        let bytes = serde_json::to_vec_pretty(&Record {
-            schema: SCHEMA.into(),
-            act: act.clone(),
-        })
-        .map_err(|e| e.to_string())?;
-        if bytes.len() as u64 > MAX_RECORD_BYTES {
-            return Err("Act record exceeds its 4 MiB bound; retain this Act and continue in a successor Act".into());
-        }
-        Ok(bytes)
+        let mut output = RecordBytes {
+            bytes: Vec::new(),
+            exceeded: false,
+        };
+        serde_json::to_writer_pretty(
+            &mut output,
+            &BorrowedRecord {
+                schema: SCHEMA,
+                act,
+            },
+        )
+        .map_err(|error| {
+            if output.exceeded {
+                RECORD_BOUND.to_owned()
+            } else {
+                error.to_string()
+            }
+        })?;
+        Ok(output.bytes)
     }
     /// The store under an explicit O:I home (`<home>/desktop/expression-acts`).
     pub fn at_home(home: &Path) -> Self {

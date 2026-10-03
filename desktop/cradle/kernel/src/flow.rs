@@ -9,10 +9,9 @@
 //! directly and never mints its own refs. A refusal is returned, never
 //! retried around.
 //!
-//! The conflict heuristic is the ported one: **revisions are compared,
-//! never conflict prose.** On a write error the kernel re-reads the source
-//! and settles whether the failure was a revision move; the structured
-//! `SourceWriteFailure` is built from the two observed revisions.
+//! On a valid native refusal the existing conflict heuristic compares
+//! revisions, never conflict prose. Lost mutation receipts stay unknown;
+//! current bytes cannot establish whether our original operation completed.
 //!
 //! Unavailable ≠ error: a `ctrl` executable that cannot be launched is an
 //! honest `Unavailable` observation the caller degrades locally — never a
@@ -38,16 +37,90 @@ pub enum OwnerCallError {
     /// The owner executable could not be launched. Absence, not an error.
     Unavailable { detail: String },
     /// The owner answered, and the answer was no.
-    Refused { message: String },
+    Refused {
+        message: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        native: Option<Value>,
+    },
     /// The owner answered something the contract cannot parse.
     Malformed { detail: String },
+    /// The launched operation may have acted; loss of its receipt is not refusal.
+    OutcomeUnknown {
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
+    },
+    /// A contracted read failed physically after launch. It is not owner absence.
+    TransportFailed {
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+    },
+}
+
+/// Caller-owned classification of effects, never permission to perform them.
+/// Generic native commands remain conservative; only a closed owner contract
+/// permits ReadOnly. No command-name suffix is used to infer this distinction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Effect {
+    ReadOnly,
+    MayMutate,
+}
+impl Effect {
+    pub(crate) fn lost_response(
+        self,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
+    ) -> OwnerCallError {
+        match self {
+            Self::MayMutate => OwnerCallError::OutcomeUnknown {
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            },
+            Self::ReadOnly => OwnerCallError::Malformed { detail },
+        }
+    }
+    pub(crate) fn physical_failure(self, error: crate::native_process::Failure) -> OwnerCallError {
+        if !error.launched {
+            return if error.kind == crate::native_process::FailureKind::Launch {
+                OwnerCallError::Unavailable {
+                    detail: error.detail,
+                }
+            } else {
+                OwnerCallError::Malformed {
+                    detail: error.detail,
+                }
+            };
+        }
+        match self {
+            Self::MayMutate => OwnerCallError::OutcomeUnknown {
+                detail: error.detail,
+                child_pid: error.child_pid,
+                cleanup: error.cleanup,
+                native: None,
+            },
+            Self::ReadOnly => OwnerCallError::TransportFailed {
+                detail: error.detail,
+                child_pid: error.child_pid,
+                cleanup: error.cleanup,
+            },
+        }
+    }
 }
 
 impl OwnerCallError {
     pub fn detail(&self) -> String {
         match self {
-            Self::Unavailable { detail } | Self::Malformed { detail } => detail.clone(),
-            Self::Refused { message } => message.clone(),
+            Self::Unavailable { detail }
+            | Self::Malformed { detail }
+            | Self::OutcomeUnknown { detail, .. }
+            | Self::TransportFailed { detail, .. } => detail.clone(),
+            Self::Refused { message, .. } => message.clone(),
         }
     }
 }
@@ -56,15 +129,17 @@ impl std::fmt::Display for OwnerCallError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Unavailable { detail } => {
-                write!(formatter, "Central owner CLI unavailable: {detail}")
+                write!(formatter, "Native owner CLI unavailable: {detail}")
             }
-            Self::Refused { message } => {
-                write!(formatter, "Central owner Action refused: {message}")
+            Self::Refused { message, .. } => {
+                write!(formatter, "Native owner Action refused: {message}")
             }
             Self::Malformed { detail } => write!(
                 formatter,
-                "Central owner Action returned an unparseable answer: {detail}"
+                "Native owner Action returned an incompatible answer: {detail}"
             ),
+            Self::OutcomeUnknown { detail, cleanup, .. } => write!(formatter, "Native owner outcome unknown: {detail}; {}; inspect the original native operation before any retry", cleanup.as_deref().unwrap_or("receipt unavailable")),
+            Self::TransportFailed { detail, cleanup, .. } => write!(formatter, "Native owner read transport failed: {detail}; {}", cleanup.as_deref().unwrap_or("no cleanup observation")),
         }
     }
 }
@@ -272,12 +347,23 @@ impl CentralClient {
     }
 
     /// Run one owner Action, ported envelope law: `--json` global flag,
-    /// optional `--root`, `action run <action> <input-json>`; `ok` must be
-    /// true; the `data` payload is returned. Spawn failures are
-    /// `Unavailable`; `ok:false` is `Refused` with the owner's message.
-    /// Preserve native failure status/code for Central-facing readers. Existing
-    /// callers still use `run`, which returns the same refusal as before.
-    pub fn run_envelope(&self, action: &str, mut input: Value) -> Result<Value, OwnerCallError> {
+    /// optional `--root`, `action run <action> <input-json>`. Generic calls
+    /// conservatively may mutate; closed read callers use run_envelope_read.
+    /// Native status/code/details and explicit uncertainty survive decoding.
+    pub fn run_envelope(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
+        self.run_envelope_effect(action, input, Effect::MayMutate)
+    }
+
+    pub fn run_envelope_read(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
+        self.run_envelope_effect(action, input, Effect::ReadOnly)
+    }
+
+    fn run_envelope_effect(
+        &self,
+        action: &str,
+        mut input: Value,
+        effect: Effect,
+    ) -> Result<Value, OwnerCallError> {
         if let Some(object) = input.as_object_mut() {
             // An absent project takes the configured co-reference; an explicit
             // null names the Central root register and is carried as absence,
@@ -317,84 +403,131 @@ impl CentralClient {
         command.args(["action", "run", action]);
         // Original forms and large native edits exceed OS argv limits. The
         // explicit native stdin transport retains the same owner validation.
-        let output = if encoded.len() > 64 * 1024 {
-            use std::io::Write;
-            use std::process::Stdio;
-            let mut child = command
-                .arg("-")
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .spawn()
-                .map_err(|error| OwnerCallError::Unavailable {
-                    detail: format!("launch {} for {action}: {error}", self.executable.display()),
-                })?;
-            let mut stdin = child.stdin.take().expect("piped stdin");
-            let writer = std::thread::spawn(move || stdin.write_all(&encoded));
-            let output = child
-                .wait_with_output()
-                .map_err(|error| OwnerCallError::Unavailable {
-                    detail: format!("wait for {action}: {error}"),
-                })?;
-            let written = writer.join().map_err(|_| OwnerCallError::Malformed {
-                detail: "Central input writer failed".into(),
-            })?;
-            if output.status.success() {
-                written.map_err(|error| OwnerCallError::Malformed {
-                    detail: format!("incomplete {action} input: {error}"),
-                })?;
-            }
-            output
+        let stdin = if encoded.len() > 64 * 1024 {
+            command.arg("-");
+            Some(encoded.as_slice())
         } else {
-            command
-                .arg(String::from_utf8(encoded).expect("JSON is UTF-8"))
-                .output()
-                .map_err(|error| OwnerCallError::Unavailable {
-                    detail: format!("launch {} for {action}: {error}", self.executable.display()),
-                })?
+            command.arg(String::from_utf8(encoded.clone()).expect("JSON is UTF-8"));
+            None
         };
-        let stdout =
-            String::from_utf8(output.stdout).map_err(|error| OwnerCallError::Malformed {
-                detail: format!("{action} returned non-UTF8 output: {error}"),
-            })?;
-        let value: Value =
-            serde_json::from_str(stdout.trim()).map_err(|error| OwnerCallError::Malformed {
-                detail: format!("{action} returned invalid structured output: {error}"),
-            })?;
-        if !value.is_object() || value.get("ok").and_then(Value::as_bool).is_none() {
-            return Err(OwnerCallError::Malformed {
-                detail: format!("{action} returned no native ActionResult"),
-            });
+        let output = crate::native_process::run(
+            command,
+            stdin,
+            crate::native_process::Limits {
+                timeout: std::time::Duration::from_secs(if effect == Effect::ReadOnly {
+                    20
+                } else {
+                    300
+                }),
+                stdout_bytes: 32 * 1024 * 1024,
+                stderr_bytes: 64 * 1024,
+            },
+        )
+        .map_err(|error| effect.physical_failure(error))?;
+        let lost =
+            |detail: String| effect.lost_response(format!("{action}: {detail}"), None, None, None);
+        let value: Value = serde_json::from_slice(&output.stdout).map_err(|error| {
+            lost(format!(
+                "invalid structured output ({error}; status {}): {}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr)
+            ))
+        })?;
+        let lost = |detail: String| {
+            effect.lost_response(
+                format!("{action}: {detail}"),
+                None,
+                None,
+                Some(value.clone()),
+            )
+        };
+        if !value.is_object()
+            || value["ok"].as_bool().is_none()
+            || !matches!(
+                value["status"].as_str(),
+                Some(
+                    "success"
+                        | "cancelled"
+                        | "invalid_input"
+                        | "invalid_central_structure"
+                        | "unavailable_capability"
+                        | "connector_failure"
+                        | "partial_completion"
+                        | "verification_failure"
+                        | "internal_failure"
+                )
+            )
+        {
+            return Err(lost("no native ActionResult".into()));
         }
-        if !output.status.success() && value["ok"] == true {
-            return Err(OwnerCallError::Malformed {
-                detail: format!(
-                    "{action} returned success JSON with process status {}",
+        if value["ok"] == true {
+            if !output.status.success() || value["status"] != "success" {
+                return Err(lost(format!(
+                    "contradictory native success/status {}",
                     output.status
-                ),
-            });
+                )));
+            }
+            if value.get("data").is_none() {
+                return Err(lost("success without native data".into()));
+            }
+        } else {
+            if value["status"] == "success"
+                || !value["error"]["message"].is_string()
+                || !value["error"]["code"].is_string()
+            {
+                return Err(lost("incompatible native failure".into()));
+            }
+            // This explicit marker belongs to the native publication owner;
+            // it outranks the observer's expected effect classification.
+            if value["error"]["code"] == "central.publication_uncertain" {
+                return Err(OwnerCallError::OutcomeUnknown {
+                    detail: value["error"]["message"].as_str().unwrap().into(),
+                    child_pid: None,
+                    cleanup: None,
+                    native: Some(value),
+                });
+            }
+            // Central's current native IO envelope has no effect marker.
+            // Its generic internal/partial failures do not prove a mutation
+            // absent. Keep the complete native code/details, never mine prose.
+            if effect == Effect::MayMutate
+                && (value["status"] == "internal_failure"
+                    || value["status"] == "partial_completion"
+                    || value["status"] == "connector_failure")
+            {
+                return Err(OwnerCallError::OutcomeUnknown {
+                    detail: value["error"]["message"].as_str().unwrap().into(),
+                    child_pid: None,
+                    cleanup: None,
+                    native: Some(value),
+                });
+            }
         }
         Ok(value)
     }
 
     pub fn run(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
-        let value = self.run_envelope(action, input)?;
+        self.run_effect(action, input, Effect::MayMutate)
+    }
+
+    pub fn run_read(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
+        self.run_effect(action, input, Effect::ReadOnly)
+    }
+
+    fn run_effect(
+        &self,
+        action: &str,
+        input: Value,
+        effect: Effect,
+    ) -> Result<Value, OwnerCallError> {
+        let value = self.run_envelope_effect(action, input, effect)?;
         if value["ok"] != true {
             return Err(OwnerCallError::Refused {
-                message: value
-                    .pointer("/error/message")
-                    .and_then(Value::as_str)
-                    .or_else(|| value.get("message").and_then(Value::as_str))
-                    .unwrap_or("Central owner Action failed")
-                    .to_owned(),
+                message: value["error"]["message"].as_str().unwrap().into(),
+                native: Some(value),
             });
         }
-        value
-            .get("data")
-            .cloned()
-            .ok_or_else(|| OwnerCallError::Malformed {
-                detail: format!("{action} returned success without native data"),
-            })
+        Ok(value["data"].clone())
     }
 
     // -----------------------------------------------------------------------
@@ -565,7 +698,15 @@ impl CentralClient {
                 "central.document.mutate"
             }
         };
-        self.run(action, Value::Object(input))
+        let effect = if matches!(
+            request,
+            ReceivingRequest::List { .. } | ReceivingRequest::Read { .. }
+        ) {
+            Effect::ReadOnly
+        } else {
+            Effect::MayMutate
+        };
+        self.run_effect(action, Value::Object(input), effect)
     }
 
     // -----------------------------------------------------------------------
@@ -598,7 +739,7 @@ impl CentralClient {
                 "central.now.read"
             }
         };
-        self.run(action, Value::Object(input))
+        self.run_read(action, Value::Object(input))
     }
 
     // -----------------------------------------------------------------------
@@ -615,35 +756,39 @@ impl CentralClient {
         project: Option<&str>,
         source_ref: &str,
     ) -> Result<SourceReading, OwnerCallError> {
-        let data = self.run(
+        let envelope = self.run_envelope(
             "projectcentral.source.read",
             json!({ "project": project, "source_ref": source_ref }),
         )?;
-        let reading: SourceReading =
-            serde_json::from_value(data).map_err(|error| OwnerCallError::Malformed {
-                detail: format!("decode Central source reading: {error}"),
-            })?;
-        if reading.source.source_ref != source_ref
-            || (project.is_none() && reading.world_ref != "control:root")
-        {
-            return Err(OwnerCallError::Malformed {
-                detail: "Central redirected the requested source/scope".into(),
-            });
-        }
-        if reading.schema != SOURCE_READING_SCHEMA {
-            return Err(OwnerCallError::Malformed {
-                detail: format!(
-                    "unsupported Central source reading schema `{}`",
-                    reading.schema
-                ),
-            });
-        }
-        if reading.automatic_agent_or_model_invocation {
-            return Err(OwnerCallError::Malformed {
-                detail: "Central source read violated zero-background-Agent law".to_owned(),
-            });
-        }
-        Ok(reading)
+        // The native LocallyMutating descriptor permits derived horizon
+        // reconciliation. This grants no authored-source write authority.
+        decode_mutation_owner(
+            "projectcentral.source.read",
+            envelope,
+            |reading: &SourceReading| {
+                if reading.source.source_ref != source_ref
+                    || (project.is_none() && reading.world_ref != "control:root")
+                {
+                    return Err(OwnerCallError::Malformed {
+                        detail: "Central redirected the requested source/scope".into(),
+                    });
+                }
+                if reading.schema != SOURCE_READING_SCHEMA {
+                    return Err(OwnerCallError::Malformed {
+                        detail: format!(
+                            "unsupported Central source reading schema `{}`",
+                            reading.schema
+                        ),
+                    });
+                }
+                if reading.automatic_agent_or_model_invocation {
+                    return Err(OwnerCallError::Malformed {
+                        detail: "Central source read violated zero-background-Agent law".to_owned(),
+                    });
+                }
+                Ok(())
+            },
+        )
     }
 
     /// Write one source through `projectcentral.source.write`: Central's
@@ -673,20 +818,29 @@ impl CentralClient {
         )?;
         let receipt: SourceWriteReceipt =
             serde_json::from_value(data.get("receipt").cloned().unwrap_or_else(|| data.clone()))
-                .map_err(|error| OwnerCallError::Malformed {
+                .map_err(|error| OwnerCallError::OutcomeUnknown {
                     detail: format!("decode Central source write receipt: {error}"),
+                    child_pid: None,
+                    cleanup: None,
+                    native: Some(data.clone()),
                 })?;
         if receipt.schema != SOURCE_WRITE_RECEIPT_SCHEMA {
-            return Err(OwnerCallError::Malformed {
+            return Err(OwnerCallError::OutcomeUnknown {
                 detail: format!(
                     "unsupported Central source write receipt schema `{}`",
                     receipt.schema
                 ),
+                child_pid: None,
+                cleanup: None,
+                native: Some(data.clone()),
             });
         }
         if receipt.automatic_agent_or_model_invocation {
-            return Err(OwnerCallError::Malformed {
+            return Err(OwnerCallError::OutcomeUnknown {
                 detail: "Central source write violated zero-background-Agent law".to_owned(),
+                child_pid: None,
+                cleanup: None,
+                native: Some(data.clone()),
             });
         }
         Ok(receipt)
@@ -718,7 +872,7 @@ impl CentralClient {
         evidence_refs: &[String],
         agent_session_ref: &str,
     ) -> Result<SourceReturnReading, OwnerCallError> {
-        let data = self.run(
+        let envelope = self.run_envelope(
             "projectcentral.source.return",
             json!({
                 "project": project,
@@ -730,18 +884,22 @@ impl CentralClient {
                 "agent_session_ref": agent_session_ref,
             }),
         )?;
-        let result: SourceReturnReading = decode_owner("projectcentral.source.return", data)?;
-        ensure_schema(
+        decode_mutation_owner(
             "projectcentral.source.return",
-            &result.schema,
-            FLOW_RETURN_READING_SCHEMA,
-        )?;
-        ensure_schema(
-            "projectcentral.source.return",
-            &result.proposal.schema,
-            FLOW_RETURN_SCHEMA,
-        )?;
-        Ok(result)
+            envelope,
+            |result: &SourceReturnReading| {
+                ensure_schema(
+                    "projectcentral.source.return",
+                    &result.schema,
+                    FLOW_RETURN_READING_SCHEMA,
+                )?;
+                ensure_schema(
+                    "projectcentral.source.return",
+                    &result.proposal.schema,
+                    FLOW_RETURN_SCHEMA,
+                )
+            },
+        )
     }
 
     /// List returned-work proposals through Central's source-return owner.
@@ -751,17 +909,23 @@ impl CentralClient {
         limit: Option<u64>,
         before: Option<&str>,
     ) -> Result<SourceReturns, OwnerCallError> {
-        let data = self.run(
+        let envelope = self.run_envelope(
             "projectcentral.source.returns",
             json!({ "project": project, "limit": limit, "before": before }),
         )?;
-        let result: SourceReturns = decode_owner("projectcentral.source.returns", data)?;
-        ensure_schema(
+        // The native descriptor is LocallyMutating: owner-side recovery and
+        // retained horizon reconciliation may occur during this listing.
+        decode_mutation_owner(
             "projectcentral.source.returns",
-            &result.schema,
-            FLOW_RETURNS_SCHEMA,
-        )?;
-        Ok(result)
+            envelope,
+            |result: &SourceReturns| {
+                ensure_schema(
+                    "projectcentral.source.returns",
+                    &result.schema,
+                    FLOW_RETURNS_SCHEMA,
+                )
+            },
+        )
     }
 
     /// Re-read one proposal and its current source basis.
@@ -770,22 +934,28 @@ impl CentralClient {
         project: &str,
         return_ref: &str,
     ) -> Result<SourceReturnReading, OwnerCallError> {
-        let data = self.run(
+        let envelope = self.run_envelope(
             "projectcentral.source.return_read",
             json!({ "project": project, "return_ref": return_ref }),
         )?;
-        let result: SourceReturnReading = decode_owner("projectcentral.source.return_read", data)?;
-        ensure_schema(
+        // A later owner call can reconcile an interrupted applying proposal;
+        // the source-return contract does not promise a physically pure read.
+        decode_mutation_owner(
             "projectcentral.source.return_read",
-            &result.schema,
-            FLOW_RETURN_READING_SCHEMA,
-        )?;
-        ensure_schema(
-            "projectcentral.source.return_read",
-            &result.proposal.schema,
-            FLOW_RETURN_SCHEMA,
-        )?;
-        Ok(result)
+            envelope,
+            |result: &SourceReturnReading| {
+                ensure_schema(
+                    "projectcentral.source.return_read",
+                    &result.schema,
+                    FLOW_RETURN_READING_SCHEMA,
+                )?;
+                ensure_schema(
+                    "projectcentral.source.return_read",
+                    &result.proposal.schema,
+                    FLOW_RETURN_SCHEMA,
+                )
+            },
+        )
     }
 
     /// Explicitly accept a proposal. Central decides whether the basis still
@@ -798,7 +968,7 @@ impl CentralClient {
         acceptance: &str,
         accepted_by_ref: &str,
     ) -> Result<SourceReturnMutation, OwnerCallError> {
-        let data = self.run(
+        let envelope = self.run_envelope(
             "projectcentral.source.return_accept",
             json!({
                 "project": project,
@@ -808,14 +978,17 @@ impl CentralClient {
                 "accepted_by_ref": accepted_by_ref,
             }),
         )?;
-        let result: SourceReturnMutation =
-            decode_owner("projectcentral.source.return_accept", data)?;
-        ensure_schema(
+        decode_mutation_owner(
             "projectcentral.source.return_accept",
-            &result.proposal.schema,
-            FLOW_RETURN_SCHEMA,
-        )?;
-        Ok(result)
+            envelope,
+            |result: &SourceReturnMutation| {
+                ensure_schema(
+                    "projectcentral.source.return_accept",
+                    &result.proposal.schema,
+                    FLOW_RETURN_SCHEMA,
+                )
+            },
+        )
     }
 
     /// Reject a proposal without touching its source.
@@ -824,23 +997,26 @@ impl CentralClient {
         project: &str,
         return_ref: &str,
     ) -> Result<SourceReturnReading, OwnerCallError> {
-        let data = self.run(
+        let envelope = self.run_envelope(
             "projectcentral.source.return_reject",
             json!({ "project": project, "return_ref": return_ref }),
         )?;
-        let result: SourceReturnReading =
-            decode_owner("projectcentral.source.return_reject", data)?;
-        ensure_schema(
+        decode_mutation_owner(
             "projectcentral.source.return_reject",
-            &result.schema,
-            FLOW_RETURN_READING_SCHEMA,
-        )?;
-        ensure_schema(
-            "projectcentral.source.return_reject",
-            &result.proposal.schema,
-            FLOW_RETURN_SCHEMA,
-        )?;
-        Ok(result)
+            envelope,
+            |result: &SourceReturnReading| {
+                ensure_schema(
+                    "projectcentral.source.return_reject",
+                    &result.schema,
+                    FLOW_RETURN_READING_SCHEMA,
+                )?;
+                ensure_schema(
+                    "projectcentral.source.return_reject",
+                    &result.proposal.schema,
+                    FLOW_RETURN_SCHEMA,
+                )
+            },
+        )
     }
 }
 
@@ -886,6 +1062,31 @@ fn decode_owner<T: for<'de> Deserialize<'de>>(
     decode_value(action, data)
 }
 
+/// A successful mutation envelope may already represent a retained effect.
+/// Keep its exact receipt when decoding or validation cannot establish the
+/// typed result; incompatible observation does not make that effect absent.
+fn decode_mutation_owner<T: for<'de> Deserialize<'de>>(
+    action: &str,
+    envelope: Value,
+    validate: impl FnOnce(&T) -> Result<(), OwnerCallError>,
+) -> Result<T, OwnerCallError> {
+    // run_envelope already checked the native failure contract and explicit
+    // uncertainty. Preserve a genuine refusal without interpreting its prose.
+    if envelope["ok"] != true {
+        return Err(OwnerCallError::Refused {
+            message: envelope["error"]["message"].as_str().unwrap().into(),
+            native: Some(envelope),
+        });
+    }
+    let result = decode_owner(action, envelope["data"].clone()).and_then(|result| {
+        validate(&result)?;
+        Ok(result)
+    });
+    result.map_err(|error| {
+        Effect::MayMutate.lost_response(error.detail(), None, None, Some(envelope))
+    })
+}
+
 // ---------------------------------------------------------------------------
 // Owner contracts (decoded exactly as the owner serves them)
 // ---------------------------------------------------------------------------
@@ -911,13 +1112,15 @@ pub struct SourceBinding {
     #[serde(rename = "ref")]
     pub source_ref: String,
     pub path: String,
-    #[serde(default)]
-    pub exists: bool,
+    // Central's Source binding has no `exists` property. Older O:I cache
+    // records may contain that consumer-invented field; Serde ignores it
+    // on input, and it must never be emitted as an owner fact. Availability
+    // remains the native read/refusal, separately from this source identity.
     #[serde(default)]
     pub provenance: String,
     #[serde(default)]
     pub standing: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub roles: Vec<String>,
     #[serde(default)]
     pub treatment: String,
@@ -1048,9 +1251,29 @@ pub enum SourceWriteFailure {
     },
     /// The owner refused or could not serve for a reason that is not a
     /// revision move. Returned as it stands; never retried around.
-    OwnerRefused { source_ref: String, message: String },
+    OwnerRefused {
+        source_ref: String,
+        message: String,
+        native: Option<Value>,
+    },
+    /// The launched source write has no reliable native receipt. The proposal
+    /// stays dirty; a later current reading cannot prove this caller's success.
+    OutcomeUnknown {
+        source_ref: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
+    },
+    Failed {
+        source_ref: String,
+        detail: String,
+    },
     /// The owner executable is unavailable. Honest absence, not an error.
-    Unavailable { source_ref: String, detail: String },
+    Unavailable {
+        source_ref: String,
+        detail: String,
+    },
 }
 
 impl SourceWriteFailure {
@@ -1059,6 +1282,8 @@ impl SourceWriteFailure {
             Self::RevisionConflict { .. } => "revision-conflict",
             Self::OwnerRefused { .. } => "owner-refused",
             Self::Unavailable { .. } => "unavailable",
+            Self::OutcomeUnknown { .. } => "outcome-unknown",
+            Self::Failed { .. } => "failed",
         }
     }
 
@@ -1066,7 +1291,9 @@ impl SourceWriteFailure {
         match self {
             Self::RevisionConflict { source_ref, .. }
             | Self::OwnerRefused { source_ref, .. }
-            | Self::Unavailable { source_ref, .. } => source_ref,
+            | Self::Unavailable { source_ref, .. }
+            | Self::OutcomeUnknown { source_ref, .. }
+            | Self::Failed { source_ref, .. } => source_ref,
         }
     }
 }
@@ -1084,9 +1311,11 @@ impl std::fmt::Display for SourceWriteFailure {
                  both sides preserved — the buffer stays dirty, the canonical reading is re-readable; \
                  re-read and reconcile explicitly"
             ),
-            Self::OwnerRefused { source_ref, message } => {
+            Self::OwnerRefused { source_ref, message, .. } => {
                 write!(formatter, "owner refused the write for {source_ref}: {message}")
             }
+            Self::OutcomeUnknown { source_ref, detail, .. } => write!(formatter, "source write outcome unknown for {source_ref}: {detail}; proposal stays dirty; inspect the native source and original operation before retry"),
+            Self::Failed { source_ref, detail } => write!(formatter, "source write failed for {source_ref}: {detail}"),
             Self::Unavailable { source_ref, detail } => {
                 write!(formatter, "owner unavailable for {source_ref}: {detail}")
             }

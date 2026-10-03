@@ -121,11 +121,11 @@ export const EVENT_INVENTORY: readonly InventoryEntry[] = [
   {id: "attempt.leg-hold", family: "continuation", source: "factory-attempt", event: "request-cancellation | accept-cancellation | record-process-termination | mark-quiescent | incorporate-late-result (legs[unit].statusHistory)",
     identity: ["legs[unit]", "legs[unit].statusHistory[i]"], payload: ["legs[unit].status", "legs[unit].lateArtifacts"],
     yields: [{op: "act_select", state: "idle"}, {op: "act_text", role: "caption"}], roles: {self: "the leg's current attempt agent", caption: "status words"}, native: true},
-  {id: "attempt.receiving", family: "completion", source: "factory-attempt", event: "attach-receiving",
+  {id: "attempt.receiving", family: "continuation", source: "factory-attempt", event: "attach-receiving",
     identity: [`${A}.attemptRef`, `${A}.readableReturn.receivingRef`], payload: [`${A}.readableReturn.receivingSourceRevision`],
-    yields: [{op: "act_select", scene: "completion"}], roles: {lead: "participant agent", resultText: "readableReturn.summary"}, native: true},
-  {id: "attempt.run-complete", family: "completion", source: "factory-attempt", event: "every leg returned (legs[*].status = returned)",
-    identity: ["runRef"], payload: ["legs[*].status", "attempts[].readableReturn.summary"],
+    yields: [{op: "act_select", scene: "continuation"}], roles: {self: "participant agent", goal: "workflowUnitRef", caption: "Return received; whole Run remains owned by Factory"}, native: true},
+  {id: "attempt.run-complete", family: "completion", source: "factory-attempt", event: "native admitted closure and wholeRunState complete over every required current Return",
+    identity: ["runRef"], payload: ["completionVerified", "wholeRunState", "lifecycle", "requiredUnits", "currentReturnedUnits", "attempts[].readableReturn.summary"],
     yields: [{op: "act_select", scene: "completion"}], roles: {participants: "every cast member", resultText: "the last readable Return summary"}, native: true},
   // ── factory-telemetry ──────────────────────────────────────────────────
   {id: "telemetry.correlation", family: "activity", source: "factory-telemetry", event: "execution-correlation",
@@ -178,6 +178,10 @@ export const EVENT_INVENTORY: readonly InventoryEntry[] = [
     identity: ["agent_session", "connection_generation", "Signal.sequence = TurnEnded.last_sequence"], payload: ["Signal.kind.stop_reason", "Signal.kind.reason", "TurnEnded.stop"],
     yields: [{op: "act_select", state: "idle"}], roles: {self: "the session's agent"}, native: true,
     note: "A provider `completed` and the TurnEnded that follows it are one occurrence (the turn), never two."},
+  {id: "encounter.failure", family: "activity", source: "aikit-encounter", event: "provider Signal failed | TurnEnded.stop.Failed",
+    identity: ["agent_session", "connection_generation", "Signal.sequence = TurnEnded.last_sequence"], payload: ["Signal.kind.reason", "TurnEnded.stop.Failed.reason"],
+    yields: [{op: "act_text", role: "progressText"}], roles: {progressText: "readable failed-turn status; exact failure remains in the addressed native session journal"}, native: true,
+    note: "A failed turn retires its activity inscription. It does not create returned work or complete the undertaking."},
   // ── harness-stream (not native) ───────────────────────────────────────
   {id: "harness.skill", family: "skill-invocation", source: "harness-stream", event: "claude stream-json assistant tool_use name=Skill",
     identity: ["session_id", "message.content[].id"], payload: ["message.content[].input.skill"],
@@ -291,16 +295,16 @@ export interface LiveReadings {
 }
 
 /** The Run's time span from its attempt reading: from the first attempt's
- * admission (less a minute) to, when every leg returned, the last recorded
- * return/verification/failure (plus ten minutes); open-ended while running. */
+ * admission (less a minute) to, only after a native terminal lifecycle, the
+ * last recorded return/verification/failure (plus ten minutes). A missing leg
+ * or failed attempt does not close the ongoing undertaking's time span. */
 export function runWindow(attempts: unknown): {from?: number; to?: number} | undefined {
   const reading = attemptReading(attempts);
   if (!reading?.attempts?.length) return undefined;
   const times = (values: (string | undefined)[]) => values.map(ms).filter((value): value is number => value !== undefined);
   const starts = times(reading.attempts.map(attempt => attempt.attemptRecordedAt));
   const ends = times(reading.attempts.flatMap(attempt => [attempt.returnRecordedAt, attempt.failureRecordedAt, ...Object.values(attempt.verificationRecordedAt ?? {})]));
-  const legs = Object.values(reading.legs ?? {});
-  const done = legs.length > 0 && legs.every(leg => leg.status === "returned" || leg.status === "failed");
+  const done = ownerRunComplete(reading) || reading.lifecycle === "aborted";
   return {...(starts.length ? {from: Math.min(...starts) - 60_000} : {}), ...(done && ends.length ? {to: Math.max(...ends) + 600_000} : {})};
 }
 const within = (window: LiveReadings["window"], at: number | undefined) => at === undefined || !window || ((window.from === undefined || at >= window.from) && (window.to === undefined || at <= window.to));
@@ -316,7 +320,7 @@ export interface LiveJournals {
 /** What was already performed (op keys) and where each follow stands. */
 /** A journal's open state across passes: a chunk run not yet closed (its
  * originating cursor and text so far) and whether the turn already ended. */
-export interface SessionCursor {run?: {kind: "reply" | "thought"; first: number; text: string}; turnClosed?: boolean}
+export interface SessionCursor {run?: {kind: "reply" | "thought"; first: number; text: string; at?: number}; turnClosed?: boolean}
 export interface CursorState {
   performed: string[];
   sessions?: Record<string, SessionCursor>;
@@ -349,10 +353,31 @@ interface AttemptRecord {
   readableReturn?: {returnRef?: string; summary?: string; artifactRefs?: string[]; evidenceRefs?: string[]; receivingRef?: string | null} | null;
   returnRecordedAt?: string;
 }
-interface AttemptReadingShape {contract?: string; revision?: number; runRef?: string; attempts?: AttemptRecord[]; legs?: Record<string, {status?: string; statusHistory?: string[]; failureReason?: string | null; artifacts?: Obj[]; attempts?: Obj[]}>; independentReviewers?: Record<string, Obj>; syntheses?: Record<string, Obj>}
+interface AttemptReadingShape {contract?: string; revision?: number; runRef?: string; lifecycle?: string; completionVerified?: boolean; wholeRunState?: "incomplete" | "complete" | "failed"; requiredUnits?: string[]; currentReturnedUnits?: string[]; attempts?: AttemptRecord[]; legs?: Record<string, {status?: string; statusHistory?: string[]; failureReason?: string | null; artifacts?: Obj[]; attempts?: Obj[]}>; independentReviewers?: Record<string, Obj>; syntheses?: Record<string, Obj>}
 
 const attemptReading = (value: unknown): AttemptReadingShape | undefined =>
   obj(value) && Array.isArray((value as AttemptReadingShape).attempts) ? value as AttemptReadingShape : undefined;
+
+/** Whole completion is an owner fact. Legacy/partial/mismatched readings stay
+ * incomplete; a view never certifies the set of currently present legs. */
+export function ownerRunComplete(value: unknown): boolean {
+  const reading = attemptReading(value);
+  if (!reading || reading.completionVerified !== true || reading.wholeRunState !== "complete" || !["finished", "archived"].includes(reading.lifecycle ?? "")) return false;
+  const required = reading.requiredUnits;
+  const returned = reading.currentReturnedUnits;
+  if (!Array.isArray(required) || !Array.isArray(returned) || !required.length
+    || !required.every(unit => typeof unit === "string" && unit.length > 0)
+    || !returned.every(unit => typeof unit === "string" && unit.length > 0)) return false;
+  const requiredSet = new Set(required);
+  const returnedSet = new Set(returned);
+  return requiredSet.size === required.length && returnedSet.size === returned.length
+    && requiredSet.size === returnedSet.size && required.every(unit => returnedSet.has(unit));
+}
+
+const readingForRun = (readings: LiveReadings): AttemptReadingShape | undefined => {
+  const reading = attemptReading(readings.attempts);
+  return reading?.runRef === readings.runRef ? reading : undefined;
+};
 
 function populationPositions(value: unknown): Obj[] {
   const reading = obj(value) && obj((value as Obj).data) ? (value as Obj).data : value;
@@ -390,7 +415,7 @@ export function castOf(readings: LiveReadings): CastMember[] {
     for (const ref of fields.attempt_refs ?? []) if (!member.attempt_refs.includes(ref)) member.attempt_refs.push(ref);
     return member;
   };
-  const attempts = [...(attemptReading(readings.attempts)?.attempts ?? [])]
+  const attempts = [...(readingForRun(readings)?.attempts ?? [])]
     .sort((a, b) => (ms(a.attemptRecordedAt) ?? 0) - (ms(b.attemptRecordedAt) ?? 0));
   for (const attempt of attempts) {
     const participant = attempt.disposition?.participant;
@@ -431,6 +456,10 @@ const agentBinding = (member: CastMember | undefined, state?: CharacterState): B
 const personBinding = (ref: string): Binding => ({kind: "agent", agent_ref: ref, label: ref.startsWith("human:") ? "You" : tail(ref) ?? ref});
 const bindings = (entries: Record<string, Binding | undefined>): Record<string, Binding> =>
   Object.fromEntries(Object.entries(entries).filter((entry): entry is [string, Binding] => !!entry[1]));
+const materialBody = (value: string, maxBytes: number) => {
+  if (new TextEncoder().encode(value).byteLength > maxBytes) throw new Error(`Direct reply exceeds the native ${maxBytes}-byte text bound; source cursor remains pending`);
+  return value;
+};
 
 // ---------------------------------------------------------------------------
 // Skill / delegation / tool classification (provider shapes)
@@ -475,7 +504,7 @@ function classifyTool(name: string | undefined, input: Obj | undefined, payload?
 
 const LEG_HOLD: Record<string, string> = {
   cancel_requested: "cancellation requested", cancellation_accepted: "cancelling", process_terminated: "process ended",
-  quiescent: "quiescent", detached: "detached", late_result: "late result incorporated",
+  quiescent: "quiescent", detached: "detached", late_result: "late result retained; not incorporated",
 };
 
 /** Map every event the readings and journals carry to act operations, in
@@ -486,9 +515,24 @@ export function mapEvents(readings: LiveReadings, journals: LiveJournals, cursor
 
 /** The mapping and the journals' carried state (open chunk runs, closed
  * turns) the next pass continues from. */
-export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJournals, cursor: CursorState = emptyCursor()): {ops: ActOp[]; sessions: Record<string, SessionCursor>} {
+/** Explicit native session scope lets the same encounter event grammar perform
+ * Direct activity without creating Factory attempts, roles or Run identity. */
+export interface EncounterScope {
+  cast: readonly CastMember[];
+  humanRefs: Record<string, string>;
+  /** Native text material may carry a bounded complete reply, rather than a
+   * collapsed Factory progress caption. */
+  replyRole?: "progressText" | "resultText";
+  replyChars?: number;
+  /** Keep an exchanged message distinct from the undertaking's artifact. */
+  messageRole?: string;
+  /** The selected shared repertoire may give a native Scene to each phase. */
+  phaseScenes?: Partial<Record<CharacterState, RepertoireScene>>;
+  worldRef?: string;
+}
+export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJournals, cursor: CursorState = emptyCursor(), encounterScope?: EncounterScope, includePerformed = false): {ops: ActOp[]; sessions: Record<string, SessionCursor>} {
   const sessions: Record<string, SessionCursor> = {...(cursor.sessions ?? {})};
-  const cast = castOf(readings);
+  const cast = encounterScope ? [...encounterScope.cast] : castOf(readings);
   const lead = cast[0];
   const byAgent = new Map(cast.map(member => [member.agent_ref, member]));
   const bySession = new Map<string, CastMember>();
@@ -513,7 +557,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
   };
 
   // ── factory-attempt ────────────────────────────────────────────────────
-  const reading = attemptReading(readings.attempts);
+  const reading = readingForRun(readings);
   if (reading) {
     const attempts = [...(reading.attempts ?? [])].sort((a, b) => (ms(a.attemptRecordedAt) ?? 0) - (ms(b.attemptRecordedAt) ?? 0));
     const firstOfUnit = new Map<string, string>();
@@ -569,14 +613,14 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
           bindings: bindings({artifact: artifact ? {kind: "object", subject_ref: artifact, label: tail(artifact)} : unitObject, self: agentBinding(member, "speaking")}),
           basis: basis("attempt.return", attempt.attemptRef, `return:${ret.returnRef}`, ms(attempt.returnRecordedAt), {readable_return: ret})}, ms(attempt.returnRecordedAt));
         if (ret.receivingRef) {
-          emit({operation: "act_select", scene: "completion", bindings: bindings({lead: agentBinding(member, "idle"), goal, resultText: {kind: "text", text: oneLine(ret.summary ?? "", 280)}}),
+          emit({operation: "act_select", scene: "continuation", bindings: bindings({self: agentBinding(member, "idle"), goal: unitObject, caption: {kind: "text", text: "Return received"}}),
             basis: basis("attempt.receiving", attempt.attemptRef, `receiving:${ret.receivingRef}`, undefined, {receiving_ref: ret.receivingRef})});
         }
       }
     }
-    // Legs: status history in order. Returned is the unit's end (the run's
-    // completion when every leg returned); failed is a review outcome; the
-    // rest hold the character.
+    // Legs: status history in order. A returned unit is retained material;
+    // whole Run closure is read independently from its native owner. Failed
+    // attempts and late output remain visible while the undertaking continues.
     const legs = reading.legs ?? {};
     for (const [unit, leg] of Object.entries(legs)) {
       const current = [...attempts].reverse().find(attempt => attempt.workflowUnitRef === unit);
@@ -598,12 +642,11 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         }
       }
     }
-    const legList = Object.values(legs);
-    if (legList.length && legList.every(leg => leg.status === "returned")) {
+    if (ownerRunComplete(reading)) {
       const last = [...attempts].reverse().find(attempt => attempt.readableReturn?.summary);
       emit({operation: "act_select", scene: "completion",
         bindings: bindings({...Object.fromEntries(cast.map(member => [member.role, agentBinding(member, "idle")])), lead: agentBinding(lead, "idle"), goal, resultText: last?.readableReturn?.summary ? {kind: "text", text: oneLine(last.readableReturn.summary, 280)} : undefined}),
-        basis: basis("attempt.run-complete", readings.runRef, "run-complete", undefined, {legs: legList.length, revision: reading.revision ?? 0})});
+        basis: basis("attempt.run-complete", readings.runRef, "run-complete", undefined, {completionVerified: reading.completionVerified, wholeRunState: reading.wholeRunState, lifecycle: reading.lifecycle, requiredUnits: reading.requiredUnits, currentReturnedUnits: reading.currentReturnedUnits, revision: reading.revision ?? 0})});
     }
     for (const [executionRef, reviewer] of Object.entries(reading.independentReviewers ?? {})) {
       const attempt = byExecution.get(executionRef);
@@ -673,17 +716,30 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
   // ── aikit-encounter ───────────────────────────────────────────────────
   for (const [session, events] of Object.entries(journals.encounter ?? {})) {
     const member = bySession.get(session);
+    if (encounterScope && (!member || !journals.bounds?.[session] || !encounterScope.humanRefs[session])) {
+      throw new Error('Direct journal requires its admitted participant, human and exact work bounds');
+    }
     const self = member?.role ?? "participants.0";
     const after = cursor.encounterAfter[session] ?? -1;
     // A chunk run or a closed turn can span passes: carry them in the cursor
     // and key every occurrence by the journal cursor of its originating event.
     const carried = sessions[session] ?? {};
-    let run: {kind: "reply" | "thought"; first: number; text: string} | undefined = carried.run ? {...carried.run} : undefined;
+    let run: SessionCursor["run"] = carried.run ? {...carried.run} : undefined;
     let turnClosed = carried.turnClosed ?? false;
     const seenCalls = new Set<string>();
     const jb = (entry: string, eventRef: string, occurrence: string, cursorOf: number, at?: number, detail?: Record<string, unknown>): OpBasis => ({...basis(entry, eventRef, occurrence, at, detail), journal: {session, cursor: cursorOf}});
+    const actorBindings = (state: CharacterState) => bindings({[encounterScope ? self : "self"]: agentBinding(member, state)});
+    const phaseScene = (state: CharacterState, entry: string, occurrence: string, cursorOf: number, at?: number) => {
+      const scene = encounterScope?.phaseScenes?.[state];
+      if (scene) emit({operation: "act_select", scene, bindings: actorBindings(state), basis: jb(entry, session, occurrence + "/scene", cursorOf, at)}, at);
+    };
+    const failedTurn = (terminal: string, cursorOf: number, reason: unknown, at?: number) => {
+      const label = oneLine(member?.label ?? "The agent", 60);
+      emit({operation: "act_text", role: "progressText", text: `${label} couldn't finish this request. Open ${label}'s session to see what happened.`, bindings: {},
+        basis: jb("encounter.failure", session, terminal + "/failure", cursorOf, at, {reason})}, at);
+    };
     const closeRun = () => {
-      if (run?.kind === "reply") emit({operation: "act_text", role: "progressText", text: oneLine(run.text, 240), bindings: {}, basis: jb("encounter.reply", session, `cursor:${run.first}/text`, run.first)});
+      if (run?.kind === "reply" && run.text.trim()) emit({operation: "act_text", role: encounterScope?.replyRole ?? "progressText", text: encounterScope ? materialBody(run.text, encounterScope.replyChars ?? 4096) : oneLine(run.text, 240), bindings: {}, basis: jb("encounter.reply", session, `cursor:${run.first}/text`, run.first, run.at)}, run.at);
       run = undefined;
     };
     const bounds = journals.bounds?.[session] ?? journalBounds(events, readings.runRef, new Set(cast.map(candidate => candidate.agent_ref)), readings.window?.to !== undefined);
@@ -695,17 +751,21 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
       const at = ms(event.observed_at_ms);
       const kind = str(event.kind);
       const chunkRun = (runKind: "reply" | "thought", text: string) => {
-        if (run?.kind === runKind) { run.text = (run.text + text).slice(-2000); return; }
+        const scopedReply = encounterScope && runKind === "reply";
+        if (run?.kind === runKind) { run.text = scopedReply ? materialBody(run.text + text, encounterScope.replyChars ?? 4096) : (run.text + text).slice(-2000); return; }
+        if (scopedReply ? !text.length : !text.trim()) return;
         closeRun();
-        run = {kind: runKind, first: entry.cursor, text};
+        run = {kind: runKind, first: entry.cursor, text: scopedReply ? materialBody(text, encounterScope.replyChars ?? 4096) : text.slice(-2000), at};
         turnClosed = false;
-        emit({operation: "act_select", state: runKind === "reply" ? "speaking" : "working", role: self, bindings: bindings({self: agentBinding(member, runKind === "reply" ? "speaking" : "working")}),
+        const state = runKind === "reply" ? "speaking" : "working";
+        phaseScene(state, runKind === "reply" ? "encounter.reply" : "encounter.thought", `cursor:${entry.cursor}`, entry.cursor, at);
+        emit({operation: "act_select", state, role: self, bindings: actorBindings(state),
           basis: jb(runKind === "reply" ? "encounter.reply" : "encounter.thought", session, `cursor:${entry.cursor}`, entry.cursor, at)}, at);
       };
       if (kind === "user-message") {
         closeRun(); turnClosed = false;
-        emit({operation: "act_select", scene: "handoff", bindings: bindings({sender: personBinding("human:owner"), recipient: agentBinding(member, "idle"), caption: {kind: "text", text: oneLine(str(event.text) ?? "", 200)},
-          artifact: {kind: "object", subject_ref: `${session}#${entry.cursor}`, label: "Message"}}),
+        emit({operation: "act_select", scene: "handoff", bindings: bindings({sender: personBinding(encounterScope?.humanRefs[session] ?? "human:owner"), recipient: agentBinding(member, "idle"), caption: {kind: "text", text: oneLine(str(event.text) ?? "", 200)},
+          [encounterScope?.messageRole ?? "artifact"]: {kind: "object", subject_ref: `${session}#${entry.cursor}`, label: "Message"}}),
           basis: jb("encounter.user-message", session, `cursor:${entry.cursor}`, entry.cursor, at, {text: event.text})}, at);
         continue;
       }
@@ -719,12 +779,14 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         const senderMember = byAgent.get(senderRef);
         // The Run itself addressing an agent (its task dispatch) is the goal
         // handing over, not a person or an agent.
-        const senderBinding: Binding = senderRef === readings.runRef ? {kind: "object", subject_ref: readings.runRef, label: readings.goal ?? "The Run"} : agentBinding(senderMember, "speaking") ?? personBinding(senderRef);
-        const messageRef = str(event.delivery_ref) ?? `${session}#${entry.cursor}`;
+        const qualifiedSender = encounterScope?.worldRef && !senderRef.startsWith("world:") ? `${encounterScope.worldRef}/${senderRef}` : senderRef;
+        const senderBinding: Binding = senderRef === readings.runRef ? {kind: "object", subject_ref: readings.runRef, label: readings.goal ?? "The Run"} : agentBinding(senderMember, "speaking") ?? personBinding(qualifiedSender);
+        const delivery = str(event.delivery_ref);
+        const messageRef = delivery ? encounterScope?.worldRef && !delivery.startsWith("world:") ? `${encounterScope.worldRef}/${delivery}` : delivery : `${session}#${entry.cursor}`;
         emit({operation: "act_select", scene: "handoff", bindings: bindings({sender: senderBinding, recipient: agentBinding(member, "idle"), caption: {kind: "text", text: oneLine(str(packet.text) ?? str(event.text) ?? "", 200)},
           // The exchanged message is the handoff's selectable object.
-          artifact: {kind: "object", subject_ref: messageRef, label: "Message"}}),
-          basis: jb("encounter.agent-message", str(event.delivery_ref) ?? session, `cursor:${entry.cursor}`, entry.cursor, at, {sender: senderRef, text: packet.text, delivery_ref: event.delivery_ref})}, at);
+          [encounterScope?.messageRole ?? "artifact"]: {kind: "object", subject_ref: messageRef, label: "Message"}}),
+          basis: jb("encounter.agent-message", encounterScope ? messageRef : str(event.delivery_ref) ?? session, `cursor:${entry.cursor}`, entry.cursor, at, {sender: qualifiedSender, text: packet.text, delivery_ref: event.delivery_ref})}, at);
         continue;
       }
       // Provider events (`kind: "provider"`); trimmed excerpts may omit the
@@ -738,15 +800,21 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         // pass and after any resume.
         const ended = inner.TurnEnded;
         const terminal = typeof ended.last_sequence === "number" ? `turn-end:${str(event.connection_generation) ?? ""}:${ended.last_sequence}` : `cursor:${entry.cursor}`;
-        if (!turnClosed) emit({operation: "act_select", state: "idle", role: self, bindings: bindings({self: agentBinding(member, "idle")}), basis: jb("encounter.turn-end", session, terminal, entry.cursor, at, {stop: ended.stop})}, at);
+        if (!turnClosed) {
+          phaseScene("idle", "encounter.turn-end", terminal, entry.cursor, at);
+          emit({operation: "act_select", state: "idle", role: self, bindings: actorBindings("idle"), basis: jb("encounter.turn-end", session, terminal, entry.cursor, at, {stop: ended.stop})}, at);
+          if (obj(ended.stop) && obj(ended.stop.Failed)) failedTurn(terminal, entry.cursor, ended.stop.Failed.reason, at);
+        }
         turnClosed = false;
         continue;
       }
       const signal = inner && obj(inner.Signal) && obj(inner.Signal.kind) ? inner.Signal.kind : undefined;
       const signalKind = str(signal?.kind);
       if (!signal || !signalKind) continue;
-      if (signalKind === "agent-message-chunk") { chunkRun("reply", str(signal.text) ?? ""); continue; }
-      if (signalKind === "agent-thought-chunk") { chunkRun("thought", str(signal.text) ?? ""); continue; }
+      // Source text is material, not an identity. A whitespace-only chunk
+      // inside speech still separates words and must survive concatenation.
+      if (signalKind === "agent-message-chunk") { chunkRun("reply", typeof signal.text === "string" ? signal.text : ""); continue; }
+      if (signalKind === "agent-thought-chunk") { chunkRun("thought", typeof signal.text === "string" ? signal.text : ""); continue; }
       if (signalKind !== "status") closeRun();
       if (signalKind === "tool-call" || signalKind === "tool-result") {
         const payload = obj(signal.payload) ? signal.payload : {};
@@ -755,15 +823,17 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         if (signalKind === "tool-result" || !facts.start || seenCalls.has(callId)) continue; // joins its occurrence
         seenCalls.add(callId);
         const detail = {tool: facts.name, input: facts.input, tool_call_id: facts.id};
-        if (facts.skill) emit({operation: "act_gesture", gesture: "invoke-skill", role: self, skill: facts.skill, bindings: bindings({self: agentBinding(member, "working"), caption: {kind: "text", text: facts.skill}}), basis: jb("encounter.skill", session, `call:${callId}`, entry.cursor, at, detail)}, at);
+        if (facts.skill) emit({operation: "act_gesture", gesture: "invoke-skill", role: self, skill: facts.skill, bindings: bindings({...actorBindings("working"), caption: {kind: "text", text: facts.skill}}), basis: jb("encounter.skill", session, `call:${callId}`, entry.cursor, at, detail)}, at);
         else if (facts.delegate) emit({operation: "act_select", scene: "handoff", bindings: bindings({sender: agentBinding(member, "speaking"), recipient: {kind: "agent", agent_ref: facts.delegate.recipient, label: facts.delegate.recipient}, caption: {kind: "text", text: oneLine(facts.delegate.description ?? facts.delegate.recipient)}}), basis: jb("encounter.delegation", session, `call:${callId}`, entry.cursor, at, detail)}, at);
-        else emit({operation: "act_gesture", gesture: "operate", role: self, bindings: bindings({self: agentBinding(member, "working"), caption: {kind: "text", text: oneLine(facts.name ?? "tool", 80)}}), basis: jb("encounter.tool-call", session, `call:${callId}`, entry.cursor, at, detail)}, at);
+        else emit({operation: "act_gesture", gesture: "operate", role: self, bindings: bindings({...actorBindings("working"), caption: {kind: "text", text: oneLine(facts.name ?? "tool", 80)}}), basis: jb("encounter.tool-call", session, `call:${callId}`, entry.cursor, at, detail)}, at);
         continue;
       }
       if (signalKind === "completed" || signalKind === "failed" || signalKind === "cancelled") {
         const sequence = obj(inner?.Signal) ? inner!.Signal.sequence : undefined;
         const terminal = typeof sequence === "number" ? `turn-end:${str(event.connection_generation) ?? ""}:${sequence}` : `cursor:${entry.cursor}`;
-        emit({operation: "act_select", state: "idle", role: self, bindings: bindings({self: agentBinding(member, "idle")}), basis: jb("encounter.turn-end", session, terminal, entry.cursor, at, {signal: signalKind, reason: signal.stop_reason ?? signal.reason})}, at);
+        phaseScene("idle", "encounter.turn-end", terminal, entry.cursor, at);
+        emit({operation: "act_select", state: "idle", role: self, bindings: actorBindings("idle"), basis: jb("encounter.turn-end", session, terminal, entry.cursor, at, {signal: signalKind, reason: signal.stop_reason ?? signal.reason})}, at);
+        if (signalKind === "failed") failedTurn(terminal, entry.cursor, signal.reason, at);
         turnClosed = true;
       }
     }
@@ -791,7 +861,9 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
   }
 
   const performed = new Set(cursor.performed);
-  return {ops: out.sort((a, b) => a.order - b.order || a.seq - b.seq).map(entry => entry.op).filter(op => !performed.has(opKey(op))), sessions};
+  // A scoped Direct journal is one native cursor sequence. Wall-clock rollback
+  // must not move a turn's completion before its speech or produced text.
+  return {ops: out.sort((a, b) => encounterScope ? a.seq - b.seq : a.order - b.order || a.seq - b.seq).map(entry => entry.op).filter(op => includePerformed || !performed.has(opKey(op))), sessions};
 }
 
 /** The part of a session's journal that is this Run's work. A session can

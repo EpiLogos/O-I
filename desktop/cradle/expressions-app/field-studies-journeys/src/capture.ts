@@ -5,13 +5,65 @@ export interface CaptureSettings {includeText:boolean;transparent:boolean;width:
 export const defaultCapture=():CaptureSettings=>({includeText:true,transparent:false,width:1440,aspect:'stage',fps:30});
 export function download(blob:Blob,name:string){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
 export function slug(value:string){return value.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'field-study';}
-export function textLayout(t:TextLayer,w:number,h:number){const mobile=w<761;const width=Math.min(t.width,w*(mobile?.65:w<1051?.32:.45));const size=mobile?Math.min(36,t.size):w<1051?Math.min(38,t.size):t.size;return {x:t.x*w,y:t.y*h,width,size,kicker:mobile?7:8,kickerGap:mobile?18:25,titleGap:mobile?18:26,body:mobile?10:11};}
-function wrap(ctx:CanvasRenderingContext2D,value:string,width:number){const lines:string[]=[];for(const para of value.split('\n')){let line='';for(const word of para.split(' ')){const test=line?line+' '+word:word;if(line&&ctx.measureText(test).width>width){lines.push(line);line=word;}else line=test;}lines.push(line);}return lines;}
-export function paintText(ctx:CanvasRenderingContext2D,s:Scene,w:number,h:number){const col=s.field.palette[0];for(const t of s.text){if(!t.visible)continue;const l=textLayout(t,w,h);let y=l.y;const align=t.align,anchor=align==='center'?l.x+l.width/2:align==='right'?l.x+l.width:l.x;ctx.save();ctx.fillStyle=col;ctx.textBaseline='top';ctx.textAlign=align;
+export function textLayout(t:TextLayer,w:number,h:number){const mobile=w<761;const width=Math.min(t.width,w*(mobile?.65:w<1051?.32:.45));const size=mobile?Math.min(36,t.size):w<1051?Math.min(38,t.size):t.size;return {x:t.x*w,y:t.y*h,width,size,kicker:mobile?7:8,kickerGap:mobile?18:25,titleGap:mobile?18:26,body:typeof t.bodySize==='number'&&Number.isFinite(t.bodySize)&&t.bodySize>=8&&t.bodySize<=72?t.bodySize:mobile?10:11};}
+/** Lossless native answer chunks are one reading body, not overlapping
+ * independent captions. This is text layout only, never attribution authority;
+ * native Act confirmation belongs to the host's kept-answer read path. */
+export function captureTextLayers(s:Scene):TextLayer[]{
+ const pattern=/^(nara-answer-[a-f0-9]{64}):(primary|source)$/;
+ if(!s.text.some(t=>pattern.test(t.role??'')))return s.text;
+ const first=s.text[0],match=first&&pattern.exec(first.role??'');
+ if(!match||s.text.length>16||new Set(s.text.map(t=>t.id)).size!==s.text.length
+  ||s.text.some(t=>!t.visible||t.bodySize!==18||typeof t.body!=='string'||t.body.length>5000||pattern.exec(t.role??'')?.[1]!==match[1]))
+  throw Error('The complete native answer capture cohort is unavailable.');
+ let primary='',source='',sourceStarted=false;
+ for(const t of s.text){const kind=pattern.exec(t.role!)![2];
+  if(kind==='source'){sourceStarted=true;source+=t.body;}else {if(sourceStarted)throw Error('The native answer capture order changed.');primary+=t.body;}}
+ const body=primary+(primary&&source?'\n\nSource Inspect · original native answer\n':'')+source;
+ return[{...first,body}];
+}
+/** Preserve every literal character while wrapping ordinary words. Oversized
+ * tokens break only between complete graphemes; an unfit grapheme refuses
+ * instead of being clipped, shortened or painted outside its reading column. */
+export function wrap(ctx:CanvasRenderingContext2D,value:string,width:number):string[]{
+ if(!Number.isFinite(width)||width<=0)throw Error('The capture reading column has no finite positive width.');
+ type Segmenter={segment(value:string):Iterable<{segment:string}>};
+ const Segmenter=(Intl as unknown as {Segmenter?:new(locales:undefined,options:{granularity:'grapheme'})=>Segmenter}).Segmenter;
+ if(!Segmenter)throw Error('Complete-grapheme capture wrapping is unavailable in this browser.');
+ const segmenter=new Segmenter(undefined,{granularity:'grapheme'}),lines:string[]=[];
+ const fits=(text:string)=>{const measured=ctx.measureText(text).width;if(!Number.isFinite(measured))throw Error('Capture text measurement is unavailable.');return measured<=width;};
+ for(const para of value.split('\n')){
+  // Group whole graphemes, including a space followed by a combining mark.
+  // Regex-splitting the raw string at whitespace would divide that grapheme.
+  const tokens:{text:string;space:boolean}[]=[];
+  for(const {segment} of segmenter.segment(para)){
+   const space=/^\s/u.test(segment),last=tokens[tokens.length-1];
+   if(last&&last.space===space)last.text+=segment;else tokens.push({text:segment,space});
+  }
+  let line='';
+  for(const token of tokens){
+   if(fits(line+token.text)){line+=token.text;continue;}
+   if(line&&!token.space){lines.push(line);line='';}
+   if(fits(line+token.text)){line+=token.text;continue;}
+   for(const {segment} of segmenter.segment(token.text)){
+    if(!fits(segment))throw Error('A complete text grapheme exceeds the capture reading column. Widen it to retain the full text.');
+    if(line&&!fits(line+segment)){lines.push(line);line='';}
+    line+=segment;
+   }
+  }
+  lines.push(line);
+ }
+ return lines;
+}
+export function paintText(ctx:CanvasRenderingContext2D,s:Scene,w:number,h:number){const col=s.field.palette[0];for(const t of captureTextLayers(s)){if(!t.visible)continue;const l=textLayout(t,w,h);let y=l.y;const align=t.align,anchor=align==='center'?l.x+l.width/2:align==='right'?l.x+l.width:l.x;ctx.save();ctx.fillStyle=col;ctx.textBaseline='top';ctx.textAlign=align;
  ctx.globalAlpha=.65;ctx.font=`${l.kicker}px Arial`;if(align==='left'){ctx.fillRect(l.x,y+5,18,1);ctx.fillText(t.kicker,anchor+27,y);}else ctx.fillText(t.kicker,anchor,y);y+=l.kicker*1.5+l.kickerGap;
  ctx.globalAlpha=1;ctx.font=`${l.size}px Georgia`;if('letterSpacing'in ctx)ctx.letterSpacing=`${-l.size*.054}px`;
  for(const line of wrap(ctx,t.title,l.width)){ctx.fillText(line,anchor,y);y+=l.size*1.08;}ctx.font=`italic ${l.size}px Georgia`;for(const line of wrap(ctx,t.italic,l.width)){if(line){ctx.fillText(line,anchor,y);y+=l.size*1.08;}}
- y+=l.titleGap;if('letterSpacing'in ctx)ctx.letterSpacing='0px';ctx.font=`${l.body}px Arial`;ctx.globalAlpha=.65;for(const line of wrap(ctx,t.body,Math.min(l.width,230))){ctx.fillText(line,anchor,y);y+=l.body*1.85;}ctx.restore();}}
+ y+=l.titleGap;if('letterSpacing'in ctx)ctx.letterSpacing='0px';
+ // Explicit authored body typography uses its reading column; roles do not
+ // supply typography authority. Omitted legacy body sizes keep their default.
+ const bodyWidth=typeof t.bodySize==='number'&&Number.isFinite(t.bodySize)&&t.bodySize>=8&&t.bodySize<=72?l.width:Math.min(l.width,230);
+ ctx.font=`${l.body}px Arial`;ctx.globalAlpha=.65;for(const line of wrap(ctx,t.body,bodyWidth)){ctx.fillText(line,anchor,y);y+=l.body*1.85;}ctx.restore();}}
 export function createOutput(settings:CaptureSettings,w:number,h:number){const c=document.createElement('canvas');const aspect=settings.aspect==='stage'?w/h:settings.aspect==='16:9'?16/9:settings.aspect==='1:1'?1:9/16;const width=settings.aspect==='9:16'?Math.round(settings.width*9/16):settings.width;c.width=Math.round(width);c.height=Math.round(width/aspect);return c;}
 /** A fixed output frame. The editor, guides, selection and cursor never enter this path. */
 export function paintCapture(out:HTMLCanvasElement,field:HTMLCanvasElement,s:Scene,settings:CaptureSettings,w:number,h:number,transition?:CaptureTransition){const ctx=out.getContext('2d')!;ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.clearRect(0,0,out.width,out.height);if(!settings.transparent){const sc=Math.max(out.width/w,out.height/h);ctx.save();ctx.translate((out.width-w*sc)/2,(out.height-h*sc)/2);ctx.scale(sc,sc);paintPaper(ctx,s,w,h);ctx.restore();}const scale=Math.max(out.width/w,out.height/h),dx=(out.width-w*scale)/2,dy=(out.height-h*scale)/2;ctx.save();ctx.translate(dx,dy);ctx.scale(scale,scale);if(transition&&settings.transparent)ctx.globalAlpha=1-transition.alpha;ctx.drawImage(field,0,0,w,h);if(transition){ctx.globalAlpha=transition.alpha;if(!settings.transparent){ctx.fillStyle=transition.background;ctx.fillRect(0,0,w,h);}ctx.drawImage(transition.canvas,0,0,w,h);}ctx.globalAlpha=1;if(settings.includeText)paintText(ctx,s,w,h);ctx.restore();}

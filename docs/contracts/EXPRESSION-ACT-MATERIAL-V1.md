@@ -165,6 +165,73 @@ object-local state change — the role's entity takes that character state's
 (passage kind `state`); with a `scene_ref`, or a `state` naming an
 Expression-level state, it is a Scene change. `act_open` on an existing
 `act_ref` is an idempotent resume and may extend `cast` without duplication.
+An explicit `act_open` with `replace_cast:true` replaces the current cast
+against a required `expected_act_revision`. This is the native route for a
+reviewed participant identity correction or withdrawal. It retains the Act,
+Direct instrument, sequence and subject; it does not invoke activity. A stale
+revision refuses the whole replacement. Cross-World participants use their
+World-qualified refs; local refs remain valid in a single owner's native Act.
+
+### Authored text passages (implementation candidate)
+
+A Scene text role may opt into readable native passages on its `body` field:
+
+```json
+"passage": {
+  "schema": "oi.expression-text-passages/v1",
+  "capacity_chars": 360,
+  "max_newlines": 8,
+  "maximum_pages": 16
+}
+```
+
+These are explicit authoring budgets, not viewport measurements. The author
+must qualify the layout, responsive font and reading area with the actual
+renderer. Characters are Unicode scalar values; CRLF is one logical newline,
+and CR, LF, U+2028 and U+2029 each count as one. Segmentation retains every
+source byte, including whitespace. It never summarises or trims a Return.
+
+The existing native `act_text` owner retains the complete text binding and
+source passage with its actual event basis. Ordered native Scene editions
+retain the readable segments and their selections for ordinary Act seek and
+restart recovery. The first page's selection and Act position must agree.
+This does not hold the Act, invoke a provider, certify a Factory result, or
+use a renderer pagination store. Replaying an edition uses its retained
+document rather than grafting the complete binding into each page. Seeking the
+complete source passage is observation-only: it validates source target, native
+revision/Scene ancestry, contiguous Edition pages and their actual selected
+text bodies without replaying an earlier Scene or filling the complete text.
+Source/Edition integrity is mandatory even with an accepted drift override;
+the current target and Act revision guards still apply.
+
+The optional directive is strict and role-local. An absent directive keeps
+the existing single-fill behavior. Unknown or malformed policy, duplicate
+matching slots, collisions and exceeded page/document/Act budgets refuse
+before publication. Retrying the same event basis with the same complete
+text recovers its recorded passages; changed text on that recorded basis
+refuses rather than silently changing the source of an accepted passage.
+The durable record encoder borrows the native Act and stops at its existing
+4 MiB limit while serializing. Page admission borrows the selected native Scene
+to count the aggregate page material before its first clone, then counts the
+complete planned editions before copying that cohort. An over-budget request retains the original
+Document and Act. Later Scene selection may reuse the first retained page
+only after validating its complete native source/edition tuple; it never
+replaces the full text binding with an excerpt. Scenes that do not author a
+result slot keep their own working composition.
+
+A target-changing continuation does not requalify historical pages to the
+new target. Exact retry recovers the old acceptance without editing either
+target. Seek's supplied revision guards the Act's current target; each recorded
+replay target is separately admitted and fenced at its current native revision.
+The complete replay rollback set uses the existing 8 MiB Document budget as
+its aggregate transaction bound. Refusal, replay error and Act publication
+failure restore every touched target while retaining the original durable Act.
+A narrower seek can be used when a multi-target replay exceeds this bound.
+The cumulative Scene and 4 MiB Act limits remain explicit: a successor Act
+alone does not make an already oversized retained Document cohort fit.
+
+This contract addition is a Source candidate pending native qualification;
+it is not a claim about the installed binary.
 
 Existing `act_perform/interrupt/checkpoint/restore` keep working.
 
@@ -197,6 +264,28 @@ AIKit encounter journal of each attempt's `disposition.body.agentSessionRef`
 entry names the exact event name, identity fields and payload path, and the
 act operation it produces (`act_select` state/scene, `act_gesture`, `act_text`).
 Repeated invocations are addressed by occurrence (`event_ref` + `occurrence`).
+Scoped Direct reply mapping preserves paragraph and whitespace bytes. Its
+existing 4096-byte native input bound is an explicit refusal before consuming
+the journal cursor, never a silent cut. Direct remains its own subject and
+instrument even while using Factory expressive material.
+
+Native request recovery compares the complete performed payload, material pin
+and event basis with the retained passage. Reusing an occurrence with changed
+material remains a refusal. An uncertain Factory delivery blocks subsequent
+operations and cursor advancement; each following pass must successfully read
+the native Act before any resend. An unreadable owner backs off while preserving
+the pending request. No alternate writable receipt or Redis source is introduced.
+Retained mapped occurrences stay available until exact prequalification against
+their owning Act, including earlier rollover Acts. Historical requests use their accepted material pin and character choice;
+a new repertoire applies to unperformed occurrences. Local state and gesture
+requests use the participant/role binding recorded with their passage,
+independently of the current Scene's occupants. New Scene requests also retain
+the semantic repertoire key in the existing native state field. Initial bounded catch-up ends only when its
+native skip receipts qualify; partial receipt recovery and fresh-body re-entry
+retain the same bounded tail. Skip observations retain complete source keys in
+the existing native `operate` payload, chunked to its 4096-byte bound. Legacy
+hash-only history remains readable and replayable but refuses live continuation
+that cannot qualify the exact skipped source identities.
 
 Repertoire resolution: explicit selection → workflow-associated Expression →
 task/SkillSet-associated material → generic Factory composition; skill

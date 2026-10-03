@@ -94,12 +94,74 @@ pub enum ActionDispatch {
     OwnerRefused {
         owner_operation: String,
         message: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        native: Option<Value>,
+    },
+    /// Physical read failure or incompatible response, not semantic refusal.
+    OwnerFailed {
+        owner_operation: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+    },
+    /// Receipt loss after launch must preserve the original owner operation.
+    OwnerOutcomeUnknown {
+        owner_operation: String,
+        detail: String,
+        child_pid: Option<u32>,
+        cleanup: Option<String>,
+        native: Option<Value>,
     },
     /// The owner executable could not be launched — absence, not an error.
     OwnerUnavailable {
         owner_operation: String,
         detail: String,
     },
+}
+
+impl ActionDispatch {
+    pub(crate) fn owner_error(operation: &str, error: OwnerCallError) -> Self {
+        let owner_operation = operation.to_owned();
+        match error {
+            OwnerCallError::Unavailable { detail } => Self::OwnerUnavailable {
+                owner_operation,
+                detail,
+            },
+            OwnerCallError::Refused { message, native } => Self::OwnerRefused {
+                owner_operation,
+                message,
+                native,
+            },
+            OwnerCallError::Malformed { detail } => Self::OwnerFailed {
+                owner_operation,
+                detail,
+                child_pid: None,
+                cleanup: None,
+            },
+            OwnerCallError::TransportFailed {
+                detail,
+                child_pid,
+                cleanup,
+            } => Self::OwnerFailed {
+                owner_operation,
+                detail,
+                child_pid,
+                cleanup,
+            },
+            OwnerCallError::OutcomeUnknown {
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            } => Self::OwnerOutcomeUnknown {
+                owner_operation,
+                detail,
+                child_pid,
+                cleanup,
+                native,
+            },
+        }
+    }
 }
 
 /// The AIKit knowledge Actions that take a typed Knowledge address: the
@@ -233,20 +295,7 @@ fn invoke_central(
             owner_operation: action.to_owned(),
             data,
         },
-        Err(OwnerCallError::Refused { message }) => ActionDispatch::OwnerRefused {
-            owner_operation: action.to_owned(),
-            message,
-        },
-        Err(OwnerCallError::Unavailable { detail }) => ActionDispatch::OwnerUnavailable {
-            owner_operation: action.to_owned(),
-            detail,
-        },
-        // The owner answered something the contract cannot parse: the owner
-        // error detail is carried verbatim rather than reclassified.
-        Err(OwnerCallError::Malformed { detail }) => ActionDispatch::OwnerRefused {
-            owner_operation: action.to_owned(),
-            message: detail,
-        },
+        Err(error) => ActionDispatch::owner_error(action, error),
     }
 }
 
@@ -257,17 +306,6 @@ fn invoke_aikit_open(cwd: &Path, target_ref: &str) -> ActionDispatch {
             owner_operation,
             data,
         },
-        Err(knowledge::CallError::Refused { message }) => ActionDispatch::OwnerRefused {
-            owner_operation,
-            message,
-        },
-        Err(knowledge::CallError::Unavailable { detail }) => ActionDispatch::OwnerUnavailable {
-            owner_operation,
-            detail,
-        },
-        Err(knowledge::CallError::Malformed { detail }) => ActionDispatch::OwnerRefused {
-            owner_operation,
-            message: detail,
-        },
+        Err(error) => ActionDispatch::owner_error(&owner_operation, error),
     }
 }

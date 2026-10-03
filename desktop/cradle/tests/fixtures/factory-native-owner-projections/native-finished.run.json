@@ -1,0 +1,1013 @@
+{
+  "contract": "factory.run-reading/v1",
+  "provenance": {
+    "owner": "factory",
+    "factoryStateRevision": 17,
+    "subjectRevision": 9,
+    "source": "canonical Factory Run/RunMap + Factory Build correlations"
+  },
+  "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+  "revision": 9,
+  "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "owningJourneyRefs": [],
+  "routineInvocationRefs": [],
+  "lifecycle": "finished",
+  "destination": "Controlled native receiving regression",
+  "runMap": {
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+    "topologyRevision": 6,
+    "nodes": {
+      "destination": {
+        "id": "destination",
+        "kind": "destination",
+        "label": "Controlled native receiving regression",
+        "state": null,
+        "semanticRef": null
+      },
+      "work-inspect-source": {
+        "id": "work-inspect-source",
+        "kind": "work",
+        "label": "Recover the current Factory architecture and source obligations",
+        "state": "returned",
+        "semanticRef": "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT"
+      },
+      "work-review-adversarially": {
+        "id": "work-review-adversarially",
+        "kind": "work",
+        "label": "Challenge identity and graph compilation under hostile inputs",
+        "state": "returned",
+        "semanticRef": "workflow-unit:5EJHYKFE1D78HQ3MCZRJ8DR0FV"
+      }
+    },
+    "edges": [
+      {
+        "from": "destination",
+        "to": "work-review-adversarially",
+        "relation": "branches_to"
+      },
+      {
+        "from": "work-review-adversarially",
+        "to": "work-inspect-source",
+        "relation": "requires"
+      }
+    ]
+  },
+  "thoughtAvailable": false,
+  "thoughtRefs": [],
+  "agencies": [],
+  "executions": [],
+  "evidence": [],
+  "candidates": [],
+  "humanRequests": [],
+  "actions": [
+    {
+      "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+      "label": "Request more evidence",
+      "subjectKinds": [
+        "candidate"
+      ],
+      "inputContract": "factory.action-projection/v1",
+      "resultContract": "factory.action-projection/v1",
+      "authorityOwner": "factory",
+      "requiredCapabilityRef": "capability/factory/request-evidence",
+      "currentlyApplicable": false,
+      "applicableSubjectRefs": []
+    }
+  ],
+  "nativeAttempts": {
+    "contract": "factory.attempt-reading/v1",
+    "revision": 17,
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+    "runRevision": 9,
+    "topologyRevision": 6,
+    "workflowKey": "agent-first-implementation",
+    "workflowSourceRef": "workflow-source:01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "workflowSourceRevision": "source-revision-7",
+    "workflowSourceDigest": "9d3342fd9852e880a8eef6a0f996f03487b26b26a9a10009a26677711f838410",
+    "sourceCurrent": true,
+    "wholeRunState": "complete",
+    "lifecycle": "finished",
+    "completionVerified": true,
+    "requiredUnits": [
+      "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT",
+      "workflow-unit:5EJHYKFE1D78HQ3MCZRJ8DR0FV"
+    ],
+    "currentReturnedUnits": [
+      "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT",
+      "workflow-unit:5EJHYKFE1D78HQ3MCZRJ8DR0FV"
+    ],
+    "legs": {
+      "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT": {
+        "delegation": {
+          "parentJourneyRef": "journey:controlled-native-receiving",
+          "parentRunRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+          "executionUnitRef": "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT",
+          "concern": "Recover the current Factory architecture and source obligations",
+          "requiredDifference": "The implementation basis is explicit and evidenced",
+          "returnContract": "Return the inspected seams and exact source basis",
+          "subjectRef": "subject:controlled-native-inspect-source",
+          "basisRevision": "947ce7a",
+          "agentRequirements": {
+            "agentRefs": [
+              "agent:controlled-native-receiving-producer"
+            ],
+            "agentSetRefs": [],
+            "agencyRefs": [
+              "agency:controlled-native-inspect-source"
+            ]
+          },
+          "permittedEffects": [
+            "read and submit bounded native Central receipt"
+          ],
+          "verificationObligations": [
+            "exact native Central receiving result reopens unchanged"
+          ],
+          "returnAddress": "return:01ARZ3NDEKTSV4RRFFQ69G5FB0",
+          "stopConditions": "Stop if the requested base is unavailable",
+          "retryGrant": {
+            "grantRef": "grant:native-inspect-source",
+            "attemptsAllowed": 2,
+            "attemptsSpent": 1,
+            "revoked": false
+          }
+        },
+        "executionRef": "execution:native-inspect-source",
+        "status": "returned",
+        "statusHistory": [
+          "active",
+          "returned"
+        ],
+        "attempts": [
+          {
+            "executionRef": "execution:native-inspect-source",
+            "delegation": {
+              "parentJourneyRef": "journey:controlled-native-receiving",
+              "parentRunRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+              "executionUnitRef": "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT",
+              "concern": "Recover the current Factory architecture and source obligations",
+              "requiredDifference": "The implementation basis is explicit and evidenced",
+              "returnContract": "Return the inspected seams and exact source basis",
+              "subjectRef": "subject:controlled-native-inspect-source",
+              "basisRevision": "947ce7a",
+              "agentRequirements": {
+                "agentRefs": [
+                  "agent:controlled-native-receiving-producer"
+                ],
+                "agentSetRefs": [],
+                "agencyRefs": [
+                  "agency:controlled-native-inspect-source"
+                ]
+              },
+              "permittedEffects": [
+                "read and submit bounded native Central receipt"
+              ],
+              "verificationObligations": [
+                "exact native Central receiving result reopens unchanged"
+              ],
+              "returnAddress": "return:01ARZ3NDEKTSV4RRFFQ69G5FB0",
+              "stopConditions": "Stop if the requested base is unavailable",
+              "retryGrant": {
+                "grantRef": "grant:native-inspect-source",
+                "attemptsAllowed": 2,
+                "attemptsSpent": 1,
+                "revoked": false
+              }
+            },
+            "status": "returned",
+            "statusHistory": [
+              "active",
+              "returned"
+            ],
+            "artifacts": [
+              {
+                "artifactRef": "artifact:native:inspect-source",
+                "subjectRef": "subject:controlled-native-inspect-source",
+                "subjectRevision": "947ce7a",
+                "producingExecutionRef": "execution:native-inspect-source",
+                "evidenceRefs": [
+                  "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+                ],
+                "semanticDifference": "Native Central returned and independently reopened \"central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f\" on \"central.content-fnv1a64/v1:1585:b013abde937c983e\""
+              }
+            ],
+            "lateArtifacts": [],
+            "failureReason": null
+          }
+        ],
+        "artifacts": [
+          {
+            "artifactRef": "artifact:native:inspect-source",
+            "subjectRef": "subject:controlled-native-inspect-source",
+            "subjectRevision": "947ce7a",
+            "producingExecutionRef": "execution:native-inspect-source",
+            "evidenceRefs": [
+              "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+            ],
+            "semanticDifference": "Native Central returned and independently reopened \"central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f\" on \"central.content-fnv1a64/v1:1585:b013abde937c983e\""
+          }
+        ],
+        "lateArtifacts": [],
+        "failureReason": null
+      },
+      "workflow-unit:5EJHYKFE1D78HQ3MCZRJ8DR0FV": {
+        "delegation": {
+          "parentJourneyRef": "journey:controlled-native-receiving",
+          "parentRunRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+          "executionUnitRef": "workflow-unit:5EJHYKFE1D78HQ3MCZRJ8DR0FV",
+          "concern": "Challenge identity and graph compilation under hostile inputs",
+          "requiredDifference": "Malformed provenance and graph ambiguity fail closed",
+          "returnContract": "Return adversarial findings and reproducible failures",
+          "subjectRef": "subject:controlled-native-review-adversarially",
+          "basisRevision": "947ce7a",
+          "agentRequirements": {
+            "agentRefs": [
+              "agent:controlled-native-receiving-reviewer"
+            ],
+            "agentSetRefs": [],
+            "agencyRefs": [
+              "agency:controlled-native-review-adversarially"
+            ]
+          },
+          "permittedEffects": [
+            "read and submit bounded native Central receipt"
+          ],
+          "verificationObligations": [
+            "exact native Central receiving result reopens unchanged"
+          ],
+          "returnAddress": "return:01ARZ3NDEKTSV4RRFFQ69G5FB8",
+          "stopConditions": "Stop before mutating implementation files",
+          "retryGrant": {
+            "grantRef": "grant:native-review-adversarially",
+            "attemptsAllowed": 2,
+            "attemptsSpent": 1,
+            "revoked": false
+          },
+          "inputs": [
+            {
+              "predecessor": "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT",
+              "receivingContextRef": "context:native-review-adversarially-from-inspect-source"
+            }
+          ]
+        },
+        "executionRef": "execution:native-review-adversarially",
+        "status": "returned",
+        "statusHistory": [
+          "active",
+          "returned"
+        ],
+        "attempts": [
+          {
+            "executionRef": "execution:native-review-adversarially",
+            "delegation": {
+              "parentJourneyRef": "journey:controlled-native-receiving",
+              "parentRunRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+              "executionUnitRef": "workflow-unit:5EJHYKFE1D78HQ3MCZRJ8DR0FV",
+              "concern": "Challenge identity and graph compilation under hostile inputs",
+              "requiredDifference": "Malformed provenance and graph ambiguity fail closed",
+              "returnContract": "Return adversarial findings and reproducible failures",
+              "subjectRef": "subject:controlled-native-review-adversarially",
+              "basisRevision": "947ce7a",
+              "agentRequirements": {
+                "agentRefs": [
+                  "agent:controlled-native-receiving-reviewer"
+                ],
+                "agentSetRefs": [],
+                "agencyRefs": [
+                  "agency:controlled-native-review-adversarially"
+                ]
+              },
+              "permittedEffects": [
+                "read and submit bounded native Central receipt"
+              ],
+              "verificationObligations": [
+                "exact native Central receiving result reopens unchanged"
+              ],
+              "returnAddress": "return:01ARZ3NDEKTSV4RRFFQ69G5FB8",
+              "stopConditions": "Stop before mutating implementation files",
+              "retryGrant": {
+                "grantRef": "grant:native-review-adversarially",
+                "attemptsAllowed": 2,
+                "attemptsSpent": 1,
+                "revoked": false
+              },
+              "inputs": [
+                {
+                  "predecessor": "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT",
+                  "receivingContextRef": "context:native-review-adversarially-from-inspect-source"
+                }
+              ]
+            },
+            "status": "returned",
+            "statusHistory": [
+              "active",
+              "returned"
+            ],
+            "artifacts": [
+              {
+                "artifactRef": "artifact:native:review-adversarially",
+                "subjectRef": "subject:controlled-native-review-adversarially",
+                "subjectRevision": "947ce7a",
+                "producingExecutionRef": "execution:native-review-adversarially",
+                "evidenceRefs": [
+                  "central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036"
+                ],
+                "semanticDifference": "Native Central returned and independently reopened \"central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036\" on \"central.content-fnv1a64/v1:1609:1cc11cb62e7428a2\""
+              }
+            ],
+            "lateArtifacts": [],
+            "failureReason": null
+          }
+        ],
+        "artifacts": [
+          {
+            "artifactRef": "artifact:native:review-adversarially",
+            "subjectRef": "subject:controlled-native-review-adversarially",
+            "subjectRevision": "947ce7a",
+            "producingExecutionRef": "execution:native-review-adversarially",
+            "evidenceRefs": [
+              "central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036"
+            ],
+            "semanticDifference": "Native Central returned and independently reopened \"central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036\" on \"central.content-fnv1a64/v1:1609:1cc11cb62e7428a2\""
+          }
+        ],
+        "lateArtifacts": [],
+        "failureReason": null
+      }
+    },
+    "attempts": [
+      {
+        "attemptRef": "attempt:native-inspect-source",
+        "attemptRecordedAt": "2026-10-01T01:12:23.848Z",
+        "taskRef": "task:native-inspect-source",
+        "workflowUnitRef": "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT",
+        "reservedExecutionRef": "factory-attempt:attempt:native-inspect-source",
+        "executionRef": "execution:native-inspect-source",
+        "disposition": {
+          "selection": {
+            "schema_version": "factory.execution-intelligence/v1",
+            "demand": {
+              "project_ref": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+              "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+              "workflow_unit_ref": "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT",
+              "agency_ref": "agency:controlled-native-inspect-source",
+              "profile_ref": null,
+              "use_type": "controlled-native-owner-contract",
+              "required_capabilities": [
+                "capability:01ARZ3NDEKTSV4RRFFQ69G5FAZ"
+              ],
+              "required_modalities": [
+                "text"
+              ],
+              "required_actions": [],
+              "required_tools": [],
+              "context_characteristics": [
+                "isolated-native-Central-contract"
+              ],
+              "independence_from": [],
+              "cost_ceiling_usd": null,
+              "latency_preference_ms": null,
+              "requires_local_materialisation": false
+            },
+            "selection": {
+              "roster_version": "aikit.model-roster/v1",
+              "model_ref": "model:controlled-owner-contract-not-invoked",
+              "provider_ref": "provider:controlled-owner-contract-not-invoked",
+              "ranking_policy": "controlled-native-contract",
+              "ranking_explanation": {
+                "modelInvoked": false
+              },
+              "provenance": [
+                "source:controlled-native-owner-contract"
+              ]
+            },
+            "decided_at": "2026-10-01T00:00:00Z"
+          },
+          "participant": {
+            "agentRef": "agent:controlled-native-receiving-producer",
+            "agencyRef": "agency:controlled-native-inspect-source",
+            "worldBindingRef": "world-binding:controlled-native-Central",
+            "sourceRef": "workflow-source:01ARZ3NDEKTSV4RRFFQ69G5FAV",
+            "sourceRevision": "source-revision-7",
+            "sourceDigest": "blake3:9d3342fd9852e880a8eef6a0f996f03487b26b26a9a10009a26677711f838410"
+          },
+          "contextRefs": [
+            "context:controlled-native-owner"
+          ],
+          "praxisRefs": [
+            "skill:01ARZ3NDEKTSV4RRFFQ69G5FAY"
+          ],
+          "capabilityRefs": [
+            "capability:01ARZ3NDEKTSV4RRFFQ69G5FAZ"
+          ],
+          "body": {
+            "modelRef": "model:controlled-owner-contract-not-invoked",
+            "providerRef": "provider:controlled-owner-contract-not-invoked",
+            "routeRef": "route:controlled-native-contract",
+            "harnessRef": "harness:actual-ctrl-native-process",
+            "harnessCompositionRef": "composition:controlled-native-contract",
+            "agentSessionRef": "session:native-inspect-source",
+            "sessionSpaceRef": "session-space:controlled-native-contract"
+          },
+          "permittedEffects": [
+            "read and submit bounded native Central receipt"
+          ],
+          "verificationObligations": [
+            "exact native Central receiving result reopens unchanged"
+          ],
+          "returnAddress": "return:01ARZ3NDEKTSV4RRFFQ69G5FB0",
+          "stopConditions": "Stop if the requested base is unavailable",
+          "escalationConditions": "Escalate contradictory source contracts",
+          "budget": {
+            "wallClockTimeoutMs": 30000,
+            "retryGrantRef": "grant:native-inspect-source",
+            "maximumAttempts": 2
+          }
+        },
+        "dispatch": {
+          "ownerRef": "central",
+          "contract": "central.receiving-reading/v1",
+          "operationRef": "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f",
+          "receiptRef": "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f",
+          "sourceRevision": "central.content-fnv1a64/v1:1585:b013abde937c983e",
+          "phase": "returned",
+          "evidenceRefs": [
+            "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+          ],
+          "partialEffectRefs": [],
+          "payload": {
+            "automatic_agent_or_model_invocation": false,
+            "included": false,
+            "record": {
+              "applied_source_revision": null,
+              "author": {
+                "actor_kind": "agent",
+                "principal_ref": "agent:controlled-native-receiving-producer"
+              },
+              "authority_ref": "central:source:control:root:Control/user/authority.json",
+              "authority_revision": "central.content-fnv1a64/v1:720:838da6113f163f00",
+              "day_ref": null,
+              "document_id": "flow:controlled-native-receiving",
+              "inclusion_request": null,
+              "kind": "contribution",
+              "last_error": null,
+              "now_ref": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+              "occurred_at_unix_seconds": null,
+              "proposal": {
+                "contribution_id": "native-effect:inspect-source:body",
+                "entry_id": "native-effect:inspect-source",
+                "html": "<p>Actual bounded native owner operation.</p>",
+                "operation": "entry.add"
+              },
+              "proposed_source_revision": "central.content-fnv1a64/v1:641:7e09af9311df019f",
+              "received_at_unix_seconds": 1790817143,
+              "request_digest": "4e282736ed32028b5769431c235cb14a89838471381284e1ee64d2091795b13e",
+              "return_ref": "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f",
+              "review": null,
+              "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+              "schema": "central.received-contribution/v1",
+              "scope_ref": "control:root",
+              "sequence": 1,
+              "session_ref": "session:native-inspect-source",
+              "source_ref": "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json",
+              "stale_at_arrival": false,
+              "status": "pending",
+              "task_ref": "task:native-inspect-source"
+            },
+            "return_ref": "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f",
+            "revision": "central.content-fnv1a64/v1:1585:b013abde937c983e",
+            "schema": "central.receiving-reading/v1",
+            "source_changed_by_arrival_or_review": false
+          }
+        },
+        "observations": [],
+        "verifications": [
+          {
+            "verificationRef": "verification:native:inspect-source",
+            "ownerRef": "factory/native-owner-readback",
+            "sourceRevision": "central.content-fnv1a64/v1:1585:b013abde937c983e",
+            "outcome": "passed",
+            "obligations": [
+              "exact native Central receiving result reopens unchanged"
+            ],
+            "evidenceRefs": [
+              "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+            ]
+          }
+        ],
+        "verificationRecordedAt": {
+          "verification:native:inspect-source": "2026-10-01T01:12:24.087Z"
+        },
+        "tracking": [
+          {
+            "factRef": "fact:now:inspect-source",
+            "kind": "now",
+            "ownerRef": "central",
+            "subjectRef": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+            "sourceRevision": "central.content-fnv1a64/v1:874:47dbc17d5aa3bf7a",
+            "evidenceRefs": [
+              "central:source:control:root:Control/agents/now/clearings/c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a/now.json"
+            ]
+          }
+        ],
+        "reresolutions": [],
+        "failureEvidenceRefs": [],
+        "readableReturn": {
+          "returnRef": "return:native:inspect-source",
+          "summary": "Native Central returned and independently reopened \"central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f\" on \"central.content-fnv1a64/v1:1585:b013abde937c983e\"",
+          "artifactRefs": [
+            "artifact:native:inspect-source"
+          ],
+          "evidenceRefs": [
+            "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+          ],
+          "archiveRefs": [],
+          "regressionObservationRefs": []
+        },
+        "returnRecordedAt": "2026-10-01T01:12:24.151Z",
+        "verificationCountAtReturn": 1
+      },
+      {
+        "attemptRef": "attempt:native-review-adversarially",
+        "attemptRecordedAt": "2026-10-01T01:12:24.202Z",
+        "taskRef": "task:native-review-adversarially",
+        "workflowUnitRef": "workflow-unit:5EJHYKFE1D78HQ3MCZRJ8DR0FV",
+        "reservedExecutionRef": "factory-attempt:attempt:native-review-adversarially",
+        "executionRef": "execution:native-review-adversarially",
+        "disposition": {
+          "selectedInputs": [
+            {
+              "predecessor": "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT",
+              "executionRef": "execution:native-inspect-source",
+              "receivingContextRef": "context:native-review-adversarially-from-inspect-source",
+              "artifacts": [
+                {
+                  "artifactRef": "artifact:native:inspect-source",
+                  "subjectRef": "subject:controlled-native-inspect-source",
+                  "subjectRevision": "947ce7a",
+                  "producingExecutionRef": "execution:native-inspect-source",
+                  "evidenceRefs": [
+                    "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+                  ],
+                  "semanticDifference": "Native Central returned and independently reopened \"central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f\" on \"central.content-fnv1a64/v1:1585:b013abde937c983e\""
+                }
+              ]
+            }
+          ],
+          "selection": {
+            "schema_version": "factory.execution-intelligence/v1",
+            "demand": {
+              "project_ref": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+              "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+              "workflow_unit_ref": "workflow-unit:5EJHYKFE1D78HQ3MCZRJ8DR0FV",
+              "agency_ref": "agency:controlled-native-review-adversarially",
+              "profile_ref": null,
+              "use_type": "controlled-native-owner-contract",
+              "required_capabilities": [
+                "capability:01ARZ3NDEKTSV4RRFFQ69G5FB7"
+              ],
+              "required_modalities": [
+                "text"
+              ],
+              "required_actions": [],
+              "required_tools": [],
+              "context_characteristics": [
+                "isolated-native-Central-contract"
+              ],
+              "independence_from": [
+                "execution:native-inspect-source"
+              ],
+              "cost_ceiling_usd": null,
+              "latency_preference_ms": null,
+              "requires_local_materialisation": false
+            },
+            "selection": {
+              "roster_version": "aikit.model-roster/v1",
+              "model_ref": "model:controlled-owner-contract-not-invoked",
+              "provider_ref": "provider:controlled-owner-contract-not-invoked",
+              "ranking_policy": "controlled-native-contract",
+              "ranking_explanation": {
+                "modelInvoked": false
+              },
+              "provenance": [
+                "source:controlled-native-owner-contract"
+              ]
+            },
+            "decided_at": "2026-10-01T00:00:00Z"
+          },
+          "participant": {
+            "agentRef": "agent:controlled-native-receiving-reviewer",
+            "agencyRef": "agency:controlled-native-review-adversarially",
+            "worldBindingRef": "world-binding:controlled-native-Central",
+            "sourceRef": "workflow-source:01ARZ3NDEKTSV4RRFFQ69G5FAV",
+            "sourceRevision": "source-revision-7",
+            "sourceDigest": "blake3:9d3342fd9852e880a8eef6a0f996f03487b26b26a9a10009a26677711f838410"
+          },
+          "contextRefs": [
+            "context:controlled-native-owner",
+            "context:native-review-adversarially-from-inspect-source"
+          ],
+          "praxisRefs": [
+            "skill:01ARZ3NDEKTSV4RRFFQ69G5FB6"
+          ],
+          "capabilityRefs": [
+            "capability:01ARZ3NDEKTSV4RRFFQ69G5FB7"
+          ],
+          "body": {
+            "modelRef": "model:controlled-owner-contract-not-invoked",
+            "providerRef": "provider:controlled-owner-contract-not-invoked",
+            "routeRef": "route:controlled-native-contract",
+            "harnessRef": "harness:actual-ctrl-native-process",
+            "harnessCompositionRef": "composition:controlled-native-contract",
+            "agentSessionRef": "session:native-review-adversarially",
+            "sessionSpaceRef": "session-space:controlled-native-contract"
+          },
+          "permittedEffects": [
+            "read and submit bounded native Central receipt"
+          ],
+          "verificationObligations": [
+            "exact native Central receiving result reopens unchanged"
+          ],
+          "returnAddress": "return:01ARZ3NDEKTSV4RRFFQ69G5FB8",
+          "stopConditions": "Stop before mutating implementation files",
+          "escalationConditions": "Escalate any identity instability",
+          "budget": {
+            "wallClockTimeoutMs": 30000,
+            "retryGrantRef": "grant:native-review-adversarially",
+            "maximumAttempts": 2
+          }
+        },
+        "dispatch": {
+          "ownerRef": "central",
+          "contract": "central.receiving-reading/v1",
+          "operationRef": "central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036",
+          "receiptRef": "central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036",
+          "sourceRevision": "central.content-fnv1a64/v1:1609:1cc11cb62e7428a2",
+          "phase": "returned",
+          "evidenceRefs": [
+            "central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036"
+          ],
+          "partialEffectRefs": [],
+          "payload": {
+            "automatic_agent_or_model_invocation": false,
+            "included": false,
+            "record": {
+              "applied_source_revision": null,
+              "author": {
+                "actor_kind": "agent",
+                "principal_ref": "agent:controlled-native-receiving-reviewer"
+              },
+              "authority_ref": "central:source:control:root:Control/user/authority.json",
+              "authority_revision": "central.content-fnv1a64/v1:720:838da6113f163f00",
+              "day_ref": null,
+              "document_id": "flow:controlled-native-receiving",
+              "inclusion_request": null,
+              "kind": "contribution",
+              "last_error": null,
+              "now_ref": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+              "occurred_at_unix_seconds": null,
+              "proposal": {
+                "contribution_id": "native-effect:review-adversarially:body",
+                "entry_id": "native-effect:review-adversarially",
+                "html": "<p>Actual bounded native owner operation.</p>",
+                "operation": "entry.add"
+              },
+              "proposed_source_revision": "central.content-fnv1a64/v1:641:7e09af9311df019f",
+              "received_at_unix_seconds": 1790817144,
+              "request_digest": "3fe2f56e0ebb59b8f20441450ca92aa00ab4bf047e9fe337d84e65cb8af3435d",
+              "return_ref": "central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036",
+              "review": null,
+              "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+              "schema": "central.received-contribution/v1",
+              "scope_ref": "control:root",
+              "sequence": 2,
+              "session_ref": "session:native-review-adversarially",
+              "source_ref": "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json",
+              "stale_at_arrival": false,
+              "status": "pending",
+              "task_ref": "task:native-review-adversarially"
+            },
+            "return_ref": "central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036",
+            "revision": "central.content-fnv1a64/v1:1609:1cc11cb62e7428a2",
+            "schema": "central.receiving-reading/v1",
+            "source_changed_by_arrival_or_review": false
+          }
+        },
+        "observations": [
+          {
+            "ownerRef": "factory",
+            "contract": "factory.attempt-receiving-call/v1",
+            "operationRef": "factory-attempt-receiving:request:native-final-receiving",
+            "receiptRef": "factory-receiving-call:a343c43a617a33df826485b69ab78df554e68c52a0dbc220ff29a33ff7484f1a",
+            "sourceRevision": "factory-state:12",
+            "phase": "dispatching",
+            "evidenceRefs": [],
+            "partialEffectRefs": [],
+            "payload": {
+              "attemptRevision": 12,
+              "centralContractRevision": "e7e8479f1502732821bd3e7d3d5ceda38fd4279f",
+              "detail": {
+                "meaning": "receiving call intent; not worker execution, inclusion or Recognition"
+              },
+              "nativeRequest": {
+                "document_id": "flow:controlled-native-receiving",
+                "expected_source_revision": "central.content-fnv1a64/v1:641:7e09af9311df019f",
+                "now_ref": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+                "producer_key": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e",
+                "proposal": {
+                  "contribution_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e:body",
+                  "entry_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e",
+                  "html": "<p>Native Central returned and independently reopened &quot;central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036&quot; on &quot;central.content-fnv1a64/v1:1609:1cc11cb62e7428a2&quot;</p><p>Factory Return: return:native:review-adversarially. Task: task:native-review-adversarially. Run: run:01ARZ3NDEKTSV4RRFFQ69G5FBD. Attempt: attempt:native-review-adversarially.</p><p>Artifacts: artifact:native:review-adversarially</p><p>Evidence: central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036</p>",
+                  "operation": "entry.add"
+                },
+                "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+                "session_ref": "session:native-review-adversarially",
+                "source_ref": "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json",
+                "task_ref": "task:native-review-adversarially"
+              },
+              "requestDigest": "d747c0785a5f9f24a9f69c6a624a2798727d8ba5c676b5c6a96be93ae4c93600"
+            }
+          },
+          {
+            "ownerRef": "central",
+            "contract": "central.receiving-reading/v1",
+            "operationRef": "central.receiving:central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+            "receiptRef": "central-receiving-observation:be58bd93a420d0e0abd020f99beb405659e317d41f0e143f1fdc3a2f46d4928b",
+            "sourceRevision": "central.content-fnv1a64/v1:2224:179fa7e67563253c",
+            "phase": "observed",
+            "evidenceRefs": [
+              "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+              "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json"
+            ],
+            "partialEffectRefs": [],
+            "payload": {
+              "action": "central.receiving.submit",
+              "data": {
+                "automatic_agent_or_model_invocation": false,
+                "included": false,
+                "record": {
+                  "applied_source_revision": null,
+                  "author": {
+                    "actor_kind": "agent",
+                    "principal_ref": "agent:controlled-native-receiving-reviewer"
+                  },
+                  "authority_ref": "central:source:control:root:Control/user/authority.json",
+                  "authority_revision": "central.content-fnv1a64/v1:720:838da6113f163f00",
+                  "day_ref": null,
+                  "document_id": "flow:controlled-native-receiving",
+                  "inclusion_request": null,
+                  "kind": "contribution",
+                  "last_error": null,
+                  "now_ref": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+                  "occurred_at_unix_seconds": null,
+                  "proposal": {
+                    "contribution_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e:body",
+                    "entry_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e",
+                    "html": "<p>Native Central returned and independently reopened &quot;central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036&quot; on &quot;central.content-fnv1a64/v1:1609:1cc11cb62e7428a2&quot;</p><p>Factory Return: return:native:review-adversarially. Task: task:native-review-adversarially. Run: run:01ARZ3NDEKTSV4RRFFQ69G5FBD. Attempt: attempt:native-review-adversarially.</p><p>Artifacts: artifact:native:review-adversarially</p><p>Evidence: central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036</p>",
+                    "operation": "entry.add"
+                  },
+                  "proposed_source_revision": "central.content-fnv1a64/v1:641:7e09af9311df019f",
+                  "received_at_unix_seconds": 1790817144,
+                  "request_digest": "7bf7b71b0a35b95a7e7a5c29935bf0fae0ba1da5bdfc7ad5107bab8929f8aac2",
+                  "return_ref": "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+                  "review": null,
+                  "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+                  "schema": "central.received-contribution/v1",
+                  "scope_ref": "control:root",
+                  "sequence": 3,
+                  "session_ref": "session:native-review-adversarially",
+                  "source_ref": "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json",
+                  "stale_at_arrival": false,
+                  "status": "pending",
+                  "task_ref": "task:native-review-adversarially"
+                },
+                "return_ref": "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+                "revision": "central.content-fnv1a64/v1:2224:179fa7e67563253c",
+                "schema": "central.receiving-reading/v1",
+                "source_changed_by_arrival_or_review": false
+              },
+              "ok": true,
+              "status": "success"
+            }
+          },
+          {
+            "ownerRef": "factory",
+            "contract": "factory.attempt-receiving-call/v1",
+            "operationRef": "factory-attempt-receiving:request:native-final-receiving",
+            "receiptRef": "factory-receiving-call:f87a137705579b5ca7e24835babb90f66bdbf459a411819bd072979d7bff9ad5",
+            "sourceRevision": "factory-state:12",
+            "phase": "observed",
+            "evidenceRefs": [],
+            "partialEffectRefs": [],
+            "payload": {
+              "attemptRevision": 12,
+              "centralContractRevision": "e7e8479f1502732821bd3e7d3d5ceda38fd4279f",
+              "detail": {
+                "centralResponse": {
+                  "action": "central.receiving.submit",
+                  "data": {
+                    "automatic_agent_or_model_invocation": false,
+                    "included": false,
+                    "record": {
+                      "applied_source_revision": null,
+                      "author": {
+                        "actor_kind": "agent",
+                        "principal_ref": "agent:controlled-native-receiving-reviewer"
+                      },
+                      "authority_ref": "central:source:control:root:Control/user/authority.json",
+                      "authority_revision": "central.content-fnv1a64/v1:720:838da6113f163f00",
+                      "day_ref": null,
+                      "document_id": "flow:controlled-native-receiving",
+                      "inclusion_request": null,
+                      "kind": "contribution",
+                      "last_error": null,
+                      "now_ref": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+                      "occurred_at_unix_seconds": null,
+                      "proposal": {
+                        "contribution_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e:body",
+                        "entry_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e",
+                        "html": "<p>Native Central returned and independently reopened &quot;central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036&quot; on &quot;central.content-fnv1a64/v1:1609:1cc11cb62e7428a2&quot;</p><p>Factory Return: return:native:review-adversarially. Task: task:native-review-adversarially. Run: run:01ARZ3NDEKTSV4RRFFQ69G5FBD. Attempt: attempt:native-review-adversarially.</p><p>Artifacts: artifact:native:review-adversarially</p><p>Evidence: central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036</p>",
+                        "operation": "entry.add"
+                      },
+                      "proposed_source_revision": "central.content-fnv1a64/v1:641:7e09af9311df019f",
+                      "received_at_unix_seconds": 1790817144,
+                      "request_digest": "7bf7b71b0a35b95a7e7a5c29935bf0fae0ba1da5bdfc7ad5107bab8929f8aac2",
+                      "return_ref": "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+                      "review": null,
+                      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+                      "schema": "central.received-contribution/v1",
+                      "scope_ref": "control:root",
+                      "sequence": 3,
+                      "session_ref": "session:native-review-adversarially",
+                      "source_ref": "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json",
+                      "stale_at_arrival": false,
+                      "status": "pending",
+                      "task_ref": "task:native-review-adversarially"
+                    },
+                    "return_ref": "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+                    "revision": "central.content-fnv1a64/v1:2224:179fa7e67563253c",
+                    "schema": "central.receiving-reading/v1",
+                    "source_changed_by_arrival_or_review": false
+                  },
+                  "ok": true,
+                  "status": "success"
+                },
+                "failure": null,
+                "meaning": "owner receiving evidence; no document inclusion or human Recognition"
+              },
+              "nativeRequest": {
+                "document_id": "flow:controlled-native-receiving",
+                "expected_source_revision": "central.content-fnv1a64/v1:641:7e09af9311df019f",
+                "now_ref": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+                "producer_key": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e",
+                "proposal": {
+                  "contribution_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e:body",
+                  "entry_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e",
+                  "html": "<p>Native Central returned and independently reopened &quot;central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036&quot; on &quot;central.content-fnv1a64/v1:1609:1cc11cb62e7428a2&quot;</p><p>Factory Return: return:native:review-adversarially. Task: task:native-review-adversarially. Run: run:01ARZ3NDEKTSV4RRFFQ69G5FBD. Attempt: attempt:native-review-adversarially.</p><p>Artifacts: artifact:native:review-adversarially</p><p>Evidence: central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036</p>",
+                  "operation": "entry.add"
+                },
+                "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+                "session_ref": "session:native-review-adversarially",
+                "source_ref": "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json",
+                "task_ref": "task:native-review-adversarially"
+              },
+              "requestDigest": "d747c0785a5f9f24a9f69c6a624a2798727d8ba5c676b5c6a96be93ae4c93600"
+            }
+          },
+          {
+            "ownerRef": "central",
+            "contract": "central.receiving-reading/v1",
+            "operationRef": "central.receiving:central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+            "receiptRef": "native-receiving-admission:9194a03b87a2e6c21b73288c5b24143489fe4e6a63d383cbe8d62bd0fb3fa8ef",
+            "sourceRevision": "central.content-fnv1a64/v1:2224:179fa7e67563253c",
+            "phase": "observed",
+            "evidenceRefs": [
+              "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8"
+            ],
+            "partialEffectRefs": [],
+            "payload": {
+              "centralResponse": {
+                "action": "central.receiving.read",
+                "data": {
+                  "automatic_agent_or_model_invocation": false,
+                  "included": false,
+                  "record": {
+                    "applied_source_revision": null,
+                    "author": {
+                      "actor_kind": "agent",
+                      "principal_ref": "agent:controlled-native-receiving-reviewer"
+                    },
+                    "authority_ref": "central:source:control:root:Control/user/authority.json",
+                    "authority_revision": "central.content-fnv1a64/v1:720:838da6113f163f00",
+                    "day_ref": null,
+                    "document_id": "flow:controlled-native-receiving",
+                    "inclusion_request": null,
+                    "kind": "contribution",
+                    "last_error": null,
+                    "now_ref": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+                    "occurred_at_unix_seconds": null,
+                    "proposal": {
+                      "contribution_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e:body",
+                      "entry_id": "factory-return:0cb89c85ca46365ffd4c1eb9d978752f22dab7d9df145953536ab76045795a8e",
+                      "html": "<p>Native Central returned and independently reopened &quot;central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036&quot; on &quot;central.content-fnv1a64/v1:1609:1cc11cb62e7428a2&quot;</p><p>Factory Return: return:native:review-adversarially. Task: task:native-review-adversarially. Run: run:01ARZ3NDEKTSV4RRFFQ69G5FBD. Attempt: attempt:native-review-adversarially.</p><p>Artifacts: artifact:native:review-adversarially</p><p>Evidence: central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036</p>",
+                      "operation": "entry.add"
+                    },
+                    "proposed_source_revision": "central.content-fnv1a64/v1:641:7e09af9311df019f",
+                    "received_at_unix_seconds": 1790817144,
+                    "request_digest": "7bf7b71b0a35b95a7e7a5c29935bf0fae0ba1da5bdfc7ad5107bab8929f8aac2",
+                    "return_ref": "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+                    "review": null,
+                    "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+                    "schema": "central.received-contribution/v1",
+                    "scope_ref": "control:root",
+                    "sequence": 3,
+                    "session_ref": "session:native-review-adversarially",
+                    "source_ref": "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json",
+                    "stale_at_arrival": false,
+                    "status": "pending",
+                    "task_ref": "task:native-review-adversarially"
+                  },
+                  "return_ref": "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+                  "revision": "central.content-fnv1a64/v1:2224:179fa7e67563253c",
+                  "schema": "central.receiving-reading/v1",
+                  "source_changed_by_arrival_or_review": false
+                },
+                "ok": true,
+                "status": "success"
+              },
+              "factoryActionDigest": "e59d2c294f470483c2c51f2e258d6879b525bd08c4061832445483c7b556dfa9",
+              "hostEndpoint": {
+                "binary": "/Users/admin/Library/Application Support/OI/products/central/5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042/bin/ctrl",
+                "contractRevision": "e7e8479f1502732821bd3e7d3d5ceda38fd4279f",
+                "project": null,
+                "root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/.tmpHVRoqt"
+              },
+              "standing": "live native owner read; no caller JSON proof"
+            }
+          }
+        ],
+        "verifications": [
+          {
+            "verificationRef": "verification:native:review-adversarially",
+            "ownerRef": "factory/native-owner-readback",
+            "sourceRevision": "central.content-fnv1a64/v1:1609:1cc11cb62e7428a2",
+            "outcome": "passed",
+            "obligations": [
+              "exact native Central receiving result reopens unchanged"
+            ],
+            "evidenceRefs": [
+              "central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036"
+            ]
+          }
+        ],
+        "verificationRecordedAt": {
+          "verification:native:review-adversarially": "2026-10-01T01:12:24.368Z"
+        },
+        "tracking": [
+          {
+            "factRef": "fact:now:review-adversarially",
+            "kind": "now",
+            "ownerRef": "central",
+            "subjectRef": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+            "sourceRevision": "central.content-fnv1a64/v1:874:47dbc17d5aa3bf7a",
+            "evidenceRefs": [
+              "central:source:control:root:Control/agents/now/clearings/c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a/now.json"
+            ]
+          }
+        ],
+        "reresolutions": [],
+        "failureEvidenceRefs": [],
+        "readableReturn": {
+          "returnRef": "return:native:review-adversarially",
+          "summary": "Native Central returned and independently reopened \"central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036\" on \"central.content-fnv1a64/v1:1609:1cc11cb62e7428a2\"",
+          "artifactRefs": [
+            "artifact:native:review-adversarially"
+          ],
+          "evidenceRefs": [
+            "central:return:control:root:17f777699543e32370fcd79f4ae837b9e431eb73aa61ca49e6482a78c9ff9036",
+            "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+            "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json"
+          ],
+          "receivingRef": "central:return:control:root:1cdf777d23607e1a489ad49bb065a0f771f7fe024fb1d81aefe110a33a7e4ce8",
+          "receivingSourceRevision": "central.content-fnv1a64/v1:2224:179fa7e67563253c",
+          "archiveRefs": [],
+          "regressionObservationRefs": []
+        },
+        "returnRecordedAt": "2026-10-01T01:12:24.423Z",
+        "verificationCountAtReturn": 1
+      }
+    ],
+    "independentReviewers": {
+      "execution:native-review-adversarially": {
+        "executionRef": "execution:native-review-adversarially",
+        "dispositionRunRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+        "reviewOf": [
+          "workflow-unit:0GTZAZ6Q3MXE394CAE1WFD0MCT"
+        ],
+        "independentFromExecutionRefs": [
+          "execution:native-inspect-source"
+        ]
+      }
+    },
+    "syntheses": {}
+  }
+}

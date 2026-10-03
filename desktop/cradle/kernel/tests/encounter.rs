@@ -682,6 +682,7 @@ fn owner_refusal_carries_the_owner_message_verbatim() {
             owner,
             owner_operation,
             message,
+            ..
         } => {
             assert_eq!(owner, "ai-kit");
             assert_eq!(owner_operation, "aikit session lifecycle history");

@@ -1,0 +1,18 @@
+{
+  "standing": "Actual retained native Direct journal excerpt, controlled users; no new effects and no current installed or two-human qualification",
+  "source_capture_sha256": "95bb0635f1b8869e030e0d0aac03bf058442d0a64079503e6b8f42d393cd0969",
+  "source_ref": "central:now:control:root:9c24d9730a0c7855754f550ba7cc6d8769920fd6f61857a3b8f9d00892241d05#world-b-fresh-body-2/native-journal-complete.json",
+  "excerpt_sha256": "f58e0a3381e406db563d50f5d941648d6d0344a90d24b307b7ebcdfd70e91337",
+  "world_ref": "world:shared-expression:bea",
+  "workcell_ref": "workcell:omarchy",
+  "agent_ref": "agent:expressed-9abe707e870547cc93e72a09d94ad142",
+  "human_ref": "human:controlled:bea",
+  "agent_session": "agent-session/direct-bcd57cbdda4560c6f035152d8e97d193de4535c81b38196403367dae2cf4d763",
+  "from": 1060,
+  "to": 1923,
+  "selection": "Exact native user message, agent speech chunks and terminal events in one submitted turn; no thoughts, context deliveries or tool payloads",
+  "events": 855,
+  "participant_ref": "participant:shared-continuation:bo",
+  "human_participant_ref": "participant:shared-continuation:bea",
+  "hosted_snapshot_sha256": "e04ffc9439d951f88591b201e251f1022f03df274089c4c984dd2cba3d0ba883"
+}

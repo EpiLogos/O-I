@@ -5,7 +5,8 @@
  * seqs, deduped by seq — the observable log as the renderer sees it.
  */
 
-import { clearSavedDraft, writeDraft } from "../workspace/drafts";
+import { clearSavedDraft, writeDraft, qualifyDraftOwner, type DraftOwner } from "../workspace/drafts";
+import { beginResourceOwner } from "../files/resources";
 import {
   createContext,
   useCallback,
@@ -22,6 +23,7 @@ import {
   eventsSince,
   kernelOp,
   subscribeTopic,
+  withdrawTransportContinuation,
 } from "./bridge";
 import type {
   KernelOp,
@@ -55,6 +57,11 @@ export interface KernelApi {
   /** The first real state read has returned (success or failure). */
   stateSettled: boolean;
   snapshot: KernelSnapshotState;
+  /** Qualified from the active native root, never its next-launch selection. */
+  draftOwner: DraftOwner | undefined;
+  /** Read the current qualification at the operation boundary, including
+   * foreground invalidation before React has delivered its next render. */
+  currentDraftOwner: () => DraftOwner | undefined;
   receipts: KernelReceipt[];
   listing: SourceListingState | null;
   listingError: string | null;
@@ -72,7 +79,7 @@ export interface KernelApi {
   /** Open a Day document's buffer through the owner's Day route — the only
    * reader of a root-register Day source. Returns the opened buffer. */
   dayOpen: (dayRef?: string) => Promise<KernelOutcome | null>;
-  editBuffer: (sourceRef: SourceRef, content: string) => Promise<void>;
+  editBuffer: (sourceRef: SourceRef, content: string) => Promise<KernelOutcome | null>;
   saveSource: (sourceRef: SourceRef) => Promise<KernelOutcome | null>;
   rereadSource: (sourceRef: SourceRef) => Promise<void>;
   surfaceOpen: (surfaceId: string, kind: string, sourceRef: SourceRef | undefined, title: string) => Promise<void>;
@@ -102,6 +109,40 @@ export function KernelProvider(props: { children: ReactNode }) {
   // is gone (BOOT-02/03/04 render inside the usable shell, not behind it).
   const [stateSettled, setStateSettled] = useState(transport.kind === "unavailable");
   const [snapshot, setSnapshot] = useState<KernelSnapshotState>(EMPTY_SNAPSHOT);
+  const activeRoot = snapshot.navigator?.root?.root;
+  const [ownerRecognition, setOwnerRecognition] = useState<unknown>();
+  const lastRecognizedOwner = useRef<DraftOwner>();
+  const ownerReplaced = useRef(false);
+  const draftOwner = useMemo(() => qualifyDraftOwner(activeRoot, ownerRecognition), [activeRoot, ownerRecognition]);
+  const draftOwnerRef = useRef(draftOwner); draftOwnerRef.current = draftOwner;
+  const currentDraftOwner = useCallback(() => draftOwnerRef.current, []);
+  useEffect(() => {
+    let live = true;
+    let checkpoint = 0;
+    const recognize = () => {
+      const current = ++checkpoint;
+      // A foreground/reconnection continuation must not use a previous
+      // directory identity while its current recognition is outstanding.
+      draftOwnerRef.current = undefined; setOwnerRecognition(undefined);
+      if (activeRoot) void kernelOp(transport, {op: "ground", request: {action: "recognize", path: activeRoot}}).then(call => {
+        if (!live || current !== checkpoint || call.outcome?.result !== "ground_reading") return;
+        const recognized = qualifyDraftOwner(activeRoot, call.outcome.reading);
+        const previous = lastRecognizedOwner.current;
+        if (recognized && previous && (previous.root !== recognized.root || previous.device !== recognized.device || previous.inode !== recognized.inode)) {
+          ownerReplaced.current = true;
+          beginResourceOwner(transport);
+          withdrawTransportContinuation(transport, "This world's directory was replaced. Restart O:I to continue with its current owner.");
+          setBoot({phase: "ground-inaccessible", detail: "This world's directory was replaced. Your earlier drafts remain separately retained. Restart O:I before continuing in the new world."});
+          return;
+        }
+        if (recognized && !ownerReplaced.current) { lastRecognizedOwner.current = recognized; setOwnerRecognition(call.outcome.reading); }
+      });
+    };
+    const foreground = () => { if (document.visibilityState === "visible") recognize(); };
+    recognize();
+    window.addEventListener("focus", foreground); document.addEventListener("visibilitychange", foreground);
+    return () => { live = false; checkpoint++; window.removeEventListener("focus", foreground); document.removeEventListener("visibilitychange", foreground); };
+  }, [activeRoot, transport]);
   const [receipts, setReceipts] = useState<KernelReceipt[]>([]);
   const [listing, setListing] = useState<SourceListingState | null>(null);
   const [listingError, setListingError] = useState<string | null>(null);
@@ -133,6 +174,10 @@ export function KernelProvider(props: { children: ReactNode }) {
 
   // Merge one outcome into the pulled read models.
   const merge = useCallback((outcome: KernelOutcome) => {
+    // A hosted World owns its own buffers, snapshot and receipt cursor.
+    // Its caller receives this qualified outcome; it cannot replace the
+    // local kernel projection merely because it carries the same source ref.
+    if ("native_owner" in outcome) return;
     admitReceipts(outcome.receipts ?? []);
     switch (outcome.result) {
       case "world_read":
@@ -165,6 +210,13 @@ export function KernelProvider(props: { children: ReactNode }) {
       // Serialise ops through one queue so seq order and buffer state stay
       // deterministic under rapid typing.
       const run = applySerial.current.then(async () => {
+        if (ownerReplaced.current) { reportOpError("This world's directory was replaced. Restart O:I to continue with its current owner."); return null; }
+        // A delayed completion can clear only the owner under which it began.
+        const draftScope = draftOwnerRef.current;
+        if (!draftScope && (op.op === "source_edit" || op.op === "source_restore" || op.op === "source_save" || op.op === "source_reread")) {
+          reportOpError("The active world is being recognized. Your draft remains open; continue after its owner has been recognized.");
+          return null;
+        }
         const call = await kernelOp(transport, op);
         reportOpError(call.error ?? null);
         if ("source_ref" in op && op.source_ref && op.op.startsWith("source_")) {
@@ -172,7 +224,9 @@ export function KernelProvider(props: { children: ReactNode }) {
           let reason = call.error;
           if (call.outcome?.result === "source_save_failed") {
             const failure = call.outcome.failure;
-            reason = failure.kind === "owner-refused" ? failure.message : failure.kind === "unavailable" ? failure.detail : undefined;
+            reason = failure.kind === "owner-refused" ? failure.message
+              : failure.kind === "outcome-unknown" ? `${failure.detail} The proposal remains dirty. Read the native source and reconcile the original write before any retry.`
+              : failure.kind === "revision-conflict" ? undefined : failure.detail;
           }
           setSourceErrors(held => {
             const next = { ...held };
@@ -189,8 +243,10 @@ export function KernelProvider(props: { children: ReactNode }) {
         if (call.outcome) {
           const result = call.outcome;
           try {
-            if (result.result === "source_saved") clearSavedDraft(result.buffer.source_ref, result.buffer.content);
-            if (result.result === "source_reread" && result.buffer.dirty) writeDraft(result.buffer.source_ref, result.buffer);
+            if (!("native_owner" in result)) {
+              if (result.result === "source_saved") clearSavedDraft(draftScope, result.buffer.source_ref, result.buffer.content);
+              if (result.result === "source_reread" && result.buffer.dirty) writeDraft(draftScope, result.buffer.source_ref, result.buffer);
+            }
           } catch { reportOpError("Working draft could not be persisted on this device."); }
           merge(result);
         }
@@ -232,7 +288,7 @@ export function KernelProvider(props: { children: ReactNode }) {
 
   const editBuffer = useCallback(
     async (sourceRef: SourceRef, content: string) => {
-      await apply({ op: "source_edit", source_ref: sourceRef, content });
+      return apply({ op: "source_edit", source_ref: sourceRef, content });
     },
     [apply],
   );
@@ -281,10 +337,12 @@ export function KernelProvider(props: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     let subscription: { unsubscribe: () => void } | null = null;
+    let resync: ReturnType<typeof setTimeout> | null = null;
     void (async () => {
       const initial = await kernelOp(transport, { op: "state" });
       if (!alive) return;
       if (initial.outcome && initial.outcome.result === "state") {
+        beginResourceOwner(transport);
         merge(initial.outcome);
       }
       setStateSettled(true);
@@ -314,7 +372,7 @@ export function KernelProvider(props: { children: ReactNode }) {
                   const reason = recognizeCall.error ?? (typeof recognized?.outcome === "string" ? `Central reports this ground as "${recognized.outcome}"` : "The default Central ground is not accessible");
                   setBoot({ phase: "ground-inaccessible", detail: reason });
                 } else {
-                  setBoot({ phase: "ready" });
+                  if (!ownerReplaced.current) setBoot({ phase: "ready" });
                 }
               }
             }
@@ -327,7 +385,6 @@ export function KernelProvider(props: { children: ReactNode }) {
       // window's pulled state may be behind. The re-pull is coalesced: a
       // burst of receipts is one trailing `state` read, not one per receipt
       // (every read is a process spawn on the shared kernel seam).
-      let resync: ReturnType<typeof setTimeout> | null = null;
       const requestResync = () => {
         if (resync) clearTimeout(resync);
         resync = setTimeout(() => {
@@ -345,6 +402,7 @@ export function KernelProvider(props: { children: ReactNode }) {
     })();
     return () => {
       alive = false;
+      if (resync) clearTimeout(resync);
       subscription?.unsubscribe();
     };
   }, [admitReceipts, merge, transport]);
@@ -355,6 +413,8 @@ export function KernelProvider(props: { children: ReactNode }) {
       boot,
       stateSettled,
       snapshot,
+      draftOwner,
+      currentDraftOwner,
       receipts,
       listing,
       listingError,
@@ -378,6 +438,8 @@ export function KernelProvider(props: { children: ReactNode }) {
       boot,
       stateSettled,
       snapshot,
+      draftOwner,
+      currentDraftOwner,
       receipts,
       listing,
       listingError,

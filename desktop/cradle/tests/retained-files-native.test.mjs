@@ -4,17 +4,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn,execFileSync} from 'node:child_process';
 import {once} from 'node:events';
-import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
+import {mkdtemp,mkdir,writeFile,readFile as readSourceBytes,readdir,rm,rename,symlink,link} from 'node:fs/promises';
 import {join} from 'node:path';
+import {createServer} from 'node:http';
+import {kernelOp} from '../src/kernel/bridge.ts';
 import {listFiles,readFile,lastFileReading} from '../src/files/client.ts';
+import {acquireFileReading,acquireFileBytes,peekFileReading,peekFileBytes,resourceStats,invalidateFile,beginResourceOwner,offerOpeningFileReading,offerOpeningFileBytes,takeOpeningFileReading,takeOpeningFileBytes} from '../src/files/resources.ts';
+import {qualifyDraftOwner} from '../src/workspace/drafts.ts';
+import {saveDocumentPayload} from '../src/document/hostSave.ts';
+import {readDocumentIdentity} from '../src/document/identity.ts';
+import {openBinding,closeSurface,reopenClosed} from '../src/surface/engine.ts';
+import {freshLayout} from '../src/surface/types.ts';
 
 test('native retained readings survive restart and missing branches but never bypass fresh retrieval exclusion',{skip:process.env.OI_NATIVE_RETAINED_FILES!=='1',timeout:120000},async()=>{
  for(const name of ['OI_KERNEL_BIN','OI_CENTRAL_CTRL_BIN','OI_BIN'])assert.ok(process.env[name],`${name} is required`);
- const scratch=await mkdtemp(join(tmpdir(),'oi-retained-native-')),root=join(scratch,'Central'),home=join(scratch,'oi-home');let child,transport,stderr='';
+ assert.ok(process.env.OI_NATIVE_TEST_ROOT,'an explicit native-test fixture field is required');await mkdir(process.env.OI_NATIVE_TEST_ROOT,{recursive:true});
+ const scratch=await mkdtemp(join(process.env.OI_NATIVE_TEST_ROOT,'oi-retained-native-')),root=join(scratch,'Central'),home=join(scratch,'oi-home');let child,transport,stderr='';
  const env={...process.env,OI_HOME:home,OI_CENTRAL_ROOT:root,OI_CENTRAL_PROJECT_QUERY:''};
- const start=async()=>{child=spawn(process.env.OI_KERNEL_BIN,['127.0.0.1:0'],{env,stdio:['ignore','pipe','pipe']});child.stderr.on('data',chunk=>stderr+=chunk);const url=await new Promise((resolve,reject)=>{let text='';const timer=setTimeout(()=>reject(Error(stderr||'Native startup timed out')),30000);child.once('error',e=>{clearTimeout(timer);reject(e);});child.once('exit',code=>{clearTimeout(timer);reject(Error(`Native exited ${code}: ${stderr}`));});child.stdout.on('data',chunk=>{text+=chunk;const match=/listening on (http:\/\/[^ ]+)/.exec(text);if(match){clearTimeout(timer);resolve(match[1]);}});});transport={kind:'bridge',url};};
- const stop=async()=>{if(child&&child.exitCode===null){const exited=once(child,'exit');child.kill();await exited;}};
+ const start=async()=>{child=spawn(process.env.OI_KERNEL_BIN,['127.0.0.1:0'],{env,stdio:['ignore','pipe','pipe']});child.stderr.on('data',chunk=>stderr=(stderr+chunk).slice(-65536));const url=await new Promise((resolve,reject)=>{let text='',settled=false;const timer=setTimeout(()=>reject(Error(stderr||'Native startup timed out')),30000);child.once('error',e=>{clearTimeout(timer);reject(e);});child.once('exit',code=>{clearTimeout(timer);reject(Error(`Native exited ${code}: ${stderr}`));});child.stdout.on('data',chunk=>{if(settled)return;text=(text+chunk).slice(-65536);const match=/listening on (http:\/\/[^ ]+)/.exec(text);if(match){settled=true;clearTimeout(timer);resolve(match[1]);}});});transport={kind:'bridge',url};};
+ const stop=async()=>{if(child&&child.exitCode===null&&child.signalCode===null){const exited=once(child,'exit');let timer;const wait=async()=>{try{await Promise.race([exited,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Owned native child did not retire')),3000);})]);}finally{clearTimeout(timer);}};child.kill('SIGTERM');try{await wait();}catch{child.kill('SIGKILL');await wait();}}};
  try{
   const init=JSON.parse(execFileSync(process.env.OI_CENTRAL_CTRL_BIN,['--root',root,'--json','action','run','central.init','{}'],{env,encoding:'utf8',timeout:30000}));assert.equal(init.ok,true,JSON.stringify(init));
   const parent='Work/RetainedProof';await mkdir(join(root,parent),{recursive:true});await writeFile(join(root,parent,'reading.md'),'Native reading retained across a missing source.\n');
@@ -25,5 +33,256 @@ test('native retained readings survive restart and missing branches but never by
   const denied=await lastFileReading(transport,location);assert.equal(denied.retained,null);assert.equal(denied.migration_allowed,false,'fresh exclusion wins even after a previously allowed recovery');
   await rm(join(root,parent,'.no-agent-retrieval'));await writeFile(join(root,parent,'reading.md'),'Current source resumed.\n');const fresh=await readFile(transport,location);assert.equal(fresh.content,'Current source resumed.\n');assert.notEqual(fresh.revision,reading.revision);
   await assert.rejects(readFile(transport,{...location,root:root+'-different'}));const foreign=await lastFileReading(transport,{...location,root:root+'-different'});assert.equal(foreign.retained,null);assert.equal(foreign.migration_allowed,false);
+  // The real native owner rejects this foreign root. Its consumer cache must
+  // preserve that same qualification after an allowed text AND binary read.
+  const cached=await acquireFileReading(transport,location);assert.equal(cached.content,fresh.content);
+  const cachedBytes=await acquireFileBytes(transport,location);assert.equal(cachedBytes.location.root,location.root);
+  const neighbouring={...location,root:root+'-different'};
+  assert.equal(peekFileReading(transport,neighbouring),undefined,'a matching ref cannot expose another root\'s retained text');
+  assert.equal(peekFileBytes(transport,neighbouring),undefined,'a matching ref cannot expose another root\'s retained bytes');
+  await assert.rejects(acquireFileReading(transport,neighbouring),'text cache must not bypass the actual native root refusal');
+  await assert.rejects(acquireFileBytes(transport,neighbouring),'byte cache must not bypass the actual native root refusal');
+  const unqualified={...location,root:''};
+  await assert.rejects(readFile(transport,unqualified),'the actual native owner requires its root qualification');
+  assert.equal(peekFileReading(transport,unqualified),undefined,'an absent root is not a wildcard read');
+  assert.equal(peekFileBytes(transport,unqualified),undefined,'an absent root is not a wildcard byte read');
+  await assert.rejects(acquireFileReading(transport,unqualified));await assert.rejects(acquireFileBytes(transport,unqualified));
+  for(const invalid of [{...location,path:location.path+'.different'},{...location,ref:location.ref+'-different'},{...location,schema:'central.path-ref/wrong'}]){
+   await assert.rejects(readFile(transport,invalid),'the actual native owner rejects the incomplete or contradictory tuple');
+   assert.equal(peekFileReading(transport,invalid),undefined);assert.equal(peekFileBytes(transport,invalid),undefined);
+   await assert.rejects(acquireFileReading(transport,invalid));await assert.rejects(acquireFileBytes(transport,invalid));
+  }
+  // A restart really creates another native endpoint. Neither operation may
+  // borrow the first endpoint's cache-only presentation before admission.
+  await stop();await start();assert.equal(peekFileReading(transport,location),undefined);assert.equal(peekFileBytes(transport,location),undefined);
+  await Promise.all([acquireFileReading(transport,location),acquireFileBytes(transport,location)]);
+  await writeFile(join(root,parent,'reading.md'),'A real externally revised source.\n');
+  assert.equal((await acquireFileReading(transport,location)).content,'A real externally revised source.\n');
+  // This transparent relay delays a REAL native response without fabricating
+  // an owner result. Its stable URL also survives a genuine kernel restart.
+  const bounded=async(promise,label,milliseconds=10000)=>{let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(`${label} timed out`)),milliseconds);})]);}finally{clearTimeout(timer);}};
+  let holdNext,nativeRequests=0,nativeFileRequests=0;const holds=new Set(),controllers=new Set();
+  const holdResponse=()=>{let arrived,failed,release;const arrival=new Promise((resolve,reject)=>{arrived=resolve;failed=reject;});arrival.catch(()=>{});const gate=new Promise(resolve=>release=resolve);const held={arrival,arrived,failed,gate,release};holds.add(held);holdNext=held;return held;};
+  const relay=createServer(async(req,res)=>{
+   const controller=new AbortController();controllers.add(controller);let delayed;
+   const deadline=setTimeout(()=>{controller.abort(Error('Actual native relay request timed out'));req.destroy();res.destroy();},10000);
+   res.once('close',()=>controller.abort());
+   try{
+    let bytes=0;const chunks=[];
+    for await(const chunk of req){bytes+=chunk.length;assert.ok(bytes<=65536,'relay request byte bound');chunks.push(chunk);}
+    const body=Buffer.concat(chunks);
+    if(holdNext&&JSON.parse(body.toString('utf8')).op==='file_read'){delayed=holdNext;holdNext=undefined;}
+    const actual=await fetch(transport.url+req.url,{method:req.method,body,headers:{'content-type':'application/json'},signal:controller.signal});
+    let responseBytes=0;const responseChunks=[];
+    for await(const chunk of actual.body){responseBytes+=chunk.length;assert.ok(responseBytes<=16*1024*1024,'relay response byte bound');responseChunks.push(chunk);}
+    const nativeBody=Buffer.concat(responseChunks);nativeRequests++;if(JSON.parse(body.toString('utf8')).op==='file_read')nativeFileRequests++;
+    if(delayed){delayed.arrived(JSON.parse(nativeBody.toString('utf8')));await bounded(delayed.gate,'held actual native response');}
+    assert.equal(controller.signal.aborted,false,'relay response remains in its request lifetime');
+    res.writeHead(actual.status,{'content-type':'application/json'});res.end(nativeBody);
+   }catch(error){delayed?.failed(error);controller.abort(error);if(!res.destroyed&&!res.headersSent){res.writeHead(502);res.end(JSON.stringify({ok:false,error:String(error)}));}}
+   finally{clearTimeout(deadline);controllers.delete(controller);if(delayed)holds.delete(delayed);}
+  });
+  const relayLifetime=new AbortController();
+  try{
+   await bounded(new Promise((resolve,reject)=>{relay.once('error',reject);relay.listen({port:0,host:'127.0.0.1',signal:relayLifetime.signal},resolve);}), 'native relay listen');
+   const stable={kind:'bridge',url:`http://127.0.0.1:${relay.address().port}`};
+   const openingBinding={id:'native-opening-proof',kind:'file',ref:location.ref,title:'Native opening',location};
+   const openingCount=nativeFileRequests;
+   const opening=await acquireFileReading(stable,location);
+   const opened=await kernelOp(stable,{op:'surface_open',surface_id:openingBinding.id,kind:'file',source_ref:location.ref,title:openingBinding.title});assert.equal(opened.outcome.result,'surface_opened');
+   offerOpeningFileReading(openingBinding,stable,location,opening);
+   assert.strictEqual(takeOpeningFileReading(openingBinding,stable,location),opening);
+   assert.equal(nativeFileRequests-openingCount,1,'the real completed opening supplies admission and renderer without another native file read');
+   assert.equal(takeOpeningFileReading(openingBinding,stable,location),undefined,'the opening is not a renewable cache grant');
+   assert.equal(JSON.stringify(openingBinding).includes(opening.content),false,'native bodies are not inserted into the layout binding');
+   const refreshed=await acquireFileReading(stable,location);assert.equal(nativeFileRequests-openingCount,2,'a later acquisition returns to the real owner');
+   offerOpeningFileReading(openingBinding,stable,location,refreshed);
+   assert.equal(takeOpeningFileReading({...openingBinding},stable,location),undefined,'fresh/restored bindings do not inherit an opening operation');
+   invalidateFile(location);assert.equal(takeOpeningFileReading(openingBinding,stable,location),undefined,'an invalidated native basis cannot cross the mount boundary');
+   const openingBytes=await acquireFileBytes(stable,location);offerOpeningFileBytes(openingBinding,stable,location,openingBytes);
+   assert.strictEqual(takeOpeningFileBytes(openingBinding,stable,location),openingBytes);
+   // Close before first material presentation: the actual layout engine
+   // must retire the still-unconsumed delivery, without changing the native
+   // subject or draft id. A real exclusion then refuses reopening.
+   const unseen=await acquireFileReading(stable,location);offerOpeningFileReading(openingBinding,stable,location,unseen);
+   const closedLayout=closeSurface(openBinding(freshLayout(),openingBinding),openingBinding.id);
+   const closedNative=await kernelOp(stable,{op:'surface_close',surface_id:openingBinding.id});assert.equal(closedNative.outcome.result,'surface_closed');
+   await writeFile(join(root,parent,'.no-agent-retrieval'),'');
+   const reopenedBinding=reopenClosed(closedLayout).surfaces[openingBinding.id];
+   assert.equal(reopenedBinding.id,openingBinding.id);assert.deepEqual(reopenedBinding.location,openingBinding.location);assert.notStrictEqual(reopenedBinding,openingBinding);
+   assert.equal(takeOpeningFileReading(reopenedBinding,stable,location),undefined,'closing retires an unpresented native opening');
+   const deniedOpeningCount=nativeFileRequests;
+   await assert.rejects(acquireFileReading(stable,reopenedBinding.location),'the reopened admission reaches the actual excluded native owner');
+   assert.equal(nativeFileRequests-deniedOpeningCount,1);
+   assert.equal(takeOpeningFileReading(reopenedBinding,stable,location),undefined,'the reopened renderer cannot reuse withdrawn bytes');
+   assert.equal(peekFileReading(stable,location),undefined);
+   await rm(join(root,parent,'.no-agent-retrieval'));
+   const beforeBootstrap=await acquireFileReading(stable,location);offerOpeningFileReading(openingBinding,stable,location,beforeBootstrap);
+   const openingState=await kernelOp(stable,{op:'state'});assert.equal(openingState.outcome.result,'state');beginResourceOwner(stable);
+   assert.equal(takeOpeningFileReading(openingBinding,stable,location),undefined,'a real owner bootstrap withdraws completed opening handoffs too');
+   // An actual native document save succeeds, then an actual delayed read
+   // crosses a withdrawn foreground qualification. The second save must
+   // preserve the native source, rather than relying on a disabled button.
+   const pagePath='Control/user/owner-save-proof.html';await mkdir(join(root,'Control/user'),{recursive:true});
+   const island={profile:'oi.page/v1',meta:{family:'vision',documentId:'native-owner-save-proof',title:'Native owner save proof',revision:1},body:'Initial native source'};
+   const pageBytes=`<!doctype html><html><script type="application/json" id="ql-doc">${JSON.stringify(island)}</script></html>`;
+   await writeFile(join(root,pagePath),pageBytes);
+   const pageLocation=(await listFiles(transport,'Control/user',true)).entries.find(row=>row.name==='owner-save-proof.html').location;
+   const nativePage=()=>JSON.parse(execFileSync(process.env.OI_CENTRAL_CTRL_BIN,['--root',root,'--json','action','run','central.files.read',JSON.stringify({location:pageLocation})],{env,encoding:'utf8',timeout:20000,maxBuffer:1024*1024}));
+   const firstOwnerRead=nativePage();assert.equal(firstOwnerRead.ok,true);assert.ok(firstOwnerRead.data.source);
+   assert.deepEqual((await readFile(transport,pageLocation)).source,firstOwnerRead.data.source);
+   // Empty roles are a legal owner declaration, not a missing property.
+   // Make that declaration in this actual disposable native world and
+   // require its freshly produced reading to survive every consumer face.
+   const relationDirectory=join(root,'Control/relations'),relationPath=join(relationDirectory,'source-relations.json');
+   await mkdir(relationDirectory,{recursive:true});
+   const relationText=await readSourceBytes(relationPath,'utf8').catch(error=>{if(error.code==='ENOENT')return null;throw error;});
+   const relations=relationText?JSON.parse(relationText):{schema:'central.control.ground-relations/v1',project_id:'control:root',relations:[]};
+   assert.equal(relations.schema,'central.control.ground-relations/v1');assert.equal(relations.project_id,'control:root');assert.ok(Array.isArray(relations.relations));
+   const nativeSource=firstOwnerRead.data.source;
+   relations.relations=relations.relations.filter(row=>row.ref!==nativeSource.ref).concat({ref:nativeSource.ref,path:nativeSource.path,roles:[],provenance:nativeSource.provenance,standing:nativeSource.standing,treatment:nativeSource.treatment});
+   await writeFile(relationPath,JSON.stringify(relations));
+   const ownerRead=nativePage();
+   assert.equal(ownerRead.ok,true);assert.ok(ownerRead.data.source);
+   assert.deepEqual(ownerRead.data.source.roles,[],'the actual native declaration preserves an explicit empty role list');
+   assert.equal(Object.hasOwn(ownerRead.data.source,'exists'),false,'the actual owner does not assert this consumer-only fact');
+   const page=await readFile(transport,pageLocation);
+   assert.deepEqual(page.source,ownerRead.data.source,'the actual kernel must preserve exactly the native source metadata');
+   const cliPage=JSON.parse(execFileSync(process.env.OI_BIN,['desktop','files','read',JSON.stringify(pageLocation)],{env,encoding:'utf8',timeout:20000,maxBuffer:1024*1024}));
+   assert.deepEqual(cliPage.source,ownerRead.data.source,'the actual native CLI must not add false source existence');
+   assert.equal(cliPage.content,ownerRead.data.content);assert.equal(cliPage.revision,ownerRead.data.revision);
+   assert.deepEqual((await acquireFileReading(stable,pageLocation)).source,ownerRead.data.source);
+   assert.deepEqual((await acquireFileBytes(stable,pageLocation)).source,ownerRead.data.source,'binary and text share the actual owner source binding');
+   const recognized=await kernelOp(transport,{op:'ground',request:{action:'recognize',path:root}});
+   assert.equal(recognized.outcome.result,'ground_reading');
+   const pageOwner=qualifyDraftOwner(root,recognized.outcome.reading);assert.ok(pageOwner);let currentPageOwner=pageOwner;
+   const savedPage=await saveDocumentPayload(stable,{location:pageLocation,identity:readDocumentIdentity(page.content),basisFileRevision:page.revision,frameIslandText:JSON.stringify({...island,body:'Actually accepted native edit'}),owner:pageOwner,currentOwner:()=>currentPageOwner});
+   assert.equal(savedPage.outcome.state,'saved');
+   const savedBytes=await readSourceBytes(join(root,pagePath),'utf8');assert.ok(savedBytes.includes('Actually accepted native edit'));
+   const pageBasis=await readFile(transport,pageLocation);
+   let pageHeld=holdResponse();
+   const interruptedSave=saveDocumentPayload(stable,{location:pageLocation,identity:readDocumentIdentity(pageBasis.content),basisFileRevision:pageBasis.revision,frameIslandText:JSON.stringify({...island,body:'Must stay an unaccepted page proposal'}),owner:pageOwner,currentOwner:()=>currentPageOwner});
+   const actualPageReading=await bounded(pageHeld.arrival,'actual document read before qualification withdrawal');assert.equal(actualPageReading.ok,true);
+   currentPageOwner=undefined;pageHeld.release();
+   assert.equal((await interruptedSave).outcome.state,'refused');
+   assert.equal(await readSourceBytes(join(root,pagePath),'utf8'),savedBytes,'the async qualification boundary prevents the real native document write');
+   // Exercise migration in the actual persisted native reading, rather
+   // than inventing a native owner response. Earlier O:I stored `exists:
+   // false` here; a fresh body must ignore that unsupported member while
+   // retaining the real identity, revision and read-only recovery standing.
+   const retainedDirectory=join(home,'desktop/retained-files');let legacyRecord;
+   for(const name of await readdir(retainedDirectory)){
+    if(!name.endsWith('.json'))continue;
+    const path=join(retainedDirectory,name),record=JSON.parse(await readSourceBytes(path,'utf8'));
+    if(record.retained.reading.location.ref===pageLocation.ref){legacyRecord={path,record};break;}
+   }
+   assert.ok(legacyRecord,'the real native reading was persisted');
+   assert.equal(legacyRecord.record.retained.reading.content,savedBytes);
+   legacyRecord.record.retained.reading.source.exists=false;
+   await writeFile(legacyRecord.path,JSON.stringify(legacyRecord.record));
+   await rm(join(root,pagePath));await stop();await start();
+   await assert.rejects(readFile(transport,pageLocation));
+   const historicalPage=await lastFileReading(transport,pageLocation);
+   assert.equal(historicalPage.migration_allowed,true);assert.ok(historicalPage.retained);
+   assert.deepEqual(historicalPage.retained.reading.source,ownerRead.data.source,'the fresh native recovery retires the unsupported legacy field');
+   assert.equal(historicalPage.retained.reading.content,savedBytes);
+   assert.equal(historicalPage.retained.reading.revision,pageBasis.revision);
+   assert.equal(historicalPage.retained.standing,'last-native-reading');
+   for(const operation of ['write','history','restore'])assert.equal(historicalPage.retained.reading.operations[operation].available,false);
+   // These are actual retained bytes written by this kernel after its real
+   // Central read. Physical refusal cannot turn them into current Source
+   // authority, delete them, or replace fresh admission with cache existence.
+   const physicalRecordBytes=await readSourceBytes(legacyRecord.path);
+   const physicalOriginal=join(home,'preserved-native-record');
+   const assertHistorical=async(label)=>{
+    const reading=await bounded(lastFileReading(transport,pageLocation),label);
+    assert.equal(reading.migration_allowed,true);assert.ok(reading.retained);
+    assert.equal(reading.retained.reading.content,savedBytes);
+    assert.equal(reading.retained.reading.revision,pageBasis.revision);
+    assert.deepEqual(reading.retained.reading.location,pageLocation);
+    assert.deepEqual(reading.retained.reading.source,ownerRead.data.source);
+    for(const operation of ['write','history','restore'])assert.equal(reading.retained.reading.operations[operation].available,false);
+   };
+   const physicalAlias=join(home,'ordinary-record-hardlink');
+   await link(legacyRecord.path,physicalAlias);
+   await assertHistorical('actual hardlinked native retained record');
+   assert.deepEqual(await readSourceBytes(physicalAlias),physicalRecordBytes);await rm(physicalAlias);
+   await rename(legacyRecord.path,physicalOriginal);
+   try{
+    await symlink(physicalOriginal,legacyRecord.path);
+    await assert.rejects(bounded(lastFileReading(transport,pageLocation),'native retained final symlink'),/symbolic link|symlink|loop/i);
+    assert.deepEqual(await readSourceBytes(physicalOriginal),physicalRecordBytes);await rm(legacyRecord.path);
+    execFileSync('mkfifo',[legacyRecord.path],{timeout:3000});
+    await assert.rejects(bounded(lastFileReading(transport,pageLocation),'native retained actual FIFO'),/Invalid native retained reading/);
+    assert.deepEqual(await readSourceBytes(physicalOriginal),physicalRecordBytes);await rm(legacyRecord.path);
+    await writeFile(legacyRecord.path,Buffer.alloc(8*1024*1024+1));
+    await assert.rejects(bounded(lastFileReading(transport,pageLocation),'native retained actual oversized record'),/Invalid native retained reading/);
+    assert.deepEqual(await readSourceBytes(physicalOriginal),physicalRecordBytes);
+   }finally{await rm(legacyRecord.path,{force:true});await rename(physicalOriginal,legacyRecord.path);}
+   await assertHistorical('native retained ordinary record after physical refusal');
+   const physicalDirectory=join(home,'preserved-native-record-directory');
+   await rename(retainedDirectory,physicalDirectory);
+   try{
+    await symlink(physicalDirectory,retainedDirectory);
+    await assertHistorical('actual configured retained-directory alias');
+    assert.deepEqual(await readSourceBytes(legacyRecord.path),physicalRecordBytes);
+   }finally{await rm(retainedDirectory,{force:true});await rename(physicalDirectory,retainedDirectory);}
+   const pageMarker=join(root,'Control/user/.no-agent-retrieval');
+   await writeFile(pageMarker,'');
+   try{
+    const withheld=await bounded(lastFileReading(transport,pageLocation),'current real owner marker excludes retained body');
+    assert.equal(withheld.retained,null);assert.equal(withheld.migration_allowed,false);
+    assert.deepEqual(await readSourceBytes(legacyRecord.path),physicalRecordBytes,'current refusal preserves historical bytes without disclosing them');
+   }finally{await rm(pageMarker);}
+   await assertHistorical('native retained admission after actual owner marker removal');
+   await writeFile(join(root,pagePath),savedBytes);
+   assert.deepEqual((await readFile(transport,pageLocation)).source,ownerRead.data.source);
+   const beforeReadCount=nativeRequests;
+   let held=holdResponse();
+   const first=acquireFileReading(stable,location),joined=acquireFileReading(stable,location);
+   // Attach rejection handlers before the deliberately delayed completion.
+   const rejected=[assert.rejects(first,/file or its owner changed/),assert.rejects(joined,/file or its owner changed/)];
+   const old=await bounded(held.arrival,'actual native response arrival');assert.equal(old.outcome.reading.content,'A real externally revised source.\n');
+   await writeFile(join(root,parent,'reading.md'),'The revision after an actual delayed read.\n');
+   const revised=await readFile(transport,location);assert.notEqual(revised.revision,old.outcome.reading.revision);
+   invalidateFile(location);held.release();await Promise.all(rejected);assert.equal(nativeRequests-beforeReadCount,1,'both consumers shared the one actual native response');
+   assert.equal((await acquireFileReading(stable,location)).revision,revised.revision);
+   held=holdResponse();
+   const prior=acquireFileReading(stable,location),afterReset=assert.rejects(prior,/file or its owner changed/);
+   await bounded(held.arrival,'pre-restart native response arrival');const oldPid=child.pid;await stop();await start();assert.notEqual(child.pid,oldPid);
+   const freshState=await kernelOp(stable,{op:'state'});assert.equal(freshState.outcome.result,'state');
+   beginResourceOwner(stable);held.release();await afterReset;
+   assert.equal(peekFileReading(stable,location),undefined,'the same relay URL cannot restore the earlier owner lifetime');
+   assert.equal((await acquireFileReading(stable,location)).revision,revised.revision);
+   // A real refusal is held while a later binary read receives renewed
+   // native admission. Releasing the older refusal must preserve that read.
+   await writeFile(join(root,parent,'.no-agent-retrieval'),'');held=holdResponse();
+   const refused=acquireFileReading(stable,location),refusal=assert.rejects(refused);
+   const deniedResponse=await bounded(held.arrival,'actual native refusal arrival');assert.equal(deniedResponse.ok,false);
+   await rm(join(root,parent,'.no-agent-retrieval'));
+   const renewed=await acquireFileBytes(stable,location);held.release();await refusal;
+   assert.equal(peekFileBytes(stable,location)?.revision,renewed.revision,'an older delayed refusal cannot withdraw a later native admission');
+  }finally{relayLifetime.abort();for(const held of holds){held.failed(Error('Native relay retiring'));held.release();}for(const controller of controllers)controller.abort();relay.closeAllConnections();await bounded(new Promise(resolve=>relay.close(resolve)),'native relay retirement',2000);}
+  await Promise.all([acquireFileReading(transport,location),acquireFileBytes(transport,location)]);
+  await writeFile(join(root,parent,'.no-agent-retrieval'),'');
+  await assert.rejects(readFile(transport,location));assert.equal((await lastFileReading(transport,location)).retained,null);
+  await assert.rejects(acquireFileReading(transport,location),'a resident text read cannot renew withdrawn retrieval');
+  assert.equal(peekFileBytes(transport,location),undefined,'the first owner refusal also withdraws resident binary presentation');
+  await assert.rejects(acquireFileBytes(transport,location),'resident bytes cannot renew withdrawn retrieval');
+  assert.equal(peekFileReading(transport,location),undefined);assert.equal(peekFileBytes(transport,location),undefined);
+  await rm(join(root,parent,'.no-agent-retrieval'));
+  // Actual source visits must not leave an unbounded payload archive in the
+  // renderer. Eviction changes presentation retention, never source content.
+  for(let index=0;index<40;index++)await writeFile(join(root,parent,`visit-${index}.md`),`Native visit ${index}\n`+'x'.repeat(512*1024));
+  const visits=(await listFiles(transport,parent,true)).entries.filter(row=>row.name.startsWith('visit-')).sort((a,b)=>a.name.localeCompare(b.name));
+  for(const visit of visits)await acquireFileReading(transport,visit.location);
+  assert.equal(peekFileReading(transport,visits[0].location),undefined,'an old actual visit is evicted from presentation');
+  assert.ok(peekFileReading(transport,visits.at(-1).location),'the most recent actual visit remains readable');
+  assert.ok(resourceStats().resident_entries<=64);assert.ok(resourceStats().retained_payload_bytes<=32*1024*1024);
+  assert.equal((await readFile(transport,visits[0].location)).content.startsWith('Native visit '),true,'presentation eviction did not delete the native file');
+  for(let index=0;index<72;index++)await writeFile(join(root,parent,`small-${index}.md`),`Actual small native visit ${index}\n`);
+  const small=(await listFiles(transport,parent,true)).entries.filter(row=>row.name.startsWith('small-'));
+  for(const visit of small)await acquireFileReading(transport,visit.location);
+  assert.equal(resourceStats().resident_entries,64,'more than64 actual small native reads exercise the entry-count bound independently of the byte bound');
  }finally{await stop();await rm(scratch,{recursive:true,force:true});}
 });

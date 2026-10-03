@@ -666,17 +666,101 @@ fn read_records(
     Ok(records)
 }
 
+/// Physical observation for disposable retained readings only. It grants no
+/// current Source permission and never creates a missing cache directory.
+pub(crate) fn read_retained_record_bytes(
+    path: &std::path::Path,
+    maximum: u64,
+) -> std::io::Result<Option<Vec<u8>>> {
+    #[cfg(unix)]
+    {
+        unix::read_retained(path, maximum)
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = (path, maximum);
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "Held retained reading unsupported on this platform",
+        ))
+    }
+}
+#[cfg(all(test, unix))]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RetainedReadPhase {
+    DirectoryOpened,
+    FileOpened,
+    FirstRead,
+    SecondRead,
+}
+#[cfg(all(test, unix))]
+type RetainedReadOperation = (RetainedReadPhase, Box<dyn FnOnce(&std::path::Path)>);
+#[cfg(all(test, unix))]
+thread_local! {
+    static RETAINED_READ_HOOK: std::cell::RefCell<Option<RetainedReadOperation>> = std::cell::RefCell::new(None);
+}
+#[cfg(all(test, unix))]
+pub(crate) struct RetainedReadHook;
+#[cfg(all(test, unix))]
+impl RetainedReadHook {
+    pub(crate) fn new(
+        phase: RetainedReadPhase,
+        operation: impl FnOnce(&std::path::Path) + 'static,
+    ) -> Self {
+        RETAINED_READ_HOOK.with(|slot| {
+            assert!(slot.borrow().is_none());
+            *slot.borrow_mut() = Some((phase, Box::new(operation)));
+        });
+        Self
+    }
+    pub(crate) fn assert_fired(&self) {
+        RETAINED_READ_HOOK.with(|slot| {
+            assert!(
+                slot.borrow().is_none(),
+                "actual held read did not reach checkpoint"
+            )
+        });
+    }
+}
+#[cfg(all(test, unix))]
+impl Drop for RetainedReadHook {
+    fn drop(&mut self) {
+        RETAINED_READ_HOOK.with(|slot| {
+            slot.borrow_mut().take();
+        });
+    }
+}
+#[cfg(all(test, unix))]
+fn retained_read_checkpoint(phase: RetainedReadPhase, path: &std::path::Path) {
+    let operation = RETAINED_READ_HOOK.with(|slot| {
+        let mut current = slot.borrow_mut();
+        if current
+            .as_ref()
+            .is_some_and(|(expected, _)| *expected == phase)
+        {
+            current.take().map(|(_, operation)| operation)
+        } else {
+            None
+        }
+    });
+    if let Some(operation) = operation {
+        operation(path);
+    }
+}
 #[cfg(unix)]
 mod unix {
     use std::{
-        ffi::{CStr, CString},
+        ffi::{CStr, CString, OsStr, OsString},
         fs::{File, OpenOptions},
-        io::Write,
+        io::{self, Read, Seek, SeekFrom, Write},
         os::{
             fd::{AsRawFd, FromRawFd},
-            unix::fs::{MetadataExt, OpenOptionsExt},
+            unix::{
+                ffi::OsStrExt,
+                fs::{MetadataExt, OpenOptionsExt},
+            },
         },
-        path::Path,
+        path::{Component, Path, PathBuf},
     };
     pub struct Directory(File);
     fn name(value: &str) -> Result<CString, String> {
@@ -688,6 +772,23 @@ mod unix {
     fn error() -> String {
         std::io::Error::last_os_error().to_string()
     }
+    fn physical_name(value: &OsStr) -> io::Result<CString> {
+        let bytes = value.as_bytes();
+        if bytes.is_empty() || bytes.contains(&b'/') || bytes == b"." || bytes == b".." {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Invalid physical record member",
+            ));
+        }
+        CString::new(bytes).map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))
+    }
+    fn owned_file_io(fd: i32) -> io::Result<File> {
+        if fd < 0 {
+            Err(io::Error::last_os_error())
+        } else {
+            Ok(unsafe { File::from_raw_fd(fd) })
+        }
+    }
     fn owned_file(fd: i32) -> Result<File, String> {
         if fd < 0 {
             Err(error())
@@ -696,13 +797,35 @@ mod unix {
         }
     }
     impl Directory {
-        pub fn open(path: &Path) -> Result<Self, String> {
+        fn open_io(path: &Path) -> io::Result<Self> {
             let file = OpenOptions::new()
                 .read(true)
                 .custom_flags(libc::O_NOFOLLOW | libc::O_DIRECTORY | libc::O_CLOEXEC)
-                .open(path)
-                .map_err(|e| e.to_string())?;
+                .open(path)?;
             Ok(Self(file))
+        }
+        pub fn open(path: &Path) -> Result<Self, String> {
+            Self::open_io(path).map_err(|error| error.to_string())
+        }
+        fn child_existing_io(&self, value: &OsStr) -> io::Result<Self> {
+            let value = physical_name(value)?;
+            let flags = libc::O_RDONLY | libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC;
+            // O_DIRECTORY refuses non-directories; nothing is created on read.
+            let fd = unsafe { libc::openat(self.0.as_raw_fd(), value.as_ptr(), flags) };
+            Ok(Self(owned_file_io(fd)?))
+        }
+        fn open_file_io(&self, value: &OsStr, writable: bool, create: bool) -> io::Result<File> {
+            let value = physical_name(value)?;
+            let flags = (if writable {
+                libc::O_RDWR
+            } else {
+                libc::O_RDONLY
+            }) | libc::O_NOFOLLOW
+                | libc::O_CLOEXEC
+                | libc::O_NONBLOCK
+                | if create { libc::O_CREAT } else { 0 };
+            let fd = unsafe { libc::openat(self.0.as_raw_fd(), value.as_ptr(), flags, 0o600) };
+            owned_file_io(fd)
         }
         pub fn child(&self, value: &str) -> Result<Self, String> {
             let value = name(value)?;
@@ -727,20 +850,13 @@ mod unix {
             writable: bool,
             create: bool,
         ) -> Result<Option<File>, String> {
-            let value = name(value)?;
-            let flags = (if writable {
-                libc::O_RDWR
-            } else {
-                libc::O_RDONLY
-            }) | libc::O_NOFOLLOW
-                | libc::O_CLOEXEC
-                | libc::O_NONBLOCK
-                | if create { libc::O_CREAT } else { 0 };
-            let fd = unsafe { libc::openat(self.0.as_raw_fd(), value.as_ptr(), flags, 0o600) };
-            if fd < 0 && std::io::Error::last_os_error().kind() == std::io::ErrorKind::NotFound {
-                return Ok(None);
-            }
-            let file = owned_file(fd)?;
+            // Keep the Expression member grammar and private single-link law.
+            let _ = name(value)?;
+            let file = match self.open_file_io(OsStr::new(value), writable, create) {
+                Ok(file) => file,
+                Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+                Err(error) => return Err(error.to_string()),
+            };
             let meta = file.metadata().map_err(|e| e.to_string())?;
             if !meta.is_file() || meta.nlink() != 1 {
                 return Err("Native recovery member must be a private regular file".into());
@@ -879,6 +995,217 @@ mod unix {
             Ok(values)
         }
     }
+    fn same_directory(held: &Directory, named: &Directory) -> io::Result<()> {
+        let a = held.0.metadata()?;
+        let b = named.0.metadata()?;
+        if !a.is_dir() || !b.is_dir() || a.nlink() == 0 || (a.dev(), a.ino()) != (b.dev(), b.ino())
+        {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Retained directory affiliation changed",
+            ));
+        }
+        Ok(())
+    }
+    struct ReadDirectory {
+        original_anchor: PathBuf,
+        canonical_anchor: PathBuf,
+        directories: Vec<Directory>,
+        members: Vec<OsString>,
+    }
+    impl ReadDirectory {
+        fn check(&self) -> io::Result<()> {
+            if std::fs::canonicalize(&self.original_anchor)? != self.canonical_anchor {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Retained directory alias changed",
+                ));
+            }
+            same_directory(
+                &self.directories[0],
+                &Directory::open_io(&self.canonical_anchor)?,
+            )?;
+            for (index, member) in self.members.iter().enumerate() {
+                let named = self.directories[index].child_existing_io(member)?;
+                same_directory(&self.directories[index + 1], &named)?;
+            }
+            Ok(())
+        }
+        fn current(&self) -> &Directory {
+            self.directories.last().expect("held directory")
+        }
+        fn complete(&self, requested: &Path) -> io::Result<()> {
+            self.check()?;
+            let mut canonical = self.canonical_anchor.clone();
+            for member in &self.members {
+                canonical.push(member);
+            }
+            if std::fs::canonicalize(requested)? != canonical {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "Retained requested directory changed",
+                ));
+            }
+            same_directory(self.current(), &Directory::open_io(&canonical)?)
+        }
+    }
+    fn fingerprint(meta: &std::fs::Metadata) -> io::Result<(u64, u64, u64, i64, i64, i64, i64)> {
+        if !meta.is_file() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Invalid native retained reading",
+            ));
+        }
+        // Read-only retention permits stable hardlinks. This is not the
+        // Expression private-file policy. Access time is not a content basis.
+        Ok((
+            meta.dev(),
+            meta.ino(),
+            meta.len(),
+            meta.mtime(),
+            meta.mtime_nsec(),
+            meta.ctime(),
+            meta.ctime_nsec(),
+        ))
+    }
+    fn read_pass(file: &mut File, maximum: u64) -> io::Result<Vec<u8>> {
+        let cap = maximum.checked_add(1).ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Retained read capacity overflow",
+            )
+        })?;
+        let mut bytes = Vec::new();
+        Read::by_ref(file).take(cap).read_to_end(&mut bytes)?;
+        if bytes.len() as u64 > maximum {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Invalid native retained reading",
+            ));
+        }
+        Ok(bytes)
+    }
+    pub(super) fn read_retained(path: &Path, maximum: u64) -> io::Result<Option<Vec<u8>>> {
+        let requested = if path.is_absolute() {
+            path.to_owned()
+        } else {
+            std::env::current_dir()?.join(path)
+        };
+        let filename = requested.file_name().ok_or_else(|| {
+            io::Error::new(io::ErrorKind::InvalidInput, "Missing retained filename")
+        })?;
+        let requested_dir = requested.parent().ok_or_else(|| {
+            io::Error::new(io::ErrorKind::InvalidInput, "Missing retained directory")
+        })?;
+        let mut anchor = requested_dir.to_owned();
+        let mut missing = Vec::new();
+        let canonical = loop {
+            match std::fs::canonicalize(&anchor) {
+                Ok(canonical) => break canonical,
+                Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                    if missing.len() >= 128 {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "Retained directory depth exceeds observation bound",
+                        ));
+                    }
+                    let Some(Component::Normal(member)) = anchor.components().next_back() else {
+                        return Err(error);
+                    };
+                    missing.push(member.to_owned());
+                    anchor.pop();
+                }
+                Err(error) => return Err(error),
+            }
+        };
+        let mut context = ReadDirectory {
+            directories: vec![Directory::open_io(&canonical)?],
+            members: Vec::new(),
+            original_anchor: anchor,
+            canonical_anchor: canonical,
+        };
+        context.check()?;
+        #[cfg(test)]
+        super::retained_read_checkpoint(super::RetainedReadPhase::DirectoryOpened, &requested);
+        context.check()?;
+        for member in missing.into_iter().rev() {
+            match context.current().child_existing_io(&member) {
+                Ok(child) => {
+                    context.members.push(member);
+                    context.directories.push(child);
+                    context.check()?;
+                }
+                Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                    context.check()?;
+                    return match context.current().child_existing_io(&member) {
+                        Err(second) if second.kind() == io::ErrorKind::NotFound => {
+                            context.check()?;
+                            Ok(None)
+                        }
+                        Err(second) => Err(second),
+                        Ok(_) => Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "Absent retained directory appeared during observation",
+                        )),
+                    };
+                }
+                Err(error) => return Err(error),
+            }
+        }
+        context.complete(requested_dir)?;
+        let mut file = match context.current().open_file_io(filename, false, false) {
+            Ok(file) => file,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                context.complete(requested_dir)?;
+                return match context.current().open_file_io(filename, false, false) {
+                    Err(second) if second.kind() == io::ErrorKind::NotFound => {
+                        context.complete(requested_dir)?;
+                        Ok(None)
+                    }
+                    Err(second) => Err(second),
+                    Ok(_) => Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "Absent retained reading appeared during observation",
+                    )),
+                };
+            }
+            Err(error) => return Err(error),
+        };
+        let basis = fingerprint(&file.metadata()?)?;
+        if basis.2 > maximum {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Invalid native retained reading",
+            ));
+        }
+        #[cfg(test)]
+        super::retained_read_checkpoint(super::RetainedReadPhase::FileOpened, &requested);
+        let bytes = read_pass(&mut file, maximum)?;
+        #[cfg(test)]
+        super::retained_read_checkpoint(super::RetainedReadPhase::FirstRead, &requested);
+        file.seek(SeekFrom::Start(0))?;
+        let second = read_pass(&mut file, maximum)?;
+        #[cfg(test)]
+        super::retained_read_checkpoint(super::RetainedReadPhase::SecondRead, &requested);
+        if bytes != second
+            || bytes.len() as u64 != basis.2
+            || fingerprint(&file.metadata()?)? != basis
+        {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Native retained reading changed during observation",
+            ));
+        }
+        let named = context.current().open_file_io(filename, false, false)?;
+        if fingerprint(&named.metadata()?)? != basis || fingerprint(&file.metadata()?)? != basis {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Native retained reading name changed during observation",
+            ));
+        }
+        context.complete(requested_dir)?;
+        Ok(Some(bytes))
+    }
     use sha2::Digest;
 }
 #[cfg(all(test, unix))]
@@ -890,33 +1217,159 @@ mod tests {
         sync::{Arc, Barrier},
     };
 
-    struct Home(PathBuf);
+    struct Home(crate::retained_files::tests::Fixture);
     impl Home {
         fn new() -> Self {
-            let mut nonce = [0u8; 16];
-            getrandom::fill(&mut nonce).unwrap();
-            let path = std::env::temp_dir().join(format!(
-                "oi-expression-recovery-{:x}",
-                Sha256::digest(nonce)
-            ));
-            fs::create_dir(&path).unwrap();
-            Self(path)
+            Self(crate::retained_files::tests::Fixture::with_cleanup_capacity(2 * MAX_RECORDS + 16))
         }
         fn store(&self) -> Store {
             Store {
-                home: Some(self.0.clone()),
+                home: Some(self.0.root.clone()),
             }
         }
         fn root(&self) -> PathBuf {
-            self.0.join("desktop/expression-recovery")
+            self.0.root.join("desktop/expression-recovery")
         }
         fn path(&self, scope: Scope, kind: Kind, id: &str) -> PathBuf {
             self.root().join(scope.name()).join(filename(kind, id))
         }
     }
-    impl Drop for Home {
+    // This test guard borrows the existing Fixture owner and pins its inode.
+    // Name checks do not exclude a concurrent source-name replacement after
+    // the last check. The host exclusive rename never overwrites a destination.
+    struct HeldHome<'a> {
+        fixture: &'a crate::retained_files::tests::Fixture,
+        original: fs::File,
+        held: PathBuf,
+        replacement: PathBuf,
+        replacement_identity: (u64, u64),
+        restored: std::cell::Cell<bool>,
+    }
+    fn rename_absent(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+        use std::{ffi::CString, os::unix::ffi::OsStrExt};
+        let from = CString::new(from.as_os_str().as_bytes())
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidInput, error))?;
+        let to = CString::new(to.as_os_str().as_bytes())
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidInput, error))?;
+        let result = {
+            #[cfg(target_os = "linux")]
+            {
+                unsafe {
+                    libc::renameat2(
+                        libc::AT_FDCWD,
+                        from.as_ptr(),
+                        libc::AT_FDCWD,
+                        to.as_ptr(),
+                        libc::RENAME_NOREPLACE,
+                    )
+                }
+            }
+            #[cfg(target_os = "macos")]
+            {
+                unsafe { libc::renamex_np(from.as_ptr(), to.as_ptr(), libc::RENAME_EXCL) }
+            }
+            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+            {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Unsupported,
+                    "native exclusive fixture restoration is unavailable on this host",
+                ));
+            }
+        };
+        if result == 0 {
+            Ok(())
+        } else {
+            Err(std::io::Error::last_os_error())
+        }
+    }
+    fn directory_identity(metadata: &fs::Metadata) -> (u64, u64) {
+        use std::os::unix::fs::MetadataExt;
+        (metadata.dev(), metadata.ino())
+    }
+    impl<'a> HeldHome<'a> {
+        fn new(
+            fixture: &'a crate::retained_files::tests::Fixture,
+            replacement: &std::path::Path,
+        ) -> Self {
+            use std::os::unix::fs::OpenOptionsExt;
+            fixture.check_root_at(&fixture.root).unwrap();
+            let original = fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+                .open(&fixture.root)
+                .unwrap();
+            fixture.check_root_at(&fixture.root).unwrap();
+            assert_eq!(
+                directory_identity(&original.metadata().unwrap()),
+                directory_identity(&fs::symlink_metadata(&fixture.root).unwrap())
+            );
+            let held = fixture.root.with_extension("held-native-home");
+            rename_absent(&fixture.root, &held).unwrap();
+            fixture.check_root_at(&held).unwrap();
+            symlink(replacement, &fixture.root).unwrap();
+            let replacement_identity =
+                directory_identity(&fs::symlink_metadata(&fixture.root).unwrap());
+            Self {
+                fixture,
+                original,
+                held,
+                replacement: replacement.to_path_buf(),
+                replacement_identity,
+                restored: std::cell::Cell::new(false),
+            }
+        }
+        fn restore(&self) -> std::io::Result<()> {
+            self.restore_after_release(|| {})
+        }
+        fn restore_after_release(&self, after_release: impl FnOnce()) -> std::io::Result<()> {
+            if self.restored.get() {
+                return self.fixture.check_root_at(&self.fixture.root);
+            }
+            self.fixture.check_root_at(&self.held)?;
+            if directory_identity(&self.original.metadata()?)
+                != directory_identity(&fs::symlink_metadata(&self.held)?)
+            {
+                return Err(std::io::Error::other(
+                    "held Home descriptor affiliation changed",
+                ));
+            }
+            match fs::symlink_metadata(&self.fixture.root) {
+                Ok(metadata)
+                    if metadata.file_type().is_symlink()
+                        && directory_identity(&metadata) == self.replacement_identity
+                        && fs::read_link(&self.fixture.root)? == self.replacement =>
+                {
+                    fs::remove_file(&self.fixture.root)?;
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
+                _ => {
+                    return Err(std::io::Error::other(
+                        "owned Home replacement affiliation changed",
+                    ))
+                }
+            }
+            after_release();
+            rename_absent(&self.held, &self.fixture.root)?;
+            self.fixture.check_root_at(&self.fixture.root)?;
+            self.restored.set(true);
+            Ok(())
+        }
+    }
+    impl Drop for HeldHome<'_> {
         fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
+            if let Err(error) = self.restore() {
+                if std::thread::panicking() {
+                    eprintln!(
+                        "owned Home restoration failed; held directory retained at {}: {error}",
+                        self.held.display()
+                    );
+                } else {
+                    panic!(
+                        "owned Home restoration failed; held directory retained at {}: {error}",
+                        self.held.display()
+                    );
+                }
+            }
         }
     }
     // These are declared local journal payloads, never claimed as a source
@@ -1241,7 +1694,7 @@ mod tests {
         ] {
             let home = Home::new();
             let outside = Home::new();
-            let sentinel = outside.0.join("sentinel");
+            let sentinel = outside.0.root.join("sentinel");
             fs::write(&sentinel, b"untouched").unwrap();
             let created = home
                 .store()
@@ -1259,12 +1712,20 @@ mod tests {
                 "lock" => home.root().join(".lock"),
                 "scope" => home.root().join("expressions"),
                 "root" => home.root(),
-                "home" => home.0.clone(),
+                "home" => home.0.root.clone(),
                 _ => unreachable!(),
             };
-            if target.is_dir() {
+            let _held_home = if target_kind == "home" {
+                Some(HeldHome::new(&home.0, &outside.0.root))
+            } else {
+                None
+            };
+            if _held_home.is_some() {
+                // The guard installed the exact declared link while retaining
+                // the original owned Home inode for Fixture cleanup.
+            } else if target.is_dir() {
                 fs::remove_dir_all(&target).unwrap();
-                symlink(&outside.0, &target).unwrap();
+                symlink(&outside.0.root, &target).unwrap();
             } else {
                 fs::remove_file(&target).unwrap();
                 if target_kind == "hardlink" {
@@ -1287,6 +1748,79 @@ mod tests {
             );
             assert_eq!(fs::read(&sentinel).unwrap(), b"untouched", "{target_kind}");
         }
+    }
+
+    #[test]
+    fn held_home_replacement_refuses_without_touching_foreign_directory() {
+        let home = Home::new();
+        let outside = Home::new();
+        let foreign = Home::new();
+        let sentinel = foreign.0.root.join("foreign-sentinel");
+        fs::write(&sentinel, b"foreign material").unwrap();
+        let guard = HeldHome::new(&home.0, &outside.0.root);
+        let original = guard.held.with_extension("original-native-home");
+        rename_absent(&guard.held, &original).unwrap();
+        rename_absent(&foreign.0.root, &guard.held).unwrap();
+        assert!(guard.restore().is_err());
+        assert_eq!(fs::read_link(&home.0.root).unwrap(), outside.0.root);
+        assert_eq!(
+            fs::read(guard.held.join("foreign-sentinel")).unwrap(),
+            b"foreign material"
+        );
+        assert_eq!(
+            directory_identity(&guard.original.metadata().unwrap()),
+            directory_identity(&fs::symlink_metadata(&original).unwrap())
+        );
+        rename_absent(&guard.held, &foreign.0.root).unwrap();
+        rename_absent(&original, &guard.held).unwrap();
+        guard.restore().unwrap();
+        assert_eq!(fs::read(&sentinel).unwrap(), b"foreign material");
+    }
+
+    #[test]
+    fn late_home_destination_is_not_overwritten_by_native_restoration() {
+        let home = Home::new();
+        let outside = Home::new();
+        let guard = HeldHome::new(&home.0, &outside.0.root);
+        use std::os::unix::fs::OpenOptionsExt;
+        let mut late_directory = None;
+        let result = guard.restore_after_release(|| {
+            fs::create_dir(&home.0.root).unwrap();
+            late_directory = Some(
+                fs::OpenOptions::new()
+                    .read(true)
+                    .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+                    .open(&home.0.root)
+                    .unwrap(),
+            );
+        });
+        let late_directory = late_directory.unwrap();
+        assert_eq!(
+            result.unwrap_err().kind(),
+            std::io::ErrorKind::AlreadyExists
+        );
+        let late_identity = directory_identity(&late_directory.metadata().unwrap());
+        assert_eq!(
+            directory_identity(&fs::symlink_metadata(&home.0.root).unwrap()),
+            late_identity
+        );
+        assert_ne!(
+            late_identity,
+            directory_identity(&guard.original.metadata().unwrap())
+        );
+        assert_eq!(fs::read_dir(&home.0.root).unwrap().count(), 0);
+        home.0.check_root_at(&guard.held).unwrap();
+        assert_eq!(
+            directory_identity(&guard.original.metadata().unwrap()),
+            directory_identity(&fs::symlink_metadata(&guard.held).unwrap())
+        );
+        assert_eq!(
+            directory_identity(&fs::symlink_metadata(&home.0.root).unwrap()),
+            directory_identity(&late_directory.metadata().unwrap())
+        );
+        fs::remove_dir(&home.0.root).unwrap();
+        guard.restore().unwrap();
+        home.0.check_root_at(&home.0.root).unwrap();
     }
 
     #[test]

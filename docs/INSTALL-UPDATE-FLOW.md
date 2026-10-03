@@ -147,7 +147,7 @@ restarts.
 
 ```sh
 oi update                    # resolve cuts, plan, apply (the explicit command)
-oi update --check            # pure report; no file is touched. exit 0 current, 1 updates available
+oi update --check            # report without installation changes; may refresh Git refs. exit 0 current, 1 updates available
 oi update --check --json     # machine-readable report (for timers and other agents)
 oi update --apply [PRODUCT ...]   # explicit apply, optionally scoped
 oi update --apply --channel mainline [PRODUCT ...]   # apply origin/main cuts instead of the checkouts'
@@ -162,11 +162,14 @@ Planning per product:
 1. **skip** — the active receipt names the desired cut, the managed binary's
    SHA-256 still matches it, and the activation chain resolves. Nothing runs;
    binary currency is proven from the receipt, not re-derived by rebuilding.
-2. **adopt** — no receipt entry, but PATH resolves the executable and its
-   `--version` output names the exact desired cut (full or 12-char commit).
-   The existing binary is linked into the managed store as-is, recorded with
-   provenance `adopted` (no build claim is made). `--apply --rebuild`
-   escapes adoption and forces a real build.
+2. **adopt** — PATH resolves an executable outside the managed root whose
+   own version output names the exact desired cut (full or 12-char commit).
+   An older receipt does not hide that replacement. A healthy receipt already
+   naming the desired cut remains **skip**. The replacement is staged as-is,
+   its own staged version is checked again, and every declared companion must
+   be present beside it before the selected products are committed together.
+   The receipt records provenance `adopted` (no build claim is made).
+   `--apply --rebuild` escapes adoption and forces a real build.
 3. **build** — everything else: export the cut, run the product's own build
    contract with `CARGO_TARGET_DIR` pointed at the persistent per-product
    cache, verify the executable, stage by SHA-256, smoke `--version`, then
@@ -174,6 +177,24 @@ Planning per product:
    composition registration (`developer-source` / `managed-update`).
 4. **absent** — no checkout at `Work/<name>`: disclosed, never fatal (the
    six-product suite is not demanded of every machine).
+
+Version probes use the native bounded process runner: a five-second deadline
+and an 8 KiB limit for each of stdout and stderr. A stale receipt, an executable
+that merely has the right filename, or the invoking updater's own version
+cannot prove a replacement's source cut. Adoption verifies the discovered
+image and the separately staged image; failed probes do not activate either.
+
+For an artifact-backed update, put each qualified product under its native
+executable name in its own directory and prepend those directories to PATH
+for the transaction. Keep QL's declared companions beside `ql`. Run the
+patched updater's `--check --json` with explicit `--candidate PRODUCT=REVISION`
+inputs first; verify the intended discovered paths and **adopt** for each
+changed product before applying the identical inputs. A plan reporting
+**build** requires investigation before an artifact-only transaction proceeds.
+The public native regression is
+`cli/tests/managed_artifact_upgrade_native.py`; its real process and image
+cases preserve failed interactions and verify adoption, staged receipts,
+wrong-cut refusal, drift refusal and restored rollback.
 
 A checkout on a non-`main` branch (Actuation's `ql/vak-integration` on
 2026-09-15) is the owner's committed cut like any other; it installs under
@@ -215,7 +236,9 @@ the disclosure that motivates the route: for every product whose planned cut
 predates origin/main it prints `N commit(s) behind origin/main`, and the
 JSON adds `origin_main_revision`, `behind_main`, `ahead_of_main` and a
 top-level `mainline_pending_count`. The origin/main read fetches
-best-effort; a failed fetch degrades to the last-known ref and is disclosed,
+best-effort; this can update remote-tracking refs and Git fetch metadata even
+for `--check`, while installation links, receipts and registrations stay
+unchanged. A failed fetch degrades to the last-known ref and is disclosed,
 never passed off as fresh. "The machine lacks X" is now one command away
 from "the machine's cut predates X" — including when the product code for X
 merged days ago.

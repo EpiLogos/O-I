@@ -29,6 +29,8 @@ import {isUnavailable,sharedField,slug,type HostedEntry,type HostedParticipant,t
 import {PresentationBody,type DepthState} from "./PresentationBody";
 // @ts-ignore -- language-neutral reading over the hosted FieldNow.
 import {fieldNowReading} from "./field-now-reading.mjs";
+import {EncounterSurface} from "../encounter/EncounterSurface";
+import {constituentOf,type Reading as ConstituentReading} from "./ConstituentEncounter";
 import {BeingEncounter} from "./BeingEncounter";
 import {ContributionPanel} from "./ContributionPanel";
 import {ContextContributionPanel} from "./ContextContributionPanel";
@@ -45,14 +47,14 @@ type Snapshot=SharedFieldSnapshot|SharedFieldUnavailable;
 interface FieldView {state:"available"|"unavailable";detail?:string;target?:{name:string;uri:string;database:string};status?:{healthy?:boolean;transport?:{state?:string}};worlds:{world_ref:string;label:string;root:HostedEntry|null;entries:HostedEntry[]}[];beings:{ref:string;label:string;world_ref:string|null;field_ref:string;identity:{kind:string;ref:string};participant:HostedParticipant}[];fields:HostedField[];relations:{relation_ref?:string;field_ref?:string;from:string;to:string;relation:string;origin:string}[];counts:{entries:number;worlds:number;beings:number}}
 type Hit={kind:"entry"|"being"|"field";ref:string;label:string;summary?:string;subject_kind:string;world_ref:string|null;world_label:string;presentations?:{roles?:{role:string;presentation_ref:string}[];expressions?:string[];world_presentations?:string[];projections?:string[];field_occurrences?:string[]};field_refs?:string[]};
 
-export interface ExploreSurfaceProps {binding:SurfaceBinding;onOpenPresentation?:(ref:string,title:string,meta:PresentationMeta)=>Promise<void>;onOpenExplore?:(select:{ref:string;title?:string})=>Promise<void>}
+export interface ExploreSurfaceProps {binding:SurfaceBinding;onView?:(id:string,view:NonNullable<SurfaceBinding["view"]>)=>void;onOpenSubjectSidebar?:(ref:string,title:string,meta:PresentationMeta)=>Promise<void>;onOpenPresentation?:(ref:string,title:string,meta:PresentationMeta)=>Promise<void>;onOpenExplore?:(select:{ref:string;title?:string})=>Promise<void>}
 
 export {navigateExplore,saveTravel,type PresentationMeta} from "./navigate";
 import {loadTravel,saveTravel,TRAVEL_EVENT,type PresentationMeta,type Travel,type Visit} from "./navigate";
 const KIND_LABEL:Record<string,string>={"central-world":"world","wiki-space":"wiki space","wiki-node":"wiki node","curated-artifact":"artifact","central.document":"document",expression:"expression",contribution:"contribution",participant:"being","shared-field":"field","world-position":"agent position",workcell:"workcell",practice:"practice",activity:"activity"};
 const kindLabel=(kind:string)=>KIND_LABEL[kind]??kind;
 
-export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:ExploreSurfaceProps) {
+export function ExploreSurface({binding,onView,onOpenPresentation,onOpenSubjectSidebar,onOpenExplore}:ExploreSurfaceProps) {
   const {transport}=useKernel();
   const pinned=binding.kind==="presentation";
   const [travel,setTravel]=useState<Travel>(()=>pinned?{...freshExploreTravel(),visits:[{query:"",selected:binding.ref}]}:loadTravel());
@@ -93,11 +95,20 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
     // rows, including withdrawal and producer liveness, before rendering.
     const observe=async()=>{
       try{
-        const next=await sharedField<{state?:string;cursor:string;snapshot:Snapshot;reading?:SharedFieldReading}>(transport,{kind:"observe",observer_ref:observerRef,...(selected&&isEntry?{ref:selected}:{})});
+        const next=await sharedField<{state?:string;cursor:string;snapshot?:Snapshot;reading?:SharedFieldReading;status?:SharedFieldSnapshot["status"];reading_status?:unknown}>(transport,{kind:"observe",observer_ref:observerRef,...(cursor?{cursor}:{}),...(selected&&isEntry?{ref:selected}:{})});
         if(!active)return;
         if(next.state==="observing"){retry=setTimeout(()=>void observe(),400);return;}
         if(isUnavailable(next))throw new Error(next.detail);
-        if(cursor!==next.cursor){setSnapshot(next.snapshot);setReading(next.reading);cursor=next.cursor;}
+        if(next.state==="unchanged"){
+          if(!cursor||cursor!==next.cursor)throw new Error("The native observation requires a fresh reading");
+          // Transport status is not a material revision. Preserve the actual
+          // rows while receiving availability even when no row has changed.
+          setSnapshot(current=>current&&!isUnavailable(current)&&JSON.stringify(current.status)!==JSON.stringify(next.status)?{...current,status:next.status??current.status}:current);
+          setReading(current=>current?.state==="hosted"&&JSON.stringify(current.status)!==JSON.stringify(next.reading_status)?{...current,status:next.reading_status}:current);
+        }else{
+          if(!next.snapshot||!next.cursor)throw new Error("The native observation returned no complete reading");
+          setSnapshot(next.snapshot);setReading(next.reading);cursor=next.cursor;
+        }
         setBusy(false);setReadBusy(false);
         retry=setTimeout(()=>void observe(),500);
       }catch(cause){
@@ -120,6 +131,20 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
   const unavailable=snapshot&&isUnavailable(snapshot)?snapshot:undefined;
 
   const select=(ref:string)=>{setPromoteError(undefined);setTravel(t=>pushVisit(t,{query:(currentVisit(t) as Visit).query,selected:ref,depth:(currentVisit(t) as Visit).depth}));};
+  const selectSubject=(ref:string)=>{
+    if(!onOpenSubjectSidebar){select(ref);return;}
+    if(!snapshot||isUnavailable(snapshot)){setPromoteError("The shared field must be reachable before opening this subject.");return;}
+    const entry=snapshot.entries.find(row=>row.ref===ref);
+    const participant=snapshot.participants.find(row=>row.participant_ref===ref);
+    const world=entry?.world_ref??participant?.presentation?.world_ref;
+    if(!world){setPromoteError("The selected subject has no admitted source World.");return;}
+    void onOpenSubjectSidebar(ref,entry?entryLabel(entry,snapshot.projections.filter(p=>p.subject.ref===ref)):subjectLabel(participant?.presentation,"Participant"),{world_ref:world,field_ref:entry?snapshot.entry_fields[ref]:participant?.field_ref}).catch(error=>setPromoteError(String(error)));
+  };
+  const openSession=async(subject:ConstituentReading)=>{
+    const open=onOpenSubjectSidebar??onOpenPresentation;
+    if(!open||!subject.session)throw Error("The native Surface host is unavailable.");
+    await open(subject.ref,subject.title,{world_ref:subject.world_ref,native_session:{ref:subject.session.ref,project:subject.session.project,source_world_ref:subject.session.sourceWorldRef}});
+  };
   const release=()=>{setTravel(t=>pushVisit(t,{query:(currentVisit(t) as Visit).query}));};
   const move=(delta:number)=>setTravel(t=>travelBy(t,delta));
   const setDepth=(change:DepthState)=>setTravel(t=>amendVisit(t,{depth:{...(currentVisit(t) as Visit).depth,...change}}));
@@ -166,6 +191,12 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
     <button type="button" className="explore-refresh" aria-label="Refresh the field" title="Refresh" onClick={()=>setGeneration(n=>n+1)}>↻</button>
   </CanvasHUD>;
 
+  const nativeSession=binding.presentation?.native_session;
+  if(nativeSession&&reading?.state==="hosted"){
+    const subject=constituentOf(reading.entry,[...reading.relations,...(snapshot&&!isUnavailable(snapshot)?snapshot.relations:[])],snapshot&&!isUnavailable(snapshot)?snapshot.entries:[reading.entry]);
+    if(subject?.session?.ref!==nativeSession.ref||subject.session.project!==nativeSession.project||subject.session.sourceWorldRef!==nativeSession.source_world_ref)return <p role="alert">This subject no longer offers the bound native session.</p>;
+    return <EncounterSurface binding={{id:binding.id,kind:"encounter",ref:nativeSession.ref,project:nativeSession.project,title:binding.title,view:binding.view}} sourceWorldRef={nativeSession.source_world_ref} onView={view=>onView?.(binding.id,view)}/>;
+  }
   return <section className="explore-surface" aria-label={pinned?"Projected subject":"Explore"} data-explore-mode={pinned?"presentation":"explore"} data-selected-ref={selected??""} data-travel-index={travel.index} data-travel-length={travel.visits.length} aria-busy={busy||readBusy}>
     {(watchError||promoteError||storageError)&&<div role="alert"><p>The requested change could not be completed.</p><details><summary>Read details</summary><p>{watchError??promoteError??storageError}</p></details></div>}
     {snapshot&&!isUnavailable(snapshot)&&!!snapshot.relation_errors?.length&&<p role="status" className="explore-muted" data-relations-degraded={snapshot.relation_errors.length}>{snapshot.relation_errors.length} shared relation{snapshot.relation_errors.length===1?" is":"s are"} unavailable because its source record or endpoint could not be validated. Valid subjects remain available; refresh after the source is repaired.</p>}
@@ -187,7 +218,7 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
         </ol>
       </div>}
     </>}
-    {selected&&isEntry&&(reading?<><PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} entries={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} activityLiveness={snapshot&&!isUnavailable(snapshot)?((snapshot as unknown as {activity_liveness?:unknown[]}).activity_liveness??[]):[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip}/>{reading.state==="hosted"&&<ContributionPanel key={`${reading.entry.ref}@${(reading.projections.find(projection=>projection.projection_ref===(reading.entry.meta?.projection_ref as string|undefined))??reading.projections[0])?.projection_revision??0}`} transport={transport} reading={reading} subjects={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} onChanged={()=>setGeneration(n=>n+1)}/>}</>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
+    {selected&&isEntry&&(reading?<><PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} entries={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} stages={snapshot&&!isUnavailable(snapshot)?snapshot.stages??[]:[]} activityLiveness={snapshot&&!isUnavailable(snapshot)?((snapshot as unknown as {activity_liveness?:unknown[]}).activity_liveness??[]):[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip} onSelectSubject={selectSubject} onOpenSession={onOpenSubjectSidebar||onOpenPresentation?openSession:undefined} contributions={reading.state==="hosted"?<ContributionPanel key={`${reading.entry.ref}@${(reading.projections.find(projection=>projection.projection_ref===(reading.entry.meta?.projection_ref as string|undefined))??reading.projections[0])?.projection_revision??0}`} transport={transport} reading={reading} subjects={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} onChanged={()=>setGeneration(n=>n+1)}/>:undefined}/></>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
     {selected&&!isEntry&&<section className="presentation-body" data-presentation-state="local">{strip}{selected.startsWith("oi:field:")?<FieldBody field_ref={selected} view={view} snapshot={snapshot} onOpenRef={select}/>:selected.startsWith("relation:")?<RelationBody ref_={selected} view={view}/>:snapshot&&!isUnavailable(snapshot)?<BeingEncounter participantRef={selected} snapshot={snapshot} onOpenRef={select}/>:<p role="status" className="explore-absent">The projected Being is unavailable.</p>}</section>}
     {selected&&!isEntry&&snapshot&&!isUnavailable(snapshot)&&(()=>{const being=view.state==="available"?view.beings.find(b=>b.ref===selected):undefined;const relation=view.state==="available"?view.relations.find(r=>r.relation_ref===selected):undefined;const field_ref=selected.startsWith("oi:field:")?selected:being?.field_ref??snapshot.relation_fields[selected];return field_ref?<ContextContributionPanel key={selected} transport={transport} snapshot={snapshot} target={{kind:selected.startsWith("oi:field:")?"oi.shared-field":being?"oi.participant":"oi.relation",ref:selected,label:being?.label??(relation?relationLabel(relation.relation):subjectLabel(snapshot.fields.find(field=>field.field_ref===selected),"Shared undertaking")),field_ref}} onChanged={()=>setGeneration(n=>n+1)}/>:null;})()}
   </section>;
@@ -237,7 +268,7 @@ function FieldBody({field_ref,view,snapshot,onOpenRef}:{field_ref:string;view:Fi
     <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">SharedField · {field.kind} · {field.visibility}</div><h1>{subjectLabel(field,"Unnamed shared undertaking")}</h1></div><div className="world-presentation__revision">{mine.length?`you: ${mine.map(a=>a.role).join(", ")}`:"you: no membership"}</div></header>
     {participant&&<p><button type="button" disabled={presenceBusy} aria-pressed={present} onClick={()=>void enterOrLeave()}>{present?"Leave shared NOW":"Enter shared NOW"}</button> {present?"You are present in this undertaking.":"Enter deliberately to participate."}</p>}
     {presenceError&&<p role="alert">{presenceError}</p>}
-    <SharedStagePanel field_ref={field_ref} entries={entries} authority={mine} liveReading={{schema:"oi.shared-field.stage-reading/v1",field_ref,stage:snapshot.stages?.find(stage=>stage.field_ref===field_ref)??null,my_follow:(()=>{const follow=snapshot.my_stage_follows?.find(follow=>follow.field_ref===field_ref);return follow?{...follow,following:true}:null;})(),presence:snapshot.presence?.filter(body=>body.field_ref===field_ref)??[]}}/>
+    <SharedStagePanel key={field_ref} field_ref={field_ref} entries={entries} authority={mine} liveReading={{schema:"oi.shared-field.stage-reading/v1",field_ref,stage:snapshot.stages?.find(stage=>stage.field_ref===field_ref&&stage.state==="open")??null,my_follow:(()=>{const follow=snapshot.my_stage_follows?.find(follow=>follow.field_ref===field_ref);return follow?{...follow,following:true}:null;})(),presence:snapshot.presence?.filter(body=>body.field_ref===field_ref)??[]}}/>
     <FieldNowRegion reading={fieldNowReading(snapshot,field_ref) as FieldNow|null} subjects={snapshot.entries}/>
     <section className="world-region" data-region-role="members"><div className="world-region__label">Participants · {members.length}</div><div className="world-region__components"><div className="world-component__collection">{members.map(p=><button type="button" key={p.participant_ref} onClick={()=>onOpenRef(p.participant_ref)}><strong>{subjectLabel(p.presentation,`Unnamed participant ${members.indexOf(p)+1}`)}</strong><span>{p.identity.kind}</span></button>)}</div></div></section>
     <section className="world-region" data-region-role="relations"><div className="world-region__label">Relations · {view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).length}</div><div className="world-region__components"><div className="world-component__collection">{view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).map(r=><button type="button" key={r.relation_ref} onClick={()=>r.relation_ref&&onOpenRef(r.relation_ref)}><strong>{relationLabel(r.relation)}</strong><span>{subjectLabel(entries.find(e=>e.ref===r.from),"Unavailable subject")} → {subjectLabel(entries.find(e=>e.ref===r.to),"Unavailable subject")}</span></button>)}</div></div></section>

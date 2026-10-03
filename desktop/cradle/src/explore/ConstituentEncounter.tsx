@@ -9,40 +9,43 @@ import type {HostedEntry,HostedRelation} from "../knowledge/shared-field";
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
-import {EncounterSurface} from "../encounter/EncounterSurface";
-import {PreparedContextView} from "../context/PreparedContextView";
-import type {SurfaceBinding} from "../surface/types";
 // @ts-ignore -- language-neutral reading over the hosted contracts.
 import {constituentReading} from "./constituent.mjs";
 // @ts-ignore -- the same admitted native subjects supply display names.
 import {subjectLabel,subjectKind} from "../../../../shared-field/presentation-text.mjs";
 
-interface Reading {role:"being"|"thing";kind:string;ref:string;title:string;standing:string;world_ref:string;facts:{label:string;value:string}[];groups:{title:string;items:{ref:string;label:string;kind:string;note?:string}[]}[];session?:{ref:string;project:string;sourceWorldRef:string}}
+export interface Reading {role:"being"|"thing";kind:string;ref:string;title:string;standing:string;world_ref:string;facts:{label:string;value:string}[];groups:{title:string;items:{ref:string;label:string;kind:string;note?:string}[]}[];session?:{ref:string;project:string;sourceWorldRef:string}}
 
 export function constituentOf(entry:HostedEntry,relations:HostedRelation[],entries:HostedEntry[],activityLiveness:unknown[]=[]):Reading|null {
   return constituentReading(entry,relations,entries,{activity_liveness:activityLiveness,now_ms:Date.now()}) as Reading|null;
 }
 
-export function ConstituentEncounter({reading,worldLabel,onOpenRef}:{reading:Reading;worldLabel?:string;onOpenRef:(ref:string)=>void}) {
+export function ConstituentEncounter({reading,worldLabel,onOpenRef,onOpenSession}:{reading:Reading;worldLabel?:string;onOpenRef:(ref:string)=>void;onOpenSession?:(reading:Reading)=>Promise<void>}) {
   const {transport}=useKernel();
-  const [binding,setBinding]=useState<SurfaceBinding>();
   const [error,setError]=useState<string>();
   const [opening,setOpening]=useState(false);
   const epoch=useRef(0);
-  useEffect(()=>{epoch.current+=1;setBinding(undefined);setError(undefined);setOpening(false);},[reading.ref,reading.session?.ref,reading.session?.project,reading.session?.sourceWorldRef]);
+  const active=useRef(false);
+  const scopeKey=JSON.stringify([reading.ref,reading.session?.ref,reading.session?.project,reading.session?.sourceWorldRef,transport]);
+  const currentScope=useRef(scopeKey);currentScope.current=scopeKey;
+  useEffect(()=>{
+    epoch.current+=1;active.current=true;setError(undefined);setOpening(false);
+    return()=>{active.current=false;epoch.current+=1;};
+  },[scopeKey]);
   const openSession=async()=>{
-    if(!reading.session)return;
-    const started=epoch.current;
+    if(!active.current||!reading.session||!onOpenSession)return;
+    const started=epoch.current,startedScope=scopeKey;
+    const current=()=>active.current&&started===epoch.current&&currentScope.current===startedScope;
     setOpening(true);setError(undefined);
     try{
       const session=reading.session;
       const reply=await kernelOp(transport,{op:"hosted_native",source_world_ref:session.sourceWorldRef,request:{op:"encounter",project:session.project,request:{action:"view",agent_session:session.ref}}});
-      if(started!==epoch.current)return;
+      if(!current())return;
       if(reply.error||reply.outcome?.result!=="encounter_reading")throw Error(reply.error??"The native session owner is unavailable");
       if((reply.outcome.data as {agent_session?:string}).agent_session!==session.ref)throw Error("The native owner answered for another session");
-      setBinding({id:`shared-native:${reading.ref}`,kind:"encounter",ref:session.ref,project:session.project,title:reading.title});
-    }catch(cause){if(started===epoch.current)setError(String(cause instanceof Error?cause.message:cause));}
-    finally{if(started===epoch.current)setOpening(false);}
+      await onOpenSession(reading);
+    }catch(cause){if(current())setError(String(cause instanceof Error?cause.message:cause));}
+    finally{if(current())setOpening(false);}
   };
   const sourceLabels=new Set(["Identity","Definition","Definition revision","Native session","Agent","Source revision","Role","Workcell","Practice","Native owner","Run","Custody","Disclosure","Repertoire","Offer details"]);
   const facts=reading.facts.filter(row=>!sourceLabels.has(row.label));
@@ -62,12 +65,9 @@ export function ConstituentEncounter({reading,worldLabel,onOpenRef}:{reading:Rea
       </section>)}
       <details><summary>Source details</summary><dl className="world-component__meta">{reading.facts.map(row=><div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl><pre>{JSON.stringify(reading,null,2)}</pre></details>
       {reading.session&&<section className="world-component world-component--text">
-        <button type="button" disabled={opening} onClick={()=>void openSession()}>{opening?"Opening…":"Open native session"}</button>
+        <button type="button" disabled={opening||!onOpenSession} onClick={()=>void openSession()}>{opening?"Opening…":"Open native session"}</button>
         {error&&<p role="alert">{error}</p>}
-        {binding&&<>
-          <EncounterSurface binding={binding} sourceWorldRef={reading.session.sourceWorldRef} onView={view=>setBinding(value=>value?{...value,view:{...value.view,...view}}:value)}/>
-          <details><summary>Selections for this session</summary><PreparedContextView project={reading.session.project} session={reading.session.ref} sourceWorldRef={reading.session.sourceWorldRef}/></details>
-        </>}
+
       </section>}
     </div></section>
   </article>;

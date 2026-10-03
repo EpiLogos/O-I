@@ -1,12 +1,11 @@
 name: O-I desktop bundle
 
-# Builds the packaged Desktop bundle on a linux runner and emits the
+# Builds each packaged Desktop bundle on its native runner and emits the
 # artifact in the suite-manifest asset shape (target/name/sha256), so the
 # suite manifest can record it and `oi desktop install` can adopt it.
 #
-# The first real bundle cannot be built on macOS or Windows: the AppImage
-# packaging path is linux-only. This workflow is the linux host; the
-# omarchy machine can run desktop/cradle/package-bundle.sh directly.
+# package-bundle.sh owns both Linux AppImage and Darwin arm64 .app adoption.
+# Hosted builds keep compilation off the participants' physical Workcells.
 
 on:
   workflow_dispatch:
@@ -19,8 +18,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  bundle-linux:
-    runs-on: ubuntu-latest
+  bundle-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_suffix: ''
+          - os: macos-15
+            target: aarch64-apple-darwin
+            artifact_suffix: '-aarch64-apple-darwin'
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     permissions:
       contents: read
@@ -43,6 +52,7 @@ jobs:
       # channel, and a digest assertion would break on any upstream
       # re-release.
       - name: Refresh the pinned AppImage tooling in the tauri cache
+        if: runner.os == 'Linux'
         run: |
           set -euo pipefail
           tools="${HOME}/.cache/tauri"
@@ -54,26 +64,25 @@ jobs:
           sha256sum "${tools}/linuxdeploy-x86_64.AppImage"
           curl --fail --location --retry 5 --retry-all-errors --silent --show-error \
             --output "${tools}/linuxdeploy-plugin-gtk.sh" \
-            https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh
+            https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/dda522bce37387f1b853d9095713bfaa924c8423/linuxdeploy-plugin-gtk.sh
           python3 - <<'PY'
           from pathlib import Path
           p = Path.home() / ".cache/tauri/linuxdeploy-plugin-gtk.sh"
           text = p.read_text()
-          needle = 'copy_tree "$gdk_pixbuf_binarydir" "$APPDIR/"'
+          needle = 'copy_lib_tree "$gdk_pixbuf_binarydir" "$APPDIR/"'
           guard = ('if [ -d "$gdk_pixbuf_binarydir" ]; then '
-                   'copy_tree "$gdk_pixbuf_binarydir" "$APPDIR/"; '
+                   'copy_lib_tree "$gdk_pixbuf_binarydir" "$APPDIR/"; '
                    'else echo "no versioned gdk-pixbuf dir (loaders built-in, '
                    'gdk-pixbuf >= 2.44): skipping copy"; fi')
-          assert needle in text, (
-            "linuxdeploy-plugin-gtk.sh no longer matches the known "
-            "gdk-pixbuf copy line; re-check the guard before bundling"
-          )
+          if text.count(needle) != 1:
+              raise SystemExit("Pinned GTK plugin has changed its gdk-pixbuf copy; re-check before bundling")
           p.write_text(text.replace(needle, guard))
           print("guarded the gdk-pixbuf loader-dir copy in linuxdeploy-plugin-gtk.sh")
           PY
           chmod +x "${tools}/linuxdeploy-plugin-gtk.sh"
 
       - name: Install Tauri linux system packages
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -89,7 +98,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-unknown-linux-gnu
+          targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: desktop/cradle/src-tauri
@@ -99,13 +108,172 @@ jobs:
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
 
+      # The installed client is built from the current module's generated
+      # bindings, through the same pinned native route as shared-field.yml.
+      # This requires no hosted database, login or participant credential.
+      - name: Install the pinned native SharedField compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sSf https://install.spacetimedb.com | \
+            SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.8.1" \
+            sh -s -- -y
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          spacetime version install 2.8.1
+          spacetime version use 2.8.1
+          spacetime --version
+
+      - name: Build the selected native module and generate its exact client bindings
+        run: |
+          set -euo pipefail
+          npm install --prefix shared-field/spacetimedb --no-audit --no-fund
+          spacetime build --module-path shared-field/spacetimedb
+          spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb -y
+
+      - name: Test the exact retained reader and recovery store on this native bundle host
+        env:
+          EXPECTED_OI_HEAD: ${{ github.sha }}
+          EXPECTED_TARGET: ${{ matrix.target }}
+        run: |
+          python3 - <<'PY_NATIVE_RETAINED'
+          import hashlib, json, os, platform, re, runpy, shutil
+          from pathlib import Path
+          repo = Path.cwd().resolve(strict=True)
+          out = Path(os.environ['RUNNER_TEMP']) / 'retained-file-kernel-tests'
+          out.mkdir(exist_ok=False)
+          report = {'schema':'oi.retained-file-native-unit-acceptance/v1','pass':False,
+                    'standing':'Actual native retained reader and recovery unit effects on the selected source; no installed, Ctrl roundtrip or two-human claim',
+                    'source_head':os.environ['EXPECTED_OI_HEAD'],'target':os.environ['EXPECTED_TARGET'],
+                    'host':platform.platform(),'uid':os.geteuid(),'cases':[]}
+          def digest(path):
+              checksum = hashlib.sha256()
+              with path.open('rb') as source:
+                  for chunk in iter(lambda: source.read(1024*1024), b''): checksum.update(chunk)
+              return checksum.hexdigest()
+          owners = runpy.run_path(str(repo/'desktop/cradle/tests/native-expression-local.py'))
+          def execute(args, name, cwd=repo, timeout=900):
+              log = out / (name + '.log')
+              cleanup = {}
+              receipt = {'argv':args,'cwd':str(cwd),'log':log.name,'cleanup':cleanup}
+              report.setdefault('commands', []).append(receipt)
+              try:
+                  # Stream output to the owned log; retain partial evidence on failure.
+                  # The existing owner keeps the leader unreaped until group signalling.
+                  with log.open('xb') as handle:
+                      code = owners['run_isolated'](args,cwd=cwd,env=dict(os.environ),stdout=handle,timeout=timeout,cleanup=cleanup)
+                  receipt['status'] = code
+                  if not cleanup.get('owned_group_absent_at_readback'):
+                      raise RuntimeError(name + ': owned group cleanup was not confirmed')
+                  if code: raise RuntimeError(name + ': native command failed; see retained log')
+                  assert log.stat().st_size <= 32*1024*1024, 'Native log exceeds the bounded text inspection budget'
+                  return log.read_text()
+              except BaseException as error:
+                  receipt['failure'] = str(error)
+                  raise
+              finally:
+                  if log.is_file():
+                      receipt['bytes'] = log.stat().st_size
+                      receipt['sha256'] = digest(log)
+          try:
+              assert os.geteuid() != 0, 'Actual EACCES proof requires a nonroot native runner'
+              assert 'OI_NATIVE_TEST_ROOT' not in os.environ, 'This gate requires the actual default Source Run-space fixture route'
+              execute(['python3','desktop/cradle/tests/native-expression-local.test.py'],'native-child-owner-tests',timeout=30)
+              assert execute(['git','rev-parse','HEAD'],'head-before').strip() == report['source_head']
+              paths = execute(['git','ls-files','desktop/cradle/kernel','desktop/cradle/tests/native-expression-local.py','desktop/cradle/tests/native-expression-local.test.py','.github/workflows/desktop-bundle.yml'],'source-paths').splitlines()
+              source_before = {name:digest(repo/name) for name in paths}
+              execute(['git','diff','--exit-code','HEAD','--','desktop/cradle/kernel','desktop/cradle/tests/native-expression-local.py','desktop/cradle/tests/native-expression-local.test.py','.github/workflows/desktop-bundle.yml'],'source-clean-before')
+              toolchain = execute(['rustc','--version','--verbose'],'rustc')
+              assert 'host: ' + report['target'] in toolchain
+              execute(['cargo','--version'],'cargo')
+              built = execute(['cargo','test','--locked','--manifest-path','desktop/cradle/kernel/Cargo.toml','--lib','--no-run','--message-format=json'],'native-test-build')
+              messages = [json.loads(line) for line in built.splitlines() if line.startswith('{')]
+              binaries = {m['executable'] for m in messages if m.get('reason')=='compiler-artifact' and m.get('profile',{}).get('test') and m.get('executable')}
+              assert len(binaries) == 1, 'Cargo must disclose exactly one current native library test binary'
+              binary = Path(binaries.pop()).resolve(strict=True); assert binary.is_file()
+              report['binary'] = {'path':str(binary),'sha256':digest(binary)}
+              shutil.copy2(binary, out/binary.name)
+              assert digest(out/binary.name) == report['binary']['sha256']
+              report['binary']['artifact'] = binary.name
+              required_by_prefix = {
+                  'retained_files::tests::': {
+                      'native_record_survives_restart_exactly_and_cannot_grant_operations',
+                      'actual_default_fixture_uses_product_run_space_without_an_override',
+                      'actual_invalid_explicit_fixture_refuses_without_fallback_or_allocation',
+                      'actual_two_fixtures_remove_only_their_owned_children',
+                      'actual_explicit_fixture_alias_qualifies_the_same_existing_field',
+                      'actual_fixture_cleanup_refuses_replaced_root_and_preserves_both_trees',
+                      'actual_absent_cache_never_creates_a_directory_and_corrupt_record_stays_retained',
+                      'actual_stable_hardlink_and_configured_directory_alias_keep_read_compatibility',
+                      'actual_symlink_and_fifo_never_become_retained_body_reads',
+                      'actual_oversize_and_growth_after_held_open_refuse_without_truncated_success',
+                      'actual_hardlink_in_place_rewrite_between_held_passes_is_not_acknowledged',
+                      'actual_final_name_replacement_after_last_held_read_refuses_preserved_bytes',
+                      'actual_named_parent_replacement_and_root_alias_retarget_refuse_old_affiliation',
+                      'actual_file_permission_failure_keeps_original_private_io_errno',
+                  },
+                  'expression_recovery::tests::': {
+                      'durable_reopen_scopes_metadata_and_no_revision_aba',
+                      'actual_native_document_identity_and_interrupted_creation_are_retained_without_execution',
+                      'independent_store_writers_have_exactly_one_cas_winner',
+                      'symlink_and_hardlink_destinations_never_touch_their_target',
+                      'malformed_paths_fifo_and_unsafe_revision_refuse_without_hanging',
+                      'bounded_capacity_refuses_without_evicting_saved_work',
+                      'interrupted_atomic_temporaries_are_cleaned_without_evicting_work',
+                      'aggregate_byte_capacity_refuses_without_eviction',
+                      'held_home_replacement_refuses_without_touching_foreign_directory',
+                      'late_home_destination_is_not_overwritten_by_native_restoration',
+                  },
+              }
+              run_space = repo/'ProjectCentral'/'now'/'tmp'; run_space.mkdir(parents=True,exist_ok=True)
+              cases = []
+              components = []
+              for prefix, required in required_by_prefix.items():
+                  component = prefix.split('::',1)[0]
+                  listing = execute([str(binary),prefix,'--list'],component+'-native-case-census')
+                  disclosed = [line.removesuffix(': test') for line in listing.splitlines() if line.startswith(prefix) and line.endswith(': test')]
+                  assert required <= {case.rsplit('::',1)[-1] for case in disclosed}, 'A required original or adverse native case is absent: '+component
+                  assert len(disclosed) == len(set(disclosed)) and len(disclosed) >= len(required)
+                  output = execute([str(binary),prefix,'--nocapture','--test-threads=1','--color','never'],component+'-native-tests',cwd=run_space,timeout=180)
+                  successful = re.findall(r'^test ('+re.escape(prefix)+r'\S+) \.\.\. ok$',output,re.M)
+                  assert set(successful) == set(disclosed) and len(successful) == len(disclosed), 'Every disclosed native case must actually pass: '+component
+                  assert re.search(r'test result: ok\. '+str(len(disclosed))+r' passed; 0 failed; 0 ignored;',output)
+                  cases.extend(disclosed)
+                  components.append({'prefix':prefix,'cases':disclosed,'passed':len(disclosed),'failed':0,'ignored':0})
+              assert len(cases) == len(set(cases)) and len(cases) >= 24
+              report['components'] = components
+              assert digest(binary) == report['binary']['sha256'], 'The exact emitted test executable must remain unchanged'
+              source_after = {name:digest(repo/name) for name in paths}; assert source_after == source_before
+              execute(['git','diff','--exit-code','HEAD','--','desktop/cradle/kernel','desktop/cradle/tests/native-expression-local.py','desktop/cradle/tests/native-expression-local.test.py','.github/workflows/desktop-bundle.yml'],'source-clean-after')
+              assert execute(['git','rev-parse','HEAD'],'head-after').strip() == report['source_head']
+              report.update({'source_sha256':source_before,'source_unchanged':True,'cases':cases,'passed':len(cases),'failed':0,'ignored':0,'test_cwd':str(run_space),'pass':True})
+          except BaseException as error:
+              report['failure'] = str(error)
+              raise
+          finally:
+              (out/'receipt.json').write_text(json.dumps(report,indent=2)+'\n')
+          PY_NATIVE_RETAINED
+
+      - name: Retain exact native reader source, case census, executable identity and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retained-file-native-tests-${{ github.sha }}-${{ matrix.target }}
+          path: ${{ runner.temp }}/retained-file-kernel-tests
+          if-no-files-found: error
+
       - name: Package the desktop bundle (frontend, native shell, normalized archive)
+        # This hosted development artifact has no Apple certificate. Ask the
+        # native Tauri bundler to seal its complete app, including resources.
+        # Linker's executable-only signature is not an app-bundle signature.
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
         run: desktop/cradle/package-bundle.sh --out desktop/cradle/dist
 
       - name: Prove the emitted asset record matches the archive bytes
         run: |
           python3 - <<'PY'
-          import hashlib, json, pathlib, sys
+          import hashlib, json, pathlib, subprocess, tarfile
           dist = pathlib.Path("desktop/cradle/dist")
           assets = sorted(dist.glob("*.asset.json"))
           archives = sorted(dist.glob("*.tar.gz"))
@@ -117,6 +285,10 @@ jobs:
               digest = hashlib.sha256(archive.read_bytes()).hexdigest()
               assert digest == asset["sha256"], f"sha256 mismatch for {archive}: {digest} != {asset['sha256']}"
               assert pathlib.Path(str(archive) + ".sha256").read_text().startswith(digest)
+              with tarfile.open(archive, "r:gz") as packed:
+                  bundle = json.load(packed.extractfile("oi-desktop-bundle/BUNDLE.json"))
+              assert bundle["target"] == asset["target"]
+              assert bundle["source_revision"] == subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
               print(f"verified {asset['name']} sha256={digest}")
           PY
 
@@ -128,7 +300,7 @@ jobs:
       - name: Retain the bundle artifact, checksum sidecar and asset record
         uses: actions/upload-artifact@v4
         with:
-          name: oi-desktop-bundle-${{ github.sha }}
+          name: oi-desktop-bundle-${{ github.sha }}${{ matrix.artifact_suffix }}
           path: |
             desktop/cradle/dist/*.tar.gz
             desktop/cradle/dist/*.sha256

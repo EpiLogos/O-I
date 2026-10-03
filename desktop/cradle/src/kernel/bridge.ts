@@ -21,6 +21,13 @@ import type {
 } from "./types";
 
 const TOPIC = "oi:kernel-event";
+// A native recognition can prove that this body's original directory owner
+// was replaced. Withdraw this consumer's transport continuation until a new
+// body is created; this is a refusal, never a new authority or owner epoch.
+const unavailableContinuations = new WeakMap<KernelTransportStatus, string>();
+export function withdrawTransportContinuation(transport: KernelTransportStatus, reason: string) {
+  unavailableContinuations.set(transport, reason);
+}
 
 declare global {
   interface Window {
@@ -76,6 +83,8 @@ export async function kernelOp(
   transport: KernelTransportStatus,
   op: KernelOp,
 ): Promise<KernelOpCall> {
+  const unavailable = unavailableContinuations.get(transport);
+  if (unavailable) return {outcome: null, error: unavailable};
   try {
     if (transport.kind === "tauri") {
       const outcome = await tauriInvoke<KernelOutcome>("kernel_op", { op });

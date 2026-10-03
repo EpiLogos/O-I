@@ -3,6 +3,7 @@
  * or automatically invoke an Agent. Shell navigation remains Track 1's.
  */
 import type {KernelOp, KernelOutcome, NativeDirectory, SourceBufferState, SourceListingState} from "../kernel/types";
+import {throwNativeFailure} from "../kernel/nativeFailure";
 
 export interface SetupNative {
   listDirectory(path: string): Promise<NativeDirectory>;
@@ -25,6 +26,7 @@ export function createSetupNative(call: SetupOpCall): SetupNative {
     },
     async openSource(source_ref, project) {
       const reply = await call({op: "source_open", source_ref, ...(project ? {project} : {})});
+      throwNativeFailure(reply.error);
       if (reply.error || reply.outcome?.result !== "source_opened") throw new Error("The native owner could not open this source.");
       if (reply.outcome.buffer.source_ref !== source_ref) throw new Error("The returned source does not match the selected reference.");
       return reply.outcome.buffer;

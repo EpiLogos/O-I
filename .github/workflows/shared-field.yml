@@ -41,6 +41,8 @@ jobs:
           node-version: '22'
       - name: Install pinned SpaceTimeDB SDK client dependencies
         run: npm install --prefix shared-field/spacetimedb
+      - name: Verify tuple codecs and native Act publication contracts
+        run: npm --prefix shared-field/spacetimedb run test:primitive-contracts
       - name: Install SpaceTimeDB CLI 2.8.1
         shell: bash
         run: |
@@ -74,6 +76,12 @@ jobs:
         run: spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
       - name: Prove large client envelopes survive native process exit
         run: node --test shared-field/spacetimedb/field-cli.test.mjs
+      - name: Prove actual held connection claims, finite completion and private material isolation
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+          SPACETIMEDB_ACCEPTANCE_SQL_SERVER: local
+        run: npm --prefix shared-field/spacetimedb run acceptance:held-presence
       - name: Prove unavailable relation isolation and exact owner repair
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000

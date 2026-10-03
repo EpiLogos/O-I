@@ -39,8 +39,8 @@
  * `act_list` (by expression_ref) so the timeline and the follow cursor span
  * every act of the Run.
  *
- * The IO is injected (FactoryLive supplies kernel reads), so the loop is
- * exercised in tests without a kernel.
+ * FactoryLive supplies kernel reads through the same owner-bound IO seam
+ * used by native acceptance.
  */
 import type {JournalEventLike} from "../../../agent/tape/model";
 import {advanceCursor, castOf, decodeBasis, journalBounds, runWindow, emptyCursor, mapEventsWithCursor, occurrenceKey, opKey, wireBasis, type ActOp, type Binding, type CastMember as CastMemberOfRun, type CursorState, type LiveJournals, type LiveReadings} from "./eventMap";
@@ -144,12 +144,12 @@ export function requestFor(op: ActOp, repertoire: Repertoire, cast: LiveCastMemb
     // material while the current Scene continues (no scene_ref).
     return {material, request: {operation: "act_select", ...base, kind: "state", role: op.role, state: op.state, material: {file_ref: material.file_ref}, bindings, event_basis}};
   }
-  return {material, request: {operation: "act_select", ...base, kind: "scene", bindings, event_basis,
+  return {material, request: {operation: "act_select", ...base, kind: "scene", state: op.scene, bindings, event_basis,
     material: {file_ref: material.file_ref, ...(material.revision ? {revision: material.revision} : {}), ...(material.scene_ref ? {scene_ref: material.scene_ref} : {})}}};
 }
 
 const RACES = new Set(["revision_conflict", "act_revision_conflict", "material_revision_changed"]);
-const REFUSED = /refus|conflict|unavailable|unbound|error|invalid|changed/;
+const REFUSED = /refus|conflict|unavailable|unbound|error|invalid|changed|unknown/;
 
 /** Send one world request; a revision race re-reads the act and retries
  * once with fresh guards. Any other refusal throws with the kernel's state. */
@@ -163,24 +163,158 @@ export class PassageLimit extends Error {
 export const chainIndex = (base: string, actRef: string): number => actRef === base ? 1 : actRef.startsWith(`${base}:`) && /^\d+$/.test(actRef.slice(base.length + 1)) ? Number(actRef.slice(base.length + 1)) : 0;
 export const chainRef = (base: string, index: number) => index <= 1 ? base : `${base}:${index}`;
 
+/** A recovery/skip receipt must retain this exact native request, not merely
+ * reuse its occurrence. No second acknowledgement store is introduced. */
+export function requestAccepted(act: WorldAct | undefined, request: WorldRequest): boolean {
+  if (!act || !("act_ref" in request) || act.act_ref !== request.act_ref || !("event_basis" in request) || !request.event_basis) return false;
+  const basis = request.event_basis;
+  const same = (expected: unknown, actual: unknown): boolean => {
+    if (expected === actual) return true;
+    if (!expected || !actual || typeof expected !== "object" || typeof actual !== "object") return false;
+    if (Array.isArray(expected) || Array.isArray(actual)) return Array.isArray(expected) && Array.isArray(actual)
+      && expected.length === actual.length && expected.every((value, index) => same(value, actual[index]));
+    const entries = Object.entries(expected);
+    return entries.length === Object.keys(actual).length && entries.every(([key, value]) => same(value, (actual as Record<string, unknown>)[key]));
+  };
+  const subset = (expected: object | undefined, actual: object | undefined): boolean => !expected || !!actual
+    && Object.entries(expected).every(([key, value]) => value === undefined || same(value, (actual as Record<string, unknown>)[key]));
+  return act.sequence.some(passage => {
+    if (!passage.target_ref || !subset(basis, passage.event_basis)) return false;
+    if (request.operation === "act_text") return passage.kind === "text" && passage.role === request.role
+      && passage.field === (request.field ?? "body") && passage.text === request.text && passage.value === request.value;
+    if (request.operation === "act_operate") return passage.kind === "operate" && passage.operation === request.operation_kind
+      && passage.native_ref === request.native_ref && (request.mode === undefined || passage.mode === request.mode)
+      && passage.summary === request.summary;
+    if (request.operation !== "act_select" && request.operation !== "act_gesture") return false;
+    const material = request.material;
+    if (material?.file_ref && passage.file_ref !== material.file_ref || material?.expression_ref && passage.expression_ref !== material.expression_ref
+      || material?.revision && passage.revision !== material.revision
+      || material?.scene_ref && passage.scene_ref !== material.scene_ref && !passage.scene_ref?.endsWith(`:scene:${material.scene_ref}`)) return false;
+    if (!subset(request.transition, passage.transition)) return false;
+    if (request.operation === "act_gesture") return passage.kind === "gesture" && passage.gesture === request.gesture
+      && passage.role === request.role && (!request.entity_ref || passage.native_ref === request.entity_ref);
+    const state = request.state ?? material?.state;
+    const kind = request.kind ?? (state && !material?.scene_ref ? "state" : "scene");
+    if (passage.kind !== kind || passage.role !== request.role || passage.state !== state || passage.summary !== request.summary
+      || !subset(request.captions, passage.captions)) return false;
+    return Object.entries(request.bindings ?? {}).every(([role, binding]) => subset(binding, passage.bindings?.[role]));
+  });
+}
+
+/** Qualify a local historical request using the participant binding that
+ * accompanied its native passage, independently of today's role occupants. */
+export function retainedRequest(request: WorldRequest, op: ActOp, cast: LiveCastMember[], owner: WorldAct): WorldRequest {
+  const key = opKey(op);
+  const passage = owner.sequence.find(passage => {
+    const basis = decodeBasis(passage.event_basis);
+    return basis && occurrenceKey(basis.event_ref, basis.occurrence) === key;
+  });
+  if (!passage) throw new Error("Retained occurrence has no original native passage");
+  if (request.operation !== "act_gesture" && request.operation !== "act_select") return request;
+  // Rendering choices belong to the accepted passage. A person's later
+  // repertoire/character selection applies to new work, not old receipts.
+  const material = {...(passage.file_ref ? {file_ref: passage.file_ref} : {}),
+    ...(passage.expression_ref ? {expression_ref: passage.expression_ref} : {}),
+    ...(passage.revision ? {revision: passage.revision} : {}), ...(passage.scene_ref ? {scene_ref: passage.scene_ref} : {})};
+  let qualified: WorldRequest = {...request, material};
+  if (request.operation === "act_select") {
+    const bindings = {...request.bindings};
+    for (const [role, binding] of Object.entries(bindings)) {
+      const original = passage.bindings?.[role];
+      if (binding.kind === "agent" && binding.agent_ref === original?.agent_ref
+        && !(op.bindings[role]?.kind === "agent" && (op.bindings[role] as Extract<Binding, {kind: "agent"}>).character_ref) && original?.character_ref)
+        bindings[role] = {...binding, character_ref: original.character_ref};
+    }
+    qualified = {...request, material, bindings,
+      ...(request.kind === "scene" && passage.state === undefined ? {state: undefined} : {})};
+  }
+  if (request.operation === "act_gesture" || request.operation === "act_select" && request.kind === "state") {
+    const sourceRole = (op as {role: string}).role;
+    const sourceBinding = op.bindings[sourceRole], selfBinding = op.bindings.self;
+    const roleAgent = sourceBinding?.kind === "agent" ? sourceBinding.agent_ref : undefined;
+    const selfAgent = selfBinding?.kind === "agent" ? selfBinding.agent_ref : undefined;
+    // Factory's local state/gesture grammar binds its acting participant as
+    // `self`; scoped Direct grammar uses the cast role. If both are authored,
+    // they must identify the same actor before a historical receipt qualifies.
+    if (roleAgent && selfAgent && roleAgent !== selfAgent)
+      throw new Error("Retained local occurrence has no qualified historical participant: conflicting role/self actors");
+    const sourceAgent = roleAgent ?? selfAgent;
+    const castAgent = cast.find(member => member.role === sourceRole)?.agent_ref;
+    const role = passage.role;
+    const binding = role && (passage.bindings?.[role] ?? owner.sequence.slice(0, passage.index).reverse()
+      .map(earlier => earlier.bindings?.[role]).find(binding => binding?.agent_ref));
+    if (!role || !sourceAgent || sourceAgent !== castAgent || !binding || binding.agent_ref !== sourceAgent)
+      throw new Error("Retained local occurrence has no qualified historical participant");
+    qualified = request.operation === "act_gesture"
+      ? {...qualified, operation:"act_gesture", role, ...(passage.native_ref ? {entity_ref: passage.native_ref} : {})} as WorldRequest
+      : {...qualified, role};
+  }
+  return qualified;
+}
+
+/** Rebuild semantic source fields without consulting today's repertoire. */
+export function requestForRetained(op: ActOp, cast: LiveCastMember[], config: Pick<LiveConfig, "actRef" | "actor">, owner: WorldAct): WorldRequest {
+  const base = {act_ref: config.actRef, actor: config.actor, event_basis: wireBasis(op.basis)};
+  if (op.operation === "act_text") return {...base, operation:"act_text", role:op.role, text:op.text};
+  const bindings = withCharacters(op.bindings, cast);
+  const request: WorldRequest = op.operation === "act_gesture"
+    ? {...base, operation:"act_gesture", role:op.role, gesture:op.gesture}
+    : "state" in op
+      ? {...base, operation:"act_select", kind:"state", role:op.role, state:op.state, bindings}
+      : {...base, operation:"act_select", kind:"scene", state:op.scene, bindings};
+  return retainedRequest(request, op, cast, owner);
+}
+
+/** Reconcile an uncertain request through the native owner before sending
+ * anything further. An unreadable owner or conflicting retained payload is
+ * unavailable work, never permission to resend. */
+export async function reconcilePendingDelivery(world: WorldCall, request: WorldRequest): Promise<ActOutcome> {
+  if (!("act_ref" in request)) throw new Error("Pending delivery has no native Act identity");
+  const fresh = await actInspect(world, request.act_ref);
+  if (fresh.act?.act_ref !== request.act_ref) throw new Error("Pending native delivery remains unreadable; no resend is permitted");
+  const basis = "event_basis" in request ? decodeBasis(request.event_basis) : undefined;
+  const key = basis && occurrenceKey(basis.event_ref, basis.occurrence);
+  if (key && cursorFromAct(fresh.act).performed.includes(key) && !requestAccepted(fresh.act, request)) throw new Error("The pending occurrence retains different native request material");
+  return fresh;
+}
+
 export async function performWithRetry(world: WorldCall, request: WorldRequest, actRef: string): Promise<ActOutcome> {
-  const first = await world(request) as ActOutcome;
+  const eventBasis = "event_basis" in request ? decodeBasis(request.event_basis) : undefined;
+  const accepted = (outcome: ActOutcome | undefined) => outcome?.act?.act_ref === actRef
+    && (!eventBasis || requestAccepted(outcome.act, request));
+  const admit = (outcome: ActOutcome): ActOutcome => {
+    if (!accepted(outcome)) throw new Error(`${request.operation}: no native Act acceptance receipt`);
+    return outcome;
+  };
+  let first: ActOutcome;
+  try { first = await world(request) as ActOutcome; }
+  catch (error) {
+    // A lost response can follow an accepted native write. Read its receipt;
+    // this recovery never repeats the operation or claims unobserved acceptance.
+    const fresh = await actInspect(world, actRef).catch(() => undefined);
+    if (accepted(fresh) && requestAccepted(fresh?.act, request)) return fresh!;
+    throw error;
+  }
   if (first && typeof first === "object" && first.state === "act_passage_limit") throw new PassageLimit(actRef);
   if (!first || typeof first !== "object" || !RACES.has(String(first.state))) {
     if (first && typeof first === "object" && typeof first.state === "string" && REFUSED.test(first.state)) throw new Error(`${request.operation}: ${first.state}`);
-    return first;
+    return admit(first);
   }
   const fresh = await actInspect(world, actRef).catch(() => undefined);
+  // Another producer may have accepted this occurrence before our stale
+  // revision was refused. Its native passage is the acceptance receipt.
+  if (requestAccepted(fresh?.act, request)) return fresh!;
+  if (fresh?.act?.act_ref !== actRef) throw new Error(`${request.operation}: no native Act reading to qualify retry`);
   const retry = {...request} as WorldRequest & {expected_act_revision?: number; expected_revision?: number};
   if (fresh?.act) retry.expected_act_revision = fresh.act.revision;
   if (typeof first.current_revision === "number") retry.expected_revision = first.current_revision;
   const second = await world(retry) as ActOutcome;
   if (second && typeof second === "object" && second.state === "act_passage_limit") throw new PassageLimit(actRef);
   if (second && typeof second === "object" && typeof second.state === "string" && (RACES.has(second.state) || REFUSED.test(second.state))) throw new Error(`${request.operation}: ${second.state}`);
-  return second;
+  return admit(second);
 }
 
-/** Stand-in hash for skipped keys recorded in the catch-up passage (FNV-1a). */
+/** Legacy FNV-1a identifier, retained only to refuse unqualified hash-only continuation. */
 export function keyHash(key: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < key.length; i++) { hash ^= key.charCodeAt(i); hash = Math.imul(hash, 0x01000193) >>> 0; }
@@ -199,7 +333,16 @@ export function cursorFromAct(act: WorldAct | undefined, base: CursorState = emp
   for (const {passage, basis} of decoded) {
     // The catch-up passages name (by hash) what the first follow deliberately
     // did not perform, so a resumed act never performs that history either.
-    if (passage.operation === CATCH_UP_KIND && passage.native_ref) for (const hash of passage.native_ref.split(":").pop()!.split(".")) if (hash) skipped.add(hash);
+    if (passage.operation === CATCH_UP_KIND && passage.native_ref) {
+      if (passage.native_ref.startsWith("live-catch-up-keys:")) {
+        const keys: unknown = JSON.parse(passage.native_ref.slice("live-catch-up-keys:".length));
+        if (!Array.isArray(keys) || !keys.length || !keys.every(key => typeof key === "string" && key.length))
+          throw new Error("Native catch-up receipt has invalid source identities");
+        for (const key of keys) skipped.add(key);
+      } else if (passage.native_ref.startsWith("live-catch-up:")) {
+        for (const hash of passage.native_ref.slice("live-catch-up:".length).split(".")) if (hash) skipped.add("legacy-hash:" + hash);
+      } else throw new Error("Native catch-up receipt has unknown source custody");
+    }
     if (!basis) continue;
     performed.add(occurrenceKey(basis.event_ref, basis.occurrence));
     const journal = basis.journal;
@@ -207,12 +350,13 @@ export function cursorFromAct(act: WorldAct | undefined, base: CursorState = emp
     // A reply run whose text passage is missing was still open: re-read the
     // journal from its first chunk (its select passage dedupes; the text
     // lands once when the run closes).
-    if (basis.entry === "encounter.reply" && journal && /^cursor:\d+$/.test(basis.occurrence)
-      && !decoded.some(other => other.basis?.event_ref === basis.event_ref && other.basis.occurrence === `${basis.occurrence}/text`)) {
+    const replyStart = basis.occurrence.replace(/\/scene$/, "");
+    if (basis.entry === "encounter.reply" && journal && /^cursor:\d+$/.test(replyStart)
+      && !decoded.some(other => other.basis?.event_ref === basis.event_ref && other.basis.occurrence === `${replyStart}/text`)) {
       openRuns.push(journal);
     }
   }
-  for (const run of openRuns) if ((encounterAfter[run.session] ?? -1) <= run.cursor) encounterAfter[run.session] = run.cursor - 1;
+  for (const run of openRuns) encounterAfter[run.session] = Math.min(encounterAfter[run.session] ?? -1, run.cursor - 1);
   return {...base, performed: [...performed], encounterAfter, skipped};
 }
 
@@ -250,6 +394,9 @@ export class LiveProducer {
   private skipped = new Set<string>();
   /** The act currently performed into (the chain's newest). */
   private current: string;
+  /** Uncertain delivery is reconciled against its native passage before any
+   * subsequent pass can send it again. This is IO custody, not source state. */
+  private pendingRequest?: WorldRequest;
   constructor(io: LiveIO, config: LiveConfig, cursor: CursorState = emptyCursor()) {
     this.io = io;
     this.config = config;
@@ -281,8 +428,7 @@ export class LiveProducer {
   /** The role (and live entity) presenting an agent now: a role the act's
    * current bindings give that agent and the kernel maps to an entity, else
    * the cast role pinned at open. */
-  private occupantOf(agentRef: string | undefined, fallbackRole: string): {role: string; entity_ref?: string} {
-    const act = this.state.act;
+  private occupantOf(agentRef: string | undefined, fallbackRole: string, act = this.state.act): {role: string; entity_ref?: string} {
     if (agentRef && act) {
       for (const [role, binding] of Object.entries(act.bindings ?? {})) {
         if (binding.agent_ref === agentRef && act.role_entities?.[role]) return {role, entity_ref: act.role_entities[role]};
@@ -291,6 +437,14 @@ export class LiveProducer {
       if (pinned) return {role: fallbackRole, entity_ref: pinned};
     }
     return {role: fallbackRole};
+  }
+
+  private localiseRequest(built: WorldRequest, op: ActOp, cast: LiveCastMember[], act = this.state.act): WorldRequest {
+    if (built.operation !== "act_gesture" && !(built.operation === "act_select" && built.kind === "state")) return built;
+    const role = (op as {role: string}).role;
+    const agentRef = cast.find(member => member.role === role)?.agent_ref;
+    const occupant = this.occupantOf(agentRef, role, act);
+    return built.operation === "act_gesture" ? {...built, role: occupant.role, ...(occupant.entity_ref ? {entity_ref: occupant.entity_ref} : {})} : {...built, role: occupant.role};
   }
 
   private castEntries(cast: LiveCastMember[]): CastMember[] {
@@ -372,7 +526,14 @@ export class LiveProducer {
       const cursor = combined, skipped = skippedAll;
       this.state.chain = chain;
       this.skipped = skipped;
-      this.firstFollow = !act?.sequence?.length && !chain.length && !this.state.cursor.performed.length;
+      // A partial catch-up can have durable skip receipts but no live passage.
+      // Re-entry must finish the same bounded initial catch-up in that case.
+      const retained = [...chain, ...(act ? [act] : [])];
+      const catchUpKeys = new Set(retained.flatMap(owner => owner.sequence.filter(passage => passage.operation === CATCH_UP_KIND)
+        .map(passage => decodeBasis(passage.event_basis)).filter((basis): basis is NonNullable<typeof basis> => !!basis)
+        .map(basis => occurrenceKey(basis.event_ref, basis.occurrence))));
+      this.firstFollow = retained.every(owner => owner.sequence.every(passage => passage.operation === CATCH_UP_KIND))
+        && this.state.cursor.performed.every(key => catchUpKeys.has(key));
       this.set({status: "following", cast, act, cursor, choices: material.filter(entry => entry.kind === "expression" || entry.kind === "scene").map(entry => ({file_ref: entry.file_ref, title: entry.title, kind: entry.kind}))});
     } catch (error) {
       this.set({status: "refused", cast, error: error instanceof Error ? error.message : String(error)});
@@ -439,6 +600,18 @@ export class LiveProducer {
 
   /** One follow pass. Returns the operations performed. */
   async pass(): Promise<ActOp[]> {
+    if (this.pendingRequest) {
+      const request = this.pendingRequest;
+      const pendingAct = "act_ref" in request ? request.act_ref : this.current;
+      this.state.sources["expression-delivery"] = "unavailable";
+      const fresh = await reconcilePendingDelivery(this.io.world, request);
+      this.state.sources["expression-delivery"] = "read";
+      const recovered = cursorFromAct(fresh.act);
+      for (const hash of recovered.skipped) this.skipped.add(hash);
+      if (requestAccepted(fresh.act, request)) this.state.cursor = {...this.state.cursor, performed: [...new Set([...this.state.cursor.performed, ...recovered.performed])].slice(-4000)};
+      if (pendingAct === this.current) this.state.act = fresh.act;
+      this.pendingRequest = undefined;
+    }
     this.passes++;
     const previousRevision = this.state.cursor.telemetry?.stateRevision;
     const watch = await this.source("factory-telemetry", () => this.io.watch(this.state.cursor.telemetry));
@@ -506,12 +679,35 @@ export class LiveProducer {
       if (events?.length) journals.encounter![session] = events;
     }
 
-    const mapped = mapEventsWithCursor(readings, journals, this.state.cursor);
+    const mapped = mapEventsWithCursor(readings, journals, this.state.cursor, undefined, true);
     let ops = mapped.ops;
+    // Retained occurrences are qualified against their exact native request
+    // before any source cursor or new mutation is allowed to advance. Earlier
+    // rollover Acts retain their own request and occupant identity.
+    const owners = new Map<string, WorldAct>();
+    for (const op of ops) {
+      const key = opKey(op);
+      if (this.skipped.has(key) || !this.state.cursor.performed.includes(key)) continue;
+      const retained = [...this.state.chain, ...(this.state.act ? [this.state.act] : [])]
+        .find(owner => cursorFromAct(owner).performed.includes(key));
+      if (!retained) throw new Error("Retained occurrence has no native Act owner");
+      let owner = owners.get(retained.act_ref);
+      if (!owner) {
+        owner = (await actInspect(this.io.world, retained.act_ref)).act;
+        if (!owner || owner.act_ref !== retained.act_ref) throw new Error("Retained occurrence owner remains unreadable");
+        owners.set(owner.act_ref, owner);
+      }
+      const qualified = requestForRetained(op, cast, {...this.config, actRef: owner.act_ref}, owner);
+      if (!requestAccepted(owner, qualified)) throw new Error("Retained occurrence has different native request material");
+    }
+    // Old hash-only receipts cannot prove which colliding source key they
+    // skipped. Preserve their native history and refuse ambiguous live input.
+    if (ops.some(op => this.skipped.has("legacy-hash:" + keyHash(opKey(op)))))
+      throw new Error("Legacy catch-up has no exact source identities; its retained Act is readable but cannot qualify this live continuation");
     const skipped: ActOp[] = [];
     if (this.firstFollow) {
-      const fresh = ops.filter(op => !this.state.cursor.performed.includes(opKey(op)) && !this.skipped.has(keyHash(opKey(op))));
-      if (fresh.length > CATCH_UP.fullHistory) {
+      const fresh = ops.filter(op => !this.state.cursor.performed.includes(opKey(op)) && !this.skipped.has(opKey(op)));
+      if (ops.length > CATCH_UP.fullHistory) {
         // A long history: its latest state per record, and each journal's
         // last few events only.
         const lastCursors = new Map<string, number>();
@@ -523,74 +719,104 @@ export class LiveProducer {
           const journal = op.basis.journal;
           return !!journal && journal.cursor >= (lastCursors.get(journal.session) ?? Infinity);
         };
-        const journalOps = ops.filter(op => op.basis.source === "aikit-encounter");
-        const {keep, skip} = catchUp(ops.filter(op => op.basis.source !== "aikit-encounter"));
+        const journalOps = fresh.filter(op => op.basis.source === "aikit-encounter");
+        const {keep, skip} = catchUp(fresh.filter(op => op.basis.source !== "aikit-encounter"));
         const keptSet = new Set([...keep, ...journalOps.filter(recentJournal)]);
         skipped.push(...skip, ...journalOps.filter(op => !recentJournal(op)));
-        ops = ops.filter(op => keptSet.has(op));
+        ops = fresh.filter(op => keptSet.has(op));
       }
       // Otherwise the whole (small) history is performed, in order.
-      this.firstFollow = false;
     }
 
     // Dedupe by event_ref + occurrence before any world request.
     const already = new Set(this.state.cursor.performed);
     const performed: PerformedPassage[] = skipped.map(op => ({key: opKey(op), op, state: "skipped" as const, at: Date.now()}));
-    const done: ActOp[] = [...skipped];
+    const done: ActOp[] = [];
+    let blocked = false;
     if (skipped.length) {
-      // Recorded passages stand for the history the catch-up skipped (their
-      // keys by hash in `native_ref`, chunked to the kernel's text bound).
-      const hashes = skipped.map(op => keyHash(opKey(op)));
-      for (let i = 0; i < hashes.length; i += 400) {
-        const chunk = hashes.slice(i, i + 400);
-        for (const hash of chunk) this.skipped.add(hash);
-        await performWithRetry(this.io.world, {operation: "act_operate", act_ref: this.current, actor: this.config.actor, mode: "factory", operation_kind: CATCH_UP_KIND,
-          native_ref: `live-catch-up:${chunk.join(".")}`, summary: `Caught up: ${skipped.length} earlier event${skipped.length === 1 ? "" : "s"} not performed`,
-          event_basis: {family: "activity", source: "factory-live", event_ref: this.config.runRef, occurrence: `catch-up:${i / 400}`}}, this.current).catch(() => undefined);
+      // Native passages retain complete source identities, chunked to the
+      // existing4096byte text bound. A hash is never writable skip authority.
+      const chunks: string[][] = [];
+      let chunk: string[] = [];
+      const fits = (keys: string[]) => new TextEncoder().encode("live-catch-up-keys:" + JSON.stringify(keys)).length <= 4096;
+      for (const op of skipped) {
+        const key = opKey(op);
+        if (!fits([key])) throw new Error("Source identity exceeds native catch-up capacity; no source cursor was consumed");
+        if (!fits([...chunk, key])) { chunks.push(chunk); chunk = []; }
+        chunk.push(key);
       }
+      if (chunk.length) chunks.push(chunk);
+      for (const keys of chunks) {
+        const payload = JSON.stringify(keys);
+        const request: WorldRequest = {operation: "act_operate", act_ref: this.current, actor: this.config.actor, mode: "factory", operation_kind: CATCH_UP_KIND,
+          native_ref: "live-catch-up-keys:" + payload, summary: `Caught up: ${keys.length} earlier event${keys.length === 1 ? "" : "s"} not performed`,
+          event_basis: {family: "activity", source: "factory-live", event_ref: this.config.runRef, occurrence: "catch-up:" + payload}};
+        try { await performWithRetry(this.io.world, request, this.current); }
+        catch (error) { this.pendingRequest = request; throw error; }
+        for (const key of keys) this.skipped.add(key);
+      }
+      done.push(...skipped);
     }
+    // Initial catch-up custody ends only after every native skip receipt has
+    // qualified. A refusal/lost acknowledgement leaves this bounded path open.
+    this.firstFollow = false;
     for (const op of ops) {
       if (this.stopped) break;
       const key = opKey(op);
-      if (already.has(key) || this.skipped.has(keyHash(key))) continue;
+      if (already.has(key) || this.skipped.has(key)) continue;
       already.add(key);
       let {request, material, reason} = requestFor(op, this.repertoire, cast, {...this.config, actRef: this.current});
-      if (!request) { performed.push({key, op, state: "unresolved", error: reason, at: Date.now()}); done.push(op); continue; }
+      if (!request) { performed.push({key, op, state: "unresolved", error: reason, at: Date.now()}); blocked = true; break; }
       // Object-local operations address the entity presenting that agent now.
-      const localise = (built: WorldRequest) => {
-        if (built.operation !== "act_gesture" && !(built.operation === "act_select" && built.state)) return built;
-        const agentRef = cast.find(member => member.role === (op as {role?: string}).role)?.agent_ref;
-        const occupant = this.occupantOf(agentRef, (op as {role: string}).role);
-        return built.operation === "act_gesture" ? {...built, role: occupant.role, ...(occupant.entity_ref ? {entity_ref: occupant.entity_ref} : {})} : {...built, role: occupant.role};
-      };
+      const localise = (built: WorldRequest) => this.localiseRequest(built, op, cast);
       request = localise(request);
       try {
         try {
           const outcome = await performWithRetry(this.io.world, request, this.current);
           if (outcome?.act) this.state.act = outcome.act;
-          else if (request.operation === "act_select" && !request.state) this.state.act = (await actInspect(this.io.world, this.current).catch(() => undefined))?.act ?? this.state.act;
+          else if (request.operation === "act_select" && request.kind === "scene") this.state.act = (await actInspect(this.io.world, this.current).catch(() => undefined))?.act ?? this.state.act;
         }
         catch (error) {
           if (!(error instanceof PassageLimit)) throw error;
           await this.rollover(cast);
           ({request, material} = requestFor(op, this.repertoire, cast, {...this.config, actRef: this.current}));
-          await performWithRetry(this.io.world, localise(request!), this.current);
+          request = localise(request!);
+          const outcome = await performWithRetry(this.io.world, request, this.current);
+          this.state.act = outcome.act ?? this.state.act;
         }
         performed.push({key, op, material, state: "performed", at: Date.now()});
+        done.push(op);
       } catch (error) {
-        // Recorded with its reason; never retried on every pass.
+        // Keep the original ordering and read cursors. A refused/unconfirmed
+        // operation has no native acceptance and cannot consume its source.
         performed.push({key, op, material, state: "refused", error: error instanceof Error ? error.message : String(error), at: Date.now()});
+        this.pendingRequest = request;
+        blocked = true;
+        break;
       }
-      done.push(op);
     }
     const attemptRevision = this.held.attempts && typeof this.held.attempts === "object" && typeof (this.held.attempts as {revision?: unknown}).revision === "number" ? (this.held.attempts as {revision: number}).revision : undefined;
-    const cursor = advanceCursor(this.state.cursor, done, journals, watch ? [{type: "cursor", cursor: watch.cursor}] : undefined, attemptRevision, mapped.sessions);
+    const cursor = advanceCursor(this.state.cursor, done, blocked ? {} : journals,
+      !blocked && watch ? [{type: "cursor", cursor: watch.cursor}] : undefined,
+      blocked ? undefined : attemptRevision, blocked ? undefined : mapped.sessions);
     // The act is re-read every pass (a kernel-local read): passages performed
     // by others — the Expressions application playing it, a seek, a mode
     // continuation — reach this view's timeline too.
     let act = this.state.act;
-    try { act = (await actInspect(this.io.world, this.current)).act ?? act; } catch { /* keep the last reading */ }
+    try {
+      act = (await actInspect(this.io.world, this.current)).act ?? act;
+      // Recover accepted occurrences after a lost acknowledgement while the
+      // raw journal/telemetry cursor and unfinished chunk state remain held.
+      const pending = this.pendingRequest;
+      const basis = pending && "event_basis" in pending ? decodeBasis(pending.event_basis) : undefined;
+      const pendingKey = basis && occurrenceKey(basis.event_ref, basis.occurrence);
+      const recovered = cursorFromAct(act);
+      for (const hash of recovered.skipped) this.skipped.add(hash);
+      const confirmed = recovered.performed.filter(key => key !== pendingKey || requestAccepted(act, pending!));
+      cursor.performed = [...new Set([...cursor.performed, ...confirmed])].slice(-4000);
+    } catch { /* keep the last reading; unconfirmed work stays pending */ }
     this.set({cast, cursor, act, performed: [...this.state.performed, ...performed].slice(-MAX_PERFORMED), lastPassAt: Date.now()});
+    if (blocked) throw new Error(performed[performed.length - 1]?.error ?? "Native material remains unresolved");
     return done.filter(op => !skipped.includes(op));
   }
 
@@ -633,4 +859,3 @@ function communiqueSignature(population: unknown, cast: CastMemberOfRun[]): stri
   const positions = new Set(cast.map(member => member.position_ref).filter(Boolean));
   return JSON.stringify(rows.filter(row => row.position_ref && positions.has(row.position_ref)).map(row => [row.position_ref, row.communiques?.undelivered ?? null]).sort());
 }
-

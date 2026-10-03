@@ -70,7 +70,7 @@ export function teamResolveBuild(input: {project?: string; ref: string; availabl
   };
 }
 
-export interface TeamOutcomeRow {kind: "ok" | "refused" | "unavailable" | "unsupported"; text: string}
+export interface TeamOutcomeRow {kind: "ok" | "refused" | "unavailable" | "unsupported" | "failed" | "unknown"; text: string}
 
 /** The owner's own answer, classified for display — never rewritten into a
  * success. A proposal reply carries authorship/recognition standing and the
@@ -98,6 +98,10 @@ export function teamOutcomeRows(dispatch: ActionDispatch): TeamOutcomeRow[] {
       return [{kind: "refused", text: `${dispatch.owner_operation} refused: ${dispatch.message}`}];
     case "owner_unavailable":
       return [{kind: "unavailable", text: `${dispatch.owner_operation} is unreachable: ${dispatch.detail}`}];
+    case "owner_failed":
+      return [{kind: "failed", text: `${dispatch.owner_operation} failed: ${dispatch.detail}`}];
+    case "owner_outcome_unknown":
+      return [{kind: "unknown", text: `${dispatch.owner_operation}: ${dispatch.detail}. Retain the original composition and inspect the native agent-set record before invoking this operation again.`}];
     case "unsupported_action":
       return [{kind: "unsupported", text: `The native target does not support this operation through this surface (${dispatch.owner}): ${dispatch.detail}`}];
     case "malformed_ref":

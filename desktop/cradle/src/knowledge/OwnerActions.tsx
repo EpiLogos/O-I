@@ -77,7 +77,11 @@ function DispatchOutcome({outcome}:{outcome:ActionDispatch}) {
     case "unknown_owner":
       return <p data-dispatch-state="unknown_owner" role="status">No disclosed owner answers the spelling <code>{outcome.action}</code>.</p>;
     case "owner_refused":
-      return <p data-dispatch-state="owner_refused" role="alert">{outcome.owner_operation}: {outcome.message}</p>;
+      return <div data-dispatch-state="owner_refused"><p role="alert">{outcome.owner_operation}: {outcome.message}</p>{outcome.native!=null&&<RawDisclosure value={outcome.native} label="Inspect the native refusal"/>}</div>;
+    case "owner_failed":
+      return <div data-dispatch-state="owner_failed"><p role="alert">{outcome.owner_operation}: {outcome.detail}</p><RawDisclosure value={outcome} label="Inspect the failed owner response"/></div>;
+    case "owner_outcome_unknown":
+      return <div data-dispatch-state="owner_outcome_unknown"><p role="alert">{outcome.owner_operation}: {outcome.detail}</p><p>The operation may have taken effect. Inspect the native owner records and reconcile this operation before invoking it again.</p><RawDisclosure value={outcome} label="Inspect the uncertain owner outcome"/></div>;
     case "owner_unavailable":
       return <p data-dispatch-state="owner_unavailable" role="status">{outcome.owner_operation} is unavailable — {outcome.detail}</p>;
   }

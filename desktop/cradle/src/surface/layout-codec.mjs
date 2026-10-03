@@ -62,8 +62,14 @@ export function validBinding(raw) {
   // the optional exact refs/revisions ride along only when well-typed.
   const presentationRaw = o.presentation;
   if (o.kind === 'presentation' && (typeof o.ref !== 'string' || !o.ref.trim() || !presentationRaw || typeof presentationRaw !== 'object' || typeof presentationRaw.world_ref !== 'string')) return null;
+  const nativeSession = presentationRaw?.native_session;
+  if (nativeSession !== undefined && (!nativeSession || typeof nativeSession !== 'object'
+    || typeof nativeSession.ref !== 'string' || !nativeSession.ref.startsWith('agent-session/')
+    || typeof nativeSession.project !== 'string' || typeof nativeSession.source_world_ref !== 'string'
+    || !nativeSession.source_world_ref.startsWith('world:'))) return null;
   const presentation = o.kind === 'presentation' && presentationRaw ? {
     world_ref: presentationRaw.world_ref,
+    ...(nativeSession ? {native_session:{ref:nativeSession.ref,project:nativeSession.project,source_world_ref:nativeSession.source_world_ref}} : {}),
     ...(typeof presentationRaw.field_ref === 'string' ? { field_ref: presentationRaw.field_ref } : {}),
     ...(typeof presentationRaw.projection_ref === 'string' ? { projection_ref: presentationRaw.projection_ref } : {}),
     ...(Number.isInteger(presentationRaw.projection_revision) ? { projection_revision: presentationRaw.projection_revision } : {}),
@@ -78,7 +84,7 @@ export function validBinding(raw) {
   // well-typed; a knowledge page losing its plane would reopen as a graph.
   const viewRaw = o.view && typeof o.view === 'object' ? o.view : {};
   const view = {};
-  if (o.kind === 'encounter' && ENCOUNTER_PLANES.includes(viewRaw.encounterPlane)) view.encounterPlane = viewRaw.encounterPlane;
+  if ((o.kind === 'encounter' || o.kind === 'presentation' && nativeSession) && ENCOUNTER_PLANES.includes(viewRaw.encounterPlane)) view.encounterPlane = viewRaw.encounterPlane;
   // The knowledge view is one compact unit: a plane that is not a plane
   // invalidates the whole view (drop, never guess); a well-typed origin
   // graph rides along only with a valid plane.

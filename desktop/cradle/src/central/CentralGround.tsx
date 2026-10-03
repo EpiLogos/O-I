@@ -5,6 +5,7 @@ import {FileTree} from "../files/FileTree";
 import {readFile} from "../files/client";
 import {NowRelations} from "../receiving/NowRelations";
 import {central,readGround,openDay,sourceLocation,type CentralGroundReading,type Reading} from "./client";
+import {NativeOwnerFailure} from "../kernel/nativeFailure";
 
 /** Root is an actual native work context. This body uses the same file/source
  * callbacks and document host as every other source; it owns no working store. */
@@ -12,6 +13,7 @@ export function CentralGround({project=null,refresh=0,onOpenFile}:{project?:stri
  const {transport}=useKernel();
  const [held,setHeld]=useState<CentralGroundReading>();
  const [error,setError]=useState<string>();
+ const [nativeFailure,setNativeFailure]=useState<NativeOwnerFailure>();
  const [pending,setPending]=useState(false);
  const [version,setVersion]=useState(0);
  const [now,setNow]=useState<string>();
@@ -21,7 +23,7 @@ export function CentralGround({project=null,refresh=0,onOpenFile}:{project?:stri
  const [form,setForm]=useState<{location:CentralLocation;revision:string}>();
  const generation=useRef(0);
  const scope=useRef(project);scope.current=project;
- useEffect(()=>{setNow(undefined);setForm(undefined);setChooseForm(false);setDirectories([]);setLimit(20);},[project]);
+ useEffect(()=>{setNow(undefined);setForm(undefined);setChooseForm(false);setDirectories([]);setLimit(20);setNativeFailure(undefined);},[project]);
  const reload=()=>setVersion(v=>v+1);
  useEffect(()=>{
   const ticket=++generation.current;setPending(true);setError(undefined);
@@ -33,9 +35,9 @@ export function CentralGround({project=null,refresh=0,onOpenFile}:{project?:stri
  // A previous scope is never shown under a new scope's heading.
  const reading=held?.project===project?held:undefined;
  const perform=async(action:()=>Promise<unknown>)=>{
-  const ticket=generation.current;setError(undefined);setPending(true);
+  const ticket=generation.current;setError(undefined);setNativeFailure(undefined);setPending(true);
   try{await action();if(ticket===generation.current)reload();}
-  catch(reason){if(ticket===generation.current)setError(String(reason));}
+  catch(reason){if(ticket===generation.current){setError(String(reason));setNativeFailure(reason instanceof NativeOwnerFailure?reason:undefined);}}
   finally{if(ticket===generation.current)setPending(false);}
  };
  const openLocated=async(resolve:()=>Promise<CentralLocation>)=>{
@@ -58,6 +60,7 @@ export function CentralGround({project=null,refresh=0,onOpenFile}:{project?:stri
   <header><strong>{project?project:"Central · root meta-project"}</strong><button type="button" onClick={reload} aria-label="Refresh current ground" disabled={pending}>Refresh</button></header>
   {!project&&<p>Control is the durable authored ground. Work projects keep their own context; no child Project is required here.</p>}
   {error&&<p role="alert">{error}{reading?" — the last reading is retained, not current success.":""}</p>}
+  {nativeFailure&&<details><summary>Inspect the original native operation and failure</summary><pre>{JSON.stringify(nativeFailure.reading,null,2)}</pre></details>}
   {!reading&&<p role="status">{pending?"Reading native ground…":"Native ground has not been read."}</p>}
   {reading&&<>
    {showFailure("Civil time",reading.time)}

@@ -57,6 +57,11 @@ class EmbeddedProductionAdapter {
     this.applied = null;
     this.dirty = true;
   }
+  /** Existing native-domain and retained-target owners may present a medium
+   * without authored formations. This is draw projection, not target authority. */
+  hasNativeField() {
+    return this.nativeDomain;
+  }
   nativeConfig(config) {
     if (!this.nativeDomain) return config;
     let result = this.nativeConfigs.get(config);
@@ -157,6 +162,7 @@ class EmbeddedProductionAdapter {
       this.selectedConnection = frame.selectedConnection;
       this.connections?.configure(frame.connections ?? [], frame.selectedConnection ? [frame.selectedConnection] : []);
     }
+    this.engine.setNodePoolVisibility(Boolean(this.hasNativeField() || !Array.isArray(config.entities) && config.sourceType !== "composition" || config.medium?.enabled || config.cymatics?.enabled || config.entities?.some((e) => e.kind === "formation" && e.enabled)));
     this.engine.setSelection(frame.selectedIds);
     this.engine.setGridMode(frame.scaffold ?? "off");
     const { a, b } = basis(frame.camera), o = stageCentre(this.width, this.height);

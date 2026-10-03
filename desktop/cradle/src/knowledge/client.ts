@@ -1,6 +1,7 @@
 import {kernelOp} from "../kernel/bridge";
 import type {KernelTransportStatus, KnowledgeRequest} from "../kernel/types";
 import {KnowledgeReadCoordinator} from "./requests";
+import {NativeOwnerFailure,throwNativeFailure} from "../kernel/nativeFailure";
 
 const reads = new KnowledgeReadCoordinator();
 export interface KnowledgeReadOptions {signal?: AbortSignal; fresh?: boolean}
@@ -19,6 +20,7 @@ export async function knowledge<T>(transport: KernelTransportStatus, project: st
   const attempt = async (fresh: boolean) => {
     const response = await kernelOp(transport, {op: "knowledge", project, request, ...(fresh ? {fresh: true} : {})});
     if (response.error || response.outcome?.result !== "knowledge") throw new Error(response.error ?? "AIKit did not return the requested reading");
+    throwNativeFailure(response.outcome.data);
     return response.outcome.data as T;
   };
   if (request.action === "use") { options.signal?.throwIfAborted(); return attempt(options.fresh ?? false); }
@@ -35,7 +37,7 @@ export async function knowledge<T>(transport: KernelTransportStatus, project: st
         // own error names this as retryable ("read again"). A source that
         // genuinely changed underneath fails every attempt the same honest
         // way and is reported, never masked.
-        if (!(error instanceof Error && error.message.includes(SUPERSEDED))) throw error;
+        if (error instanceof NativeOwnerFailure || !(error instanceof Error && error.message.includes(SUPERSEDED))) throw error;
       }
     }
     throw last;

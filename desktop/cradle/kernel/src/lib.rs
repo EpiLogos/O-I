@@ -83,6 +83,7 @@ mod nara_voice_transport;
 pub mod nara_world_readiness;
 pub mod native_expression;
 pub mod native_owner_transport;
+pub mod native_process;
 pub mod owner_read;
 pub mod presentation;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
@@ -3822,6 +3823,14 @@ impl Kernel {
                     value
                 } else {
                     let value = knowledge::call(&cwd, &request)?;
+                    // Transport failures are not native readings. They must
+                    // neither become cached truth nor establish resource identity.
+                    if value["schema"] == "oi.native-call-failure/v1" {
+                        return Ok(KernelOpOutcome {
+                            receipts: Vec::new(),
+                            result: KernelOpResult::Knowledge { data: value },
+                        });
+                    }
                     if cacheable {
                         self.reads.put(key, value.clone());
                     }
@@ -4717,17 +4726,42 @@ impl Kernel {
                 // stays as it is (dirty), the canonical content is kept
                 // re-readable in the conflict record.
                 let failure = match &error {
+                    OwnerCallError::OutcomeUnknown {
+                        detail,
+                        child_pid,
+                        cleanup,
+                        native,
+                    } => {
+                        // Receipt loss takes precedence over revision heuristics.
+                        // Reading current bytes never establishes our own effect.
+                        if let Some(buffer) = self.buffers.get_mut(source_ref) {
+                            buffer.dirty = true;
+                        }
+                        SourceWriteFailure::OutcomeUnknown {
+                            source_ref: source_ref.to_owned(),
+                            detail: detail.clone(),
+                            child_pid: *child_pid,
+                            cleanup: cleanup.clone(),
+                            native: native.clone(),
+                        }
+                    }
+                    OwnerCallError::TransportFailed { detail, .. }
+                    | OwnerCallError::Malformed { detail } => SourceWriteFailure::Failed {
+                        source_ref: source_ref.to_owned(),
+                        detail: detail.clone(),
+                    },
                     OwnerCallError::Unavailable { detail } => SourceWriteFailure::Unavailable {
                         source_ref: source_ref.to_owned(),
                         detail: detail.clone(),
                     },
-                    OwnerCallError::Refused { .. } | OwnerCallError::Malformed { .. } => {
+                    OwnerCallError::Refused { native, .. } => {
                         match self.client.current_reading(project, source_ref) {
                             Ok(current) => {
                                 if current.revision.revision == expected {
                                     SourceWriteFailure::OwnerRefused {
                                         source_ref: source_ref.to_owned(),
                                         message: error.to_string(),
+                                        native: native.clone(),
                                     }
                                 } else {
                                     let failure = SourceWriteFailure::RevisionConflict {
@@ -4752,6 +4786,7 @@ impl Kernel {
                             Err(_) => SourceWriteFailure::OwnerRefused {
                                 source_ref: source_ref.to_owned(),
                                 message: error.to_string(),
+                                native: native.clone(),
                             },
                         }
                     }
@@ -4938,7 +4973,12 @@ impl Kernel {
     fn owner_read(&self, project: Option<&str>, source_ref: &str) -> Result<SourceReading, String> {
         self.client
             .source_read(project, source_ref)
-            .map_err(|error| error.to_string())
+            .map_err(|error| {
+                let mut failure = knowledge::failure_reading("projectcentral.source.read", error);
+                failure["owner_input"] =
+                    serde_json::json!({ "project": project, "source_ref": source_ref });
+                failure.to_string()
+            })
     }
 
     // -----------------------------------------------------------------------
@@ -5261,78 +5301,93 @@ mod tests {
             .is_err());
     }
 
-    /// A stand-in owner executable that answers the shaped readings the
-    /// cache serves and appends every action it was asked to a log file, so
-    /// a test can count real process spawns.
-    const FAKE_OWNER: &str = r#"#!/usr/bin/env python3
-import json, sys, os
-# argv: <script> --json action run <action> <input-json>
-action = sys.argv[4]
-payload = json.loads(sys.argv[5]) if len(sys.argv) > 5 else {}
-log = os.environ.get("FAKE_OWNER_LOG")
-if log:
-    with open(log, "a") as handle:
-        handle.write(action + "\n")
-def ok(data):
-    print(json.dumps({"ok": True, "data": data}))
-if action == "central.files.list":
-    path = payload["path"]
-    ok({"schema": "central.directory-reading/v1",
-        "automatic_agent_or_model_invocation": False,
-        "location": {"schema": "central.path-ref/v1", "ref": "ref:" + path, "root": "R", "path": path},
-        "entries": [{"name": "a.md", "kind": "file", "byte_len": 1, "retrieval_allowed": True,
-                     "location": {"schema": "central.path-ref/v1", "ref": "ref:" + path + "/a.md", "root": "R", "path": path + "/a.md"}}]})
-elif action == "central.files.write":
-    ok({"schema": "central.file-mutation/v1", "outcome": "written", "location": payload["location"]})
-elif action == "central.world":
-    ok({"schema": "central.world-map/v1", "root": "/tmp", "work": {"projects": []}})
-else:
-    ok({})
-"#;
-
+    /// Count invocations while forwarding every request and response to the
+    /// actual built Central owner. No substitute owner data or receipt exists.
     #[cfg(unix)]
-    struct FakeOwner {
+    struct NativeCacheOwner {
+        directory: std::path::PathBuf,
+        root: std::path::PathBuf,
         executable: std::path::PathBuf,
+        owner: std::path::PathBuf,
         log: std::path::PathBuf,
     }
 
     #[cfg(unix)]
-    impl FakeOwner {
-        /// One script + one spawn log per test, so parallel tests never
-        /// share a counter. The log path is baked into a tiny wrapper so
-        /// the count never rides a process environment tests race on.
-        fn spawn_counter(test: &str) -> Self {
+    impl NativeCacheOwner {
+        fn new(test: &str) -> Self {
             use std::os::unix::fs::PermissionsExt;
-            let stem = format!("oi-cradle-{}-{test}", std::process::id());
-            let script = std::env::temp_dir().join(format!("{stem}.py"));
-            let wrapper = std::env::temp_dir().join(format!("{stem}.sh"));
-            let log = std::env::temp_dir().join(format!("{stem}.log"));
-            std::fs::write(&script, FAKE_OWNER).unwrap();
-            std::fs::write(
-                &wrapper,
-                format!(
-                    "#!/bin/sh\nFAKE_OWNER_LOG={} exec python3 {} \"$@\"\n",
-                    log.display(),
-                    script.display()
-                ),
-            )
-            .unwrap();
-            std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755)).unwrap();
-            crate::test_stub::settle_stub(&wrapper);
-            let _ = std::fs::remove_file(&log);
-            Self {
-                executable: wrapper,
+            let owner = std::path::PathBuf::from(
+                std::env::var_os("OI_CENTRAL_CTRL_BIN")
+                    .expect("The native cache gate requires its built Central owner"),
+            );
+            assert!(owner.is_absolute() && owner.is_file());
+            let directory = std::env::temp_dir().join(format!(
+                "oi-native-cache-{}-{test}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            let root = directory.join("world");
+            std::fs::create_dir_all(&root).unwrap();
+            let executable = directory.join("owner-count.py");
+            let log = directory.join("calls.log");
+            let script = format!(
+                "#!/usr/bin/env python3\nimport json,os,sys\nowner=json.loads({})\nlog=json.loads({})\nargs=sys.argv[1:]\naction=args[args.index('run')+1]\nwith open(log,'a') as out: out.write(action+chr(10))\nos.execv(owner,[owner]+args)\n",
+                serde_json::to_string(&serde_json::to_string(&owner).unwrap()).unwrap(),
+                serde_json::to_string(&serde_json::to_string(&log).unwrap()).unwrap(),
+            );
+            std::fs::write(&executable, script).unwrap();
+            std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o700)).unwrap();
+            crate::test_stub::settle_stub(&executable);
+            let fixture = Self {
+                directory,
+                root,
+                executable,
+                owner,
                 log,
-            }
+            };
+            fixture
+                .direct()
+                .run("central.init", serde_json::json!({"project":null}))
+                .unwrap();
+            std::fs::create_dir_all(fixture.root.join("Work/CacheProject")).unwrap();
+            fixture
+                .direct()
+                .run(
+                    "projectcentral.init",
+                    serde_json::json!({"project":"CacheProject", "project_id":"cache-project"}),
+                )
+                .unwrap();
+            std::fs::write(fixture.root.join("Work/CacheProject/a.md"), "before").unwrap();
+            fixture
+        }
+        fn direct(&self) -> CentralClient {
+            CentralClient::with(
+                self.owner.clone(),
+                Some(self.root.clone()),
+                "CacheProject".into(),
+            )
         }
         fn kernel(&self) -> Kernel {
             Kernel::new(CentralClient::with(
                 self.executable.clone(),
-                None,
-                "test".into(),
+                Some(self.root.clone()),
+                "CacheProject".into(),
             ))
         }
-        /// How many times the named action reached the owner executable.
+        fn file(&self) -> files::Reading {
+            let directory = files::list(&self.direct(), "Work/CacheProject").unwrap();
+            let location = directory
+                .entries
+                .iter()
+                .find(|entry| entry.name == "a.md")
+                .unwrap()
+                .location
+                .clone();
+            files::read(&self.direct(), &location).unwrap()
+        }
         fn spawns(&self, action: &str) -> usize {
             std::fs::read_to_string(&self.log)
                 .map(|text| text.lines().filter(|line| *line == action).count())
@@ -5341,28 +5396,22 @@ else:
     }
 
     #[cfg(unix)]
-    impl Drop for FakeOwner {
+    impl Drop for NativeCacheOwner {
         fn drop(&mut self) {
-            let stem = self.executable.with_extension("");
-            for suffix in [".sh", ".py"] {
-                let _ = std::fs::remove_file(std::path::PathBuf::from(format!(
-                    "{}{suffix}",
-                    stem.display()
-                )));
-            }
-            let _ = std::fs::remove_file(&self.log);
+            let _ = std::fs::remove_dir_all(&self.directory);
         }
     }
 
     #[cfg(unix)]
     #[test]
+    #[ignore = "Requires actual built Central; readable-presentation-native executes this gate"]
     fn a_repeated_directory_read_serves_from_the_cache_and_a_fresh_read_bypasses_it() {
-        let owner = FakeOwner::spawn_counter("directory-cache");
+        let owner = NativeCacheOwner::new("directory-cache");
         let mut kernel = owner.kernel();
         for _ in 0..3 {
             kernel
                 .apply(KernelOp::FilesList {
-                    path: "Work/proj".into(),
+                    path: "Work/CacheProject".into(),
                     fresh: None,
                 })
                 .unwrap();
@@ -5374,7 +5423,7 @@ else:
         );
         kernel
             .apply(KernelOp::FilesList {
-                path: "Work/proj".into(),
+                path: "Work/CacheProject".into(),
                 fresh: Some(true),
             })
             .unwrap();
@@ -5387,32 +5436,30 @@ else:
 
     #[cfg(unix)]
     #[test]
+    #[ignore = "Requires actual built Central; readable-presentation-native executes this gate"]
     fn a_file_write_invalidates_the_parent_listing_by_name() {
-        let owner = FakeOwner::spawn_counter("write-invalidation");
+        let owner = NativeCacheOwner::new("write-invalidation");
+        let native_file = owner.file();
+        assert_eq!(native_file.content, "before");
         let mut kernel = owner.kernel();
         kernel
             .apply(KernelOp::FilesList {
-                path: "Work/proj".into(),
+                path: "Work/CacheProject".into(),
                 fresh: None,
             })
             .unwrap();
         kernel
             .apply(KernelOp::FileOperation {
-                location: files::Location {
-                    schema: "central.path-ref/v1".into(),
-                    ref_id: "ref:Work/proj/a.md".into(),
-                    root: "R".into(),
-                    path: "Work/proj/a.md".into(),
-                },
+                location: native_file.location.clone(),
                 request: files::Request::Write {
-                    expected_revision: "r1".into(),
+                    expected_revision: native_file.revision.clone(),
                     content: "new".into(),
                 },
             })
             .unwrap();
         kernel
             .apply(KernelOp::FilesList {
-                path: "Work/proj".into(),
+                path: "Work/CacheProject".into(),
                 fresh: None,
             })
             .unwrap();
@@ -5421,30 +5468,33 @@ else:
             2,
             "the written directory is re-read after its write"
         );
+        assert_eq!(owner.file().content, "new");
     }
 
     #[cfg(unix)]
     #[test]
+    #[ignore = "Requires actual built Central; readable-presentation-native executes this gate"]
     fn a_changed_file_write_discloses_one_file_changed_receipt() {
         // One state change, one event: an owner-confirmed write discloses
         // FileChanged naming the changed path (the receipt a retained listing
         // invalidates on); a non-mutating request discloses nothing.
-        let owner = FakeOwner::spawn_counter("file-changed-receipt");
+        let owner = NativeCacheOwner::new("file-changed-receipt");
+        let native_file = owner.file();
+        assert_eq!(native_file.content, "before");
         let mut kernel = owner.kernel();
         let outcome = kernel
             .apply(KernelOp::FileOperation {
-                location: files::Location {
-                    schema: "central.path-ref/v1".into(),
-                    ref_id: "ref:Work/proj/a.md".into(),
-                    root: "R".into(),
-                    path: "Work/proj/a.md".into(),
-                },
+                location: native_file.location.clone(),
                 request: files::Request::Write {
-                    expected_revision: "r1".into(),
+                    expected_revision: native_file.revision.clone(),
                     content: "new".into(),
                 },
             })
             .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(owner.root.join("Work/CacheProject/a.md")).unwrap(),
+            "new"
+        );
         let receipt = outcome
             .receipts
             .iter()
@@ -5457,7 +5507,7 @@ else:
         );
         kernel
             .apply(KernelOp::FilesList {
-                path: "Work/proj".into(),
+                path: "Work/CacheProject".into(),
                 fresh: None,
             })
             .unwrap();
@@ -5474,8 +5524,9 @@ else:
 
     #[cfg(unix)]
     #[test]
+    #[ignore = "Requires actual built Central; readable-presentation-native executes this gate"]
     fn the_world_mapping_is_cached_until_a_fresh_browse_is_demanded() {
-        let owner = FakeOwner::spawn_counter("world-cache");
+        let owner = NativeCacheOwner::new("world-cache");
         let mut kernel = owner.kernel();
         kernel.apply(KernelOp::WorldBrowse { fresh: None }).unwrap();
         kernel.apply(KernelOp::WorldBrowse { fresh: None }).unwrap();

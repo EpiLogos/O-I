@@ -6,9 +6,32 @@ on:
       - 'desktop/cradle/kernel/**'
       - 'desktop/cradle/src/expressions/**'
       - 'desktop/cradle/src/kernel/types.ts'
+      - 'desktop/cradle/src/files/resources.ts'
+      - 'desktop/cradle/tests/retained-files-native.test.mjs'
+      - 'desktop/cradle/tests/draft-owner-native.test.mjs'
+      - 'desktop/cradle/src/workspace/drafts.ts'
+      - 'desktop/cradle/src/document/hostSave.ts'
+      - 'desktop/cradle/material/shared-field/**'
+      - 'desktop/cradle/material/expressive-material/**'
+      - 'desktop/cradle/src/contributions/factory/live/**'
+      - 'desktop/cradle/src/expression/**'
+      - 'desktop/cradle/src/stage/**'
+      - 'desktop/cradle/tests/shared-direct*'
+      - 'desktop/cradle/tests/factory-live-producer.test.mjs'
+      - 'desktop/cradle/tests/factory-live-native-path.mjs'
+      - 'desktop/cradle/tests/fixtures/shared-direct-journal/**'
+      - 'desktop/cradle/tests/fixtures/shared-native-expression/**'
+      - 'desktop/cradle/tests/shared-expression-resource-native.mjs'
+      - 'shared-field/expression-projection.mjs'
+      - 'shared-field/expression-material.mjs'
+      - 'shared-field/expression-material.test.mjs'
+      - 'shared-field/scripts/direct-expression-activity-producer.mts'
       - 'desktop/cradle/tests/native-expression*'
       - 'desktop/cradle/tests/*formation*'
       - 'desktop/cradle/tests/candidate-cache-native.mjs'
+      - 'desktop/cradle/tests/native-capture-compiler.py'
+      - 'desktop/cradle/tests/native-text-authoring.test.mjs'
+      - 'desktop/cradle/tests/wiki-native-binaries.py'
       - 'packages/oi-design-system/expressions-engine/engine/**'
       - 'packages/oi-design-system/expressions-engine/shell/**'
       - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
@@ -24,7 +47,7 @@ concurrency:
 jobs:
   embedded:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,6 +63,12 @@ jobs:
           ref: ${{ steps.ql.outputs.revision }}
           path: .native-owner/QL-MEF
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 2a604574774c41921003ed99a2eed73b4c9f4266
+          path: .native-owner/Central
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -50,6 +79,8 @@ jobs:
           workspaces: |
             desktop/cradle/kernel -> target
             .native-owner/QL-MEF -> target
+            .native-owner/Central -> target
+            cli -> target
       - name: Locked dependencies and actual embedded application build
         run: |
           mkdir -p /tmp/w5-checks
@@ -60,6 +91,17 @@ jobs:
           npm run build:journeys --prefix expressions-app
           expressions-app/node_modules/.bin/tsc --noEmit -p expressions-app/field-studies-journeys/tsconfig.json
           npx playwright install --with-deps chromium
+      - name: Build the exact native Central owner and suite route
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks/native
+          git -C .native-owner/Central rev-parse HEAD > /tmp/w5-checks/native/Central.revision
+          test "$(cat /tmp/w5-checks/native/Central.revision)" = 2a604574774c41921003ed99a2eed73b4c9f4266
+          python3 desktop/cradle/tests/wiki-native-binaries.py \
+            --target OI_BIN cli/Cargo.toml oi \
+            --target OI_CENTRAL_CTRL_BIN .native-owner/Central/ctrl/Cargo.toml ctrl \
+            --receipt /tmp/w5-checks/native/central-binaries.json \
+            2>&1 | tee /tmp/w5-checks/native/central-build.log
       - name: Complete retained React shell lint
         if: always()
         run: |
@@ -76,6 +118,7 @@ jobs:
           (cd desktop/cradle && python3 tests/native-expression-local.test.py) 2>&1 | tee /tmp/w5-checks/local-packet.log
           (cd desktop/cradle && python3 tests/native-expression-receipt.test.py) 2>&1 | tee /tmp/w5-checks/local-receipt-admission.log
           (cd desktop/cradle && node --test tests/native-expression.test.mjs) 2>&1 | tee /tmp/w5-checks/native-expression.log
+          (cd desktop/cradle && node --test tests/native-expression-central.test.mjs) 2>&1 | tee /tmp/w5-checks/native-owner-cleanup.log
           npm test --prefix desktop/cradle/expressions-app 2>&1 | tee /tmp/w5-checks/embedded.log
           node --test .native-owner/QL-MEF/adapters/retained-field/native-audio.test.mjs .native-owner/QL-MEF/adapters/retained-field/instrument-session.test.mjs 2>&1 | tee /tmp/w5-checks/native-clients.log
       - name: Native formation authoring, emitted modules and bounded candidate retention
@@ -85,6 +128,18 @@ jobs:
           cd desktop/cradle
           node --test tests/emitted-formation-modules.test.mjs 2>&1 | tee /tmp/w5-checks/emitted-formation.log
           node tests/formation-native-regressions.mjs 2>&1 | tee /tmp/w5-checks/formation-native.log
+      - name: Compile the actual native text painter and require its exact shipped companion
+        id: native_capture
+        if: always()
+        env:
+          OI_CAPTURE_COMPILE_OUT: /tmp/w5-checks/native-capture-compiler
+        run: python3 desktop/cradle/tests/native-capture-compiler.py
+      - name: Authored native text sizing, legacy imports and malformed-size refusal
+        if: ${{ !cancelled() && steps.native_capture.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node --test tests/native-text-authoring.test.mjs 2>&1 | tee /tmp/w5-checks/native-text-authoring.log
       - name: Actual embedded WebGL browser and relay
         if: always()
         env:
@@ -118,6 +173,40 @@ jobs:
           mkdir -p /tmp/w5-checks
           cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml 2>&1 | tee /tmp/w5-checks/kernel.log
+      - name: Actual Central retained-file authority and foreign-root cache refusal
+        if: ${{ !cancelled() }}
+        env:
+          OI_NATIVE_RETAINED_FILES: '1'
+          OI_KERNEL_BIN: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
+          OI_NATIVE_TEST_ROOT: /tmp/w5-checks/native-fixtures
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/retained-files-native.test.mjs 2>&1 | tee /tmp/w5-checks/retained-files-native.log
+          node --experimental-webstorage --localstorage-file=/tmp/w5-checks/draft-native.bin --experimental-strip-types --import ./tests/ts-register.mjs --test tests/draft-owner-native.test.mjs 2>&1 | tee /tmp/w5-checks/draft-owner-native.log
+      - name: Retained Direct speech through real native Factory material and Act acceptance
+        if: ${{ !cancelled() }}
+        env:
+          NATIVE_EXPRESSION_BRIDGE: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
+          OI_SHARED_TEXT_OUT: /tmp/w5-checks/shared-native-text
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shared-direct-journal.test.mjs tests/factory-live-producer.test.mjs 2>&1 | tee /tmp/w5-checks/shared-consumer-regressions.log
+          node --test ../../shared-field/expression-material.test.mjs 2>&1 | tee /tmp/w5-checks/shared-material-admission.log
+          node tests/shared-direct-native-owner.mjs 2>&1 | tee /tmp/w5-checks/shared-native-text.log
+      - name: Actually rendered native proposal, required-body failure and bounded live resources
+        if: ${{ !cancelled() }}
+        env:
+          OI_SHARED_NATIVE_DOCUMENT: /tmp/w5-checks/shared-native-text/document.json
+          OI_SHARED_NATIVE_ACT: /tmp/w5-checks/shared-native-text/act.json
+          OI_SHARED_NATIVE_OWNER_RECEIPT: /tmp/w5-checks/shared-native-text/native-owner.json
+          OI_SHARED_REQUIRED_RETURN_TEXT: '1'
+          OI_SHARED_RESOURCE_OUT: /tmp/w5-checks/shared-native-text-render
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node tests/shared-expression-resource-native.mjs 2>&1 | tee /tmp/w5-checks/shared-native-text-render.log
       - name: Build the exact real QL host and C++ material owner
         if: always()
         run: |
@@ -156,6 +245,15 @@ jobs:
             --bridge "$NATIVE_EXPRESSION_BRIDGE" --input "$NATIVE_EXPRESSION_INPUT" \
             --output /tmp/w5-checks/local-join --run-browser-join \
             2>&1 | tee /tmp/w5-checks/native-browser.log
+      - name: Admit the exact real producer receipt and reject native identity drift
+        if: ${{ !cancelled() }}
+        env:
+          REQUIRE_NATIVE_RECEIPT: '1'
+          NATIVE_LOCAL_RECEIPT: /tmp/w5-checks/local-join/local-receipt.json
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          python3 tests/native-expression-receipt.test.py 2>&1 | tee /tmp/w5-checks/actual-native-receipt-admission.log
       - name: Scene causal trace and deliberately disconnected consumer
         if: always()
         env:
@@ -172,6 +270,24 @@ jobs:
             node tests/native-expression-scene-browser.mjs > /tmp/w5-checks/scene-disconnected.log 2>&1; then
             echo "disconnected consumer passed the causal trace" >&2; exit 1
           fi
+          # A crash or failed teardown is not the required visual failure.
+          python3 - <<'PY_ACCEPT'
+          import json
+          from pathlib import Path
+          reading = json.loads(Path('/tmp/w5-checks/scene-disconnected/scene-trace-disconnected.json').read_text())
+          assert reading['schema'] == 'oi.native-expression-scene-trace/v1'
+          assert reading['mode'] == 'negative: GPU target delivery disconnected before the determinant'
+          assert reading['pass'] is False
+          assert 'cleanup_failure' not in reading
+          assert all(value['ok'] is True for value in reading['owner_cleanup'].values())
+          assert reading['requests'] == {'opens': 3, 'closes': 3}
+          failures = {value['check'] if isinstance(value, dict) else value for value in reading['failures']}
+          assert 'delivery: the GPU-bound target textures carry the changed frame' in failures
+          assert 'GPU: particle positions after N fixed steps differ from control beyond the determinism baseline' in failures
+          assert reading['transfer']['after_step_admitted_max_abs_difference_m'] > 0
+          assert reading['delivery']['after_step_gpu_target_max_abs_difference'] == 0
+          assert reading['gpu']['effect_mean_abs_difference'] <= reading['gpu']['tolerance']
+          PY_ACCEPT
       - name: Exact source and toolchain receipt
         if: always()
         run: |

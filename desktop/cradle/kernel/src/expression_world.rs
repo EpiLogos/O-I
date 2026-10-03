@@ -81,6 +81,20 @@ fn text(value: &str) -> Result<(), String> {
 fn optional_text(value: &Option<String>) -> Result<(), String> {
     value.as_deref().map(text).unwrap_or(Ok(()))
 }
+// Material bodies carry authored paragraphs and tabular text. Identity,
+// reference and actor fields continue to use the stricter text validator.
+fn material_text(value: &str) -> Result<(), String> {
+    if value.trim().is_empty()
+        || value.len() > MAX_TEXT
+        || value
+            .chars()
+            .any(|c| c.is_control() && !matches!(c, '\n' | '\r' | '\t'))
+    {
+        Err("Expected bounded nonempty material text".into())
+    } else {
+        Ok(())
+    }
+}
 
 /// Deterministic local suffix for kernel-derived presentation refs
 /// (FNV-1a 64, the same digest family Central uses for content refs).
@@ -296,11 +310,13 @@ impl Binding {
             &self.character_ref,
             &self.subject_ref,
             &self.label,
-            &self.text,
             &self.entity_ref,
             &self.character_revision,
         ] {
             optional_text(value)?;
+        }
+        if let Some(body) = &self.text {
+            material_text(body)?;
         }
         if let Some(state) = &self.state {
             expression::role_name(state)?;
@@ -1094,6 +1110,10 @@ pub enum Request {
         summary: Option<String>,
         #[serde(default)]
         cast: Vec<CastMember>,
+        /// An explicitly reviewed full cast correction, checked against the
+        /// existing Act revision. Ordinary resume continues to extend cast.
+        #[serde(default)]
+        replace_cast: bool,
         #[serde(default)]
         subject_ref: Option<String>,
         #[serde(default)]
@@ -2208,6 +2228,102 @@ struct Snapshot {
     document: expression::Document,
 }
 
+/// Admission counts bytes without allocating another complete JSON document.
+struct JsonBudget {
+    bytes: usize,
+    maximum: usize,
+}
+impl std::io::Write for JsonBudget {
+    fn write(&mut self, input: &[u8]) -> std::io::Result<usize> {
+        if input.len() > self.maximum - self.bytes {
+            return Err(std::io::Error::other(
+                "Native Act transaction byte budget exceeded",
+            ));
+        }
+        self.bytes += input.len();
+        Ok(input.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// Borrow the actual Scene while counting its page-specific JSON. Admission
+/// must precede cloning large native geometry into the page/Edition cohort.
+struct TextPageScene<'a> {
+    scene: &'a Value,
+    role: &'a str,
+    field: &'a str,
+    text: &'a str,
+    id: &'a str,
+    name: &'a str,
+}
+struct TextPageLayers<'a>(&'a TextPageScene<'a>, &'a [Value]);
+struct TextPageLayer<'a>(&'a TextPageScene<'a>, &'a Value);
+impl Serialize for TextPageScene<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let fields = self.scene.as_object().ok_or_else(|| {
+            serde::ser::Error::custom("Native text page requires an object Scene")
+        })?;
+        let mut map = serializer.serialize_map(None)?;
+        for (key, value) in fields {
+            match key.as_str() {
+                "id" => map.serialize_entry(key, self.id)?,
+                "name" => map.serialize_entry(key, self.name)?,
+                "text" => {
+                    let layers = value.as_array().ok_or_else(|| {
+                        serde::ser::Error::custom("Native text layers must be an array")
+                    })?;
+                    map.serialize_entry(key, &TextPageLayers(self, layers))?;
+                }
+                _ => map.serialize_entry(key, value)?,
+            }
+        }
+        if !fields.contains_key("id") {
+            map.serialize_entry("id", self.id)?;
+        }
+        if !fields.contains_key("name") {
+            map.serialize_entry("name", self.name)?;
+        }
+        map.end()
+    }
+}
+impl Serialize for TextPageLayers<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeSeq;
+        let mut sequence = serializer.serialize_seq(Some(self.1.len()))?;
+        for layer in self.1 {
+            sequence.serialize_element(&TextPageLayer(self.0, layer))?;
+        }
+        sequence.end()
+    }
+}
+impl Serialize for TextPageLayer<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        if self.1["role"].as_str() != Some(self.0.role) {
+            return self.1.serialize(serializer);
+        }
+        let fields = self
+            .1
+            .as_object()
+            .ok_or_else(|| serde::ser::Error::custom("Native text layer must be an object"))?;
+        let mut map = serializer.serialize_map(None)?;
+        for (key, value) in fields {
+            if key == self.0.field {
+                map.serialize_entry(key, self.0.text)?;
+            } else {
+                map.serialize_entry(key, value)?;
+            }
+        }
+        if !fields.contains_key(self.0.field) {
+            map.serialize_entry(self.0.field, self.0.text)?;
+        }
+        map.end()
+    }
+}
+
 fn act_conflict(act: &Act, expected: u64) -> Value {
     json!({
         "state":"act_revision_conflict",
@@ -2351,6 +2467,25 @@ impl Kernel {
         Ok(())
     }
 
+    fn act_rollback_targets(
+        &mut self,
+        snapshots: Vec<Snapshot>,
+        receipts: &mut Receipts,
+    ) -> Result<(), String> {
+        let mut failures = Vec::new();
+        for snapshot in snapshots {
+            let target = snapshot.target.clone();
+            if let Err(error) = self.act_rollback(snapshot, receipts) {
+                failures.push(format!("{target}: {error}"));
+            }
+        }
+        if failures.is_empty() {
+            Ok(())
+        } else {
+            Err(format!("Act rollback failed: {}", failures.join("; ")))
+        }
+    }
+
     /// Commit an act mutation: bump its CAS revision and persist it. A store
     /// conflict reloads the stored act and returns the structured refusal.
     /// An archived act is written back to the archive, not held in memory.
@@ -2396,11 +2531,26 @@ impl Kernel {
         snapshot: Option<Snapshot>,
         receipts: &mut Receipts,
     ) -> Result<Value, String> {
+        self.act_finish_targets(
+            act,
+            previous,
+            extra,
+            snapshot.into_iter().collect(),
+            receipts,
+        )
+    }
+
+    fn act_finish_targets(
+        &mut self,
+        act: Act,
+        previous: u64,
+        extra: Value,
+        snapshots: Vec<Snapshot>,
+        receipts: &mut Receipts,
+    ) -> Result<Value, String> {
         let committed = self.act_commit(act, Some(previous));
         if !matches!(committed, Ok(Ok(_))) {
-            if let Some(snapshot) = snapshot {
-                self.act_rollback(snapshot, receipts)?;
-            }
+            self.act_rollback_targets(snapshots, receipts)?;
         }
         Ok(match committed? {
             Ok(act) => {
@@ -2579,7 +2729,7 @@ impl Kernel {
         }
         for (role, caption) in captions {
             expression::role_name(role)?;
-            text(caption)?;
+            material_text(caption)?;
             fills
                 .entry(role.clone())
                 .or_insert_with(RoleFill::default)
@@ -2628,6 +2778,351 @@ impl Kernel {
             .unwrap_or(expected)))
     }
 
+    /// Opt-in ActText pages use native edits and Edition restore. Preflight
+    /// covers every selected edition and the full durable Act before edits;
+    /// retained editions are read back from actual native commits.
+    #[allow(clippy::too_many_arguments)]
+    fn world_perform_text_passages(
+        &mut self,
+        act: &Act,
+        role: &str,
+        field: &str,
+        body: &str,
+        value: Option<f64>,
+        event_basis: &Option<EventBasis>,
+        expected: Option<u64>,
+        actor: &str,
+        receipts: &mut Receipts,
+    ) -> Result<Option<Value>, String> {
+        use crate::expression_material as material;
+        let target = self.world_document(&act.expression_ref)?;
+        if expected.is_some_and(|revision| revision != target.revision) {
+            return Ok(Some(
+                json!({"state":"revision_conflict","expression_ref":act.expression_ref,
+                "current_revision":target.revision,"expected_revision":expected}),
+            ));
+        }
+        // A retry reads retained material, even if the current template changed.
+        if event_basis.is_some() {
+            if let Some(source) = act.sequence.iter().rev().find(|passage| {
+                passage.kind == PassageKind::Text
+                    && passage.role.as_deref() == Some(role)
+                    && passage.field.as_deref() == Some(field)
+                    && &passage.event_basis == event_basis
+                    && passage.native_ref.as_deref().is_some_and(|reference| {
+                        reference.starts_with("act-text:")
+                            && act.sequence.iter().any(|page| {
+                                page.kind == PassageKind::Edition
+                                    && page.native_ref.as_deref() == Some(reference)
+                            })
+                    })
+            }) {
+                if source.text.as_deref() != Some(body) || source.value != value {
+                    return Err(
+                        "A paged text event basis already retains different source bytes".into(),
+                    );
+                }
+                if let Some(refusal) = self.act_precheck(act, 0, false, true)? {
+                    return Ok(Some(refusal));
+                }
+                let pages = Self::retained_text_pages(act, source)?;
+                return Ok(Some(
+                    json!({"state":"act_performed","act":act,"passage":source,
+                    "page_passages":pages,"presented":false,"coalesced":false,"deduplicated":true}),
+                ));
+            }
+        }
+        let scene = target
+            .scenes
+            .iter()
+            .find(|scene| scene.scene_ref == target.selection.scene_ref)
+            .ok_or("The selected text Scene is absent")?;
+        let Some(presentation) = &scene.presentation else {
+            return Ok(None);
+        };
+        let Some(pages) = material::text_passages(&presentation.scene, role, field, body)? else {
+            return Ok(None);
+        };
+        if scene.body.is_some() || !scene.triggers.is_empty() {
+            return Err(
+                "Paged text requires a Scene without an alternate body or declarative triggers"
+                    .into(),
+            );
+        }
+        if let Some(refusal) = self.act_precheck(act, pages.len() + 1, false, true)? {
+            return Ok(Some(refusal));
+        }
+        let source_index = act.sequence.len();
+        let identity = serde_json::to_string(&(
+            act.act_ref.as_str(),
+            source_index,
+            target.expression_ref.as_str(),
+            target.revision,
+            scene.scene_ref.as_str(),
+            role,
+            field,
+            body,
+            value,
+            event_basis,
+            &presentation.scene,
+        ))
+        .map_err(|error| error.to_string())?;
+        let suffix = fnv1a64(&identity);
+        let source_ref = format!("act-text:{suffix}:source");
+        if act
+            .sequence
+            .iter()
+            .any(|passage| passage.native_ref.as_deref() == Some(source_ref.as_str()))
+        {
+            return Err("Text passage source ref collides with retained history".into());
+        }
+        let page_refs: Vec<_> = (0..pages.len())
+            .map(|index| {
+                format!(
+                    "{}:scene:text-{suffix}-{}",
+                    target.expression_ref,
+                    index + 1
+                )
+            })
+            .collect();
+        if page_refs.iter().any(|reference| {
+            target
+                .scenes
+                .iter()
+                .any(|scene| &scene.scene_ref == reference)
+        }) {
+            return Err("Text page Scene ref collides with an existing Scene".into());
+        }
+        let existing_bytes = crate::expression_act_store::ActStore::encoded_record(act)?.len();
+        let remaining = crate::expression_act_store::MAX_RECORD_BYTES as usize - existing_bytes;
+        let mut page_budget = JsonBudget {
+            bytes: 0,
+            maximum: remaining / pages.len(),
+        };
+        // Every retained Edition includes the whole page cohort. Count that
+        // lower bound using borrowed native material before the first clone.
+        for (index, (page_ref, page)) in page_refs.iter().zip(&pages).enumerate() {
+            let title = format!("{} ({}/{})", scene.title, index + 1, pages.len());
+            serde_json::to_writer(
+                &mut page_budget,
+                &TextPageScene {
+                    scene: &presentation.scene,
+                    role,
+                    field,
+                    text: page,
+                    id: page_ref,
+                    name: &title,
+                },
+            )
+            .map_err(|_| "Act record exceeds its 4 MiB bound before page material allocation; retain this Act and continue with smaller native material".to_owned())?;
+        }
+        let mut changes = Vec::new();
+        for (index, (page_ref, page)) in page_refs.iter().zip(&pages).enumerate() {
+            let title = format!("{} ({}/{})", scene.title, index + 1, pages.len());
+            let mut page_material = presentation.clone();
+            page_material.saved = None;
+            page_material.scene["id"] = json!(page_ref);
+            page_material.scene["name"] = json!(title);
+            material::fill_text(&mut page_material.scene, role, field, page);
+            changes.push(Change::SceneCreate {
+                scene_ref: page_ref.clone(),
+                title,
+            });
+            changes.push(Change::SceneCompose {
+                scene_ref: page_ref.clone(),
+                entity_refs: scene.entity_refs.clone(),
+            });
+            changes.push(Change::SceneMaterialSet {
+                scene_ref: page_ref.clone(),
+                presentation: page_material,
+            });
+        }
+        changes.push(Change::Focus {
+            scene_ref: page_refs[0].clone(),
+            entity_ref: None,
+        });
+        if changes.len() > expression::LIMIT {
+            return Err("Text page edit budget exceeded".into());
+        }
+        let mut planned = target.edited(changes.clone())?;
+        // Even compact snapshots are a lower bound on the durable pretty
+        // record. Refuse before multiplying the Document by page count; the
+        // exact bounded record encoder still checks the complete prospective
+        // Act below. This keeps an over-budget request from first allocating
+        // up to 64 copies of an 8 MiB native Document.
+        let mut budget = JsonBudget {
+            bytes: 0,
+            maximum: remaining / pages.len(),
+        };
+        serde_json::to_writer(&mut budget, &planned).map_err(|_| {
+            "Act record exceeds its 4 MiB bound; retain this Act and continue in a successor Act".to_owned()
+        })?;
+        let mut editions = vec![planned.clone()];
+        for page_ref in page_refs.iter().skip(1) {
+            planned = planned.edited(vec![Change::Focus {
+                scene_ref: page_ref.clone(),
+                entity_ref: None,
+            }])?;
+            editions.push(planned.clone());
+        }
+        let final_revision = if pages.len() == 1 {
+            planned.revision
+        } else {
+            planned
+                .revision
+                .checked_add(1)
+                .ok_or("Revision exhausted")?
+        };
+        let mut final_document = editions[0].clone();
+        final_document.revision = final_revision;
+        final_document.validate()?;
+        let mut next = act.clone();
+        let binding = next.bindings.entry(role.to_owned()).or_insert(Binding {
+            kind: if value.is_some() {
+                BindingKind::Value
+            } else {
+                BindingKind::Text
+            },
+            agent_ref: None,
+            profile_ref: None,
+            character_ref: None,
+            subject_ref: None,
+            state: None,
+            label: None,
+            glyph: None,
+            text: None,
+            value: None,
+            entity_ref: None,
+            character_revision: None,
+        });
+        binding.text = Some(body.to_owned());
+        if value.is_some() {
+            binding.value = value;
+        }
+        let mut source = Passage::new(source_index, PassageKind::Text, act.mode);
+        source.expression_ref = Some(target.expression_ref.clone());
+        source.revision = Some(target.revision.to_string());
+        source.scene_ref = Some(scene.scene_ref.clone());
+        source.target_ref = Some(target.expression_ref.clone());
+        source.target_scene_ref = Some(scene.scene_ref.clone());
+        source.role = Some(role.to_owned());
+        source.field = Some(field.to_owned());
+        source.text = Some(body.to_owned());
+        source.value = value;
+        source.event_basis = event_basis.clone();
+        source.native_ref = Some(source_ref.clone());
+        next.sequence.push(source.clone());
+        for (index, (edition, page)) in editions.iter().zip(&pages).enumerate() {
+            let mut passage = Passage::new(next.sequence.len(), PassageKind::Edition, act.mode);
+            passage.target_ref = Some(target.expression_ref.clone());
+            passage.expression_ref = Some(target.expression_ref.clone());
+            passage.revision = Some(edition.revision.to_string());
+            passage.scene_ref = Some(page_refs[index].clone());
+            passage.target_scene_ref = Some(page_refs[index].clone());
+            passage.role = Some(role.to_owned());
+            passage.field = Some(field.to_owned());
+            passage.text = Some(page.clone());
+            passage.event_basis = event_basis.clone();
+            passage.native_ref = Some(source_ref.clone());
+            passage.summary = Some(format!("Text page {}/{}", index + 1, pages.len()));
+            passage.edition = Some(Box::new(edition.clone()));
+            next.sequence.push(passage);
+        }
+        next.position = Some(source_index + 1);
+        next.basis_revision = final_revision;
+        // Predictive editions are admission material, not retained receipts.
+        let mut prospective = next.clone();
+        prospective.revision = act
+            .revision
+            .checked_add(1)
+            .ok_or("Act revision exhausted")?;
+        prospective.updated_at_unix_ms = unix_ms().max(act.updated_at_unix_ms);
+        crate::expression_act_store::ActStore::encoded_record(&prospective)?;
+        if let Some(refusal) = self.act_precheck(act, pages.len() + 1, false, true)? {
+            return Ok(Some(refusal));
+        }
+        let snapshot = Snapshot {
+            target: target.expression_ref.clone(),
+            document: target.clone(),
+        };
+        let performed = (|| -> Result<Result<(), Value>, String> {
+            let mut current = match self.world_edit(
+                &target.expression_ref,
+                Some(target.revision),
+                actor,
+                changes,
+                receipts,
+            )? {
+                Ok(revision) => revision,
+                Err(refusal) => return Ok(Err(refusal)),
+            };
+            for (index, expected_edition) in editions.iter().enumerate() {
+                if index > 0 {
+                    current = match self.world_edit(
+                        &target.expression_ref,
+                        Some(current),
+                        actor,
+                        vec![Change::Focus {
+                            scene_ref: page_refs[index].clone(),
+                            entity_ref: None,
+                        }],
+                        receipts,
+                    )? {
+                        Ok(revision) => revision,
+                        Err(refusal) => return Ok(Err(refusal)),
+                    };
+                }
+                let actual = self.world_document(&target.expression_ref)?;
+                if &actual != expected_edition {
+                    return Err("Native text page edition differs from admitted edit".into());
+                }
+                next.sequence[source_index + 1 + index].edition = Some(Box::new(actual));
+            }
+            if pages.len() > 1 {
+                let first = next.sequence[source_index + 1].clone();
+                match self.replay_passage(&mut next, &first, Some(current), actor, receipts)? {
+                    Some(Performed::Done {
+                        revision,
+                        scene_ref,
+                    }) if revision == final_revision && scene_ref == page_refs[0] => {}
+                    Some(Performed::Refused(refusal)) => return Ok(Err(refusal)),
+                    _ => {
+                        return Err(
+                            "Native first text page restore did not confirm its selection".into(),
+                        )
+                    }
+                }
+            }
+            if self.world_document(&target.expression_ref)? != final_document {
+                return Err(
+                    "Native text page selection differs from admitted first edition".into(),
+                );
+            }
+            Ok(Ok(()))
+        })();
+        match performed {
+            Ok(Ok(())) => {}
+            Ok(Err(refusal)) => {
+                self.act_rollback(snapshot, receipts)?;
+                return Ok(Some(refusal));
+            }
+            Err(error) => {
+                self.act_rollback(snapshot, receipts)?;
+                return Err(error);
+            }
+        }
+        let page_passages = next.sequence[source_index + 1..].to_vec();
+        self.act_finish(
+            next,
+            act.revision,
+            json!({"state":"act_performed","passage":source,
+            "page_passages":page_passages,"presented":true,"coalesced":false,"deduplicated":false}),
+            Some(snapshot),
+            receipts,
+        )
+        .map(Some)
+    }
+
     /// Perform one material Scene into a live target Scene: graft role fills,
     /// map material entities onto target entities (role occupants are stable
     /// per act; unroled material entities replace the previous performance's
@@ -2664,7 +3159,44 @@ impl Kernel {
             .find(|s| s.scene_ref == scene_ref)
             .ok_or("The target Scene is absent")?;
         let mut authored = m::scene_material(&material.document, material_scene)?;
-        m::graft(&mut authored, fills);
+        let mut presentation_fills = fills.clone();
+        // Later phase Scenes may show a retained page. Only a matching native
+        // text source and its complete immutable Edition sequence authorize
+        // that bounded fill; the Act binding remains the entire source.
+        for (role, fill) in &mut presentation_fills {
+            let Some(body) = &fill.text else { continue };
+            let field = fill.field.as_deref().unwrap_or("body");
+            if !m::text_passages(&authored, role, field, body)?.is_some_and(|pages| pages.len() > 1)
+            {
+                continue;
+            }
+            let source = act
+                .sequence
+                .iter()
+                .rev()
+                .find(|passage| {
+                    passage.kind == PassageKind::Text
+                        && passage.role.as_deref() == Some(role.as_str())
+                        && passage.field.as_deref() == Some(field)
+                        && passage.text.as_deref() == Some(body.as_str())
+                        && passage
+                            .native_ref
+                            .as_deref()
+                            .is_some_and(|reference| reference.starts_with("act-text:"))
+                })
+                .ok_or("Text exceeding an authored passage capacity requires ActText")?;
+            let pages = Self::retained_text_pages(act, source)?;
+            let page = pages
+                .first()
+                .and_then(|page| page.text.clone())
+                .ok_or("Retained text source has no native page")?;
+            if m::text_passages(&authored, role, field, &page)?.is_some_and(|pages| pages.len() > 1)
+            {
+                return Err("Retained text page exceeds the current authored capacity".into());
+            }
+            fill.text = Some(page);
+        }
+        m::graft(&mut authored, &presentation_fills);
         let mut map: BTreeMap<String, String> = BTreeMap::new();
         let mut adds: Vec<(String, String)> = Vec::new();
         for entity in authored["entities"].as_array().cloned().unwrap_or_default() {
@@ -2894,6 +3426,11 @@ impl Kernel {
         else {
             return Ok(None);
         };
+        if crate::expression_material::text_passages(&presentation.scene, role, field, value)?
+            .is_some_and(|pages| pages.len() > 1)
+        {
+            return Err("Text exceeding an authored passage capacity requires ActText".into());
+        }
         if !crate::expression_material::fill_text(&mut presentation.scene, role, field, value) {
             return Ok(None);
         }
@@ -3006,6 +3543,41 @@ impl Kernel {
         Ok(None)
     }
 
+    fn retained_text_source(passage: &Passage) -> bool {
+        passage.kind == PassageKind::Text
+            && passage
+                .native_ref
+                .as_deref()
+                .is_some_and(|reference| reference.starts_with("act-text:"))
+    }
+
+    /// A paged source is an observation; its Editions own the presentation.
+    /// Qualify the entire ancestry even when the caller accepts material drift.
+    fn validate_text_ancestry(act: &Act, passage: &Passage) -> Result<bool, String> {
+        if Self::retained_text_source(passage) {
+            Self::retained_text_pages(act, passage)?;
+            return Ok(true);
+        }
+        if passage.kind == PassageKind::Edition
+            && passage
+                .native_ref
+                .as_deref()
+                .is_some_and(|reference| reference.starts_with("act-text:"))
+        {
+            let mut sources = act.sequence.iter().filter(|source| {
+                Self::retained_text_source(source) && source.native_ref == passage.native_ref
+            });
+            let source = sources
+                .next()
+                .ok_or("Retained text edition has no source")?;
+            if sources.next().is_some() {
+                return Err("Retained text edition has ambiguous source ancestry".into());
+            }
+            Self::retained_text_pages(act, source)?;
+        }
+        Ok(false)
+    }
+
     fn validate_retained_edition(passage: &Passage) -> Result<(), String> {
         let edition = passage
             .edition
@@ -3017,6 +3589,95 @@ impl Kernel {
             return Err("Retained edition target or revision mismatch".into());
         }
         edition.validate()
+    }
+
+    fn retained_text_pages<'a>(act: &'a Act, source: &Passage) -> Result<Vec<&'a Passage>, String> {
+        let target = source
+            .target_ref
+            .as_deref()
+            .ok_or("Retained text source has no target")?;
+        if source.expression_ref.as_deref() != Some(target) {
+            return Err("Retained text source target mismatch".into());
+        }
+        let pages: Vec<_> = act
+            .sequence
+            .iter()
+            .filter(|page| {
+                page.kind == PassageKind::Edition && page.native_ref == source.native_ref
+            })
+            .collect();
+        if pages.is_empty() {
+            return Err("Retained text source has no native page".into());
+        }
+        if source.scene_ref != source.target_scene_ref {
+            return Err("Retained text source Scene or target Scene mismatch".into());
+        }
+        let source_revision = source
+            .revision
+            .as_deref()
+            .and_then(|revision| revision.parse::<u64>().ok())
+            .ok_or("Retained text source has no native revision")?;
+        let source_scene = source
+            .scene_ref
+            .as_deref()
+            .ok_or("Retained text source has no Scene")?;
+        let mut complete = String::new();
+        for (index, page) in pages.iter().enumerate() {
+            Self::validate_retained_edition(page)?;
+            if page.index != source.index + index + 1
+                || page.target_ref.as_deref() != Some(target)
+                || page.expression_ref.as_deref() != Some(target)
+                || page.event_basis != source.event_basis
+                || page.role != source.role
+                || page.field != source.field
+                || page.scene_ref != page.target_scene_ref
+                || page
+                    .edition
+                    .as_ref()
+                    .map(|edition| edition.selection.scene_ref.as_str())
+                    != page.scene_ref.as_deref()
+            {
+                return Err("Retained text page does not match its source passage".into());
+            }
+            let edition = page.edition.as_ref().unwrap();
+            if source_revision.checked_add(index as u64 + 1) != Some(edition.revision)
+                || !edition
+                    .scenes
+                    .iter()
+                    .any(|scene| scene.scene_ref == source_scene)
+            {
+                return Err("Retained text edition has different native source ancestry".into());
+            }
+            let scene = edition
+                .scenes
+                .iter()
+                .find(|scene| scene.scene_ref == edition.selection.scene_ref)
+                .and_then(|scene| scene.presentation.as_ref())
+                .ok_or("Retained text edition has no selected presentation")?;
+            let mut layers = scene.scene["text"]
+                .as_array()
+                .ok_or("Retained text edition has no text layers")?
+                .iter()
+                .filter(|layer| layer["role"].as_str() == page.role.as_deref());
+            let layer = layers
+                .next()
+                .ok_or("Retained text edition has no source role")?;
+            if layers.next().is_some()
+                || page.field.as_deref() != Some("body")
+                || page.text.as_deref() != layer["body"].as_str()
+            {
+                return Err("Retained text edition presentation differs from its page".into());
+            }
+            complete.push_str(
+                page.text
+                    .as_deref()
+                    .ok_or("Retained text page has no text")?,
+            );
+        }
+        if Some(complete.as_str()) != source.text.as_deref() {
+            return Err("Retained text pages do not preserve their complete source".into());
+        }
+        Ok(pages)
     }
 
     /// Re-perform one recorded passage into its recorded target.
@@ -3147,6 +3808,19 @@ impl Kernel {
                 receipts,
             )?));
         }
+        // The complete source is an observation, not a full-fill replay over
+        // its own recorded page Editions.
+        if passage.kind == PassageKind::Text
+            && passage.native_ref.as_deref().is_some_and(|reference| {
+                reference.starts_with("act-text:")
+                    && act.sequence.iter().any(|page| {
+                        page.kind == PassageKind::Edition
+                            && page.native_ref.as_deref() == Some(reference)
+                    })
+            })
+        {
+            return Ok(None);
+        }
         if let (Some(role), Some(field)) = (&passage.role, &passage.field) {
             let shown = passage
                 .text
@@ -3218,6 +3892,7 @@ impl Kernel {
                 actor,
                 summary,
                 cast,
+                replace_cast,
                 subject_ref,
                 instrument_ref,
                 selection,
@@ -3241,7 +3916,14 @@ impl Kernel {
                     optional_text(&member.character_ref)?;
                     optional_text(&member.label)?;
                 }
-                if self.act_lookup(&act_ref)?.is_none() {
+                let existing = self.act_lookup(&act_ref)?;
+                if replace_cast && expected_act_revision.is_none() {
+                    return Err("Replacing an existing cast requires expected_act_revision".into());
+                }
+                if replace_cast && existing.is_none() {
+                    return Err("Cannot replace the cast of an absent Act".into());
+                }
+                if existing.is_none() {
                     // An act addresses a live target: the Expression is open.
                     let document = self.world_document(&expression_ref)?;
                     let mut act = Act::new(
@@ -3284,6 +3966,9 @@ impl Kernel {
                 }
                 let previous = act.revision;
                 let mut next = act.clone();
+                if replace_cast {
+                    next.cast.clear();
+                }
                 for member in cast {
                     if !next.cast.iter().any(|c| {
                         c.role == member.role && c.participant_ref == member.participant_ref
@@ -3449,6 +4134,7 @@ impl Kernel {
                     }
                     passage.role = Some(role);
                     passage.state = Some(state);
+                    passage.bindings = next.bindings.clone();
                     passage.file_ref = loaded.file_ref.clone();
                     passage.expression_ref = loaded
                         .file_ref
@@ -3733,6 +4419,7 @@ impl Kernel {
                 passage.target_ref = Some(target_ref);
                 passage.target_scene_ref = Some(target_scene);
                 passage.native_ref = Some(occupant);
+                passage.bindings = next.bindings.clone();
                 passage.transition = transition;
                 passage.event_basis = event_basis;
                 next.basis_revision = revision;
@@ -3760,7 +4447,9 @@ impl Kernel {
             } => {
                 text(&actor)?;
                 expression::role_name(&role)?;
-                optional_text(&value_text)?;
+                if let Some(body) = &value_text {
+                    material_text(body)?;
+                }
                 optional_basis(&event_basis)?;
                 let field = field.unwrap_or_else(|| "body".into());
                 crate::expression_material::text_field(&field)?;
@@ -3772,6 +4461,21 @@ impl Kernel {
                 }
                 let act = guard!(act_ref, expected_act_revision);
                 live!(act);
+                if let Some(body) = &value_text {
+                    if let Some(result) = self.world_perform_text_passages(
+                        &act,
+                        &role,
+                        &field,
+                        body,
+                        value,
+                        &event_basis,
+                        expected_revision,
+                        &actor,
+                        receipts,
+                    )? {
+                        return Ok(result);
+                    }
+                }
                 // A fill of the same text role/field as the immediately
                 // preceding passage updates that passage in place.
                 let coalesce = act.sequence.last().is_some_and(|p| {
@@ -3912,10 +4616,15 @@ impl Kernel {
                 let act = guard!(act_ref, expected_act_revision);
                 live!(act);
                 precheck!(act, 1, false);
-                if let Some(target) = &expression_ref {
-                    // The continued act addresses a live (open) target.
-                    self.world_document(target)?;
-                }
+                // A new target carries its own revision basis. The previous
+                // target's revision cannot qualify an independent document.
+                let target_revision = expression_ref
+                    .as_ref()
+                    .map(|target| {
+                        self.world_document(target)
+                            .map(|document| document.revision)
+                    })
+                    .transpose()?;
                 let previous = act.revision;
                 let mut next = act.clone();
                 let continuation = Continuation {
@@ -3932,6 +4641,8 @@ impl Kernel {
                 }
                 if let Some(target) = expression_ref {
                     next.expression_ref = target;
+                    next.basis_revision =
+                        target_revision.ok_or("Continued target has no revision")?;
                 }
                 let mut passage = Passage::new(next.sequence.len(), PassageKind::Continue, to);
                 passage.native_ref = instrument_ref;
@@ -4047,7 +4758,14 @@ impl Kernel {
                         false,
                     ),
                 };
-                let replay: Vec<Passage> = act.sequence[start..=position].to_vec();
+                // Seeking the source observation reads its retained ancestry;
+                // it never re-fills the complete reply or replays an older Scene.
+                let source_only = Self::retained_text_source(&act.sequence[position]);
+                let replay: Vec<Passage> = if source_only {
+                    vec![act.sequence[position].clone()]
+                } else {
+                    act.sequence[start..=position].to_vec()
+                };
                 // Refuse drift before any edit (unless the caller accepts it).
                 let mut replay = replay;
                 for passage in &mut replay {
@@ -4055,6 +4773,9 @@ impl Kernel {
                     // override, and is checked before any presentation edit.
                     if passage.kind == PassageKind::Edition {
                         Self::validate_retained_edition(passage)?;
+                    }
+                    if Self::validate_text_ancestry(&act, passage)? {
+                        continue;
                     }
                     if accept_drift {
                         for binding in passage.bindings.values_mut() {
@@ -4065,35 +4786,73 @@ impl Kernel {
                         return Ok(refusal);
                     }
                 }
-                let target_ref = act.expression_ref.clone();
-                let snapshot = self.act_snapshot(&target_ref)?;
-                let mut expected = expected_revision;
+                // The caller's revision guards the current Act target. Historical
+                // Editions keep their own recorded targets; every actual target
+                // is admitted and revision-fenced before any replay edit.
+                let current = self.world_document(&act.expression_ref)?;
+                if expected_revision.is_some_and(|revision| revision != current.revision) {
+                    return Ok(
+                        json!({"state":"revision_conflict","expression_ref":act.expression_ref,
+                        "current_revision":current.revision,"expected_revision":expected_revision}),
+                    );
+                }
+                let mut targets = BTreeSet::new();
+                for passage in &replay {
+                    targets.insert(
+                        passage
+                            .target_ref
+                            .clone()
+                            .unwrap_or_else(|| act.expression_ref.clone()),
+                    );
+                }
+                let mut budget = JsonBudget {
+                    bytes: 0,
+                    maximum: expression::DOCUMENT_BYTES,
+                };
+                let mut snapshots = Vec::new();
+                let mut revisions = BTreeMap::new();
+                for target in targets {
+                    let snapshot = self.act_snapshot(&target)?;
+                    serde_json::to_writer(&mut budget, &snapshot.document)
+                        .map_err(|_| "Act replay targets exceed the native 8 MiB transaction bound; seek a narrower passage".to_owned())?;
+                    revisions.insert(target, snapshot.document.revision);
+                    snapshots.push(snapshot);
+                }
                 let mut performed_any = false;
                 for passage in &replay {
-                    match self.replay_passage(&mut next, passage, expected, &actor, receipts)? {
-                        Some(Performed::Refused(v)) => {
-                            self.act_rollback(snapshot, receipts)?;
+                    let target = passage.target_ref.as_deref().unwrap_or(&act.expression_ref);
+                    let expected = revisions.get(target).copied();
+                    match self.replay_passage(&mut next, passage, expected, &actor, receipts) {
+                        Ok(Some(Performed::Refused(v))) => {
+                            self.act_rollback_targets(snapshots, receipts)?;
                             return Ok(v);
                         }
-                        Some(Performed::Done { revision, .. }) => {
-                            next.basis_revision = revision;
-                            expected = None;
+                        Ok(Some(Performed::Done { revision, .. })) => {
+                            revisions.insert(target.to_owned(), revision);
+                            if target == next.expression_ref {
+                                next.basis_revision = revision;
+                            }
                             performed_any = true;
                         }
-                        None => {}
+                        Ok(None) => {}
+                        Err(error) => {
+                            self.act_rollback_targets(snapshots, receipts)?;
+                            return Err(error);
+                        }
                     }
                 }
                 next.position = Some(position);
-                self.act_finish(
+                self.act_finish_targets(
                     next,
                     previous,
                     json!({"state":"act_sought","position":position,"performed":performed_any,
                     "replayed":{"from":start,"to":position,"incremental":incremental},
                     "passage":act.sequence[position]}),
-                    Some(snapshot),
+                    snapshots,
                     receipts,
                 )
             }
+
             Request::ActArchive { act_ref, actor } => {
                 text(&actor)?;
                 let act = guard!(act_ref, None::<u64>);
@@ -4140,6 +4899,932 @@ impl Kernel {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Actual retained Direct speech, not a provider fixture or new model turn.
+    // Native cursor interval 1060..1923 contains 855 events / 852 speech chunks.
+    fn retained_bo_text() -> (String, EventBasis) {
+        use sha2::{Digest, Sha256};
+        let bytes = include_str!("../../tests/fixtures/shared-direct-journal/native-turn.json");
+        assert_eq!(
+            format!("{:x}", Sha256::digest(bytes.as_bytes())),
+            "f58e0a3381e406db563d50f5d941648d6d0344a90d24b307b7ebcdfd70e91337"
+        );
+        let turn: Value = serde_json::from_str(bytes).unwrap();
+        assert_eq!(turn["events"].as_array().unwrap().len(), 855);
+        let chunks: Vec<_> = turn["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|row| {
+                let signal = &row["event"]["event"]["Signal"]["kind"];
+                (signal["kind"] == "agent-message-chunk").then(|| signal["text"].as_str().unwrap())
+            })
+            .collect();
+        assert_eq!(chunks.len(), 852);
+        let body = chunks.concat();
+        assert_eq!(body.len(), 2967);
+        assert_eq!(
+            format!("{:x}", Sha256::digest(body.as_bytes())),
+            "99825459850f96ffb234969fa3a7f267f1b6c84f58fc230ffa7191e8f31a9c65"
+        );
+        let basis = EventBasis {
+            family: "agent-message".into(),
+            source: "aikit-encounter".into(),
+            event_ref: turn["agent_session"].as_str().unwrap().into(),
+            occurrence: Some(json!("cursor:1917")),
+        };
+        (body, basis)
+    }
+
+    const TEXT_ACT: &str = "act:retained-bo-native-text";
+    const TEXT_ROLE: &str = "resultText";
+
+    struct NativeTextFixture {
+        kernel: Kernel,
+        home: std::path::PathBuf,
+        expression_ref: String,
+    }
+    impl NativeTextFixture {
+        fn new(policy: Option<Value>) -> Self {
+            let home = std::env::temp_dir().join(format!(
+                "oi-native-text-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            // Only native O:I owners are exercised. No Central request, provider,
+            // model or fabricated owner reply participates in these operations.
+            let mut kernel = Kernel::new(crate::flow::CentralClient::discover());
+            kernel.attach_act_store(&home).unwrap();
+            let document: Value = serde_json::from_str(include_str!(
+                "../../tests/fixtures/shared-native-expression/native-document.json"
+            ))
+            .unwrap();
+            let expression_ref = document["expression_ref"].as_str().unwrap().to_owned();
+            native_text_expression(
+                &mut kernel,
+                json!({"operation":"open","document":document,
+                "actor":"agent:controlled-native-replay"}),
+            )
+            .unwrap();
+            let mut result = Self {
+                kernel,
+                home,
+                expression_ref,
+            };
+            if let Some(policy) = policy {
+                let mut presentation = result.selected_material();
+                let layer = presentation["scene"]["text"]
+                    .as_array_mut()
+                    .unwrap()
+                    .iter_mut()
+                    .find(|layer| layer["role"] == TEXT_ROLE)
+                    .unwrap();
+                layer["passage"] = policy;
+                result.set_material(presentation);
+            }
+            native_text_world(
+                &mut result.kernel,
+                json!({"operation":"act_open","act_ref":TEXT_ACT,"mode":"factory",
+                "expression_ref":result.expression_ref,"actor":"agent:controlled-native-replay"}),
+            )
+            .unwrap();
+            result
+        }
+        fn document(&mut self) -> Value {
+            native_text_expression(
+                &mut self.kernel,
+                json!({"operation":"inspect",
+                "expression_ref":self.expression_ref}),
+            )
+            .unwrap()["document"]
+                .clone()
+        }
+        fn act(&mut self) -> Value {
+            native_text_world(
+                &mut self.kernel,
+                json!({"operation":"act_inspect","act_ref":TEXT_ACT}),
+            )
+            .unwrap()["act"]
+                .clone()
+        }
+        fn selected_material(&mut self) -> Value {
+            let document = self.document();
+            document["scenes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|scene| scene["scene_ref"] == document["selection"]["scene_ref"])
+                .unwrap()["presentation"]
+                .clone()
+        }
+        fn set_material(&mut self, presentation: Value) {
+            let before = self.document();
+            native_text_expression(
+                &mut self.kernel,
+                json!({"operation":"edit",
+                "expression_ref":self.expression_ref,"expected_revision":before["revision"],
+                "actor":"agent:controlled-native-replay","changes":[{"change":"scene_material_set",
+                    "scene_ref":before["selection"]["scene_ref"],"presentation":presentation}]}),
+            )
+            .unwrap();
+        }
+        fn fill(&mut self, body: &str, basis: &EventBasis) -> Result<Value, String> {
+            let document = self.document();
+            let act = self.act();
+            native_text_world(
+                &mut self.kernel,
+                json!({"operation":"act_text","act_ref":TEXT_ACT,
+                "actor":"agent:controlled-native-replay","role":TEXT_ROLE,"text":body,
+                "event_basis":basis,"expected_revision":document["revision"],
+                "expected_act_revision":act["revision"]}),
+            )
+        }
+        fn stored_bytes(&self) -> Vec<(std::ffi::OsString, Vec<u8>)> {
+            let mut files: Vec<_> = std::fs::read_dir(self.home.join("desktop/expression-acts"))
+                .unwrap()
+                .map(|entry| {
+                    let entry = entry.unwrap();
+                    (entry.file_name(), std::fs::read(entry.path()).unwrap())
+                })
+                .collect();
+            files.sort_by(|a, b| a.0.cmp(&b.0));
+            files
+        }
+    }
+    impl Drop for NativeTextFixture {
+        fn drop(&mut self) {
+            std::fs::remove_dir_all(&self.home).unwrap();
+        }
+    }
+    fn native_text_expression(kernel: &mut Kernel, request: Value) -> Result<Value, String> {
+        let result = kernel
+            .apply(crate::KernelOp::Expression {
+                request: serde_json::from_value(request).map_err(|error| error.to_string())?,
+            })?
+            .result;
+        match result {
+            KernelOpResult::Expression { data } => Ok(data),
+            other => panic!("{other:?}"),
+        }
+    }
+    fn native_text_world(kernel: &mut Kernel, request: Value) -> Result<Value, String> {
+        let result = kernel
+            .apply(crate::KernelOp::ExpressionWorld {
+                request: serde_json::from_value(request).map_err(|error| error.to_string())?,
+            })?
+            .result;
+        match result {
+            KernelOpResult::ExpressionWorld { data } => Ok(data),
+            other => panic!("{other:?}"),
+        }
+    }
+    fn authored_text_policy() -> Value {
+        json!({"schema":"oi.expression-text-passages/v1","capacity_chars":360,
+            "max_newlines":8,"maximum_pages":16})
+    }
+    fn selected_text(document: &Value) -> &str {
+        document["scenes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|scene| scene["scene_ref"] == document["selection"]["scene_ref"])
+            .unwrap()["presentation"]["scene"]["text"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|layer| layer["role"] == TEXT_ROLE)
+            .unwrap()["body"]
+            .as_str()
+            .unwrap()
+    }
+
+    #[test]
+    fn native_empty_paged_text_preserves_the_nonempty_material_contract() {
+        let (_, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        let before = fixture.document();
+        let stored = fixture.stored_bytes();
+        for body in ["", " \t\r\n"] {
+            assert_eq!(
+                fixture.fill(body, &basis).unwrap_err(),
+                "Expected bounded nonempty material text"
+            );
+            assert_eq!(fixture.document(), before);
+            assert_eq!(fixture.stored_bytes(), stored);
+        }
+    }
+
+    #[test]
+    fn native_text_page_passage_limit_retains_the_owner_rollover_refusal() {
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        for index in 0..MAX_PASSAGES {
+            let observed = native_text_world(
+                &mut fixture.kernel,
+                json!({"operation":"act_operate","act_ref":TEXT_ACT,
+                    "actor":"agent:controlled-native-replay","mode":"factory",
+                    "operation_kind":"controlled-observation",
+                    "native_ref":format!("native:controlled-observation:{index}")}),
+            )
+            .unwrap();
+            assert_eq!(observed["state"], "act_operated");
+        }
+        let before = fixture.document();
+        let stored = fixture.stored_bytes();
+        let refused = fixture.fill(&body, &basis).unwrap();
+        assert_eq!(refused["state"], "act_passage_limit");
+        assert_eq!(refused["act_ref"], TEXT_ACT);
+        assert_eq!(fixture.document(), before);
+        assert_eq!(fixture.stored_bytes(), stored);
+    }
+
+    #[test]
+    fn native_retained_bo_text_pages_retry_and_replay_after_restart() {
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        let before = fixture.document();
+        let filled = fixture.fill(&body, &basis).unwrap();
+        assert_eq!(filled["state"], "act_performed");
+        assert_eq!(filled["act"]["phase"], "running");
+        assert_eq!(filled["act"]["bindings"][TEXT_ROLE]["text"], body);
+        let sequence = filled["act"]["sequence"].as_array().unwrap();
+        assert_eq!(sequence[0]["kind"], "text");
+        assert_eq!(sequence[0]["text"], body);
+        assert_eq!(sequence[0]["event_basis"], json!(basis));
+        assert_eq!(sequence[0]["scene_ref"], before["selection"]["scene_ref"]);
+        assert_eq!(
+            sequence[0]["revision"],
+            before["revision"].as_u64().unwrap().to_string()
+        );
+        let pages = sequence[1..].to_vec();
+        assert!(pages.len() > 1);
+        let text: String = pages
+            .iter()
+            .map(|page| {
+                assert_eq!(page["kind"], "edition");
+                assert_eq!(page["native_ref"], sequence[0]["native_ref"]);
+                assert_eq!(page["event_basis"], json!(basis));
+                assert_eq!(page["edition"]["selection"]["scene_ref"], page["scene_ref"]);
+                assert_eq!(
+                    page["revision"],
+                    page["edition"]["revision"].as_u64().unwrap().to_string()
+                );
+                let text = page["text"].as_str().unwrap();
+                assert!(text.chars().count() <= 360);
+                assert!(text.chars().filter(|character| *character == '\n').count() <= 8);
+                text
+            })
+            .collect();
+        assert_eq!(text.as_bytes(), body.as_bytes());
+        let after = fixture.document();
+        assert_eq!(after["selection"]["scene_ref"], pages[0]["scene_ref"]);
+        assert_eq!(filled["act"]["position"], pages[0]["index"]);
+        assert_eq!(selected_text(&after), pages[0]["text"].as_str().unwrap());
+        assert_eq!(
+            after["scenes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|scene| { scene["scene_ref"] == before["selection"]["scene_ref"] })
+                .unwrap(),
+            before["scenes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|scene| { scene["scene_ref"] == before["selection"]["scene_ref"] })
+                .unwrap(),
+            "the source Scene is not rewritten to a full-body page"
+        );
+        let stored = fixture.stored_bytes();
+        let stale = native_text_world(
+            &mut fixture.kernel,
+            json!({"operation":"act_text",
+            "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","role":TEXT_ROLE,
+            "text":body,"event_basis":basis,"expected_revision":before["revision"],
+            "expected_act_revision":filled["act"]["revision"]}),
+        )
+        .unwrap();
+        assert_eq!(stale["state"], "revision_conflict");
+        let stale_act = native_text_world(
+            &mut fixture.kernel,
+            json!({"operation":"act_text",
+            "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","role":TEXT_ROLE,
+            "text":body,"event_basis":basis,"expected_revision":after["revision"],
+            "expected_act_revision":1}),
+        )
+        .unwrap();
+        assert_eq!(stale_act["state"], "act_revision_conflict");
+        assert_eq!(fixture.document(), after);
+        assert_eq!(fixture.stored_bytes(), stored);
+        let retry = fixture.fill(&body, &basis).unwrap();
+        assert_eq!(retry["deduplicated"], true);
+        assert_eq!(fixture.document(), after);
+        assert_eq!(fixture.stored_bytes(), stored);
+        let different = format!("{body}\nChanged source");
+        assert_eq!(
+            fixture.fill(&different, &basis).unwrap_err(),
+            "A paged text event basis already retains different source bytes"
+        );
+        assert_eq!(fixture.document(), after);
+        assert_eq!(fixture.stored_bytes(), stored);
+        // Actual authoring edit replaces current text/policy. Retained history
+        // must replay the original page, not consult this newer template.
+        let mut changed = fixture.selected_material();
+        let layer = changed["scene"]["text"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|layer| layer["role"] == TEXT_ROLE)
+            .unwrap();
+        layer["body"] = json!("Current template must not replace retained text");
+        layer["passage"] = json!({"schema":"oi.expression-text-passages/v1",
+            "capacity_chars":1,"max_newlines":1,"maximum_pages":1});
+        fixture.set_material(changed);
+        let changed_document = fixture.document();
+        assert_eq!(fixture.fill(&body, &basis).unwrap()["deduplicated"], true);
+        assert_eq!(fixture.document(), changed_document);
+        assert_eq!(fixture.stored_bytes(), stored);
+        let mut fresh = Kernel::new(crate::flow::CentralClient::discover());
+        fresh.attach_act_store(&fixture.home).unwrap();
+        native_text_expression(
+            &mut fresh,
+            json!({"operation":"open","document":changed_document,
+            "actor":"agent:controlled-native-replay"}),
+        )
+        .unwrap();
+        fixture.kernel = fresh;
+        assert_eq!(fixture.act(), filled["act"]);
+        for page in &pages {
+            let act = fixture.act();
+            let document = fixture.document();
+            let replay = native_text_world(&mut fixture.kernel, json!({"operation":"act_seek",
+                "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","position":page["index"],
+                "expected_revision":document["revision"],"expected_act_revision":act["revision"]})).unwrap();
+            assert_eq!(replay["state"], "act_sought");
+            assert_eq!(replay["act"]["phase"], "running");
+            let shown = fixture.document();
+            assert_eq!(shown["selection"]["scene_ref"], page["scene_ref"]);
+            assert_eq!(selected_text(&shown), page["text"].as_str().unwrap());
+            assert_eq!(replay["act"]["bindings"][TEXT_ROLE]["text"], body);
+            assert_eq!(replay["act"]["sequence"], filled["act"]["sequence"]);
+        }
+    }
+
+    #[test]
+    fn native_paged_source_seek_is_observation_only_after_restart_and_checks_cas() {
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        let filled = fixture.fill(&body, &basis).unwrap();
+        for restart in [false, true] {
+            let before = fixture.document();
+            if restart {
+                let mut fresh = Kernel::new(crate::flow::CentralClient::discover());
+                fresh.attach_act_store(&fixture.home).unwrap();
+                native_text_expression(
+                    &mut fresh,
+                    json!({"operation":"open",
+                    "document":before,"actor":"agent:controlled-native-replay"}),
+                )
+                .unwrap();
+                fixture.kernel = fresh;
+            }
+            let act = fixture.act();
+            let result = native_text_world(
+                &mut fixture.kernel,
+                json!({"operation":"act_seek",
+                "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","position":0,
+                "expected_revision":before["revision"],"expected_act_revision":act["revision"]}),
+            )
+            .unwrap();
+            assert_eq!(result["state"], "act_sought");
+            assert_eq!(
+                fixture.document(),
+                before,
+                "Source seek never fills or replays material"
+            );
+            assert_eq!(result["act"]["sequence"], filled["act"]["sequence"]);
+            assert_eq!(result["act"]["position"], 0);
+            let stored = fixture.stored_bytes();
+            let result = native_text_world(
+                &mut fixture.kernel,
+                json!({"operation":"act_seek",
+                "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","position":0,
+                "expected_revision":before["revision"].as_u64().unwrap()-1,
+                "expected_act_revision":result["act"]["revision"]}),
+            )
+            .unwrap();
+            assert_eq!(result["state"], "revision_conflict");
+            assert_eq!(fixture.document(), before);
+            assert_eq!(fixture.stored_bytes(), stored);
+        }
+    }
+
+    #[test]
+    fn native_paged_source_and_edition_corruption_refuse_before_seek_edits() {
+        let (body, basis) = retained_bo_text();
+        for fault in [
+            "source-bytes",
+            "page-bytes",
+            "page-body",
+            "source-target",
+            "page-target",
+            "source-revision",
+            "source-scene",
+            "source-existing-scene",
+        ] {
+            let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+            fixture.fill(&body, &basis).unwrap();
+            let before = fixture.document();
+            let files = fixture.stored_bytes();
+            // The real durable store also owns its lock file. Select this
+            // exact native Act record rather than treating every file as JSON.
+            let (name, bytes) = files
+                .iter()
+                .find(|(_, bytes)| {
+                    serde_json::from_slice::<Value>(bytes)
+                        .is_ok_and(|record| record["act"]["act_ref"] == TEXT_ACT)
+                })
+                .expect("Actual native Act record required");
+            let path = fixture.home.join("desktop/expression-acts").join(name);
+            let mut record: Value = serde_json::from_slice(bytes).unwrap();
+            let sequence = record["act"]["sequence"].as_array_mut().unwrap();
+            match fault {
+                "source-bytes" => sequence[0]["text"] = json!(format!("{body} changed")),
+                "source-revision" => sequence[0]["revision"] = json!("999999"),
+                "source-scene" => {
+                    sequence[0]["scene_ref"] = json!("expression:changed-source-scene")
+                }
+                "source-existing-scene" => {
+                    sequence[0]["scene_ref"] = sequence[1]["scene_ref"].clone()
+                }
+                "page-bytes" => sequence[1]["text"] = json!("Changed page bytes"),
+                "source-target" => {
+                    sequence[0]["expression_ref"] = json!("expression:changed-source-target")
+                }
+                "page-target" => {
+                    sequence[1]["target_ref"] = json!("expression:changed-page-target")
+                }
+                "page-body" => {
+                    let scene_ref = sequence[1]["edition"]["selection"]["scene_ref"].clone();
+                    let scene = sequence[1]["edition"]["scenes"]
+                        .as_array_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .find(|scene| scene["scene_ref"] == scene_ref)
+                        .unwrap();
+                    let layer = scene["presentation"]["scene"]["text"]
+                        .as_array_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .find(|layer| layer["role"] == TEXT_ROLE)
+                        .unwrap();
+                    layer["body"] = json!("Changed actual retained presentation");
+                }
+                _ => unreachable!(),
+            }
+            // Fault injection changes the actual durable record, never a
+            // fabricated owner response. A fresh native body must refuse it.
+            std::fs::write(&path, serde_json::to_vec_pretty(&record).unwrap()).unwrap();
+            let damaged = fixture.stored_bytes();
+            let mut fresh = Kernel::new(crate::flow::CentralClient::discover());
+            fresh.attach_act_store(&fixture.home).unwrap();
+            native_text_expression(
+                &mut fresh,
+                json!({"operation":"open",
+                "document":before,"actor":"agent:controlled-native-replay"}),
+            )
+            .unwrap();
+            fixture.kernel = fresh;
+            for position in [0, 1] {
+                let result = native_text_world(
+                    &mut fixture.kernel,
+                    json!({"operation":"act_seek",
+                    "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","position":position,
+                    "accept_drift":true,"expected_revision":before["revision"]}),
+                );
+                assert!(
+                    result.is_err(),
+                    "{fault}: a drift override cannot accept damaged ancestry"
+                );
+                assert_eq!(fixture.document(), before);
+                assert_eq!(fixture.stored_bytes(), damaged);
+            }
+        }
+    }
+
+    #[test]
+    fn native_unicode_whitespace_and_crlf_pages_are_lossless() {
+        let (_, basis) = retained_bo_text();
+        let body = " \tαβ🙂\r\n多行\u{2028}after\u{2029} e\u{301}nd \t".repeat(2);
+        let policy = json!({"schema":"oi.expression-text-passages/v1",
+            "capacity_chars":17,"max_newlines":1,"maximum_pages":64});
+        let mut fixture = NativeTextFixture::new(Some(policy));
+        let filled = fixture.fill(&body, &basis).unwrap();
+        let pages = &filled["act"]["sequence"].as_array().unwrap()[1..];
+        let rebuilt: String = pages
+            .iter()
+            .map(|page| {
+                let text = page["text"].as_str().unwrap();
+                assert!(text.chars().count() <= 17);
+                let normalised = text.replace("\r\n", "\n");
+                assert!(
+                    normalised
+                        .chars()
+                        .filter(|character| {
+                            matches!(character, '\r' | '\n' | '\u{2028}' | '\u{2029}')
+                        })
+                        .count()
+                        <= 1
+                );
+                text
+            })
+            .collect();
+        assert_eq!(rebuilt.as_bytes(), body.as_bytes());
+        for pair in pages.windows(2) {
+            assert!(
+                !(pair[0]["text"].as_str().unwrap().ends_with('\r')
+                    && pair[1]["text"].as_str().unwrap().starts_with('\n'))
+            );
+        }
+    }
+
+    #[test]
+    fn native_retained_bo_text_without_policy_remains_one_fill_and_coalesces() {
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(None);
+        let before = fixture.document();
+        let filled = fixture.fill(&body, &basis).unwrap();
+        assert_eq!(filled["act"]["sequence"].as_array().unwrap().len(), 1);
+        assert_eq!(filled["act"]["sequence"][0]["kind"], "text");
+        assert_eq!(fixture.document()["selection"], before["selection"]);
+        assert_eq!(selected_text(&fixture.document()), body);
+        let changed = format!("{body}\nLegacy continuation");
+        let second = fixture.fill(&changed, &basis).unwrap();
+        assert_eq!(second["coalesced"], true);
+        assert_eq!(second["act"]["sequence"].as_array().unwrap().len(), 1);
+        assert_eq!(selected_text(&fixture.document()), changed);
+    }
+
+    #[test]
+    fn native_text_policy_refusals_preserve_expression_and_durable_act_bytes() {
+        let (body, basis) = retained_bo_text();
+        for policy in [
+            json!({"schema":"wrong","capacity_chars":360,"max_newlines":8,"maximum_pages":16}),
+            json!({"schema":"oi.expression-text-passages/v1","capacity_chars":"360","max_newlines":8,"maximum_pages":16}),
+            json!({"schema":"oi.expression-text-passages/v1","capacity_chars":360,"max_newlines":8,"maximum_pages":16,"unexpected":true}),
+            json!({"schema":"oi.expression-text-passages/v1","capacity_chars":0,"max_newlines":8,"maximum_pages":16}),
+            json!({"schema":"oi.expression-text-passages/v1","capacity_chars":360,"max_newlines":8,"maximum_pages":1}),
+        ] {
+            let mut fixture = NativeTextFixture::new(Some(policy));
+            let before = fixture.document();
+            let stored = fixture.stored_bytes();
+            assert!(fixture.fill(&body, &basis).is_err());
+            assert_eq!(fixture.document(), before);
+            assert_eq!(fixture.stored_bytes(), stored);
+        }
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        let mut material = fixture.selected_material();
+        let layers = material["scene"]["text"].as_array_mut().unwrap();
+        let mut duplicate = layers
+            .iter()
+            .find(|layer| layer["role"] == TEXT_ROLE)
+            .unwrap()
+            .clone();
+        duplicate["id"] = json!("duplicate-result-role");
+        layers.push(duplicate);
+        fixture.set_material(material);
+        let before = fixture.document();
+        let stored = fixture.stored_bytes();
+        assert_eq!(
+            fixture.fill(&body, &basis).unwrap_err(),
+            "A paged text role must name exactly one text layer"
+        );
+        assert_eq!(fixture.document(), before);
+        assert_eq!(fixture.stored_bytes(), stored);
+    }
+
+    #[test]
+    fn native_text_page_collision_and_record_budget_refuse_before_publication() {
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        let before = fixture.document();
+        let document: expression::Document = serde_json::from_value(before.clone()).unwrap();
+        let scene = document
+            .scenes
+            .iter()
+            .find(|scene| scene.scene_ref == document.selection.scene_ref)
+            .unwrap();
+        // An actual authoring edit occupies the ref that the next exact owner
+        // basis would derive; no in-memory owner state is replaced for this case.
+        let identity = serde_json::to_string(&(
+            TEXT_ACT,
+            0usize,
+            document.expression_ref.as_str(),
+            document.revision + 1,
+            scene.scene_ref.as_str(),
+            TEXT_ROLE,
+            "body",
+            body.as_str(),
+            None::<f64>,
+            &Some(basis.clone()),
+            &scene.presentation.as_ref().unwrap().scene,
+        ))
+        .unwrap();
+        let collision = format!(
+            "{}:scene:text-{}-1",
+            document.expression_ref,
+            fnv1a64(&identity)
+        );
+        native_text_expression(
+            &mut fixture.kernel,
+            json!({"operation":"edit",
+            "expression_ref":fixture.expression_ref,"expected_revision":before["revision"],
+            "actor":"agent:controlled-native-replay","changes":[{"change":"scene_create",
+                "scene_ref":collision,"title":"Authored occupied Scene"}]}),
+        )
+        .unwrap();
+        let occupied = fixture.document();
+        let stored = fixture.stored_bytes();
+        assert_eq!(
+            fixture.fill(&body, &basis).unwrap_err(),
+            "Text page Scene ref collides with an existing Scene"
+        );
+        assert_eq!(fixture.document(), occupied);
+        assert_eq!(fixture.stored_bytes(), stored);
+        let mut budget = NativeTextFixture::new(Some(authored_text_policy()));
+        let mut material = budget.selected_material();
+        material["scene"]["engine"]["authoredCapacityCase"] = json!("x".repeat(90_000));
+        budget.set_material(material);
+        let before = budget.document();
+        let stored = budget.stored_bytes();
+        assert_eq!(
+            budget.fill(&body, &basis).unwrap_err(),
+            "Act record exceeds its 4 MiB bound before page material allocation; retain this Act and continue with smaller native material"
+        );
+        assert_eq!(budget.document(), before);
+        assert_eq!(budget.stored_bytes(), stored);
+    }
+
+    #[test]
+    fn native_large_scene_64_page_admission_refuses_before_material_allocation() {
+        let (_, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(json!({
+            "schema":"oi.expression-text-passages/v1","capacity_chars":64,
+            "max_newlines":8,"maximum_pages":64
+        })));
+        let mut material = fixture.selected_material();
+        // A permitted native document near its 8 MiB budget. Sixty-four
+        // cloned page Scenes would amplify this into hundreds of MiB before
+        // the retained Edition/Act budget could otherwise refuse it.
+        material["scene"]["engine"]["authoredCapacityCase"] = json!("x".repeat(7 * 1024 * 1024));
+        fixture.set_material(material);
+        let before = fixture.document();
+        let stored = fixture.stored_bytes();
+        assert_eq!(
+            fixture.fill(&"y".repeat(4096), &basis).unwrap_err(),
+            "Act record exceeds its 4 MiB bound before page material allocation; retain this Act and continue with smaller native material"
+        );
+        assert_eq!(fixture.document(), before);
+        assert_eq!(fixture.stored_bytes(), stored);
+    }
+
+    #[test]
+    fn native_text_pages_roll_back_after_real_store_publication_failure() {
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        let before = fixture.document();
+        let before_act = fixture.act();
+        let stored = fixture.stored_bytes();
+        let record = std::fs::read_dir(fixture.home.join("desktop/expression-acts"))
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .find(|path| {
+                path.extension()
+                    .is_some_and(|extension| extension == "json")
+            })
+            .unwrap();
+        let pending = record.with_extension("json.pending");
+        // The native precheck can read/lock the genuine Act record. Only its
+        // later publication fails: an owned directory occupies the pending file.
+        std::fs::create_dir(&pending).unwrap();
+        let expected_error = std::fs::File::create(&pending).unwrap_err().to_string();
+        assert_eq!(fixture.fill(&body, &basis).unwrap_err(), expected_error);
+        let restored = fixture.document();
+        assert!(restored["revision"].as_u64().unwrap() > before["revision"].as_u64().unwrap());
+        let mut expected = before;
+        expected["revision"] = restored["revision"].clone();
+        assert_eq!(restored, expected);
+        assert_eq!(fixture.act(), before_act);
+        std::fs::remove_dir(&pending).unwrap();
+        assert_eq!(fixture.stored_bytes(), stored);
+        // Explicit retry after the real obstruction is removed uses the new
+        // document basis; the failed attempt did not commit source/page passages.
+        let filled = fixture.fill(&body, &basis).unwrap();
+        assert_eq!(filled["state"], "act_performed");
+        assert_eq!(filled["deduplicated"], false);
+        assert_eq!(filled["act"]["sequence"][0]["text"], body);
+    }
+
+    #[test]
+    fn native_act_record_encoding_preserves_bytes_and_refuses_before_publication() {
+        use crate::expression_act_store::{ActStore, MAX_RECORD_BYTES, SCHEMA};
+        #[derive(Serialize)]
+        struct LegacyRecord {
+            schema: String,
+            act: Act,
+        }
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        fixture.fill(&body, &basis).unwrap();
+        let act: Act = serde_json::from_value(fixture.act()).unwrap();
+        let original = fixture.stored_bytes();
+        let encoded = ActStore::encoded_record(&act).unwrap();
+        assert_eq!(
+            encoded,
+            serde_json::to_vec_pretty(&LegacyRecord {
+                schema: SCHEMA.into(),
+                act: act.clone()
+            })
+            .unwrap()
+        );
+        let store = ActStore::at_home(&fixture.home);
+        assert_eq!(store.read(TEXT_ACT).unwrap().unwrap(), act);
+        let mut oversized = act.clone();
+        let edition = oversized.sequence[1].edition.as_mut().unwrap();
+        edition.scenes[0].presentation.as_mut().unwrap().scene["engine"]["authoredCapacityCase"] =
+            json!("x".repeat(MAX_RECORD_BYTES as usize));
+        edition.validate().unwrap();
+        assert_eq!(
+            store.write(&oversized, Some(act.revision)).unwrap_err(),
+            "Act record exceeds its 4 MiB bound; retain this Act and continue in a successor Act"
+        );
+        assert_eq!(fixture.stored_bytes(), original);
+        assert_eq!(store.read(TEXT_ACT).unwrap().unwrap(), act);
+    }
+
+    #[test]
+    fn native_target_continuation_retry_and_old_page_failure_preserve_both_documents() {
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        let original_source = fixture.document();
+        let filled = fixture.fill(&body, &basis).unwrap();
+        let old_target = fixture.expression_ref.clone();
+        let new_target = "expression:controlled-fresh-text-target";
+        let new_document: Value = serde_json::from_str(
+            &serde_json::to_string(&original_source)
+                .unwrap()
+                .replace(&old_target, new_target),
+        )
+        .unwrap();
+        native_text_expression(
+            &mut fixture.kernel,
+            json!({"operation":"open","document":new_document,
+            "actor":"agent:controlled-native-replay"}),
+        )
+        .unwrap();
+        let continued = native_text_world(
+            &mut fixture.kernel,
+            json!({"operation":"act_continue",
+            "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","to":"factory",
+            "expression_ref":new_target,"expected_act_revision":filled["act"]["revision"]}),
+        )
+        .unwrap();
+        assert_eq!(continued["state"], "act_continued");
+        fixture.expression_ref = new_target.into();
+        let a = native_text_expression(
+            &mut fixture.kernel,
+            json!({"operation":"inspect","expression_ref":old_target}),
+        )
+        .unwrap()["document"]
+            .clone();
+        let b = fixture.document();
+        assert_eq!(continued["act"]["basis_revision"], b["revision"]);
+        let stored = fixture.stored_bytes();
+        let retried = fixture.fill(&body, &basis).unwrap();
+        assert_eq!(retried["deduplicated"], true);
+        assert_eq!(retried["passage"]["target_ref"], old_target);
+        assert_eq!(fixture.document(), b);
+        assert_eq!(
+            native_text_expression(
+                &mut fixture.kernel,
+                json!({"operation":"inspect","expression_ref":old_target})
+            )
+            .unwrap()["document"],
+            a
+        );
+        assert_eq!(fixture.stored_bytes(), stored);
+        let before_act = fixture.act();
+        let position = filled["page_passages"][1]["index"].as_u64().unwrap();
+        let record = std::fs::read_dir(fixture.home.join("desktop/expression-acts"))
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .find(|path| {
+                path.extension()
+                    .is_some_and(|extension| extension == "json")
+            })
+            .unwrap();
+        let pending = record.with_extension("json.pending");
+        std::fs::create_dir(&pending).unwrap();
+        let error = std::fs::File::create(&pending).unwrap_err().to_string();
+        let failed = native_text_world(&mut fixture.kernel, json!({"operation":"act_seek","act_ref":TEXT_ACT,
+            "actor":"agent:controlled-native-replay","position":position,"expected_revision":b["revision"],
+            "expected_act_revision":before_act["revision"]})).unwrap_err();
+        assert_eq!(failed, error);
+        let restored = native_text_expression(
+            &mut fixture.kernel,
+            json!({"operation":"inspect","expression_ref":old_target}),
+        )
+        .unwrap()["document"]
+            .clone();
+        assert!(restored["revision"].as_u64().unwrap() > a["revision"].as_u64().unwrap());
+        let mut expected_a = a;
+        expected_a["revision"] = restored["revision"].clone();
+        assert_eq!(restored, expected_a);
+        assert_eq!(fixture.document(), b);
+        assert_eq!(fixture.act(), before_act);
+        std::fs::remove_dir(pending).unwrap();
+        assert_eq!(fixture.stored_bytes(), stored);
+        let sought = native_text_world(&mut fixture.kernel, json!({"operation":"act_seek","act_ref":TEXT_ACT,
+            "actor":"agent:controlled-native-replay","position":position,"expected_revision":b["revision"],
+            "expected_act_revision":before_act["revision"]})).unwrap();
+        assert_eq!(sought["state"], "act_sought");
+        assert_eq!(sought["act"]["expression_ref"], new_target);
+        assert_eq!(
+            sought["act"]["basis_revision"],
+            before_act["basis_revision"]
+        );
+        let selected = native_text_expression(
+            &mut fixture.kernel,
+            json!({"operation":"inspect","expression_ref":old_target}),
+        )
+        .unwrap()["document"]
+            .clone();
+        assert_eq!(
+            selected_text(&selected),
+            filled["page_passages"][1]["text"].as_str().unwrap()
+        );
+        assert_eq!(fixture.document(), b);
+    }
+
+    #[test]
+    fn native_later_phase_retains_bounded_page_and_full_source_before_next_text() {
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        let filled = fixture.fill(&body, &basis).unwrap();
+        let material: Value = serde_json::from_str(include_str!(
+            "../../material/shared-field/shared-undertaking.expression.json"
+        ))
+        .unwrap();
+        let material_ref = material["expression_ref"].as_str().unwrap().to_owned();
+        native_text_expression(
+            &mut fixture.kernel,
+            json!({"operation":"open","document":material,
+            "actor":"agent:controlled-native-replay"}),
+        )
+        .unwrap();
+        for phase in ["work-passage", "review"] {
+            let document = fixture.document();
+            let act = fixture.act();
+            let performed = native_text_world(&mut fixture.kernel, json!({"operation":"act_select","act_ref":TEXT_ACT,
+                "actor":"agent:controlled-native-replay","kind":"scene",
+                "material":{"expression_ref":material_ref,"scene_ref":format!("{material_ref}:scene:{phase}")},
+                "expected_revision":document["revision"],"expected_act_revision":act["revision"]})).unwrap();
+            assert_eq!(performed["state"], "act_performed");
+            assert_eq!(performed["act"]["bindings"][TEXT_ROLE]["text"], body);
+            assert_eq!(performed["act"]["sequence"][0]["text"], body);
+            if phase == "review" {
+                assert_eq!(
+                    selected_text(&fixture.document()),
+                    filled["page_passages"][0]["text"].as_str().unwrap()
+                );
+            } else {
+                assert!(
+                    !fixture.selected_material()["scene"]["text"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|layer| layer["role"] == TEXT_ROLE),
+                    "Working forms do not squeeze the previous full proposal into a footer"
+                );
+            }
+        }
+        // A separate controlled native ingestion, not a second provider turn.
+        // Its source is a complete prefix of the retained actual speech.
+        let short: String = body.chars().take(240).collect();
+        let next_basis = EventBasis {
+            occurrence: Some(json!("controlled:short-following-text")),
+            ..basis
+        };
+        let next = fixture.fill(&short, &next_basis).unwrap();
+        assert_eq!(next["state"], "act_performed");
+        assert_eq!(next["deduplicated"], false);
+        assert_eq!(next["act"]["bindings"][TEXT_ROLE]["text"], short);
+        assert_eq!(next["act"]["sequence"][0]["text"], body);
+        assert_eq!(selected_text(&fixture.document()), short);
+    }
 
     fn reading(r: &str, revision: &str) -> ReadingRef {
         ReadingRef {

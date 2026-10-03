@@ -1,48 +1,43 @@
 /** Real native producer -> production kernel/relay -> actual embedded stage.
- * Central disclosure alone is controlled; no fake field/PCM/M1/M2/M3 outputs.
+ * Central disclosure comes from the actual initialized native owner.
  * Runs only with explicit binaries/input. Never connects to installed machines. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {spawn} from 'node:child_process';
-import {readFile,writeFile,mkdir,mkdtemp,rm,chmod} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,mkdtemp,rm} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {tmpdir,platform,cpus} from 'node:os';
 import {createHash} from 'node:crypto';
 import {build} from '../expressions-app/node_modules/esbuild/lib/main.js';
 import {chromium} from 'playwright';
+import {nativeCentralWorld,retireNativeBrowserOwners} from './native-expression-central.mjs';
 const paths={bridge:process.env.NATIVE_EXPRESSION_BRIDGE,host:process.env.OI_QL_FIELD_HOST_BIN,worker:process.env.OI_QL_FIELD_WORKER_BIN,input:process.env.NATIVE_EXPRESSION_INPUT};
 for(const [name,path] of Object.entries(paths))assert.ok(path&&path.startsWith('/'),`Explicit absolute ${name} path required; no PATH or fixture fallback`);
 const out=resolve(process.env.NATIVE_EXPRESSION_OUT??'walk/artifacts/native-expression-native');await mkdir(out,{recursive:true});
 const temp=await mkdtemp(join(tmpdir(),'native-expression-joined-')),input=JSON.parse(await readFile(paths.input,'utf8'));
-const report={schema:'oi.native-expression-joined-browser/v1',standing:'real C/Rust/C++ owner and WebGL; controlled Central disclosure and captured input; not installed Mac, live ephemeris, measured material or speaker/microphone evidence',checks:[],timings_ms:[],sources:{},machine:{platform:platform(),logical_cpus:cpus().length},pass:false};
+const report={schema:'oi.native-expression-joined-browser/v1',standing:'real Central disclosure, C/Rust/C++ owner and WebGL; private initialized World and captured input; not installed Mac, live ephemeris, measured material or speaker/microphone evidence',checks:[],timings_ms:[],sources:{},machine:{platform:platform(),logical_cpus:cpus().length},pass:false};
 for(const [name,path] of Object.entries(paths))report.sources[name]={path,sha256:createHash('sha256').update(await readFile(path)).digest('hex')};
-const central=join(temp,'central.py');
-await writeFile(central,`#!/usr/bin/env python3
-import json,pathlib,sys,hashlib
-root=pathlib.Path(__file__).parent
-content=(root/'binding.json').read_text()
-def location(path):return {'schema':'central.path-ref/v1','ref':'controlled:path:'+path,'root':'controlled:root','path':path}
-action=sys.argv[-2]
-if action=='central.files.list':
- data={'schema':'central.directory-reading/v1','location':location('.'),'entries':[{'name':'binding.json','location':location('binding.json'),'kind':'file','byte_len':len(content.encode()),'retrieval_allowed':True}],'automatic_agent_or_model_invocation':False}
-elif action=='central.files.read':
- data={'schema':'central.file-reading/v1','location':location('binding.json'),'revision':hashlib.sha256(content.encode()).hexdigest(),'byte_len':len(content.encode()),'content_encoding':'utf-8','content':content,'project':None,'source':None,'automatic_agent_or_model_invocation':False}
-else:raise RuntimeError('Unexpected disclosure action '+action)
-print(json.dumps({'ok':True,'data':data}))
-`);await chmod(central,0o700);
-const bridge=spawn(paths.bridge,['127.0.0.1:0'],{env:{...process.env,OI_BIN:central,OI_CENTRAL_ROOT:temp,OI_CENTRAL_PROJECT_QUERY:''},stdio:['ignore','pipe','pipe']});
-let bridgeLog='',bridgeErr='';bridge.stdout.on('data',x=>bridgeLog+=x);bridge.stderr.on('data',x=>bridgeErr+=x);
-const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('native kernel bridge startup timed out')),15000);bridge.once('error',reject);bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`bridge exited ${code}: ${bridgeErr}`));});bridge.stdout.on('data',()=>{const match=bridgeLog.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});});
-let latestSources=null,lease=null,opens=0,closes=0,pcm=false,disconnect=false,observedClose;
+let bridge,browser,browserOwner,server,page,endpoint,lease=null,latestSources=null;
+let bridgeLog='',bridgeErr='';
+const proxyAbort=new AbortController();
+const interrupt=()=>{report.failure='Explicit local test interruption';void browser?.close();};
+try{
+const central=await nativeCentralWorld(temp);
+report.native_owners=central.sources;
+report.central_initialization=central.initialization;
+bridge=spawn(paths.bridge,['127.0.0.1:0'],{env:central.env,stdio:['ignore','pipe','pipe']});
+bridge.stdout.on('data',x=>bridgeLog+=x);bridge.stderr.on('data',x=>bridgeErr+=x);
+endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('native kernel bridge startup timed out')),15000);bridge.once('error',error=>{clearTimeout(timer);reject(error);});bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`bridge exited ${code}: ${bridgeErr}`));});bridge.stdout.on('data',()=>{const match=bridgeLog.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});});
+let opens=0,closes=0,pcm=false,disconnect=false,observedClose;
 const terminalClose=new Promise(resolve=>{observedClose=resolve;});
 const frames=new Map(),key=frame=>`${frame.generation}:${frame.samples_elapsed}`;
 await build({stdin:{contents:`import {relayNativeChannel} from './src/expressions/nativeChannel.ts'; window.disposeRelay=relayNativeChannel(document.querySelector('iframe'),{kind:'bridge',url:location.origin});`,resolveDir:resolve('.')},bundle:true,platform:'browser',format:'esm',outfile:join(temp,'parent.js')});
 const html=await readFile('expressions-app/field-studies-journeys/public/index.html');
-const server=createServer(async(req,res)=>{try{
+server=createServer(async(req,res)=>{try{
  if(req.method==='POST'&&req.url==='/op'){
   const chunks=[];for await(const c of req)chunks.push(c);const bytes=Buffer.concat(chunks),op=JSON.parse(bytes);
   if(disconnect&&op.request?.operation==='exchange')throw new Error('explicit test transport disconnection after real native effects');
-  const start=performance.now();const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:bytes});const result=await response.json();report.timings_ms.push({operation:op.request?.request?.command?.operation??op.request?.operation??op.op,elapsed:performance.now()-start});
+  const start=performance.now();const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:bytes,signal:AbortSignal.any([proxyAbort.signal,AbortSignal.timeout(20000)])});const result=await response.json();report.timings_ms.push({operation:op.request?.request?.command?.operation??op.request?.operation??op.op,elapsed:performance.now()-start});
   const data=result.outcome?.data;
   if(data?.schema==='oi.native-expression-open/v1'){opens++;lease=data.lease;frames.set(key(data.receipt.field),data.receipt.field);}
   if(data?.schema==='oi.native-expression-closed/v1'){closes++;lease=null;observedClose();}
@@ -52,14 +47,14 @@ const server=createServer(async(req,res)=>{try{
  }
  if(req.url==='/parent.js'){res.setHeader('content-type','text/javascript');res.end(await readFile(join(temp,'parent.js')));return;}
  res.setHeader('content-type','text/html');res.end(req.url?.startsWith('/app')?html:'<!doctype html><style>body{margin:0}iframe{border:0;width:100vw;height:100vh}</style><iframe src="/app?host=expressions"></iframe><script type="module" src="/parent.js"></script>');
- }catch(error){res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:false,error:String(error)}));}});
+ }catch(error){if(!res.destroyed){res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:false,error:String(error)}));}}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const hardwareGPU=process.env.NATIVE_EXPRESSION_GPU==='hardware';
-const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:hardwareGPU?[]:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const page=await browser.newPage({viewport:{width:1100,height:800}}),errors=[];page.on('pageerror',error=>errors.push(String(error)));
-const interrupt=()=>{report.failure='Explicit local test interruption';void browser.close();};process.once('SIGTERM',interrupt);
+browserOwner=await chromium.launchServer({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:hardwareGPU?[]:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+browser=await chromium.connect(browserOwner.wsEndpoint(),{timeout:15000});
+page=await browser.newPage({viewport:{width:1100,height:800}});const errors=[];page.on('pageerror',error=>errors.push(String(error)));
+process.once('SIGTERM',interrupt);
 report.browser=browser.version();report.renderer=hardwareGPU?'default browser GPU requested; actual renderer below':'Chromium software WebGL / SwiftShader';report.viewport='1100x800';
-try{
  await page.goto(`http://127.0.0.1:${server.address().port}`);const frame=page.frames().find(f=>f!==page.mainFrame());
  // Entry gate is the ordinary New/Continue/Open front door; dismiss before the
  // field admits topology or native depth (gate can withhold the living stage).
@@ -90,7 +85,8 @@ try{
  await frame.locator('.native-field-panel summary',{hasText:'Inspect depth'}).click();
  await frame.locator('[name="native-path"]').fill('binding.json');
  await frame.locator('[data-native="source"]').click({force:true});
- await frame.waitForFunction(()=>!document.querySelector('[data-native="connect"]')?.disabled,null,{timeout:10000});
+ try{await frame.waitForFunction(()=>!document.querySelector('[data-native="connect"]')?.disabled,null,{timeout:10000});}
+ catch(error){report.source_read_failure=await frame.locator('output[data-native-source]').textContent();throw error;}
  await frame.locator('[data-native="connect"]').click({force:true});
  await frame.waitForFunction(()=>['following','held','unavailable'].includes(window.__FIELD_STUDIES__.native().status),null,{timeout:20000});
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().status),'following',await frame.locator('[data-native-status]').textContent());
@@ -144,10 +140,16 @@ try{
  report.measurement={standing:'bounded single scenario, not sustained real-time performance acceptance',latency_by_operation:{}};
  for(const operation of new Set(report.timings_ms.map(x=>x.operation))){const values=report.timings_ms.filter(x=>x.operation===operation).map(x=>x.elapsed).sort((a,b)=>a-b);report.measurement.latency_by_operation[operation]={count:values.length,mean_ms:values.reduce((a,b)=>a+b,0)/values.length,p95_ms:values[Math.ceil(values.length*.95)-1],max_ms:values.at(-1)};}
  report.pass=true;report.requests={opens,closes};report.final_sources=latestSources;console.log(JSON.stringify({...report,final_sources:'retained in artifact'},null,2));
-}catch(error){report.failure=String(error);report.reading=await page.frames().find(f=>f!==page.mainFrame())?.evaluate(()=>window.__FIELD_STUDIES__?.native()).catch(()=>null);await page.screenshot({path:join(out,'failure.png')}).catch(()=>{});throw error;}
+}catch(error){report.failure=String(error);report.pass=false;if(page){report.reading=await page.frames().find(f=>f!==page.mainFrame())?.evaluate(()=>window.__FIELD_STUDIES__?.native()).catch(()=>null);await page.screenshot({path:join(out,'failure.png')}).catch(()=>{});}throw error;}
 finally{
  process.removeListener('SIGTERM',interrupt);
- if(lease)await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'native_expression',request:{operation:'close',lease}})}).catch(()=>{});
+ try{
+  if(lease&&endpoint){const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'native_expression',request:{operation:'close',lease}}),signal:AbortSignal.timeout(6000)});report.cleanup_close=await response.json();assert.equal(report.cleanup_close.ok,true);}
+ }catch(error){report.pass=false;report.cleanup_failure=String(error);}
+ report.owner_cleanup=await retireNativeBrowserOwners({bridge,browser,browserOwner,server,proxyAbort});
+ for(const [owner,result] of Object.entries(report.owner_cleanup))if(!result.ok){report.pass=false;report.cleanup_failure=`${owner}: ${result.error}`;}
+ report.bridge_cleanup=report.owner_cleanup.bridge.receipt;
  await writeFile(join(out,'joined.json'),JSON.stringify(report,null,2)+'\n');await writeFile(join(out,'kernel.log'),bridgeLog+'\n'+bridgeErr);
- await browser.close();await new Promise(r=>server.close(r));bridge.kill();await rm(temp,{recursive:true,force:true});
+ await rm(temp,{recursive:true,force:true});
+ if(report.cleanup_failure)throw new Error(report.cleanup_failure);
 }

@@ -1,0 +1,286 @@
+/** Captured actual Direct journal -> production Factory mapping/request/acceptance
+ * -> real O:I Kernel/ActStore and Central material owner. Controlled replay of
+ * retained activity; no new provider, tool effect, Factory Run or installed claim. */
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {readFile, writeFile, mkdir, mkdtemp, cp, rm} from 'node:fs/promises';
+import {createReadStream} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {tmpdir} from 'node:os';
+import {resolve, join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {build} from '../node_modules/esbuild/lib/main.js';
+import {nativeCentralWorld, releaseNativeBridge} from './native-expression-central.mjs';
+import {acceptNativeLiveProducer} from './factory-live-native-path.mjs';
+const binary=process.env.NATIVE_EXPRESSION_BRIDGE;
+assert.ok(binary?.startsWith('/'),'Explicit actual native bridge required');
+const out=resolve(process.env.OI_SHARED_TEXT_OUT??'tests/artifacts/shared-direct-native');
+await mkdir(out,{recursive:true});
+const root=await mkdtemp(join(tmpdir(),'oi-shared-native-text-'));
+const hash=async path=>{const h=createHash('sha256');for await(const bytes of createReadStream(path))h.update(bytes);return h.digest('hex');};
+const journalPath=resolve('tests/fixtures/shared-direct-journal/native-turn.json');
+const source=JSON.parse(await readFile('tests/fixtures/shared-direct-journal/source.json','utf8'));
+const journal=JSON.parse(await readFile(journalPath,'utf8'));
+assert.equal(await hash(journalPath),source.excerpt_sha256);
+const report={schema:'oi.shared-native-text-owner-acceptance/v1',standing:'Actual Kernel/ActStore/Central material operations using captured actual Direct speech; controlled replay, no new model/tool invocation, installed or two-human claim',sources:{journal:{sha256:source.excerpt_sha256,events:journal.events.length,from:source.from,to:source.to},bridge:{path:binary,sha256:await hash(binary)}},checks:[],pass:false};
+let bridge,endpoint,stdout='',stderr='';
+const controller=new AbortController(),deadline=setTimeout(()=>controller.abort(new Error('Native Direct replay exceeded its 120s bound')),120000);
+try {
+ const central=await nativeCentralWorld(root);report.native_owners=central.sources;report.initialization=central.initialization;
+ const register=join(root,'Work/O-I/desktop/cradle/material/expressive-material');
+ await cp(resolve('material/expressive-material'),register,{recursive:true});
+ const materialPath=resolve('material/shared-field/shared-undertaking.expression.json');
+ await cp(materialPath,join(register,'expression/shared-undertaking.expression.json'));
+ report.sources.material={path:materialPath,sha256:await hash(materialPath)};
+ await build({stdin:{contents:"export {castOf,mapEventsWithCursor,opKey} from './src/contributions/factory/live/eventMap.ts';export {LiveProducer,requestFor,performWithRetry,cursorFromAct,requestAccepted,reconcilePendingDelivery,retainedRequest,requestForRetained} from './src/contributions/factory/live/producer.ts';export {resolveRepertoire} from './src/contributions/factory/live/repertoire.ts';",resolveDir:resolve('.')},bundle:true,platform:'node',format:'esm',outfile:join(root,'native-consumer.mjs')});
+ const {LiveProducer,castOf,mapEventsWithCursor,opKey,requestFor,performWithRetry,cursorFromAct,requestAccepted,reconcilePendingDelivery,retainedRequest,requestForRetained,resolveRepertoire}=await import(pathToFileURL(join(root,'native-consumer.mjs')).href);
+ const startBridge=async()=>{
+  stdout='';
+  bridge=spawn(binary,['127.0.0.1:0'],{env:central.env,stdio:['ignore','pipe','pipe']});
+  bridge.stdout.on('data',b=>{stdout=(stdout+b).slice(-16384);});bridge.stderr.on('data',b=>{stderr=(stderr+b).slice(-262144);});
+  endpoint=await new Promise((accept,reject)=>{const timer=setTimeout(()=>reject(new Error('Native bridge startup exceeded15s')),15000);bridge.once('error',e=>{clearTimeout(timer);reject(e);});bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`Native bridge exited${code}: ${stderr}`));});bridge.stdout.on('data',()=>{const found=stdout.match(/http:\/\/127\.0\.0\.1:\d+/);if(found){clearTimeout(timer);accept(found[0]);}});});
+ };
+ await startBridge();
+ const requests=[];
+ const call=async(op,request)=>{requests.push({op,operation:request.operation});const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op,request}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])});const value=await response.json();if(value.ok!==true)throw new Error(value.error??'Native operation failed');assert.equal(value.outcome?.result,op);return value.outcome.data;};
+ const world=request=>call('expression_world',request);
+ const initial=JSON.parse(await readFile('tests/fixtures/shared-native-expression/native-document.json','utf8'));
+ await call('expression',{operation:'open',document:initial,actor:'agent:controlled-native-replay'});
+ const listing=await world({operation:'material_list'});
+ const material=listing.materials.find(row=>row.expression_ref==='expression:shared-undertaking-material');
+ assert.ok(material,JSON.stringify(listing.unreadable));
+ assert.ok(material.file_ref.startsWith('central:'),'Material identity must come from the actual native owner');
+ const repertoire=resolveRepertoire(listing.materials,{explicit:material.file_ref});
+ const character=listing.materials.find(row=>row.kind==='character'&&row.states?.idle&&row.states?.working&&row.states?.speaking);
+ assert.ok(character,'Actual character repertoire required');
+ const session=source.world_ref+'/'+journal.agent_session,actRef='act:controlled-retained-direct-native';
+ const agentRef=source.world_ref+'/'+source.agent_ref;
+ const initialScene=initial.scenes.find(scene=>scene.scene_ref===initial.selection.scene_ref);
+ const bindings=Object.fromEntries(initialScene.presentation.scene.entities.map(body=>{
+  const entity=initial.entities[body.id];assert.ok(entity?.subject?.subject_ref,'Every rendered role must retain its actual native subject');
+  return [body.role,{kind:entity.subject.presentation_role==='being'?'agent':'object',subject_ref:entity.subject.subject_ref,entity_ref:entity.entity_ref,label:entity.title}];
+ }));
+ const agentEntity=Object.values(initial.entities).find(entity=>entity.subject?.subject_ref===source.participant_ref);
+ assert.ok(agentEntity,'The actual working participant must have a native body');
+ bindings.bo={...bindings.bo,agent_ref:agentRef,character_ref:character.file_ref};
+ const cast=[{role:'bo',agent_ref:agentRef,label:'Bo',character_ref:character.file_ref,session_refs:[session],attempt_refs:[]}];
+ const scope={cast,humanRefs:{[session]:source.world_ref+'/'+source.human_ref},replyRole:'resultText',replyChars:4096,messageRole:'communication',worldRef:source.world_ref,phaseScenes:{working:'work-passage',speaking:'review'}};
+ let act=(await world({operation:'act_open',act_ref:actRef,expression_ref:initial.expression_ref,mode:'expressions',subject_ref:session,instrument_ref:session,actor:'agent:controlled-native-replay',bindings,cast:[{role:'bo',participant_ref:agentRef,label:'Bo',character_ref:character.file_ref}]})).act;
+ const inspect=async()=> (await world({operation:'act_inspect',act_ref:actRef})).act;
+ const mapped=mapEventsWithCursor({runRef:initial.expression_ref},{encounter:{[session]:journal.events},bounds:{[session]:{from:source.from,to:source.to}}},{performed:[],encounterAfter:{[session]:source.from-1}},scope);
+ for(const op of mapped.ops){
+  act=await inspect();
+  if(cursorFromAct(act).performed.includes(opKey(op)))continue;
+  const built=requestFor(op,repertoire,cast,{actRef,actor:'agent:controlled-native-replay'});
+  assert.ok(built.request,built.reason);
+  for(const[role,value]of Object.entries(built.request.bindings??{})){
+   if(value.agent_ref===agentRef)built.request.bindings[role]={...value,...bindings.bo,state:value.state};
+   else if(bindings[role]?.entity_ref)built.request.bindings[role]={...value,entity_ref:bindings[role].entity_ref};
+  }
+  const outcome=await performWithRetry(world,{...built.request,expected_act_revision:act.revision},actRef);
+  assert.ok(cursorFromAct(outcome.act).performed.includes(opKey(op)),'Only actual accepted native occurrences are consumed');
+ }
+ act=await inspect();
+ const full=journal.events.map(row=>row.event?.event?.Signal?.kind).filter(row=>row?.kind==='agent-message-chunk').map(row=>row.text).join('');
+ const retained=act.sequence.find(p=>p.kind==='text'&&p.role==='resultText'&&p.text===full);
+ assert.ok(retained,'Actual full Direct speech must be retained as native text');
+ const pages=act.sequence.filter(p=>p.kind==='edition'&&p.native_ref===retained.native_ref);
+ assert.ok(pages.length>1);assert.equal(pages.map(p=>p.text).join(''),full);
+ const document=(await call('expression',{operation:'inspect',expression_ref:initial.expression_ref})).document;
+ const selected=document.scenes.find(s=>s.scene_ref===document.selection.scene_ref);
+ assert.deepEqual(Object.keys(document.entities).sort(),Object.keys(initial.entities).sort(),'Scene changes reuse actual subjects instead of minting parallel role bodies');
+ for(const[ref,entity]of Object.entries(initial.entities))assert.deepEqual(document.entities[ref].subject,entity.subject,'Actual participant/work/source authority bindings remain unchanged');
+ for(const body of selected.presentation.scene.entities)assert.ok(document.entities[body.id]?.subject?.subject_ref,'Every rendered body must still resolve an actual native subject');
+ assert.equal(act.bindings.bo.agent_ref,agentRef);assert.equal(act.role_entities.bo,agentEntity.entity_ref);
+ assert.equal(selected.presentation.scene.text.find(t=>t.role==='resultText').body,pages[0].text,'The actual terminal agent state preserves its first readable page');
+ assert.equal(act.mode,'expressions');assert.equal(act.subject_ref,session);assert.equal(act.instrument_ref,session);
+ assert.ok(!act.subject_ref.startsWith('run:'),'Direct activity preserves its own identity');
+ report.checks.push('Actual Central-qualified Factory repertoire and real native Act operations','Complete2967byte Direct reply retained without truncation','Terminal local idle preserves the returned native page','Direct subject/instrument do not acquire Factory Run identity');
+ const originalTextOp=mapped.ops.find(op=>op.operation==='act_text'&&op.role==='resultText');
+ const changed=requestFor({...originalTextOp,text:full+'\nControlled different source bytes'},repertoire,cast,{actRef,actor:'agent:controlled-native-replay'}).request;
+ const sameRequest=requestFor(originalTextOp,repertoire,cast,{actRef,actor:'agent:controlled-native-replay'}).request;
+ assert.equal(requestAccepted(act,sameRequest),true);assert.equal(requestAccepted(act,changed),false);
+ await assert.rejects(()=>performWithRetry(world,{...changed,expected_act_revision:act.revision},actRef),/already retains different source bytes/);
+ assert.deepEqual(await inspect(),act);assert.deepEqual((await call('expression',{operation:'inspect',expression_ref:initial.expression_ref})).document,document);
+ report.checks.push('Changed source bytes on the same accepted event basis remain a real native refusal, never recovered as acceptance');
+ // Stop the actual producer bridge and resume a fresh body on its real
+ // durable ActStore. Unknown delivery is reconciled with reads, not effects.
+ report.interrupted_bridge_cleanup=await releaseNativeBridge(bridge);
+ const beforeInterruption=requests.length;
+ await assert.rejects(()=>reconcilePendingDelivery(world,sameRequest));
+ assert.deepEqual(requests.slice(beforeInterruption),[{op:'expression_world',operation:'act_inspect'}]);
+ await startBridge();
+ const resumed=await reconcilePendingDelivery(world,sameRequest);
+ assert.deepEqual(resumed.act,act,'Fresh body reads the unchanged durable native Act and retained text pages');
+ await assert.rejects(()=>reconcilePendingDelivery(world,changed),/different native request material/);
+ assert.deepEqual(requests.slice(beforeInterruption),Array.from({length:3},()=>({op:'expression_world',operation:'act_inspect'})),'Neither network loss nor recovery replays a native mutation');
+ await call('expression',{operation:'open',document,actor:'agent:controlled-native-replay'});
+ report.checks.push('Real bridge interruption holds uncertain delivery; a fresh body reconciles the durable native Act without replaying mutations');
+
+ await writeFile(join(out,'document.json'),JSON.stringify(document,null,2)+'\n');
+ await writeFile(join(out,'act.json'),JSON.stringify(act,null,2)+'\n');
+ report.native_document={path:join(out,'document.json'),sha256:await hash(join(out,'document.json')),expression_ref:document.expression_ref,revision:document.revision};
+ report.native_act={path:join(out,'act.json'),sha256:await hash(join(out,'act.json')),act_ref:actRef,revision:act.revision,pages:pages.length,complete_text_bytes:Buffer.byteLength(full)};
+ // A real ended native Act refuses the next operation. The production
+ // acceptance helper cannot turn the failure into a success receipt.
+ await world({operation:'act_complete',act_ref:actRef,actor:'agent:controlled-native-replay',expected_act_revision:act.revision});
+ const ended=await inspect(),before=(await call('expression',{operation:'inspect',expression_ref:initial.expression_ref})).document;
+ await assert.rejects(()=>performWithRetry(world,{operation:'act_text',act_ref:actRef,actor:'agent:controlled-native-replay',role:'resultText',text:'This refused operation must not consume its source',expected_act_revision:ended.revision,event_basis:{family:'activity',source:'controlled-native-refusal',event_ref:session,occurrence:'after-complete'}},actRef),/Act has ended/);
+ assert.deepEqual(await inspect(),ended);assert.deepEqual((await call('expression',{operation:'inspect',expression_ref:initial.expression_ref})).document,before);
+ report.checks.push('Real native refusal has no acceptance and leaves the actual Act and Document unchanged');
+ // The production historical qualifier sees the actual state receipt before
+ // and after another native Scene remaps the same participant to sender.
+ const historicalRef='expression:controlled-native-local-history';
+ const historical=JSON.parse(JSON.stringify(initial).split(initial.expression_ref).join(historicalRef));
+ await call('expression',{operation:'open',document:historical,actor:'agent:controlled-native-replay'});
+ const localAct='act:controlled-native-local-history';
+ const localBindings=JSON.parse(JSON.stringify(bindings).split(initial.expression_ref).join(historicalRef));
+ await world({operation:'act_open',act_ref:localAct,expression_ref:historicalRef,mode:'expressions',actor:'agent:controlled-native-replay',bindings:localBindings,cast:[{role:'bo',participant_ref:agentRef,character_ref:character.file_ref}]});
+ // A local character state follows an actual Scene which has established
+ // its participant occupant, matching the captured Direct activity order.
+ const historicalSceneOp=mapped.ops.find(op=>op.operation==='act_select'&&'scene' in op);assert.ok(historicalSceneOp);
+ const historicalSceneRequest=requestFor(historicalSceneOp,repertoire,cast,{actRef:localAct,actor:'agent:controlled-native-replay'}).request;
+ assert.ok(historicalSceneRequest);await performWithRetry(world,historicalSceneRequest,localAct);
+ const localOp=mapped.ops.find(op=>op.operation==='act_select'&&op.state==='idle'&&op.role==='bo');
+ assert.ok(localOp);
+ const localRequest=requestFor(localOp,repertoire,cast,{actRef:localAct,actor:'agent:controlled-native-replay'}).request;
+ const localPerformed=await performWithRetry(world,localRequest,localAct);
+ const handoff=listing.materials.find(row=>row.kind==='scene'&&row.file_ref.endsWith('/handoff.expression.json'));
+ assert.ok(handoff,'Actual Factory handoff material required');
+ const other=localBindings.self;assert.ok(other?.kind==='agent'&&other.subject_ref!==source.participant_ref);
+ const remapped=(await world({operation:'act_select',act_ref:localAct,actor:'agent:controlled-native-replay',kind:'scene',material:{file_ref:handoff.file_ref,revision:handoff.revision},
+  bindings:{bo:{...other,agent_ref:other.subject_ref,character_ref:character.file_ref},sender:localBindings.bo,recipient:{...other,agent_ref:other.subject_ref,character_ref:character.file_ref}},
+  event_basis:{family:'handoff',source:'controlled-native-role-history',event_ref:session,occurrence:'native-role-remap'}})).act;
+ assert.notEqual(remapped.bindings.bo.agent_ref,agentRef);
+ assert.equal(requestAccepted(remapped,retainedRequest(localRequest,localOp,cast,remapped)),true,'Historical state retains its original participant/role through an actual handoff');
+ assert.throws(()=>retainedRequest(localRequest,localOp,[{...cast[0],agent_ref:other.subject_ref}],remapped),/qualified historical participant/);
+ assert.equal(localPerformed.act.sequence[localPerformed.act.sequence.length-1].bindings.bo.agent_ref,agentRef);
+ report.checks.push('Actual native local-state receipt qualifies its historical participant after handoff role remapping; a different source agent refuses');
+ const sceneOp=mapped.ops.find(op=>op.operation==='act_select'&&'scene' in op);assert.ok(sceneOp);
+ const originalScene=requestFor(sceneOp,repertoire,cast,{actRef:localAct,actor:'agent:controlled-native-replay'}).request;
+ await performWithRetry(world,originalScene,localAct);
+ const beforeChoice=(await world({operation:'act_inspect',act_ref:localAct})).act;
+ const alternate=resolveRepertoire(listing.materials,{workflowKey:'unknown'});
+ assert.ok(alternate.expression&&alternate.expression.file_ref!==repertoire.expression.file_ref);
+ const futureScene={...sceneOp,basis:{...sceneOp.basis,occurrence:sceneOp.basis.occurrence+'/controlled-next-native-operation'}};
+ const nextScene=requestFor(futureScene,alternate,cast,{actRef:localAct,actor:'agent:controlled-native-replay'}).request;
+ assert.notEqual(nextScene.material.file_ref,originalScene.material.file_ref);
+ await performWithRetry(world,nextScene,localAct);
+ const afterChoice=(await world({operation:'act_inspect',act_ref:localAct})).act;
+ const qualified=requestForRetained(sceneOp,cast,{actRef:localAct,actor:'agent:controlled-native-replay'},afterChoice);
+ assert.equal(qualified.material.file_ref,originalScene.material.file_ref);
+ assert.equal(requestAccepted(afterChoice,qualified),true,'A new repertoire applies to new native work and cannot rewrite the original material pin');
+ assert.equal(afterChoice.sequence.length,beforeChoice.sequence.length+1);
+ const changedBindings={...sceneOp,bindings:{...sceneOp.bindings,bo:{...sceneOp.bindings.bo,agent_ref:'world:controlled/agent:wrong-participant'}}};
+ assert.equal(requestAccepted(afterChoice,requestForRetained(changedBindings,cast,{actRef:localAct,actor:'agent:controlled-native-replay'},afterChoice)),false,'A changed semantic participant remains a refusal despite preserving the original render choice');
+ report.checks.push('Actual native old/new repertoire Scenes keep distinct material pins; source/body binding changes remain refusals');
+ // This tracked capture is a real Factory native-owner reading with actual
+ // Central receiving receipts. Only its production-mapped local state is
+ // performed here; captured delivery, provider and tool effects are not replayed.
+ const factoryPath='tests/fixtures/factory-native-owner-projections/native-finished.run.json';
+ const factoryCapture=JSON.parse(await readFile(factoryPath,'utf8'));
+ const factoryReadings={runRef:factoryCapture.runRef,attempts:factoryCapture.nativeAttempts};
+ const factoryCast=castOf(factoryReadings).map(member=>({...member,character_ref:character.file_ref}));
+ const factoryOp=mapEventsWithCursor(factoryReadings,{}).ops.find(op=>op.operation==='act_select'&&'state' in op&&op.bindings.self?.agent_ref);
+ assert.ok(factoryOp,'The actual native Factory dispatch reading must produce its local state');
+ assert.equal(factoryOp.role,'participants.0');assert.equal(factoryOp.bindings[factoryOp.role],undefined);
+ const member=factoryCast.find(row=>row.role===factoryOp.role);
+ assert.equal(factoryOp.bindings.self.agent_ref,member.agent_ref);
+ const factoryExpression='expression:controlled-native-factory-role-self';
+ const factoryDoc=JSON.parse(JSON.stringify(initial).split(initial.expression_ref).join(factoryExpression));
+ const factoryEntity=Object.values(factoryDoc.entities).find(entity=>entity.subject?.subject_ref===source.participant_ref);assert.ok(factoryEntity);
+ factoryEntity.subject={...factoryEntity.subject,subject_ref:member.agent_ref,sources:[]};factoryEntity.title=member.label;
+ await call('expression',{operation:'open',document:factoryDoc,actor:'agent:controlled-native-replay'});
+ const factoryAct='act:controlled-native-factory-role-self';
+ const factoryBinding={kind:'agent',agent_ref:member.agent_ref,entity_ref:factoryEntity.entity_ref,character_ref:character.file_ref,label:member.label};
+ await world({operation:'act_open',act_ref:factoryAct,expression_ref:factoryExpression,mode:'expressions',actor:'agent:controlled-native-replay',
+  subject_ref:factoryCapture.runRef,instrument_ref:factoryCapture.runRef,bindings:{[member.role]:factoryBinding,self:factoryBinding},
+  cast:[{role:member.role,participant_ref:member.agent_ref,character_ref:character.file_ref}]});
+ const factoryRequest=requestFor(factoryOp,repertoire,factoryCast,{actRef:factoryAct,actor:'agent:controlled-native-replay'}).request;
+ assert.ok(factoryRequest);
+ const factoryPerformed=(await performWithRetry(world,factoryRequest,factoryAct)).act;
+ assert.equal(factoryPerformed.sequence[0].role,member.role);
+ assert.equal(factoryPerformed.sequence[0].bindings[member.role].agent_ref,member.agent_ref);
+ assert.equal(requestAccepted(factoryPerformed,requestForRetained(factoryOp,factoryCast,{actRef:factoryAct,actor:'agent:controlled-native-replay'},factoryPerformed)),true);
+ const wrongSelf={...factoryOp,bindings:{...factoryOp.bindings,self:{...factoryOp.bindings.self,agent_ref:'agent:controlled-other-actor'}}};
+ assert.throws(()=>requestForRetained(wrongSelf,factoryCast,{actRef:factoryAct,actor:'agent:controlled-native-replay'},factoryPerformed),/qualified historical participant/);
+ const conflict={...factoryOp,bindings:{...factoryOp.bindings,[member.role]:{...factoryOp.bindings.self,agent_ref:'agent:controlled-other-actor'}}};
+ assert.throws(()=>requestForRetained(conflict,factoryCast,{actRef:factoryAct,actor:'agent:controlled-native-replay'},factoryPerformed),/conflicting role\/self actors/);
+ assert.deepEqual((await world({operation:'act_inspect',act_ref:factoryAct})).act,factoryPerformed);
+ report.factory_local_source={path:factoryPath,sha256:await hash(factoryPath),run_ref:factoryCapture.runRef,standing:'Captured actual Factory native owner and Central receiving; local state performed in the real Kernel/ActStore, no delivery/provider/tool effects replayed'};
+ report.checks.push('Production-mapped actual Factory local state with participants.0 role and self actor binding qualifies its actual native receipt; changed or conflicting actors refuse without effects');
+ // This real remote turn was accepted, then failed without returning speech.
+ // Its native failure must reach the Expression, rather than leaving the
+ // previous activity inscription in place or inventing returned material.
+ const failedPath='tests/fixtures/shared-direct-journal/native-failed-turn.json';
+ const failedSource=JSON.parse(await readFile('tests/fixtures/shared-direct-journal/failed-source.json','utf8'));
+ const failedJournal=JSON.parse(await readFile(failedPath,'utf8'));
+ assert.equal(await hash(failedPath),failedSource.excerpt_sha256);
+ assert.equal(failedJournal.agent_session,journal.agent_session);
+ assert.equal(failedSource.world_ref,source.world_ref);
+ const failureSignal=failedJournal.events.find(row=>row.event?.event?.Signal?.kind?.kind==='failed');
+ const failureEnd=failedJournal.events.find(row=>row.event?.event?.TurnEnded);
+ assert.equal(failureSignal.event.event.Signal.sequence,failureEnd.event.event.TurnEnded.last_sequence);
+ assert.equal(failureSignal.event.event.Signal.kind.reason,failureEnd.event.event.TurnEnded.stop.Failed.reason);
+ const failureExpression='expression:controlled-native-failed-turn';
+ const failureDoc=JSON.parse(JSON.stringify(initial).split(initial.expression_ref).join(failureExpression));
+ const failureBindings=JSON.parse(JSON.stringify(bindings).split(initial.expression_ref).join(failureExpression));
+ await call('expression',{operation:'open',document:failureDoc,actor:'agent:controlled-native-replay'});
+ const failureAct='act:controlled-native-failed-turn';
+ await world({operation:'act_open',act_ref:failureAct,expression_ref:failureExpression,mode:'expressions',actor:'agent:controlled-native-replay',
+  subject_ref:session,instrument_ref:session,bindings:failureBindings,cast:[{role:'bo',participant_ref:agentRef,character_ref:character.file_ref}]});
+ const failedMapped=mapEventsWithCursor({runRef:failureExpression},{encounter:{[session]:failedJournal.events},bounds:{[session]:{from:failedSource.from,to:failedSource.to}}},
+  {performed:[],encounterAfter:{[session]:failedSource.from-1}},scope);
+ for(const op of failedMapped.ops){
+  const current=(await world({operation:'act_inspect',act_ref:failureAct})).act;
+  const built=requestFor(op,repertoire,cast,{actRef:failureAct,actor:'agent:controlled-native-replay'});
+  assert.ok(built.request,built.reason);
+  for(const[role,value]of Object.entries(built.request.bindings??{})){
+   if(value.agent_ref===agentRef)built.request.bindings[role]={...value,...failureBindings.bo,state:value.state};
+   else if(failureBindings[role]?.entity_ref)built.request.bindings[role]={...value,entity_ref:failureBindings[role].entity_ref};
+  }
+  await performWithRetry(world,{...built.request,expected_act_revision:current.revision},failureAct);
+ }
+ const failedNative=(await world({operation:'act_inspect',act_ref:failureAct})).act;
+ const failureText="Bo couldn't finish this request. Open Bo's session to see what happened.";
+ const statusOp=failedMapped.ops.find(op=>op.operation==='act_text'&&op.role==='progressText');
+ const statusRequest=requestFor(statusOp,repertoire,cast,{actRef:failureAct,actor:'agent:controlled-native-replay'}).request;
+ const failedTexts=failedNative.sequence.filter(p=>p.kind==='text'&&p.role==='progressText');
+ assert.equal(failedTexts.length,1,'The actual Failed and its matching TurnEnded must retain one failure inscription');
+ assert.equal(failedTexts[0].text,failureText);
+ assert.equal(statusOp.basis.detail.reason,failureSignal.event.event.Signal.kind.reason,'The mapper consumes the exact actual native failure');
+ assert.equal(statusOp.basis.event_ref,session);
+ assert.deepEqual(statusOp.basis.journal,{session,cursor:failureSignal.cursor});
+ assert.deepEqual(failedTexts[0].event_basis,statusRequest.event_basis,'The native passage retains the qualified event address; its detailed cause stays authoritative in the session journal');
+ assert.equal(failedTexts[0].event_basis.event_ref,session);
+ assert.equal(failedNative.sequence.some(p=>p.kind==='text'&&p.role==='resultText'),false,'A failed turn without speech creates no returned artifact');
+ assert.equal(failedNative.subject_ref,session);assert.equal(failedNative.instrument_ref,session);
+ assert.equal(failedNative.bindings.bo.state,'idle');
+ const failedDocument=(await call('expression',{operation:'inspect',expression_ref:failureExpression})).document;
+ const failedScene=failedDocument.scenes.find(s=>s.scene_ref===failedDocument.selection.scene_ref);
+ assert.equal(failedScene.presentation.scene.text.find(t=>t.role==='progressText').body,failureText,'The actual native Scene carries the failure, not only its metadata');
+ assert.equal(requestAccepted(failedNative,statusRequest),true);
+ const terminalOnly=mapEventsWithCursor({runRef:failureExpression},{encounter:{[session]:[failureEnd]},bounds:{[session]:{from:failedSource.from,to:failedSource.to}}},
+  {performed:[],encounterAfter:{[session]:failedSource.from-1}},scope);
+ const terminalStatus=terminalOnly.ops.filter(op=>op.operation==='act_text'&&op.role==='progressText');
+ assert.equal(terminalStatus.length,1,'A fresh reading of the actual TurnEnded alone still discloses failure');
+ assert.equal(terminalStatus[0].text,failureText);assert.equal(opKey(terminalStatus[0]),opKey(statusOp));
+ assert.equal(mapEventsWithCursor({runRef:failureExpression},{encounter:{[session]:failedJournal.events},bounds:{[session]:{from:failedSource.from,to:failedSource.to}}},cursorFromAct(failedNative),scope).ops.length,0);
+ report.failed_turn={source:failedSource,path:failedPath,act_ref:failureAct,act_revision:failedNative.revision,expression_ref:failureExpression,
+  status:failureText,native_failure:failureSignal.event.event.Signal.kind.reason,native_failure_basis:failedTexts[0].event_basis,
+  failure_authority:'The qualified actual native session journal, not a duplicate Act detail field',returned_text:false,provider_effects_replayed:false};
+ await writeFile(join(out,'failed-turn-document.json'),JSON.stringify(failedDocument,null,2)+'\n');
+ await writeFile(join(out,'failed-turn-act.json'),JSON.stringify(failedNative,null,2)+'\n');
+ report.checks.push('Actual failed remote turn performs one readable native failure inscription; exact failure stays inspectable, no result or Run completion is invented, and native cursor continuation duplicates nothing');
+ await acceptNativeLiveProducer({LiveProducer,world,call,endpoint,initial,report,signal:controller.signal});
+ report.pass=true;
+} catch(error) {report.failure=String(error);throw error;}
+finally {
+ clearTimeout(deadline);controller.abort();
+ if(bridge){try{report.bridge_cleanup={ok:true,receipt:await releaseNativeBridge(bridge)};}catch(error){report.bridge_cleanup={ok:false,error:String(error)};report.pass=false;report.cleanup_failure=String(error);}}
+ await writeFile(join(out,'native-owner.json'),JSON.stringify(report,null,2)+'\n');
+ await writeFile(join(out,'kernel.log'),stdout+'\n'+stderr);
+ await rm(root,{recursive:true,force:true});
+ if(report.cleanup_failure)throw new Error(report.cleanup_failure);
+}
+console.log(JSON.stringify(report,null,2));
