@@ -7,6 +7,9 @@ use crate::expression_procedural_scene_reader::NativeDocumentSceneReader;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+#[path = "native_expression_selected_scene_source.rs"]
+pub mod source;
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Request {
@@ -380,6 +383,7 @@ pub(super) struct SelectedOpening {
     scene_owner: SceneOwner,
     opened: Value,
     closed: Option<Value>,
+    source_observation: Option<source::Observation>,
 }
 
 pub struct Completed {
@@ -634,6 +638,7 @@ impl crate::Kernel {
             scene_owner,
             opened: data.clone(),
             closed: None,
+            source_observation: None,
         });
         Ok(crate::KernelOpOutcome {
             receipts: Vec::new(),

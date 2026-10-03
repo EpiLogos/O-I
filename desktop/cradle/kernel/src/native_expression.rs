@@ -27,6 +27,8 @@ const TIMEOUT: Duration = Duration::from_secs(20);
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    RetainSelectedSceneSource { request: selected_scene::source::Request },
+    RecoverSelectedSceneSource { request: selected_scene::source::Request },
     OpenSelectedScene {
         request: selected_scene::Request,
     },
@@ -616,7 +618,7 @@ impl Drop for Owner {
 impl Manager {
     pub fn apply(&mut self, client: &CentralClient, request: Request) -> Result<Value, String> {
         match request {
-            Request::OpenSelectedScene { .. }
+            Request::RetainSelectedSceneSource { .. } | Request::RecoverSelectedSceneSource { .. } | Request::OpenSelectedScene { .. }
             | Request::RecoverSelectedScene { .. }
             | Request::AbandonSelectedScene { .. } => Err(
                 "Selected-Scene opening/recovery requires its actual native Kernel Document owner"
