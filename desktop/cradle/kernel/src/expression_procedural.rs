@@ -1890,7 +1890,7 @@ fn validate_retention_metadata_write(
             let new = after[key]
                 .as_array()
                 .ok_or("Invalid source-qualified retention basis")?;
-            if old.iter().any(|row|!new.contains(row)) || new.iter().filter(|row|!old.contains(row)).any(|row|**row!=json!({"ref":definition["recipe"]["source_ref"],"revision":definition["recipe"]["revision"],"availability":"available"})&&**row!=json!({"ref":definition["profile"]["source_ref"],"revision":definition["profile"]["revision"],"availability":"available"})) {
+            if old.iter().any(|row|!new.contains(row)) || new.iter().filter(|row|!old.contains(row)).any(|row|*row!=json!({"ref":definition["recipe"]["source_ref"],"revision":definition["recipe"]["revision"],"availability":"available"})&&*row!=json!({"ref":definition["profile"]["source_ref"],"revision":definition["profile"]["revision"],"availability":"available"})) {
                 return Err("Granular native source metadata replaced another continuing source basis".into());
             }
             continue;
