@@ -542,7 +542,9 @@ jobs:
 
   epi-mac-candidate:
     name: Exact native Mac candidate / canonical managed bundle
-    if: github.event_name == 'workflow_dispatch' && inputs.build_mac_candidate
+    # Explicit candidate builds support installed diagnosis; native failures remain acceptance failures.
+    # Require a completed native job and the embedded source/build proof; never admit cancelled or skipped runs.
+    if: ${{ always() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.build_mac_candidate && needs.embedded.result == 'success' && (needs.native-kernel-regressions.result == 'success' || needs.native-kernel-regressions.result == 'failure') }}
     needs: [embedded, native-kernel-regressions]
     runs-on: macos-15
     timeout-minutes: 90

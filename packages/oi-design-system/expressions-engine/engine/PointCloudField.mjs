@@ -134,6 +134,11 @@ class PointCloudField {
   particleGeometry;
   particleMaterial;
   particlePoints;
+  /** Project draw membership of the native node pool. The independently
+   * admitted connection tail, resident medium and clock remain intact. */
+  setNodePoolVisibility(visible) {
+    this.particleMaterial.uniforms.uNodePoolVisible.value = visible ? 1 : 0;
+  }
   // Animation & Clock (the ONE clock: simTime)
   clock;
   animFrameId = null;
@@ -358,6 +363,7 @@ class PointCloudField {
    * count, then re-bakes and reseeds. Camera, grid, pins and config all persist.
    */
   rebuildParticleSystem() {
+    const nodePoolVisible = this.particleMaterial?.uniforms.uNodePoolVisible.value ?? 1;
     const hostSize = this.hosted ? this.renderer.getSize(new THREE.Vector2()) : null;
     const width = hostSize?.x ?? (this.canvas.clientWidth || window.innerWidth);
     const height = hostSize?.y ?? (this.canvas.clientHeight || window.innerHeight);
@@ -369,6 +375,7 @@ class PointCloudField {
     this.simulator = new GPGPUSimulator(this.renderer, this.config.particleCount);
     this.initEntities(true);
     this.initParticlePipeline(width, height, dpr);
+    this.particleMaterial.uniforms.uNodePoolVisible.value = nodePoolVisible;
     this.resonatorActive = false;
     this.updateConfig({});
   }
@@ -469,6 +476,7 @@ class PointCloudField {
         uEditSelected: { value: new Float32Array(MAX_FORMATIONS) },
         uEntityCount: { value: 0 },
         uConnectionStart: { value: 1e30 },
+        uNodePoolVisible: { value: 1 },
         uConnectionMetadata: { value: this.entities.noiseTexture },
         uConnectionRestOpacity: { value: 1 },
         uEntityBounds: { value: new Float32Array(MAX_FORMATIONS) },

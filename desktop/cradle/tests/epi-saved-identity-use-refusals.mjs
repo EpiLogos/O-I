@@ -183,16 +183,63 @@ export async function prepareSavedIdentityUseRefusals({page,frame,bridge,identit
     report.newer_consumer_refusal={passed:true,expected_refusal:VOICE_REFUSAL,native_pin:held.evidence,actual_controller:{status:actual.status,lease:actual.lease,lifetime:actual.lifetime},
      standing:'Actual ordinary consumer refuses without a following native lease; no native audio operation or sound acceptance is claimed',current_ref:current.context.reading_ref,document_revision:after.revision};
     artifact('saved-use-newer-consumer-refusal.json',report.newer_consumer_refusal);
-    // A new, real Source operation deliberately starts a new encounter. It
-    // clears the old alert by its existing law; no parser/error filter does.
+    // With no selected body, Explore Bimba opens its inventory without a
+    // native read. Choose the exact admitted hub in that ordinary disclosure;
+    // the parent maps this action to nara_coordinate, not operation:'source'.
     if(after.selection.entity_ref)await selectActualBody(after.selection.entity_ref);
+    const record=await frame.evaluate(()=>window.__FIELD_STUDIES__.epiWorld());
+    const hub=record.inventory.filter(row=>row.canonical_ref===record.receiving.personal.canonical_locus);
+    assert.equal(hub.length,1);assert.equal(hub[0].coordinate,'M4.4.4.4');
+    assert.equal(hub[0].source_revision,initialRecord.inventory[0].source_revision);
     const at=receipt.issued_requests.length;await frame.locator('[data-epi="source"]').click();
     await frame.locator('.epi-source-dialog').waitFor({state:'visible',timeout});
-    await frame.waitForFunction(()=>!document.querySelector('.epi-world-entrance [role="status"]')?.textContent?.includes('Receiving the native operation'),null,{timeout});
-    assert.ok(receipt.issued_requests.slice(at).some(row=>row.operation==='source'),'A real source request, not a diagnostic clear hook, must acknowledge the next encounter');
+    await frame.getByRole('searchbox',{name:'Find a Bimba subject',exact:true}).fill(hub[0].coordinate);
+    const sourceChoice=frame.locator('.epi-source-dialog [data-epi-ref="'+hub[0].canonical_ref+'"]');
+    await sourceChoice.waitFor({state:'visible',timeout});assert.equal(await sourceChoice.count(),1);
+    // Passive observers retain the unchanged actual response to THIS newly
+    // issued UI request. They neither replace a reply nor clear product state.
+    let sourceRequest,sourceRawRequest,sourceObserved=false,active=true,resolveSource,rejectSource;
+    const sourceAck=new Promise((resolve,reject)=>{resolveSource=resolve;rejectSource=reject;});void sourceAck.catch(()=>{});
+    const sourceTimer=setTimeout(()=>rejectSource(Error('The ordinary source choice did not receive its exact native acknowledgement in30s')),timeout);
+    const onSourceRequest=request=>{
+     if(sourceRequest||request.method()!=='POST'||request.url()!==bridge+'/op')return;
+     let value;try{value=request.postDataJSON();}catch{return;}
+     if(value?.op!=='nara_coordinate'||value.request?.coordinate_ref!==hub[0].canonical_ref)return;
+     try{assert.deepEqual(value,{op:'nara_coordinate',request:{coordinate_ref:hub[0].canonical_ref,face:'bimba',source_only:true}});sourceRawRequest=request.postData();assert.ok(sourceRawRequest&&Buffer.byteLength(sourceRawRequest)<=64*1024);sourceRequest=request;}catch(error){rejectSource(error);}
+    };
+    const onSourceResponse=async response=>{
+     if(sourceObserved||response.request()!==sourceRequest)return;sourceObserved=true;
+     try{
+      assert.equal(response.status(),200);const declared=response.headers()['content-length'];
+      assert.match(declared??'',/^(0|[1-9][0-9]*)$/);assert.ok(Number(declared)<=16*1024*1024);
+      const bytes=await response.body();if(!active)return;assert.equal(bytes.length,Number(declared));
+      const value=JSON.parse(bytes);assert.equal(value.ok,true);assert.equal(value.outcome?.result,'nara_coordinate');
+      const content=value.outcome.data;assert.equal(content.schema,'ql.bimba-coordinate-content/v1');
+      assert.equal(content.source_revision,hub[0].source_revision);assert.equal(content.identity.source_revision,hub[0].source_revision);
+      assert.equal(content.identity.canonical_ref,hub[0].canonical_ref);assert.equal(content.identity.coordinate,hub[0].coordinate);
+      assert.equal(content.identity.uuid,'dcb274c1-fbbc-5914-b27d-dea979c78558');assert.equal(content.identity.properties_sha256,hub[0].properties_sha256);
+      assert.equal(Object.keys(content.identity.properties??{}).length,64,'The current qualified907 hub retains all determining properties');
+      assert.equal(content.relations.length,23,'The current qualified907 hub retains every incident relation');
+      assert.ok(content.relations.every(row=>row.orientation==='directed'&&row.source_revision===content.source_revision&&row.properties&&row.properties_sha256&&(row.from_coordinate===hub[0].coordinate||row.to_coordinate===hub[0].coordinate)));
+      resolveSource({content,request:saveRaw('saved-use-next-source.request',sourceRawRequest),response:saveRaw('saved-use-next-source.response',bytes)});
+     }catch(error){if(active)rejectSource(error);}
+    };
+    page.on('request',onSourceRequest);page.on('response',onSourceResponse);
+    let acknowledgedSource;
+    try{await sourceChoice.click();acknowledgedSource=await sourceAck;}finally{active=false;clearTimeout(sourceTimer);page.off('request',onSourceRequest);page.off('response',onSourceResponse);}
+    await frame.waitForFunction(basis=>{
+     const dialog=document.querySelector('.epi-source-dialog');if(!dialog?.open||dialog.querySelector('h2')?.textContent!==basis.title)return false;
+     const details=Array.from(dialog.querySelectorAll('details')),properties=details.find(e=>e.querySelector('summary')?.textContent==='Original properties and supporting text'),relations=details.find(e=>e.querySelector('summary')?.textContent==='Typed relations · '+basis.relations);
+     return properties?.querySelectorAll('dl>dt').length===basis.properties&&relations?.querySelectorAll(':scope>ul>li').length===basis.relations
+      &&dialog.textContent.includes(basis.coordinate)&&dialog.textContent.includes(basis.uuid)
+      &&!document.querySelector('.epi-world-entrance [role="status"]')?.textContent?.includes('Receiving the native operation')&&!document.querySelector('.epi-world-entrance [role="alert"]');
+    },{title:acknowledgedSource.content.identity.title,coordinate:hub[0].coordinate,uuid:acknowledgedSource.content.identity.uuid,properties:64,relations:23},{timeout});
+    assert.ok(receipt.issued_requests.slice(at).some(row=>row.op==='nara_coordinate'),'A real source request, not a diagnostic clear hook, must acknowledge the next encounter');
     await frame.locator('[data-epi-source="return"]').click();
     await frame.waitForFunction(()=>!document.querySelector('.epi-source-dialog')?.open&&!document.querySelector('.epi-world-entrance [role="alert"]')&&!window.__FIELD_STUDIES__.nativeWorking().busy,null,{timeout});
     assert.deepEqual(await nativeDocument(expressionRef),after,'Ordinary Source and Return must leave the complete admitted native Document unchanged');
+    report.source_cleanup={coordinate_ref:hub[0].canonical_ref,source_revision:hub[0].source_revision,native_operation:'nara_coordinate',source_only:true,acknowledged:true,request:acknowledgedSource.request,response:acknowledgedSource.response,document_revision:after.revision,selection:after.selection};
+    artifact('saved-use-next-source-ack.json',report.source_cleanup);
    }catch(error){completionFailure=error;}finally{
     await cleanup('newer-consumer-refusal',completionFailure,[['owned actual Pin response settlement and unroute',()=>pinHold.stop()]]);
    }

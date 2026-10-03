@@ -121,7 +121,6 @@ jobs:
       - name: Build cradle web bundle from the locked graph
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
-          python3 scripts/hosted-native-module-refresh.py
           npm --prefix desktop/cradle run build
       - name: Build and start the dev-only kernel walk bridge with a disposable OI_HOME
         id: bridge
@@ -256,7 +255,6 @@ jobs:
           path: |
             desktop/cradle/tests/artifacts/readable-presentation/
             desktop/cradle/tests/artifacts/visuals-preferences/
-            desktop/cradle/tests/artifacts/shared-expression-resources/native-module-refresh/
             ${{ runner.temp }}/walk-bridge.log
           if-no-files-found: warn
       - name: Retain collection source-identity consumer evidence

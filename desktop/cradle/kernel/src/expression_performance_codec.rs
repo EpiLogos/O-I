@@ -107,6 +107,42 @@ fn read_word(bytes: &[u8], at: &mut usize) -> Result<usize, String> {
     *at = end;
     Ok(u16::from_le_bytes(value.try_into().unwrap()) as usize)
 }
+/// Compare the native serializer's complete output to the qualified decoded
+/// bytes without allocating a second canonical page. No qualification survives
+/// this call, and a matching prefix is insufficient.
+struct CanonicalBytes<'a> {
+    expected: &'a [u8],
+    at: usize,
+}
+impl std::io::Write for CanonicalBytes<'_> {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        let end = self.at.checked_add(bytes.len()).ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "performance page typed defaults/canonical bytes differ",
+            )
+        })?;
+        if self.expected.get(self.at..end) != Some(bytes) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "performance page typed defaults/canonical bytes differ",
+            ));
+        }
+        self.at = end;
+        Ok(bytes.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+fn canonical_bytes_match<T: Serialize + ?Sized>(value: &T, expected: &[u8]) -> Result<(), String> {
+    let mut compared = CanonicalBytes { expected, at: 0 };
+    serde_json::to_writer(&mut compared, value).map_err(|e| e.to_string())?;
+    if compared.at != expected.len() {
+        return Err("performance page typed defaults/canonical bytes differ".into());
+    }
+    Ok(())
+}
 impl EncodedPage {
     pub fn from_value<T: Serialize + ?Sized>(value: &T) -> Result<Self, String> {
         // Borrowed budget preflight BEFORE constructing expanded JSON bytes.
@@ -185,9 +221,7 @@ impl EncodedPage {
     pub fn read<T: serde::de::DeserializeOwned + Serialize>(&self) -> Result<T, String> {
         let bytes = self.bytes()?;
         let typed: T = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
-        if serde_json::to_vec(&typed).map_err(|e| e.to_string())? != bytes {
-            return Err("performance page typed defaults/canonical bytes differ".into());
-        }
+        canonical_bytes_match(&typed, &bytes)?;
         Ok(typed)
     }
 }
@@ -195,6 +229,73 @@ impl EncodedPage {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn canonical_stream_comparison_retains_exact_bytes_and_refuses_prefix_or_suffix() {
+        let value = serde_json::json!({
+            "integer": "18446744073709551615",
+            "float": 0.12345678901234567,
+            "escaped": "body\n\"\\ and λ",
+            "array": [null, false, {"late": "retained"}]
+        });
+        let page = EncodedPage::from_value(&value).unwrap();
+        let bytes = page.bytes().unwrap();
+        assert_eq!(page.read::<serde_json::Value>().unwrap(), value);
+        canonical_bytes_match(&value, &bytes).unwrap();
+        let mut first = bytes.clone();
+        first[0] ^= 1;
+        assert!(canonical_bytes_match(&value, &first).is_err());
+        let mut last = bytes.clone();
+        let end = last.len() - 1;
+        last[end] ^= 1;
+        assert!(canonical_bytes_match(&value, &last).is_err());
+        assert!(canonical_bytes_match(&value, &bytes[..bytes.len() - 1]).is_err());
+        let mut suffix = bytes.clone();
+        suffix.push(b' ');
+        assert!(canonical_bytes_match(&value, &suffix).is_err());
+        let mut chunked = CanonicalBytes {
+            expected: &bytes,
+            at: 0,
+        };
+        for chunk in bytes.chunks(3) {
+            std::io::Write::write_all(&mut chunked, chunk).unwrap();
+        }
+        assert_eq!(chunked.at, bytes.len());
+        let cursor = chunked.at;
+        assert!(std::io::Write::write(&mut chunked, b"extra").is_err());
+        assert_eq!(chunked.at, cursor);
+    }
+
+    #[test]
+    fn native_scene_page_still_refuses_omitted_typed_defaults_after_stream_comparison() {
+        let mut kernel = crate::Kernel::new(crate::flow::CentralClient::discover());
+        let opened = kernel
+            .apply(crate::KernelOp::Expression {
+                request: crate::expression::Request::Create {
+                    expression_ref: "expression:canonical-native-page".into(),
+                    title: "Native canonical page".into(),
+                    actor: "agent:canonical-page-test".into(),
+                },
+            })
+            .unwrap();
+        let crate::KernelOpResult::Expression { data } = opened.result else {
+            panic!("actual native Expression result absent");
+        };
+        let scene: crate::expression::Scene =
+            serde_json::from_value(data["document"]["scenes"][0].clone()).unwrap();
+        let page = EncodedPage::from_value(&scene).unwrap();
+        assert_eq!(page.read::<crate::expression::Scene>().unwrap(), scene);
+        let original = serde_json::to_value(&scene).unwrap();
+        for key in ["body", "triggers"] {
+            let mut omitted = original.clone();
+            assert!(omitted.as_object_mut().unwrap().remove(key).is_some());
+            let page = EncodedPage::from_value(&omitted).unwrap();
+            let error = page.read::<crate::expression::Scene>().unwrap_err();
+            assert!(
+                error.contains("typed defaults/canonical bytes differ"),
+                "{error}"
+            );
+        }
+    }
     #[test]
     fn canonical_requalification_is_private_and_imported_alternative_stream_refuses() {
         let value = serde_json::json!({"samples":["0","128","48000","18446744073709551615"],"receipts":vec![serde_json::json!({"kind":5,"requested_sample":"48000","value":0.12345678901234567});128]});

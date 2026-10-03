@@ -803,6 +803,7 @@ fn actual_file_and_indexed_document_editions_preserve_full_material_without_expa
     let all: Vec<_> = full.events().cloned().collect();
     let mut custody = ActPerformanceCustody::default();
     let mut first = None;
+    let mut last_expected = None;
     for block in 1..=180u64 {
         let mut edition = native.clone();
         edition.revision = block + 1;
@@ -821,6 +822,9 @@ fn actual_file_and_indexed_document_editions_preserve_full_material_without_expa
         if first.is_none() {
             first = Some(edition.clone());
         }
+        if block == 180 {
+            last_expected = Some(edition.clone());
+        }
         let append_started = std::time::Instant::now();
         custody = custody.appended(&edition).unwrap();
         if block == 1 || block % 30 == 0 {
@@ -837,6 +841,56 @@ fn actual_file_and_indexed_document_editions_preserve_full_material_without_expa
     assert_eq!(reopened.restore(0).unwrap(), first.unwrap());
     let last = reopened.restore(179).unwrap();
     assert_eq!(last.scenes[0].performance.as_ref().unwrap(), &full);
+    // The complete expected native edition was captured before append, not
+    // reconstructed from its metadata dictionary or restore result.
+    let expected = last_expected.unwrap();
+    assert_eq!(last, expected);
+    let public = serde_json::to_value(&expected).unwrap();
+    let snapshot = custody.snapshot();
+    let selected = &snapshot.documents[179];
+    let expected_keys: Vec<_> = public
+        .as_object()
+        .unwrap()
+        .keys()
+        .filter(|key| key.as_str() != "scenes")
+        .cloned()
+        .collect();
+    assert_eq!(
+        selected.fields.keys().cloned().collect::<Vec<_>>(),
+        expected_keys
+    );
+    for (key, reference) in &selected.fields {
+        let literal = snapshot
+            .literals
+            .iter()
+            .find(|literal| &literal.r#ref == reference)
+            .unwrap();
+        assert_eq!(
+            &literal.value, &public[key],
+            "complete native Document field {key}"
+        );
+    }
+    for (scene, original) in selected
+        .scenes
+        .iter()
+        .zip(public["scenes"].as_array().unwrap())
+    {
+        let fields: serde_json::Map<String, Value> = original
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|(key, _)| !["revision", "performance"].contains(&key.as_str()))
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect();
+        let literal = snapshot
+            .literals
+            .iter()
+            .find(|literal| literal.r#ref == scene.scene_part)
+            .unwrap();
+        assert_eq!(literal.value, Value::Object(fields));
+        assert_eq!(scene.revision, original["revision"].as_u64().unwrap());
+        assert!(scene.performance_catalog.is_some() && scene.performance_manifest.is_some());
+    }
     let mut missing = custody.snapshot();
     missing.performance_catalogs.clear();
     assert!(ActPerformanceCustody::read(missing).is_err());

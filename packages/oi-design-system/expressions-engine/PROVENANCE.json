@@ -201,9 +201,9 @@
     },
     "engine/PointCloudField.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/PointCloudField.ts",
-      "source_sha256": "100f999e944d0cbfdc8bef6b510a1cb611d8ac1676af06247773b9da7b55efcb",
-      "output_sha256": "226c303406b505c5d7df361cd46fe6c984ce0a5d0e15b3f0f4e697a61775a2f4",
-      "compiler": "esbuild@0.25.12",
+      "source_sha256": "3a2a4b95bae3b4a2b5153385407cfd75aee2a110a0f7b8818c5e2f6f562eb514",
+      "output_sha256": "93b3f9a8dd1a8c9d7b6e89f70d93d8a3da4ac449e5b3c2d077308c28475cf0bd",
+      "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "engine/LocalizedResonanceBank.mjs": {
@@ -250,9 +250,9 @@
     },
     "engine/entityRuntime.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/entityRuntime.ts",
-      "source_sha256": "8aed1dbf1dbdd32c92c5da9dd41b14bf4abe84d35d53a615fdf820a46477f48b",
-      "output_sha256": "9ce97e2eb2780b2abe9956a6a1c3c9d93f2da942d9ce2c601909bc8555fa99c8",
-      "compiler": "esbuild@0.25.12",
+      "source_sha256": "509a26355710fb3eabd5a1fc2279aecd9b2ed735b37f1a34c96863dcb47bd69c",
+      "output_sha256": "c2e3c42335d2cc77095e49da7c6df51b36ba960b75dabc0434760be94022696a",
+      "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "engine/entityPose.mjs": {
@@ -292,9 +292,9 @@
     },
     "engine/shaders/particleShaders.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/shaders/particleShaders.ts",
-      "source_sha256": "50c54a6dc1f91eb698ffe3ac85c6baa94ea1b5565855d8d5c4302b0d7003df99",
-      "output_sha256": "4e9ce62b03d66fad89b7254c959eab768b5a7c9c0e345c1f80714d9eaba6a3b5",
-      "compiler": "esbuild@0.25.12",
+      "source_sha256": "307d07e118065641e4d0fafcb310cf6ab87a28fb9d42d31f680676291366b930",
+      "output_sha256": "3bd084d5da423f7eeb8e1477c8b6a19a728e79f6f2ac6525a9f767c4e6f7732e",
+      "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "engine/GlyphSampler.mjs": {
@@ -404,9 +404,9 @@
     },
     "shell/production.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/production.ts",
-      "source_sha256": "973fbad9bf7c817217c43e85a390782f38c181755ad46ab3062be5105695b463",
-      "output_sha256": "8191272a693c6bb2bedf2cc8e0b78944b447356eaa9cf5fd9dcc5634692d36ce",
-      "compiler": "esbuild@0.25.12",
+      "source_sha256": "efaa7fbf3c2edec0a98e68af8ff1f3ea99a7dd22103ada6107551b73015f13d1",
+      "output_sha256": "75235cbd9f97f6e8d3c48ef5581cb14b5320ad75bc82daa880991c90bfe7329d",
+      "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "shell/native-field/entitySound.mjs": {

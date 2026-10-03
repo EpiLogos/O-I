@@ -497,6 +497,81 @@ impl<'de> Deserialize<'de> for ActPerformanceCustody {
         Self::read_value(Value::deserialize(d)?).map_err(serde::de::Error::custom)
     }
 }
+/// Exhaustive borrowed projections of the existing native metadata. Full
+/// Scene/performance bodies are excluded before serialization, rather than
+/// serialized and immediately discarded. Adding a native field requires this
+/// exhaustive pattern to be reconciled; native serde omission rules stay exact.
+struct DocumentFields<'a>(&'a Document);
+impl Serialize for DocumentFields<'_> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let Document {
+            presentation,
+            schema,
+            expression_ref,
+            revision,
+            title,
+            scenes: _,
+            entities,
+            relations,
+            selection,
+            provenance,
+            representations,
+            refinements,
+            collections,
+            profiles,
+            reuse,
+        } = self.0;
+        let mut out = s.serialize_map(Some(
+            12 + usize::from(presentation.is_some()) + usize::from(reuse.is_some()),
+        ))?;
+        if let Some(presentation) = presentation {
+            out.serialize_entry("presentation", presentation)?;
+        }
+        out.serialize_entry("schema", schema)?;
+        out.serialize_entry("expression_ref", expression_ref)?;
+        out.serialize_entry("revision", revision)?;
+        out.serialize_entry("title", title)?;
+        out.serialize_entry("entities", entities)?;
+        out.serialize_entry("relations", relations)?;
+        out.serialize_entry("selection", selection)?;
+        out.serialize_entry("provenance", provenance)?;
+        out.serialize_entry("representations", representations)?;
+        out.serialize_entry("refinements", refinements)?;
+        out.serialize_entry("collections", collections)?;
+        out.serialize_entry("profiles", profiles)?;
+        if let Some(reuse) = reuse {
+            out.serialize_entry("reuse", reuse)?;
+        }
+        out.end()
+    }
+}
+struct SceneMetadata<'a>(&'a crate::expression::Scene);
+impl Serialize for SceneMetadata<'_> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let crate::expression::Scene {
+            presentation,
+            scene_ref,
+            revision: _,
+            title,
+            entity_refs,
+            performance: _,
+            body,
+            triggers,
+        } = self.0;
+        let mut out = s.serialize_map(Some(5 + usize::from(presentation.is_some())))?;
+        if let Some(presentation) = presentation {
+            out.serialize_entry("presentation", presentation)?;
+        }
+        out.serialize_entry("scene_ref", scene_ref)?;
+        out.serialize_entry("title", title)?;
+        out.serialize_entry("entity_refs", entity_refs)?;
+        out.serialize_entry("body", body)?;
+        out.serialize_entry("triggers", triggers)?;
+        out.end()
+    }
+}
 impl ActPerformanceCustody {
     pub fn has_native_sources(&self) -> bool {
         self.performance_catalogs
@@ -543,21 +618,18 @@ impl ActPerformanceCustody {
             return Err("native Act passage budget exceeded".into());
         }
         let mut next = self.clone();
-        let mut fields = serde_json::to_value(document)
-            .map_err(|e| e.to_string())?
-            .as_object()
-            .ok_or("native Document object absent")?
-            .clone();
-        fields.remove("scenes");
+        let Value::Object(fields) =
+            serde_json::to_value(DocumentFields(document)).map_err(|e| e.to_string())?
+        else {
+            return Err("native Document object absent".into());
+        };
         let mut refs = BTreeMap::new();
         for (key, value) in fields {
             refs.insert(key, next.literal(value)?);
         }
         let mut scenes = Vec::new();
         for scene in &document.scenes {
-            let mut metadata = serde_json::to_value(scene).map_err(|e| e.to_string())?;
-            metadata.as_object_mut().unwrap().remove("revision");
-            metadata.as_object_mut().unwrap().remove("performance");
+            let metadata = serde_json::to_value(SceneMetadata(scene)).map_err(|e| e.to_string())?;
             let scene_part = next.literal(metadata)?;
             let (performance_catalog, performance_manifest) = if let Some(p) = &scene.performance {
                 let old = next
@@ -915,5 +987,97 @@ impl ActPerformanceCustody {
         self.performance_catalogs
             .values()
             .any(|c| c.requires_private_disclosure())
+    }
+}
+
+#[cfg(test)]
+mod borrowed_metadata_tests {
+    use super::*;
+
+    fn assert_native_metadata(document: &Document) {
+        document.validate().unwrap();
+        let full = serde_json::to_value(document).unwrap();
+        let fields: serde_json::Map<String, Value> = full
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|(key, _)| key.as_str() != "scenes")
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect();
+        assert_eq!(
+            serde_json::to_value(DocumentFields(document)).unwrap(),
+            Value::Object(fields)
+        );
+        for (scene, original) in document
+            .scenes
+            .iter()
+            .zip(full["scenes"].as_array().unwrap())
+        {
+            let fields: serde_json::Map<String, Value> = original
+                .as_object()
+                .unwrap()
+                .iter()
+                .filter(|(key, _)| !["revision", "performance"].contains(&key.as_str()))
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect();
+            assert_eq!(
+                serde_json::to_value(SceneMetadata(scene)).unwrap(),
+                Value::Object(fields)
+            );
+        }
+    }
+
+    #[test]
+    fn borrowed_metadata_matches_complete_native_world_and_default_owner_document() {
+        use sha2::{Digest, Sha256};
+        let bytes = include_str!("../tests/fixtures/epi-world-131.expression.json");
+        assert_eq!(
+            format!("{:x}", Sha256::digest(bytes.as_bytes())),
+            "630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
+        let retained = expression_file::decode(bytes).unwrap();
+        assert_eq!(
+            (
+                retained.revision,
+                retained.entities.len(),
+                retained.relations.len(),
+                retained.scenes.len()
+            ),
+            (131, 38, 86, 3)
+        );
+        assert!(retained.presentation.is_some());
+        assert!(retained.reuse.is_some());
+        assert!(retained
+            .scenes
+            .iter()
+            .all(|scene| scene.presentation.is_some()));
+        assert_native_metadata(&retained);
+
+        let mut kernel = crate::Kernel::new(crate::flow::CentralClient::discover());
+        let opened = kernel
+            .apply(crate::KernelOp::Expression {
+                request: crate::expression::Request::Create {
+                    expression_ref: "expression:borrowed-native-metadata".into(),
+                    title: "Native metadata".into(),
+                    actor: "agent:borrowed-metadata-test".into(),
+                },
+            })
+            .unwrap();
+        let crate::KernelOpResult::Expression { data } = opened.result else {
+            panic!("actual native Expression result absent");
+        };
+        let created: Document = serde_json::from_value(data["document"].clone()).unwrap();
+        assert!(created.presentation.is_none());
+        assert!(created.reuse.is_none());
+        assert!(created
+            .scenes
+            .iter()
+            .all(|scene| scene.presentation.is_none() && scene.performance.is_none()));
+        assert_native_metadata(&created);
+        let fields = serde_json::to_value(DocumentFields(&created)).unwrap();
+        assert!(fields.get("presentation").is_none() && fields.get("reuse").is_none());
+        let scene = serde_json::to_value(SceneMetadata(&created.scenes[0])).unwrap();
+        assert_eq!(scene["body"], Value::Null);
+        assert_eq!(scene["triggers"], serde_json::json!([]));
     }
 }
