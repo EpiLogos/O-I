@@ -1,0 +1,21 @@
+{
+  "schema": "oi.native-act-world-fixture/v1",
+  "file": "epi-world-131.expression.json",
+  "sha256": "630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec",
+  "bytes": 2611679,
+  "origin": "Actual retained native Expression edit91; independently equal expanded actual native file100; saved controlled world revision131",
+  "person_ref": "person:controlled-world-a",
+  "shared_locus_uuid": "dcb274c1-fbbc-5914-b27d-dea979c78558",
+  "bimba_source_revision": "907c46bc8a65b47e12f14aa4d8b444263dc956a1a7b4b6d038e57223d6073288",
+  "rendered_body_occurrences": {
+    "cosmic": 32,
+    "personal": 9,
+    "branch": 7
+  },
+  "native_document_counts": {
+    "entities": 38,
+    "relations": 86,
+    "scenes": 3
+  },
+  "standing": "Actual controlled native saved material, not owner private identity; codec/Act native tests pending; no installed/GPU/audio acceptance"
+}
