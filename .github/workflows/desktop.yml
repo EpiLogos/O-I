@@ -55,7 +55,6 @@ jobs:
       - name: Build cradle web bundle from the locked graph
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
-          python3 scripts/hosted-native-module-refresh.py
           npm --prefix desktop/cradle run build
       - name: Build and start the dev-only kernel walk bridge with a disposable OI_HOME
         id: bridge

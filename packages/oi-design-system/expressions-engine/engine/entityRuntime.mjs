@@ -469,7 +469,8 @@ class EntityRuntime {
       u.morph[i] = 0;
       this.collisionTiles[i * 4 + 3] = 0;
     }
-    this.connections.update(poses, this.dataA, this.dataB, this.noiseData);
+    const enabledIds = new Set(entities.filter((entity) => entity.enabled !== false).map((entity) => entity.id));
+    this.connections.update(poses.filter((pose) => enabledIds.has(pose.entityId)), this.dataA, this.dataB, this.noiseData);
     if (this.connections.enabled) {
       this.textureA.needsUpdate = true;
       this.textureB.needsUpdate = true;
