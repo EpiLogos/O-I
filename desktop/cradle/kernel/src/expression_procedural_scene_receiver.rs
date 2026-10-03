@@ -241,7 +241,7 @@ impl SceneOwner {
         json!({"schema":"oi.native-document-scene-constructor/v1",
             "expression_ref":self.lifetime.expression_ref,"scene_ref":self.scene_ref,
             "instance_ref":self.instance_ref(),"construction_generation":self.construction_generation(),
-            "generation_domain":DOMAIN,"initial_document_revision":self.lifetime.initial_document_revision,
+            "generation_domain":self.generation_domain(),"initial_document_revision":self.lifetime.initial_document_revision,
             "initial_document_sha256":self.lifetime.initial_document_sha256,
             "document_revision":self.document_revision,"document_sha256":self.document_sha256})
     }

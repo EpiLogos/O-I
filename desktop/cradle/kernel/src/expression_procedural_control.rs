@@ -124,6 +124,8 @@ pub(super) fn current_procedure_metadata<'a>(
     }
     Ok(procedure)
 }
+type DriverIntake<'a> = (Vec<Address>, Vec<&'a str>, Vec<peers::Peer<'a>>);
+
 /// Charge the whole actual driver and every possible older owner definition
 /// before native Source reconstruction or Parameter preview copies any Scene.
 fn driver_intake_plan<'a>(
@@ -134,7 +136,7 @@ fn driver_intake_plan<'a>(
     action: &Action,
     actor: &str,
     operation_ref: &str,
-) -> Result<(Vec<Address>, Vec<&'a str>, Vec<peers::Peer<'a>>), String> {
+) -> Result<DriverIntake<'a>, String> {
     let native = document
         .entities
         .get(entity_ref)

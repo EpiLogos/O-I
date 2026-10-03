@@ -147,7 +147,7 @@ pub(super) fn read_selected_scene(
             "document_fingerprint":fingerprint(&before)?,"native_identity":identity,
             "coordinate":coordinate,"original_intent":intent});
     let issued = IssuedSceneRead::from_selected_owner(
-        &before,
+        before,
         &intent.scene_ref,
         source.clone(),
         locus.clone(),

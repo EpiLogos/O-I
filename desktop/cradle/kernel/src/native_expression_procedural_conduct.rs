@@ -33,7 +33,7 @@ impl crate::Kernel {
                         "Private completion has another original control intent".into(),
                     );
                 }
-                let super::manual::Completed::Control(completed) = completed else {
+                let Some(completed) = completed.into_control() else {
                     return self.native_procedural_control_refusal(
                         control,
                         "Manual attribution cannot grant native control".into(),

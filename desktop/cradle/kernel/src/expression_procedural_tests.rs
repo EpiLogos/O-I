@@ -3829,7 +3829,7 @@ fn a07_a10_a14_event_contexts_come_from_real_scene_material_and_do_not_grant_nat
     let row = json!({"contribution_ref":contribution["contribution_ref"],
         "material":source_current_output_basis(&d,&contribution).unwrap(),"overlays":[]});
     let original = serde_json::to_vec(&d).unwrap();
-    let contexts = source_event_intervention_contexts(&d, &[row.clone()]).unwrap();
+    let contexts = source_event_intervention_contexts(&d, std::slice::from_ref(&row)).unwrap();
     assert_eq!(
         contexts.len(),
         2,
@@ -4224,8 +4224,10 @@ fn a13_native_runtime_retirement_and_reopen_resynchronise_without_prior_life_del
             .inspect(&other_intent.operation_ref)
             .is_ok()
     );
-    let mut fresh = Application::default();
-    fresh.procedural_runtime = std::mem::take(&mut app.procedural_runtime);
+    let mut fresh = Application {
+        procedural_runtime: std::mem::take(&mut app.procedural_runtime),
+        ..Application::default()
+    };
     fresh
         .open(
             serde_json::from_slice(&retained_bytes).unwrap(),
@@ -4740,9 +4742,9 @@ fn a06_a13_actual_control_fork_preserves_persistent_configuration() {
             input["original"]["scenes"][0]["presentation"]["scene"]["procedural"]["controls"][0]["takeover"],
             "persistent authored takeover provenance/lifetime was discarded"
         );
-        let target = format!(
+        let target =
             "entity:expression%3Aindependent-native-fork-controls%3Aentity%3Aa:forces.strength"
-        );
+                .to_owned();
         assert_eq!(
             control["target"], target,
             "actual encoded target still names the original Entity"
@@ -5911,12 +5913,11 @@ fn a05_a14_actual_edit_rejects_stale_source_snapshot_before_unqualified_payload_
 // Append to the actual native independent receiving test module.
 // These are configured Document negatives, never qualified producer examples.
 fn independent_peer_configuration_candidate(controls: Vec<Value>) -> Result<Document, String> {
-    let document = independent_budget_document(false, 0, 0)
-        .edited(vec![Change::ParameterSet {
-            entity_ref: format!("{EXPRESSION}:entity:a"),
-            parameter: "force_radius".into(),
-            value: json!(80.0),
-        }])?;
+    let document = independent_budget_document(false, 0, 0).edited(vec![Change::ParameterSet {
+        entity_ref: format!("{EXPRESSION}:entity:a"),
+        parameter: "force_radius".into(),
+        value: json!(80.0),
+    }])?;
     let mut presentation = document.scenes[0].presentation.clone().unwrap();
     presentation.scene["procedural"]["controls"] = json!(controls);
     document.edited(vec![Change::SceneMaterialSet {
@@ -5977,13 +5978,22 @@ fn a02_a05_a06_native_peer_intake_refuses_wrong_coordinates_duplicate_or_lost_pa
             // Document merely to reach a later private peer guard.
             let before = independent_budget_document(false, 0, 0);
             let mut application = Application::default();
-            application.open(before.clone(), "human:owner".into()).unwrap();
+            application
+                .open(before.clone(), "human:owner".into())
+                .unwrap();
             let error = independent_peer_configuration_candidate(controls).unwrap_err();
-            assert_eq!(error, "Conflicting retained control",
-                "duplicate peer escaped its actual retained identity guard");
+            assert_eq!(
+                error, "Conflicting retained control",
+                "duplicate peer escaped its actual retained identity guard"
+            );
             assert_eq!(application.document(EXPRESSION).unwrap(), &before);
             assert!(application.procedural_runtime.producers.is_empty());
-            assert!(application.procedural_runtime.qualified_operations.is_empty());
+            assert!(
+                application
+                    .procedural_runtime
+                    .qualified_operations
+                    .is_empty()
+            );
             assert!(application.procedural_runtime.controls.is_empty());
             continue;
         }
@@ -6406,7 +6416,6 @@ fn a05_a14_genuine_manual_cancel_and_exact_saved_journal_cannot_settle_a_source_
     assert_eq!(cold.document(EXPRESSION).unwrap(), &actual);
     assert!(cold.procedural_runtime.qualified_operations.is_empty());
 }
-
 
 // Origin serialization and aggregate accounting over real native Application
 // edits. A manual operation remains unqualified: these tests never populate a

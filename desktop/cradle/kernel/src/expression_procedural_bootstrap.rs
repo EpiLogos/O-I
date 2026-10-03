@@ -239,7 +239,7 @@ impl Application {
             let reading: ReadingRef = serde_json::from_value(json!({"ref":basis["source_ref"],
                 "revision":basis["revision"],"availability":"available"}))
             .map_err(|e| e.to_string())?;
-            super::super::readings(&[reading.clone()])?;
+            super::super::readings(std::slice::from_ref(&reading))?;
             let row = json!(reading);
             if !retained_sources.contains(&row) {
                 retained_sources.push(row);

@@ -4616,10 +4616,10 @@ impl Application {
             .operations
             .insert(operation_ref.to_owned(), scheduled.clone());
         self.procedural_runtime.emit(json!({"expression_ref":scheduled.envelope.expression_ref,"targets":scheduled.targets,"operation_ref":operation_ref,"status":"scheduled"}))?;
-        return Ok((
+        Ok((
             json!({"schema":SCHEMA,"operation":scheduled,"document_receipt":receipt}),
             changed,
-        ));
+        ))
     }
 
     /// The timing owner calls this after confirming actual queue withdrawal;

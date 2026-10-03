@@ -7,38 +7,61 @@ use serde_json::{Value, json};
 
 const MAX_BYTES: usize = 8 * 1024 * 1024;
 
+/// Opaque host handoff; callers cannot replace a private native candidate.
 #[derive(Debug)]
-pub enum Prepared {
-    Manual {
-        candidate: ManualCandidate,
-        request: Value,
-    },
-    Control(super::control::Prepared),
+pub struct Prepared {
+    inner: PreparedWork,
 }
 #[derive(Debug)]
-pub enum Completed {
+enum PreparedWork {
     Manual {
-        candidate: ManualCandidate,
+        candidate: Box<ManualCandidate>,
+        request: Value,
+    },
+    Control(Box<super::control::Prepared>),
+}
+#[derive(Debug)]
+pub struct Completed {
+    inner: CompletedWork,
+}
+#[derive(Debug)]
+enum CompletedWork {
+    Manual {
+        candidate: Box<ManualCandidate>,
         result: Result<Value, String>,
     },
-    Control(super::control::Completed),
+    Control(Box<super::control::Completed>),
 }
 impl Prepared {
     pub(crate) fn new(candidate: ManualCandidate) -> Result<Self, String> {
+        if candidate
+            .entries
+            .iter()
+            .any(|entry| entry.expression_ref != candidate.before().expression_ref)
+        {
+            return Err("Native intervention entry belongs to another original Document".into());
+        }
         let request = json!({"schema":"ql.procedural-intervention-batch-request/v1",
             "entries":candidate.entries.iter().map(|entry|entry.request.clone()).collect::<Vec<_>>()});
         let bytes = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
         if candidate.entries.is_empty() || candidate.entries.len() > 64 || bytes.len() > MAX_BYTES {
             return Err("Native intervention batch exceeds its source receiving budget".into());
         }
-        Ok(Self::Manual { candidate, request })
+        Ok(Self {
+            inner: PreparedWork::Manual {
+                candidate: Box::new(candidate),
+                request,
+            },
+        })
     }
     pub fn execute(self) -> Completed {
-        let Self::Manual { candidate, request } = self else {
-            let Self::Control(prepared) = self else {
-                unreachable!()
-            };
-            return Completed::Control(prepared.execute());
+        let (candidate, request) = match self.inner {
+            PreparedWork::Manual { candidate, request } => (candidate, request),
+            PreparedWork::Control(prepared) => {
+                return Completed {
+                    inner: CompletedWork::Control(Box::new((*prepared).execute())),
+                };
+            }
         };
         let result = super::execute_stateless(
             "intervention-batch",
@@ -59,18 +82,26 @@ impl Prepared {
             }
             Ok(reply)
         });
-        Completed::Manual { candidate, result }
+        Completed {
+            inner: CompletedWork::Manual { candidate, result },
+        }
     }
 }
 impl Completed {
     pub(crate) fn original(&self) -> &crate::expression::Request {
-        match self {
-            Self::Manual { candidate, .. } => candidate.original(),
-            Self::Control(completed) => completed.original(),
+        match &self.inner {
+            CompletedWork::Manual { candidate, .. } => candidate.original(),
+            CompletedWork::Control(completed) => completed.original(),
+        }
+    }
+    pub(crate) fn into_control(self) -> Option<super::control::Completed> {
+        match self.inner {
+            CompletedWork::Control(completed) => Some(*completed),
+            CompletedWork::Manual { .. } => None,
         }
     }
     pub(crate) fn into_records(self) -> Result<(ManualCandidate, ManualBatchRecords), String> {
-        let Self::Manual { candidate, result } = self else {
+        let CompletedWork::Manual { candidate, result } = self.inner else {
             return Err("Control completion cannot grant ordinary manual attribution".into());
         };
         let reply = result?;
@@ -90,7 +121,7 @@ impl Completed {
             .ok_or("Native Source batch results missing")?
             .clone();
         Ok((
-            candidate,
+            *candidate,
             ManualBatchRecords {
                 native_reply: reply,
                 results,
@@ -110,9 +141,9 @@ impl crate::Kernel {
             return Ok(None);
         };
         if let Some(candidate) = self.expressions.prepare_procedural_control(request)? {
-            return Ok(Some(Prepared::Control(super::control::Prepared::new(
-                candidate,
-            ))));
+            return Ok(Some(Prepared {
+                inner: PreparedWork::Control(Box::new(super::control::Prepared::new(candidate))),
+            }));
         }
         self.expressions
             .prepare_procedural_manual_request(&self.client, request)?
