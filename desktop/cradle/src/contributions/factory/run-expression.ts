@@ -1,9 +1,9 @@
 import type {ExpressionDocument,Entity,ReadingRef,Relation,Scene,SubjectBinding} from "../../expression/types";
 /** Factory Run-in-Expressions (O:I #220 / Factory #195 presentation lane).
  *
- * The adapter reads the run through the owner's own CLI surfaces —
- * `factory development run`, `factory development workflow-units` and
- * `factory attempt read` — and composes one `oi.expression/v1` document
+ * The adapter reads one canonical `factory development run` snapshot and
+ * its owner-embedded `nativeAttempts`, and composes one `oi.expression/v1`
+ * document
  * whose subject is the Run itself. The kernel's composition law shapes the
  * document: expression-local refs (`<expression_ref>:entity:…`), at most
  * ten entities per scene, and only presentation parameters — so the run's
@@ -30,6 +30,8 @@ export interface RunReading {
   runMap:{runRef:string;topologyRevision:number;nodes:Record<string,{id:string;kind:string;label:string;state:string|null;semanticRef:string|null}>;edges:{from:string;to:string;relation:string}[]};
   actions?:{actionRef:string;label:string;authorityOwner:string;requiredCapabilityRef?:string;subjectKinds?:string[]}[];
   agencies?:unknown[];executions?:unknown[];evidence?:unknown[];candidates?:unknown[];humanRequests?:unknown[];
+  /** Optional owner-embedded attempt field from this same canonical Run snapshot. */
+  nativeAttempts?:AttemptReading|null;
 }
 export interface AttemptReading {
   contract:string; runRef:string; revision:number; runRevision:number; topologyRevision:number;
@@ -56,12 +58,31 @@ function localSuffix(nativeRef:string):string {
 
 const PRESENTATION_ROLE={run:"being",node:"thing",attempt:"thing"} as const;
 
+/** One owner snapshot supplies both topology and attempts. A separate current
+ * attempt cannot fill an absent canonical field or replace its source basis. */
+function nativeAttemptsOf(run:RunReading,supplied?:AttemptReading):AttemptReading|undefined {
+  if(run.contract!=="factory.run-reading/v1")throw new Error("Factory returned an incompatible run reading");
+  if(!run.runRef||run.runMap?.runRef!==run.runRef||!Number.isSafeInteger(run.revision)||run.revision<1||
+    !Number.isSafeInteger(run.runMap?.topologyRevision)||run.runMap.topologyRevision<1)throw new Error("Factory returned an inconsistent Run/RunMap identity or revision");
+  const native=run.nativeAttempts;
+  if(native==null){
+    if(supplied!=null)throw new Error("The canonical Run reading has no native attempt field; an independent attempt reading cannot fill it");
+    return undefined;
+  }
+  if(native.contract!=="factory.attempt-reading/v1"||native.runRef!==run.runRef||native.runRevision!==run.revision||
+    native.topologyRevision!==run.runMap.topologyRevision||!Number.isSafeInteger(native.revision)||native.revision<1||
+    !Array.isArray(native.attempts)||!native.legs||typeof native.legs!=="object"||Array.isArray(native.legs))throw new Error("Factory returned an inconsistent embedded attempt reading");
+  const basis=["contract","runRef","revision","runRevision","topologyRevision","workflowKey","workflowSourceRef","workflowSourceRevision","workflowSourceDigest"] as const;
+  if(supplied!=null&&basis.some(field=>supplied[field]!==native[field]))throw new Error("An independent attempt reading conflicts with the canonical Run snapshot");
+  return native;
+}
+
 function runSubjectBinding(run:RunReading,statePath:string,attempt?:AttemptReading):SubjectBinding {
   return {
     subject_ref:run.runRef,
     native_owner:"software-factory",
     presentation_role:PRESENTATION_ROLE.run,
-    sources:[readingRef(`file:${statePath}`,`topology:${attempt?.topologyRevision??"unattached"}`)],
+    sources:[readingRef(`file:${statePath}`,`topology:${run.runMap.topologyRevision}`)],
     readings:[
       readingRef(run.contract,String(run.revision)),
       ...(attempt?[readingRef(attempt.contract,String(attempt.revision))]:[]),
@@ -81,8 +102,9 @@ function runSubjectBinding(run:RunReading,statePath:string,attempt?:AttemptReadi
  * no separate leg: the owner's topology projects compiled barriers as Gate
  * nodes with requires edges. Nothing is invented: every entity's subject
  * names its native ref, every fact names the reading it came from. */
-export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptReading;units:UnitListReading;statePath:string;cast?:RunCastMember[]},expressionRef:string):ExpressionDocument {
-  const {run,attempt,units,statePath}=inputs;
+export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptReading;units?:UnitListReading;statePath:string;cast?:RunCastMember[]},expressionRef:string):ExpressionDocument {
+  const {run,statePath}=inputs;
+  const attempt=nativeAttemptsOf(run,inputs.attempt);
   const cast:RunCastMember[]=inputs.cast??castOf({runRef:run.runRef,attempts:attempt});
   if(!expressionRef.startsWith("expression:")) throw new Error("The expression ref must be expression-local (expression:<slug>)");
   const eRef=(suffix:string)=>`${expressionRef}:entity:${suffix}`;
@@ -230,7 +252,6 @@ export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptRead
       readingRef(`file:${statePath}`,`run:${run.revision}`),
       readingRef(run.contract,String(run.revision)),
       ...(attempt?[readingRef(attempt.contract,String(attempt.revision))]:[]),
-      readingRef(units.contract,"1"),
     ],
     representations:[],
     refinements:[],
@@ -259,18 +280,15 @@ export async function resolveRunCast(cast:CastMember[],readCard:(agentRef:string
   }));
 }
 
-/** Read the three owner surfaces and compose the document in one call. */
-export async function readAndComposeRunExpression(transport:unknown,statePath:string,runRef:string,expressionRef:string,developmentReadFn?:typeof developmentRead,attemptReadFn?:typeof attemptRead,readCard?:(agentRef:string)=>Promise<unknown>):Promise<ExpressionDocument> {
+/** Read one canonical Run snapshot and compose its embedded attempt field.
+ * The sixth reader argument remains a deprecated compatibility slot; it is
+ * never invoked. Cards retain their seventh argument position and their own
+ * native profile observations. No attempt/units fallback repairs absence. */
+export async function readAndComposeRunExpression(transport:unknown,statePath:string,runRef:string,expressionRef:string,developmentReadFn?:typeof developmentRead,_attemptReadFn?:typeof attemptRead,readCard?:(agentRef:string)=>Promise<unknown>):Promise<ExpressionDocument> {
   const dev=developmentReadFn??developmentRead;
-  const att=attemptReadFn??attemptRead;
-  const [run,attempt,units]=await Promise.all([
-    dev<RunReading>(transport as never,statePath,"run",runRef),
-    att<AttemptReading>(transport as never,statePath,runRef),
-    dev<UnitListReading>(transport as never,statePath,"workflow-units",runRef),
-  ]);
-  if(run.contract!=="factory.run-reading/v1")throw new Error("Factory returned an incompatible run reading");
-  if(attempt&&attempt.contract!=="factory.attempt-reading/v1")throw new Error("Factory returned an incompatible attempt reading");
-  if(units.contract!=="factory.workflow-unit-list-reading/v1")throw new Error("Factory returned an incompatible workflow-unit list reading");
+  const run=await dev<RunReading>(transport as never,statePath,"run",runRef);
+  if(run.runRef!==runRef)throw new Error("Factory returned a different Run reading");
+  const attempt=nativeAttemptsOf(run);
   const cast=readCard?await resolveRunCast(castOf({runRef:run.runRef,attempts:attempt}),readCard):undefined;
-  return composeRunExpression({run,attempt,units,statePath,...(cast?{cast}:{})},expressionRef);
+  return composeRunExpression({run,statePath,...(cast?{cast}:{})},expressionRef);
 }

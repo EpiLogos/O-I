@@ -18,26 +18,18 @@ if (!factoryBin || !statePath || !runRef) {
 const checks = []
 const check = (name, ok, detail="") => { checks.push({name, ok, detail}); if (!ok) throw new Error(`check failed: ${name} ${detail}`) }
 
-const runSh = spawnSync(factoryBin, ["development", "run", statePath, runRef, "--json"], {encoding:"utf8"})
-if (runSh.status !== 0) throw new Error(runSh.stderr || runSh.stdout || "factory development run failed")
-const unitsSh = spawnSync(factoryBin, ["development", "workflow-units", statePath, runRef, "--json"], {encoding:"utf8"})
-if (unitsSh.status !== 0) throw new Error(unitsSh.stderr || unitsSh.stdout || "factory development workflow-units failed")
-const attemptSh = spawnSync(factoryBin, ["attempt", "read", statePath, runRef, "--json"], {encoding:"utf8"})
-const run = JSON.parse(runSh.stdout), units = JSON.parse(unitsSh.stdout)
-let attempt
-let attemptsSkipped = null
-if (attemptSh.status === 0) { attempt = JSON.parse(attemptSh.stdout) }
-else {
-  const refusal = String(attemptSh.stderr || attemptSh.stdout || "")
-  if (!refusal.includes("no native attempt field")) throw new Error(refusal || "factory attempt read failed")
-  // Honest refusal for attempt-less runs: compose topology-only and name it.
-  attemptsSkipped = refusal.trim().split("\n")[0]
-}
-if (attempt && attempt.contract !== "factory.attempt-reading/v1") throw new Error("incompatible attempt reading: " + attempt.contract)
-
+const runSh = spawnSync(factoryBin, ["development", "run", statePath, runRef, "--json"], {encoding:"utf8", timeout:15000, maxBuffer:2*1024*1024})
+if (runSh.error || runSh.status !== 0) throw new Error(runSh.error?.message || runSh.stderr || "factory development run failed")
+const run = JSON.parse(runSh.stdout)
+// The exact owner-embedded field supplies the attempt basis. Omission is an
+// actual canonical observation, not a manufactured attempt-refusal receipt.
+const attempt = run.nativeAttempts ?? undefined
+const attemptsSkipped = attempt ? null : "canonical Run reading omits nativeAttempts (topology-only)"
 check("run reading contract", run.contract === "factory.run-reading/v1", run.contract)
-check("attempt reading contract", !attempt || attempt.contract === "factory.attempt-reading/v1", attempt?.contract ?? "absent (attempt-less run)")
-check("unit list contract", units.contract === "factory.workflow-unit-list-reading/v1", units.contract)
+check("requested Run and topology identity", run.runRef === runRef && run.runMap.runRef === runRef, run.runRef)
+check("embedded attempt contract and Run/topology basis", !attempt ||
+  (attempt.contract === "factory.attempt-reading/v1" && attempt.runRef === run.runRef && attempt.runRevision === run.revision && attempt.topologyRevision === run.runMap.topologyRevision),
+  attempt ? `provider ${attempt.revision}, Run ${attempt.runRevision}, topology ${attempt.topologyRevision}` : "absent in canonical owner snapshot")
 
 const transpile = async (path) => {
   const source = await readFile(new URL(path, import.meta.url), "utf8")
@@ -53,7 +45,7 @@ const transpile = async (path) => {
 }
 const adapter = await transpile("../src/contributions/factory/run-expression.ts")
 const expressionRef = "expression:walk-factory-run-expression"
-const document = adapter.composeRunExpression({run, attempt, units, statePath}, expressionRef)
+const document = adapter.composeRunExpression({run, statePath}, expressionRef)
 
 check("expression schema", document.schema === "oi.expression/v1", document.schema)
 check("subject bound to the run", document.entities[`${expressionRef}:entity:run`]?.subject?.subject_ref === run.runRef, "")
@@ -85,7 +77,7 @@ if (attempt) {
   const returned = attempt.attempts.find(a => a.readableReturn)
   check("readable Return has its scene", Boolean(returned) === document.scenes.some(scn => scn.scene_ref.endsWith(":scene:return")), "")
 } else {
-  check("attempt-less run discloses the refusal", Boolean(attemptsSkipped), attemptsSkipped ?? "")
+  check("attempt-less run discloses canonical field absence", Boolean(attemptsSkipped), attemptsSkipped ?? "")
   check("attempt-less run invents no attempts", !document.scenes.some(scn => scn.scene_ref.endsWith(":scene:executions-1")), "")
 }
 
