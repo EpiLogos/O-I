@@ -143,6 +143,64 @@ pub(crate) fn disclosed_reading(reading: &Value) -> Value {
 
 /// Retained personal reception belongs to the actually open stored world,
 /// rather than an arbitrary same-labelled snapshot supplied by the browser.
+// This comparison admits the same saved numerical sky across native and JSON
+// carriers. Only exact decimal values AND finite IEEE bits may agree despite
+// alternate number spelling. Object keys, text, array order, signed zero and
+// every numerical value remain determining. This does not rewrite stored sky
+// tokens, change global Value equality, or relax protected checkpoint custody.
+fn saved_sky_number_basis(number: &serde_json::Number) -> Option<(bool, String, i64, u64)> {
+    let finite = number.as_f64()?;
+    if !finite.is_finite() {
+        return None;
+    }
+    let token = number.to_string();
+    let negative = token.starts_with('-');
+    let unsigned = token.strip_prefix('-').unwrap_or(&token);
+    let (mantissa, exponent) = match unsigned.split_once(|ch| ch == 'e' || ch == 'E') {
+        Some((mantissa, exponent)) => (mantissa, exponent.parse::<i64>().ok()?),
+        None => (unsigned, 0),
+    };
+    let (integer, fraction) = mantissa.split_once('.').unwrap_or((mantissa, ""));
+    let digits = format!("{integer}{fraction}");
+    if digits.is_empty() || !digits.bytes().all(|digit| digit.is_ascii_digit()) {
+        return None;
+    }
+    let digits = digits.trim_start_matches('0');
+    if digits.is_empty() {
+        return Some((negative, "0".into(), 0, finite.to_bits()));
+    }
+    let significant = digits.trim_end_matches('0');
+    let removed = i64::try_from(digits.len() - significant.len()).ok()?;
+    let fraction_len = i64::try_from(fraction.len()).ok()?;
+    let scale = exponent.checked_sub(fraction_len)?.checked_add(removed)?;
+    Some((negative, significant.into(), scale, finite.to_bits()))
+}
+fn same_saved_sky(actual: &Value, expected: &Value) -> bool {
+    match (actual, expected) {
+        (Value::Number(actual), Value::Number(expected)) => {
+            match (saved_sky_number_basis(actual), saved_sky_number_basis(expected)) {
+                (Some(actual), Some(expected)) => actual == expected,
+                _ => false,
+            }
+        }
+        (Value::Array(actual), Value::Array(expected)) => {
+            actual.len() == expected.len()
+                && actual.iter().zip(expected).all(|(actual, expected)| {
+                    same_saved_sky(actual, expected)
+                })
+        }
+        (Value::Object(actual), Value::Object(expected)) => {
+            actual.len() == expected.len()
+                && actual.iter().all(|(key, actual)| {
+                    expected.get(key).is_some_and(|expected| {
+                        same_saved_sky(actual, expected)
+                    })
+                })
+        }
+        _ => actual == expected,
+    }
+}
+
 fn validate_saved_occasion(
     document: &Value,
     binding: &nara_dialogue::Request,
@@ -208,7 +266,7 @@ fn validate_saved_occasion(
         || record["receiving"]["personal"]["canonical_locus"] != "ql:m-coordinate:bimba:M4.4.4.4"
         || record["world"]["event_ref"] != snapshot["snapshot_ref"]
         || record["world"]["snapshot_ref"] != snapshot["snapshot_ref"]
-        || record["world"]["sky"] != *snapshot
+        || !same_saved_sky(&record["world"]["sky"], snapshot)
     {
         return Err(
             "The retained occasion does not match this saved person, identity and native world"
@@ -506,6 +564,34 @@ mod tests {
             "ql:m-coordinate:bimba:M4.4.4.4"
         );
     }
+    // Conformance uses the four original actual9563 saved-sky operand pairs;
+    // it is no native admission or fabricated numerical acceptance.
+    #[test]
+    fn saved_sky_comparison_retains_decimal_bits_and_complete_structure() {
+        let number = |token: &str| serde_json::from_str::<Value>(token).unwrap();
+        for (document, checkpoint) in [
+            ("-1.9260705030710736e-06", "-1.9260705030710736e-6"),
+            ("-3.285944299349127e-06", "-3.285944299349127e-6"),
+            ("2.7483592226209487e-05", "0.000027483592226209487"),
+            ("-3.647126460111755e-05", "-0.00003647126460111755"),
+        ] {
+            assert!(same_saved_sky(&number(document), &number(checkpoint)));
+        }
+        let original = number("-1.9260705030710736e-6");
+        let changed = number("-1.92607050307107361e-6");
+        assert_eq!(original.as_f64().unwrap().to_bits(), changed.as_f64().unwrap().to_bits());
+        assert!(!same_saved_sky(&original, &changed),
+                "Equal IEEE bits cannot erase a changed exact decimal");
+        assert!(!same_saved_sky(&original, &number("-1.926070503071073e-6")));
+        assert!(!same_saved_sky(&number("-0.0"), &number("0.0")));
+        assert!(!same_saved_sky(&number("9007199254740992"), &number("9007199254740993")));
+        assert!(!same_saved_sky(&number("1e-400"), &number("1e-401")));
+        assert!(!same_saved_sky(&json!([1,2]), &json!([2,1])));
+        assert!(!same_saved_sky(&json!({"body":"Moon"}), &json!({"body":"Sun"})));
+        assert!(!same_saved_sky(&json!({"body":"Moon","revision":"r1"}), &json!({"body":"Moon"})));
+        assert!(!same_saved_sky(&json!({"angle":1}), &json!({"angle":"1"})));
+    }
+
     #[test]
     fn native_current_request_refuses_a_supplied_reading_or_quaternion() {
         let binding = json!({"operation":"context","source_ref":"central:source:controlled",

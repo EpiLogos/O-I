@@ -786,6 +786,41 @@ mod actual_checkpoint_tests {
         assert_eq!(good.context, pin.context);
         assert_eq!(good.reading, pin.reading);
         assert_eq!(good.activity_input, pin.activity_input);
+        // Counterproofs operate on the actual newly admitted world/sky. All
+        // private checkpoint bytes and native person/profile fences stay intact.
+        let scene_index = document["scenes"].as_array().unwrap().iter()
+            .position(|scene| scene.pointer("/presentation/scene/epiWorld/schema")
+                == Some(&json!("oi.epi-world-material/v1"))).unwrap();
+        let sky_path = format!("/scenes/{scene_index}/presentation/scene/epiWorld/world/sky");
+        let original_number = &pin.reading["transit"]["sky"]["bodies"][0]["latitude_speed_degrees_per_day"];
+        let same_bits_changed_decimal: Value =
+            serde_json::from_str("-1.92607050307107361e-6").unwrap();
+        assert_eq!(original_number.as_f64().unwrap().to_bits(),
+                   same_bits_changed_decimal.as_f64().unwrap().to_bits());
+        for changed in [
+            same_bits_changed_decimal,
+            serde_json::from_str::<Value>("-1.926070503071073e-6").unwrap(),
+        ] {
+            let mut wrong = document.clone();
+            *wrong.pointer_mut(&format!("{sky_path}/bodies/0/latitude_speed_degrees_per_day")).unwrap() = changed;
+            assert!(store.restore(&project, &pin.binding, &pin.profile, &wrong)
+                .unwrap_err().contains("does not match"));
+        }
+        let mut reordered = document.clone();
+        reordered.pointer_mut(&format!("{sky_path}/bodies")).unwrap()
+            .as_array_mut().unwrap().swap(0,1);
+        assert!(store.restore(&project, &pin.binding, &pin.profile, &reordered)
+            .unwrap_err().contains("does not match"));
+        let mut changed_snapshot = document.clone();
+        *changed_snapshot.pointer_mut(&format!("{sky_path}/snapshot_ref")).unwrap() =
+            json!("snapshot:changed-actual-saved-occasion");
+        assert!(store.restore(&project, &pin.binding, &pin.profile, &changed_snapshot)
+            .unwrap_err().contains("does not match"));
+        let mut lost_body = document.clone();
+        lost_body.pointer_mut(&format!("{sky_path}/bodies")).unwrap()
+            .as_array_mut().unwrap().remove(0);
+        assert!(store.restore(&project, &pin.binding, &pin.profile, &lost_body)
+            .unwrap_err().contains("does not match"));
         let target = home.join("desktop/nara-current").join(&name);
         // Actual missing disk custody must refuse even though a prior admitted
         // Pinned value is still held locally; it cannot fall through to memory.
