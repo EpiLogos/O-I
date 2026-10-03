@@ -243,7 +243,7 @@ impl Application {
             return Err("Native control Edit has another owner, actor or CAS".into());
         }
         validate_control_changes(&candidate, changes)?;
-        let expanded = inherit_material_receipts(&candidate.before, changes.clone())?;
+        let expanded = inherit_material_receipts(&candidate.before, changes)?;
         let preview = candidate
             .before
             .edited_with_journal(expanded.clone(), true)?;
