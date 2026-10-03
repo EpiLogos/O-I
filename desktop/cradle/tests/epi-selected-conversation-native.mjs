@@ -48,6 +48,47 @@ if(selectionOnly){
 await mkdir(cfg.output,{recursive:true});assert.equal((await readdir(cfg.output)).length,0);
 const report={schema:'oi.epi-selected-conversation-native-gate/v1',passed:false,selection_case:cfg.selection_case,qualification:{path:cfg.qualification,sha256:cfg.qualification_sha256},checks:[],native:[],requests:[],limitations:['Actual controlled production hook and native HTTP receiving boundary; no provider/model question is sent','A positive selection gate does not qualify full source content, fresh answer, Keep/save/restart or installed/hardware/H','Superseded/invalidated queue outcomes remain separately required actual queue/lifetime cases; this driver does not manufacture these outcomes']};
 let browser,page,frame,releaseHeld,captureDOM;
+// Failure-only observations do not read another native body, mutate admission,
+// or extend the original cold receiving deadline. HTTP status is not native ACK.
+let collectingInitialWitness=selectionOnly;
+const initialRequestTimes=new WeakMap(),initialReplies=[],initialPageErrors=[];
+let initialReplyBytes=0,initialReplyDrops=0,initialPageErrorDrops=0;
+const shortError=value=>String(value).slice(0,2048);
+const shortTag=value=>typeof value==='string'?value.slice(0,128):null;
+function recordInitialReply(row){
+ if(!collectingInitialWitness)return;
+ const size=Buffer.byteLength(JSON.stringify(row));initialReplies.push(row);initialReplyBytes+=size;
+ while(initialReplies.length>128||initialReplyBytes>24*1024){initialReplyBytes-=Buffer.byteLength(JSON.stringify(initialReplies.shift()));initialReplyDrops++;}
+}
+async function retainInitialReceivingFailure(basis){
+ const started=Date.now();
+ let actual;
+ try{actual=await frame.evaluate(basis=>{
+  const f=window.__FIELD_STUDIES__,readErrors={};
+  const read=(name,fn)=>{try{return fn();}catch(error){readErrors[name]=String(error).slice(0,1024);return null;}};
+  const w=read('nativeWorking',()=>f?.nativeWorking()),r=read('epiWorld',()=>f?.epiWorld()),c=read('epiCurrent',()=>f?.epiCurrent());
+  const scalar=value=>typeof value==='string'?value.slice(0,2048):typeof value==='boolean'||typeof value==='number'&&Number.isFinite(value)?value:null;
+  const notice=document.querySelector('.epi-world-entrance [role="alert"]');
+  const predicates={native_ref:w?.native_ref===basis.expression_ref,not_busy:!w?.busy,not_pending:!w?.pending,not_failed:!w?.failed,
+   file_root:w?.file?.location?.root===basis.world,instance:r?.world?.instance_ref===basis.expression_ref,
+   person:r?.person_ref===basis.person_ref,identity_source:r?.identity_source?.source_ref===basis.identity_source_ref,
+   occasion:r?.world?.event_ref===basis.event_ref,current_person:c?.reading?.identity?.person_ref===basis.person_ref,current_occasion:c?.context?.event_ref===basis.event_ref};
+  return {captured_at:new Date().toISOString(),read_errors:readErrors,predicates,
+   working:{present:!!w,native_ref:scalar(w?.native_ref),revision:scalar(w?.revision),busy:scalar(w?.busy),pending:scalar(w?.pending),failed:scalar(w?.failed),
+    file_root:scalar(w?.file?.location?.root),file_revision:scalar(w?.file?.revision)},
+   world:{present:!!r,instance_ref:scalar(r?.world?.instance_ref),person_ref:scalar(r?.person_ref),identity_source_ref:scalar(r?.identity_source?.source_ref),event_ref:scalar(r?.world?.event_ref)},
+   current:{present:!!c,person_ref:scalar(c?.reading?.identity?.person_ref),event_ref:scalar(c?.context?.event_ref),reading_ref:scalar(c?.context?.reading_ref),reading_revision:scalar(c?.context?.reading_revision)},
+   dom:{ready_state:document.readyState,entrance_present:!!document.querySelector('.epi-world-entrance'),notice_text:notice?.textContent?.slice(0,2048)??null,
+    notice_visible:!!notice&&notice.getClientRects().length>0,conversation_visible:!!document.querySelector('#nara-instrument')?.getClientRects().length}};
+ },basis);}catch(error){actual={read_failed:shortError(error)};}
+ collectingInitialWitness=false;
+ const witness={schema:'epi.actual-cold-receiving-failure-witness/v1',started_at:new Date(started).toISOString(),finished_at:new Date().toISOString(),basis,actual,
+  page_errors:[...initialPageErrors],page_errors_dropped:initialPageErrorDrops,native_replies:initialReplies.map(row=>({...row})),native_replies_dropped:initialReplyDrops,
+  native_protocol_body_read:false,scope:'Passive actual loaded scalar/DOM and HTTP completion/error observations after the unchanged30s fence fails; no native acquisition, body copy, mutation or ACK substitution'};
+ const bytes=JSON.stringify(witness,null,2)+'\n';assert.ok(Buffer.byteLength(bytes)<=64*1024,'Cold receiving failure witness is bounded');
+ const name='initial-receiving-failure.json';await writeFile(resolve(cfg.output,name),bytes);
+ report.initial_receiving_failure={path:name,bytes:Buffer.byteLength(bytes),sha256:hash(bytes)};
+}
 async function responseBytes(response,cap=64*1024*1024){assert.ok(response.ok,'Actual HTTP '+response.status);const reader=response.body.getReader(),parts=[];let size=0;try{for(;;){const r=await reader.read();if(r.done)break;size+=r.value.byteLength;if(size>cap)throw Error('Actual native reply exceeds its receiving bound');parts.push(Buffer.from(r.value));}}catch(e){await reader.cancel();throw e;}finally{reader.releaseLock();}return Buffer.concat(parts);}
 async function native(request){
  const body=JSON.stringify({op:'expression',request});const bytes=await responseBytes(await fetch(cfg.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body}));const value=JSON.parse(bytes);
@@ -130,7 +171,10 @@ async function qualifyHostedAdmission(document){
 async function qualifyHostedDurable(label){
  const expected=hostedAdmission;
  const decoded=await native({operation:'inspect_file',location:expected.file.location,expected_file_revision:expected.file.revision});
- assert.equal(decoded.state,'ready');assert.deepEqual(decoded.file,expected.file);assert.deepEqual(decoded.document,expected.document,label+': every durable body/property/source/history remains exact');
+ assert.equal(decoded.state,'ready');
+ assert.deepEqual(decoded.file,{location:expected.file.location,revision:expected.file.revision},label+': actual native InspectFile location/revision contract');
+ assert.deepEqual({...decoded.file,expression_ref:decoded.document.expression_ref,document_revision:decoded.document.revision},expected.file,label+': canonical file identity/revision comes from the complete native decoded Document');
+ assert.deepEqual(decoded.document,expected.document,label+': every durable body/property/source/history remains exact');
  const bytes=await responseBytes(await fetch(cfg.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'file_read',location:expected.file.location})}),24*1024*1024);
  const result=JSON.parse(bytes);assert.equal(result.ok,true);assert.equal(result.outcome.result,'file_read');const reading=result.outcome.reading;
  assert.deepEqual({location:reading.location,revision:reading.revision},{location:expected.file.location,revision:expected.file.revision});assert.equal(Buffer.byteLength(reading.content),expected.content_bytes);assert.equal(hash(reading.content),expected.content_sha256);
@@ -144,8 +188,15 @@ function exactFocusOnly(before,after,sceneRef,entityRef){const expected=structur
 try{
  if(selectionOnly)await qualifyHostedOwner();
  browser=selectionOnly?await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']}):await chromium.launch({headless:true});page=selectionOnly?await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}):await browser.newPage({viewport:{width:1440,height:900}});
- const errors=[];page.on('pageerror',e=>errors.push(String(e)));
- page.on('request',request=>{if(request.url()!==cfg.bridge+'/op'||request.method()!=='POST')return;const text=request.postData();if(!text||Buffer.byteLength(text)>32*1024*1024)return;try{const v=JSON.parse(text);report.requests.push({op:v.op,operation:v.request?.operation,action:v.request?.action,sha256:hash(text),bytes:Buffer.byteLength(text)});}catch{report.requests.push({unreadable:true});}});
+ const errors=[];page.on('pageerror',e=>{errors.push(String(e));if(collectingInitialWitness){if(initialPageErrors.length<8)initialPageErrors.push(shortError(e));else initialPageErrorDrops++;}});
+ page.on('request',request=>{if(request.url()!==cfg.bridge+'/op'||request.method()!=='POST')return;const text=request.postData();if(!text||Buffer.byteLength(text)>32*1024*1024)return;try{const v=JSON.parse(text);report.requests.push({op:v.op,operation:v.request?.operation,action:v.request?.action,sha256:hash(text),bytes:Buffer.byteLength(text)});if(collectingInitialWitness)initialRequestTimes.set(request,{ordinal:report.requests.length-1,op:shortTag(v.op),operation:shortTag(v.request?.operation),started:Date.now()});}catch{report.requests.push({unreadable:true});}});
+ page.on('response',response=>{
+  const metadata=initialRequestTimes.get(response.request());if(!metadata||!collectingInitialWitness)return;
+  const arrived=Date.now(),headers=response.headers(),length=headers['content-length'];
+  recordInitialReply({...metadata,phase:'headers',at:arrived,elapsed_ms:arrived-metadata.started,http_status:response.status(),declared_bytes:typeof length==='string'?length.slice(0,32):null});
+  void response.finished().then(error=>{const at=Date.now();recordInitialReply({...metadata,phase:'finished',at,elapsed_ms:at-metadata.started,http_status:response.status(),error:error?shortError(error):null});}).catch(error=>recordInitialReply({...metadata,phase:'completion-error',at:Date.now(),error:shortError(error)}));
+ });
+ page.on('requestfailed',request=>{const metadata=initialRequestTimes.get(request);if(metadata)recordInitialReply({...metadata,phase:'request-failed',at:Date.now(),error:shortError(request.failure()?.errorText??'Unknown HTTP request failure')});});
  await page.goto(cfg.app_url);await page.waitForSelector('iframe',{timeout:30000});
  if(selectionOnly){
   const host=page.locator('#world');assert.equal(await host.count(),1);
@@ -155,12 +206,14 @@ try{
   assert.equal(new URL(frame.url()).searchParams.get('expression'),cfg.expression_ref,'Actual production host must admit this exact instance');
  }else {const candidates=page.frames().filter(f=>f.url().includes('field-studies'));assert.equal(candidates.length,1);frame=candidates[0];}
  await frame.waitForFunction(()=>!!window.__FIELD_STUDIES__?.nativeWorking(),null,{timeout:30000});
- if(selectionOnly)await frame.waitForFunction(basis=>{
+ if(selectionOnly){try{
+  await frame.waitForFunction(basis=>{
   const f=window.__FIELD_STUDIES__,w=f?.nativeWorking(),r=f?.epiWorld(),c=f?.epiCurrent();
   return w?.native_ref===basis.expression_ref&&!w.busy&&!w.pending&&!w.failed&&w.file?.location?.root===basis.world
    &&r?.world?.instance_ref===basis.expression_ref&&r.person_ref===basis.person_ref&&r.identity_source?.source_ref===basis.identity_source_ref
    &&r.world.event_ref===basis.event_ref&&c?.reading?.identity?.person_ref===basis.person_ref&&c.context?.event_ref===basis.event_ref;
  },{expression_ref:cfg.expression_ref,person_ref:cfg.person_ref,identity_source_ref:cfg.identity_source_ref,world:cfg.world,event_ref:q.event_ref},{timeout:30000});
+ }catch(error){try{await retainInitialReceivingFailure({expression_ref:cfg.expression_ref,person_ref:cfg.person_ref,identity_source_ref:cfg.identity_source_ref,world:cfg.world,event_ref:q.event_ref});}catch(diagnostic){report.initial_receiving_diagnostic_error=shortError(diagnostic);}throw error;}finally{collectingInitialWitness=false;}}
  const original=await inspect(),document=original.document;assert.equal(document.expression_ref,cfg.expression_ref);assert.equal(original.dirty,false);assert.ok(original.file);assert.equal(original.file.location.root,cfg.world);
  const carrier=document.scenes.find(s=>s.presentation?.scene?.epiWorld)?.presentation.scene.epiWorld;assert.ok(carrier);assert.equal(carrier.person_ref,cfg.person_ref);assert.equal(carrier.identity_source.source_ref,cfg.identity_source_ref);
  if(selectionOnly){assert.equal(carrier.person_ref,q.person_ref);assert.equal(carrier.world.event_ref,q.event_ref);assert.equal(carrier.world.snapshot_ref,q.snapshot_ref);assert.equal(carrier.world.instance_ref,q.instance_ref);await qualifyHostedAdmission(document);}
