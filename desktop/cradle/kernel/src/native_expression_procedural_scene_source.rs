@@ -39,6 +39,17 @@ impl NativeSceneOperationRefusal {
 }
 
 impl Manager {
+    /// Actual privately borrowed current Document/Scene; the existing QL
+    /// field-source operation replays the complete original/current source.
+    /// This wrapper does not compose, invent a first Act or install source.
+    pub(crate) fn native_field_source_scene_read(
+        &mut self,
+        lease: &str,
+        reader: &NativeSceneSourceReader<'_>,
+    ) -> Result<Value, NativeSceneOperationRefusal> {
+        self.closed_native_scene_operation(lease, reader, "field-source", None, None, None)
+    }
+
     /// SAME held source Document/Scene, actual coordinate owner and complete
     /// original HostRequest. Native conduct itself admits its ordinal once.
     pub(crate) fn procedural_bootstrap_scene_read(
@@ -124,15 +135,13 @@ impl Manager {
         #[cfg(any(target_os = "linux", target_os = "macos"))]
         {
             let mut native_reply = None;
+            let mut delivery_started = false;
             let outcome = (|| -> Result<Value, String> {
                 let owner = self
                     .active
                     .as_mut()
                     .ok_or("native Scene source has no current Manager owner")?;
-                if owner.lease != lease
-                    || owner.stopped
-                    || owner.child.try_wait().map_err(|e| e.to_string())?.is_some()
-                {
+                if owner.lease != lease || owner.stopped || owner.process_exited()? {
                     return Err("native Scene source has another/closed Manager lease".into());
                 }
                 let channel = owner
@@ -238,6 +247,7 @@ impl Manager {
                     request["procedural_request"] = original;
                 }
                 let mut query = 0_u64;
+                delivery_started = true;
                 let reply=channel.exchange_stream(&request,|value| {
                 if value["schema"]!="ql.native-act-owner-query/v1" {return Ok(None);}
                 query=query.checked_add(1).ok_or("native Scene part ordinal exhausted")?;
@@ -325,7 +335,15 @@ impl Manager {
                 }
                 Ok(value.clone())
             })();
-            if outcome.is_err() {
+            if outcome.is_err()
+                && delivery_started
+                && self
+                    .active
+                    .as_ref()
+                    .is_some_and(|owner| owner.lease == lease)
+            {
+                // Only this operation's admitted owner may have uncertain effects.
+                // A preflight/wrong-lease refusal must preserve the current owner.
                 self.active.take();
             }
             outcome.map_err(|reason| NativeSceneOperationRefusal {
@@ -336,3 +354,105 @@ impl Manager {
     }
 }
 
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+mod tests {
+    use super::*;
+    use crate::{Kernel, KernelOp, KernelOpResult};
+
+    fn apply(kernel: &mut Kernel, request: Value) -> Value {
+        match kernel
+            .apply(KernelOp::Expression {
+                request: serde_json::from_value(request).unwrap(),
+            })
+            .unwrap()
+            .result
+        {
+            KernelOpResult::Expression { data } => {
+                assert_eq!(data["state"], "ready");
+                data
+            }
+            other => panic!("actual Expression result expected: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn actual_current_scene_wrong_lease_and_preflight_refusal_preserve_owned_process() {
+        let mut kernel = Kernel::discover();
+        let created = apply(
+            &mut kernel,
+            json!({"operation":"create",
+            "expression_ref":"expression:lease-refusal","title":"Actual source",
+            "actor":"human:lease-refusal-test"}),
+        );
+        let scene_ref = created["document"]["scenes"][0]["scene_ref"].clone();
+        let edited = apply(
+            &mut kernel,
+            json!({"operation":"edit",
+            "expression_ref":created["document"]["expression_ref"],
+            "expected_revision":created["document"]["revision"],
+            "actor":"human:lease-refusal-test","changes":[{"change":"scene_material_set",
+            "scene_ref":scene_ref,"presentation":{"schema":"oi.journey-scene/v1","scene":{
+                "id":scene_ref,"name":"Current Scene","character":"Lease refusal",
+                "duration":42,"transition":3,"view":{"mode":"3d","yaw":0.0,"pitch":0.0,
+                    "zoom":1.0,"panX":0.0,"panY":0.0},
+                "field":{"background":"#fafafa","palette":["#111111"],"material":"ink","params":{}},
+                "composition":{},"morph":{},"engine":{},"entities":[],"text":[],"automation":[]}}}]}),
+        );
+        let owner = super::super::tests::owned_process_for_test("exec sleep 60");
+        let pid = owner.child.id();
+        let lease = owner.lease.clone();
+        kernel.native_expression.active = Some(owner);
+        let doc = &edited["document"];
+        let actual_scene = doc["scenes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|scene| scene["scene_ref"] == scene_ref)
+            .unwrap();
+        for supplied in ["foreign-lease", lease.as_str()] {
+            let outcome = kernel
+                .with_native_document_scene(
+                    doc["expression_ref"].as_str().unwrap(),
+                    doc["revision"].as_u64().unwrap(),
+                    scene_ref.as_str().unwrap(),
+                    actual_scene["revision"].as_u64().unwrap(),
+                    |manager, reader| {
+                        let reader = NativeSceneSourceReader::CurrentDocument(reader);
+                        let result = manager.native_field_source_scene_read(supplied, &reader);
+                        let error = match result {
+                            Ok(_) => panic!("unqualified process gained a native source"),
+                            Err(error) => error,
+                        };
+                        assert!(error.native_reply().is_none());
+                        assert!(
+                            error.reason().contains(if supplied == "foreign-lease" {
+                                "another/closed Manager lease"
+                            } else {
+                                "no qualified OS/image channel"
+                            }),
+                            "{}",
+                            error.reason()
+                        );
+                        Ok(())
+                    },
+                )
+                .unwrap();
+            outcome.result.unwrap();
+            outcome.currentness.unwrap();
+            let retained = kernel
+                .native_expression
+                .active
+                .as_ref()
+                .expect("preflight retired current owner");
+            assert_eq!(retained.child.id(), pid);
+            assert_eq!(retained.lease, lease);
+            assert_eq!(retained.last_request_id, 0);
+            assert!(!retained.process_exited().unwrap());
+        }
+        let current = apply(
+            &mut kernel,
+            json!({"operation":"inspect","expression_ref":doc["expression_ref"]}),
+        );
+        assert_eq!(current["document"], *doc);
+    }
+}

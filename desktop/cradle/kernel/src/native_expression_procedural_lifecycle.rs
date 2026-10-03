@@ -2,11 +2,11 @@
 //! Coordinate reading executes outside the Kernel mutation lock. Complete
 //! native receipts survive a refused receiving admission or a revision race.
 use crate::expression::procedural::{
-    Participant, Timing,
     lifecycle::{Intent, RESPONSE_SCHEMA},
+    Participant, Timing,
 };
 use crate::expression::{Document, Request as ExpressionRequest};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 /// Captured from the actual current Manager before its private C31 channel
 /// consumes this original Host request. There is no wire constructor.
@@ -233,7 +233,7 @@ impl crate::Kernel {
             .active
             .as_mut()
             .ok_or("Lifecycle has no actual current native Source owner")?;
-        if owner.stopped || owner.child.try_wait().map_err(|e| e.to_string())?.is_some() {
+        if owner.stopped || owner.process_exited()? {
             return Err("Lifecycle actual native Source owner has closed".into());
         }
         let lease = owner.lease.clone();
@@ -324,7 +324,7 @@ impl crate::Kernel {
         if owner.lease != lease
             || owner.identity != identity
             || owner.stopped
-            || owner.child.try_wait().map_err(|e| e.to_string())?.is_some()
+            || owner.process_exited()?
         {
             return Err("Actual lifecycle native owner changed during reading".into());
         }

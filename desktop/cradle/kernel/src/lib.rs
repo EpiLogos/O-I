@@ -2425,6 +2425,15 @@ impl Kernel {
             }
             KernelOp::NativeExpression { request } => {
                 let data = match request {
+                    native_expression::Request::OpenSelectedScene { request } => {
+                        self.native_selected_scene_open(request)?
+                    }
+                    native_expression::Request::RecoverSelectedScene { request } => {
+                        self.recover_native_selected_scene_open(request)?
+                    }
+                    native_expression::Request::AbandonSelectedScene { request } => {
+                        self.abandon_native_selected_scene_open(request)?
+                    }
                     native_expression::Request::ProceduralConduct { request } => {
                         self.native_procedural_conduct(request)?
                     }

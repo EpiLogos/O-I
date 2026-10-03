@@ -2,7 +2,7 @@
 //! the exact material and CAS. Neither part can be issued by a JSON request.
 use crate::expression::{Document, ReadingRef};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -193,10 +193,7 @@ impl crate::Kernel {
             .active
             .as_mut()
             .ok_or("No current native Scene source owner")?;
-        if owner.lease != input.lease
-            || owner.stopped
-            || owner.child.try_wait().map_err(|e| e.to_string())?.is_some()
-        {
+        if owner.lease != input.lease || owner.stopped || owner.process_exited()? {
             return Err("Source bootstrap belongs to another or closed native owner".into());
         }
         Ok(Some(Prepared {
@@ -234,7 +231,7 @@ impl crate::Kernel {
         if owner.lease != input.lease
             || owner.stopped
             || owner.identity != identity
-            || owner.child.try_wait().map_err(|e| e.to_string())?.is_some()
+            || owner.process_exited()?
         {
             return Err("Native Scene source owner changed during coordinate reading".into());
         }
@@ -752,10 +749,7 @@ impl crate::Kernel {
             .active
             .as_mut()
             .ok_or("No current native source bootstrap owner; re-open and requalify")?;
-        if owner.lease != request.lease
-            || owner.stopped
-            || owner.child.try_wait().map_err(|e| e.to_string())?.is_some()
-        {
+        if owner.lease != request.lease || owner.stopped || owner.process_exited()? {
             return Err("Source bootstrap retry belongs to another or closed native owner".into());
         }
         let identity = owner.identity.clone();

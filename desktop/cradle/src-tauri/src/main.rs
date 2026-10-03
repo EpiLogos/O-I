@@ -5,15 +5,15 @@
 // is a receipt the kernel recorded.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod windows;
+mod app_assets;
 mod browser;
-mod terminal;
-mod working_surface_lease;
-mod menus;
 mod ground_dialog;
 mod material_protocol;
-mod app_assets;
+mod menus;
+mod terminal;
 mod walk_diagnostics;
+mod windows;
+mod working_surface_lease;
 use std::sync::Mutex;
 
 use oi_cradle_kernel::events::{KernelEventReceipt, KERNEL_EVENT_TOPIC};
@@ -43,62 +43,167 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
             return oi_cradle_kernel::nara_coordinate::execute(request);
         }
         let host = app.state::<KernelHost>();
-        let lifecycle = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_native_procedural_lifecycle(&op)?;
-        if let Some(prepared) = lifecycle {
+        let selected_scene = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_native_selected_scene_open(&op)?;
+        if let Some(prepared) = selected_scene {
             let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_native_procedural_lifecycle(completed)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            let outcome = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_native_selected_scene_open(completed)?;
+            for receipt in &outcome.receipts {
+                let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+            }
             return Ok(outcome);
         }
-        let lifecycle = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_native_procedural_lifecycle_cancel(&op)?;
+        let lifecycle = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_native_procedural_lifecycle(&op)?;
         if let Some(prepared) = lifecycle {
             let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_native_procedural_lifecycle_cancel(completed)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            let outcome = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_native_procedural_lifecycle(completed)?;
+            for receipt in &outcome.receipts {
+                let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+            }
             return Ok(outcome);
         }
-        let bootstrap = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_native_procedural_bootstrap(&op)?;
+        let lifecycle = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_native_procedural_lifecycle_cancel(&op)?;
+        if let Some(prepared) = lifecycle {
+            let completed = prepared.execute()?;
+            let outcome = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_native_procedural_lifecycle_cancel(completed)?;
+            for receipt in &outcome.receipts {
+                let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+            }
+            return Ok(outcome);
+        }
+        let bootstrap = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_native_procedural_bootstrap(&op)?;
         if let Some(prepared) = bootstrap {
             let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_native_procedural_bootstrap(completed)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            let outcome = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_native_procedural_bootstrap(completed)?;
+            for receipt in &outcome.receipts {
+                let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+            }
             return Ok(outcome);
         }
-        let epii = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii(&op)?;
+        let epii = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_nara_epii(&op)?;
         if let Some(prepared) = epii {
             let completed = prepared.execute()?;
-            let attribution = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii_attribution(&completed)?;
+            let attribution = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .prepare_nara_epii_attribution(&completed)?;
             let attribution = attribution.map(|prepared| prepared.execute());
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_epii_with_attribution(completed, attribution)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            let outcome = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_nara_epii_with_attribution(completed, attribution)?;
+            for receipt in &outcome.receipts {
+                let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+            }
             return Ok(outcome);
         }
-        let voice = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_voice(&op)?;
-        let act = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_expressive_act(&op)?;
+        let voice = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_nara_voice(&op)?;
+        let act = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_nara_expressive_act(&op)?;
         if let Some(prepared) = act {
             let completed = prepared.execute()?;
-            let attribution = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_expressive_act_attribution(&completed)?;
+            let attribution = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .prepare_nara_expressive_act_attribution(&completed)?;
             let attribution = attribution.map(|prepared| prepared.execute());
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_expressive_act_with_attribution(completed, attribution)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            let outcome = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_nara_expressive_act_with_attribution(completed, attribution)?;
+            for receipt in &outcome.receipts {
+                let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+            }
             return Ok(outcome);
         }
-        let presence=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_presence(&op)?;
-        if let Some(prepared)=presence {
-            let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_presence(completed);
+        let presence = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_nara_presence(&op)?;
+        if let Some(prepared) = presence {
+            let completed = prepared.execute()?;
+            return host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_nara_presence(completed);
         }
-        let m3=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_m3_reception(&op)?;
-        if let Some(prepared)=m3 {
-            let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_m3_reception(completed);
+        let m3 = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_m3_reception(&op)?;
+        if let Some(prepared) = m3 {
+            let completed = prepared.execute()?;
+            return host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_m3_reception(completed);
         }
-        let current=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_current(&op)?;
-        if let Some(prepared)=current {
-            let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_current(completed);
+        let current = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_nara_current(&op)?;
+        if let Some(prepared) = current {
+            let completed = prepared.execute()?;
+            return host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_nara_current(completed);
         }
-        if let Some(prepared) = voice { return prepared.execute(); }
+        if let Some(prepared) = voice {
+            return prepared.execute();
+        }
         let dialogue = host
             .0
             .lock()
@@ -117,84 +222,226 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         }
         // Composing may provision QL's dated sky for tens of seconds: run it
         // outside the lock; only the single-owner open is serialised.
-        let procedure=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_procedural_compile(&op)?;
-        if let Some(prepared)=procedure { let completed=prepared.execute()?; return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_procedural_compile(completed); }
-        let attribution=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_procedural_manual(&op);
-        if let Ok(Some(prepared))=attribution {
-            let completed=prepared.execute();
-            let outcome=host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_procedural_manual(completed)?;
-            for receipt in &outcome.receipts { let _=app.emit(KERNEL_EVENT_TOPIC,receipt); }
+        let procedure = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_native_procedural_compile(&op)?;
+        if let Some(prepared) = procedure {
+            let completed = prepared.execute()?;
+            return host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_native_procedural_compile(completed);
+        }
+        let attribution = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_native_procedural_manual(&op);
+        if let Ok(Some(prepared)) = attribution {
+            let completed = prepared.execute();
+            let outcome = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_native_procedural_manual(completed)?;
+            for receipt in &outcome.receipts {
+                let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+            }
             return Ok(outcome);
         }
-        let compose=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_compose(&op)?;
-        if let Some(prepared)=compose{let composed=prepared.execute()?;return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_compose(composed);}
-        let prepared = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_owner_read(&op);
-        if let Some(read) = prepared { return read.execute(); }
-        let working=match &op {
-            KernelOp::WorkingSurfaceRead {project,agent_session,binding}=>Some(host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_working_surface_read(project,agent_session.clone(),binding.clone(),false)?),
-            KernelOp::WorkingSurfaceAttachment {project,agent_session,binding}=>Some(host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_working_surface_read(project,agent_session.clone(),Some(binding.clone()),true)?),
-            _=>None,
+        let compose = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_native_compose(&op)?;
+        if let Some(prepared) = compose {
+            let composed = prepared.execute()?;
+            return host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_native_compose(composed);
+        }
+        let prepared = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_owner_read(&op);
+        if let Some(read) = prepared {
+            return read.execute();
+        }
+        let working = match &op {
+            KernelOp::WorkingSurfaceRead {
+                project,
+                agent_session,
+                binding,
+            } => Some(
+                host.0
+                    .lock()
+                    .map_err(|_| "kernel lock unavailable")?
+                    .prepare_working_surface_read(
+                        project,
+                        agent_session.clone(),
+                        binding.clone(),
+                        false,
+                    )?,
+            ),
+            KernelOp::WorkingSurfaceAttachment {
+                project,
+                agent_session,
+                binding,
+            } => Some(
+                host.0
+                    .lock()
+                    .map_err(|_| "kernel lock unavailable")?
+                    .prepare_working_surface_read(
+                        project,
+                        agent_session.clone(),
+                        Some(binding.clone()),
+                        true,
+                    )?,
+            ),
+            _ => None,
         };
-        if let Some(read)=working{return Ok(KernelOpOutcome {receipts:vec![],result:oi_cradle_kernel::KernelOpResult::WorkingSurfaceReading{document:read.execute()?}});}
-        let dictation=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_dictation(&op)?;
-        if let Some(prepared)=dictation{return prepared.execute();}
-        let knowledge=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_knowledge(&op)?;
-        if let Some(prepared)=knowledge{let completed=prepared.execute()?;return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_knowledge(completed);}
-        let decision = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_decision(&op)?;
-        let decision_receipt = match decision { Some(prepared) => Some(prepared.execute()?), None => None };
+        if let Some(read) = working {
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: oi_cradle_kernel::KernelOpResult::WorkingSurfaceReading {
+                    document: read.execute()?,
+                },
+            });
+        }
+        let dictation = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_dictation(&op)?;
+        if let Some(prepared) = dictation {
+            return prepared.execute();
+        }
+        let knowledge = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_knowledge(&op)?;
+        if let Some(prepared) = knowledge {
+            let completed = prepared.execute()?;
+            return host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_knowledge(completed);
+        }
+        let decision = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_decision(&op)?;
+        let decision_receipt = match decision {
+            Some(prepared) => Some(prepared.execute()?),
+            None => None,
+        };
         let (outcome, receipts) = {
             let mut kernel = host.0.lock().map_err(|_| "kernel lock unavailable")?;
             let outcome = match decision_receipt {
-                Some(receipt) => kernel.finish_decision(receipt, matches!(&op, KernelOp::InvokeAction { .. }))?,
+                Some(receipt) => {
+                    kernel.finish_decision(receipt, matches!(&op, KernelOp::InvokeAction { .. }))?
+                }
                 None => kernel.apply(op)?,
             };
             let receipts = outcome.receipts.clone();
             (outcome, receipts)
         };
         for receipt in receipts {
-            if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } = &receipt.envelope.event {
+            if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } =
+                &receipt.envelope.event
+            {
                 apply_native_appearance(&app, &theme.appearance);
             }
             let _ = app.emit(KERNEL_EVENT_TOPIC, &receipt);
         }
         Ok(outcome)
-    }).await.map_err(|e| e.to_string())?
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 /// Native human confirmation is the only issuance door. The caller supplies
 /// an opaque preflight reference, never a grant, approval flag or dialog text.
 #[tauri::command]
-async fn decision_episode_authorise(app: AppHandle, window: tauri::WebviewWindow, preflight_ref: String) -> Result<KernelOpOutcome, String> {
-    if window.label() != "main" { return Err("Authorise a decision episode from the main desktop window".into()); }
+async fn decision_episode_authorise(
+    app: AppHandle,
+    window: tauri::WebviewWindow,
+    preflight_ref: String,
+) -> Result<KernelOpOutcome, String> {
+    if window.label() != "main" {
+        return Err("Authorise a decision episode from the main desktop window".into());
+    }
     tauri::async_runtime::spawn_blocking(move || {
-        let host=app.state::<KernelHost>();
-        let preview=host.0.lock().map_err(|_| "kernel lock unavailable")?.decision_authorisation_preview(&preflight_ref)?;
-        let approved=app.dialog().message(preview.message).title("Allow this decision episode?")
-            .buttons(MessageDialogButtons::OkCancelCustom("Allow this episode".into(), "Cancel".into())).blocking_show();
-        if !approved {return Err("Decision episode was not authorised".into());}
-        let outcome=host.0.lock().map_err(|_| "kernel lock unavailable")?.authorise_decision(&preflight_ref)?;
-        for receipt in &outcome.receipts {let _=app.emit(KERNEL_EVENT_TOPIC,receipt);}
+        let host = app.state::<KernelHost>();
+        let preview = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .decision_authorisation_preview(&preflight_ref)?;
+        let approved = app
+            .dialog()
+            .message(preview.message)
+            .title("Allow this decision episode?")
+            .buttons(MessageDialogButtons::OkCancelCustom(
+                "Allow this episode".into(),
+                "Cancel".into(),
+            ))
+            .blocking_show();
+        if !approved {
+            return Err("Decision episode was not authorised".into());
+        }
+        let outcome = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .authorise_decision(&preflight_ref)?;
+        for receipt in &outcome.receipts {
+            let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+        }
         Ok(outcome)
-    }).await.map_err(|error|error.to_string())?
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
 
 /// The ordered, observable event log, read by cursor. This is the typed
 /// command the renderer bootstraps from and re-syncs through; the topic
 /// event is the push that says "look again".
 #[tauri::command]
-async fn kernel_event_log(app: AppHandle, since_seq: u64) -> Result<Vec<KernelEventReceipt>, String> {
+async fn kernel_event_log(
+    app: AppHandle,
+    since_seq: u64,
+) -> Result<Vec<KernelEventReceipt>, String> {
     // An owner read can hold this mutex for seconds. Waiting on the main
     // thread freezes WebKit and native window interaction, even though
     // kernel_op itself correctly runs on the blocking pool.
     tauri::async_runtime::spawn_blocking(move || {
         let host = app.state::<KernelHost>();
-        let kernel = host.0.lock().map_err(|_| "kernel lock unavailable".to_owned())?;
+        let kernel = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable".to_owned())?;
         Ok(kernel.event_log().since(since_seq.max(1)).to_vec())
-    }).await.map_err(|error| error.to_string())?
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
 
 fn apply_native_appearance(app: &AppHandle, appearance: &str) {
-    app.set_theme(match appearance { "light" => Some(tauri::Theme::Light), "dark" => Some(tauri::Theme::Dark), _ => None });
+    app.set_theme(match appearance {
+        "light" => Some(tauri::Theme::Light),
+        "dark" => Some(tauri::Theme::Dark),
+        _ => None,
+    });
 }
 
 fn main() {
@@ -207,14 +454,23 @@ fn main() {
             std::env::set_var("OI_BIN", oi);
         }
     }
-    let mut context=tauri::generate_context!();
+    let mut context = tauri::generate_context!();
     // A development/native acceptance run can use an isolated persistent
     // WebKit store while exercising the real owner ground and kernel.
     #[cfg(debug_assertions)]
-    if let Ok(raw)=std::env::var("OI_CRADLE_DATA_STORE_ID") {
-        assert!(raw.len()==32 && raw.bytes().all(|b|b.is_ascii_hexdigit()),"OI_CRADLE_DATA_STORE_ID must be 32 hex digits");
-        let mut id=[0u8;16];for (i,byte) in id.iter_mut().enumerate(){*byte=u8::from_str_radix(&raw[i*2..i*2+2],16).expect("validated hex");}
-        for window in &mut context.config_mut().app.windows {window.data_store_identifier=Some(id);window.create=false;}
+    if let Ok(raw) = std::env::var("OI_CRADLE_DATA_STORE_ID") {
+        assert!(
+            raw.len() == 32 && raw.bytes().all(|b| b.is_ascii_hexdigit()),
+            "OI_CRADLE_DATA_STORE_ID must be 32 hex digits"
+        );
+        let mut id = [0u8; 16];
+        for (i, byte) in id.iter_mut().enumerate() {
+            *byte = u8::from_str_radix(&raw[i * 2..i * 2 + 2], 16).expect("validated hex");
+        }
+        for window in &mut context.config_mut().app.windows {
+            window.data_store_identifier = Some(id);
+            window.create = false;
+        }
     }
     let builder = material_protocol::register(tauri::Builder::default());
     builder
@@ -227,7 +483,9 @@ fn main() {
             // `shared-field/` resource); a development build without it falls
             // back to the checkout inside the kernel.
             if let Ok(resources) = app.path().resource_dir() {
-                oi_cradle_kernel::shared_field::bind_bundled_client_home(resources.join("shared-field"));
+                oi_cradle_kernel::shared_field::bind_bundled_client_home(
+                    resources.join("shared-field"),
+                );
             }
             let mut kernel = Kernel::discover();
             // Expressive acts survive restart ($OI_HOME/desktop/expression-acts).
@@ -235,9 +493,16 @@ fn main() {
                 eprintln!("Expressive act store unavailable; acts stay in memory: {error}");
             }
             match kernel.apply(KernelOp::PresentationRead) {
-                Ok(outcome) => if let oi_cradle_kernel::KernelOpResult::PresentationReading { document } = outcome.result {
-                    apply_native_appearance(app.handle(), document["theme"]["appearance"].as_str().unwrap_or("system"));
-                },
+                Ok(outcome) => {
+                    if let oi_cradle_kernel::KernelOpResult::PresentationReading { document } =
+                        outcome.result
+                    {
+                        apply_native_appearance(
+                            app.handle(),
+                            document["theme"]["appearance"].as_str().unwrap_or("system"),
+                        );
+                    }
+                }
                 Err(error) => eprintln!("Desktop appearance could not be restored: {error}"),
             }
             app.manage(KernelHost(Mutex::new(kernel)));
@@ -250,15 +515,32 @@ fn main() {
                     &socket,
                     move |request| {
                         let host = handle.state::<KernelHost>();
-                        let prepared=owner.prepare_native_procedural_manual(
-                            &*host.0.lock().map_err(|_|"native kernel lock unavailable")?,&request);
-                        let value=match prepared {
-                            Ok(Some(prepared))=> {
-                                let completed=prepared.execute();
+                        let prepared = owner.prepare_native_procedural_manual(
+                            &*host
+                                .0
+                                .lock()
+                                .map_err(|_| "native kernel lock unavailable")?,
+                            &request,
+                        );
+                        let value = match prepared {
+                            Ok(Some(prepared)) => {
+                                let completed = prepared.execute();
                                 owner.finish_native_procedural_manual(
-                                    &mut *host.0.lock().map_err(|_|"native kernel lock unavailable")?,request,completed)?
-                            },
-                            _=>owner.apply(&mut *host.0.lock().map_err(|_|"native kernel lock unavailable")?,request)?,
+                                    &mut *host
+                                        .0
+                                        .lock()
+                                        .map_err(|_| "native kernel lock unavailable")?,
+                                    request,
+                                    completed,
+                                )?
+                            }
+                            _ => owner.apply(
+                                &mut *host
+                                    .0
+                                    .lock()
+                                    .map_err(|_| "native kernel lock unavailable")?,
+                                request,
+                            )?,
                         };
                         if let Some(receipts) = value["outcome"]["receipts"].as_array() {
                             for receipt in receipts {
@@ -275,7 +557,9 @@ fn main() {
             #[cfg(unix)]
             {
                 let path = oi_cradle_kernel::expression_transport::default_socket_path()?;
-                if let Some(directory) = path.parent() { std::fs::create_dir_all(directory)?; }
+                if let Some(directory) = path.parent() {
+                    std::fs::create_dir_all(directory)?;
+                }
                 let handle = app.handle().clone();
                 match oi_cradle_kernel::expression_transport::serve_routed(&path, move |request| {
                     let host = handle.state::<KernelHost>();
@@ -283,30 +567,52 @@ fn main() {
                     // world seam (acts, material, selection); others are
                     // ordinary Expression requests.
                     let op = match request {
-                        oi_cradle_kernel::expression_transport::Request::Expression(request) => KernelOp::Expression { request },
-                        oi_cradle_kernel::expression_transport::Request::World(request) => KernelOp::ExpressionWorld { request },
+                        oi_cradle_kernel::expression_transport::Request::Expression(request) => {
+                            KernelOp::Expression { request }
+                        }
+                        oi_cradle_kernel::expression_transport::Request::World(request) => {
+                            KernelOp::ExpressionWorld { request }
+                        }
                     };
-                    let prepared=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_procedural_manual(&op);
-                    let outcome=match prepared {
-                        Ok(Some(prepared))=> {
-                            let completed=prepared.execute();
-                            host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_procedural_manual(completed)?
-                        },
-                        _=>host.0.lock().map_err(|_|"kernel lock unavailable")?.apply(op)?,
+                    let prepared = host
+                        .0
+                        .lock()
+                        .map_err(|_| "kernel lock unavailable")?
+                        .prepare_native_procedural_manual(&op);
+                    let outcome = match prepared {
+                        Ok(Some(prepared)) => {
+                            let completed = prepared.execute();
+                            host.0
+                                .lock()
+                                .map_err(|_| "kernel lock unavailable")?
+                                .finish_native_procedural_manual(completed)?
+                        }
+                        _ => host
+                            .0
+                            .lock()
+                            .map_err(|_| "kernel lock unavailable")?
+                            .apply(op)?,
                     };
-                    for receipt in &outcome.receipts { let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt); }
+                    for receipt in &outcome.receipts {
+                        let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt);
+                    }
                     serde_json::to_value(outcome).map_err(|e| e.to_string())
                 }) {
-                    Ok(server) => { app.manage(Mutex::new(server)); eprintln!("Expression application: {}", path.display()); }
+                    Ok(server) => {
+                        app.manage(Mutex::new(server));
+                        eprintln!("Expression application: {}", path.display());
+                    }
                     Err(error) => eprintln!("Expression Agent transport unavailable: {error}"),
                 }
             }
 
-            #[cfg(target_os="macos")]
+            #[cfg(target_os = "macos")]
             for config in &app.config().app.windows {
                 if !config.create {
-                    if let Some(id)=config.data_store_identifier {
-                        tauri::WebviewWindowBuilder::from_config(app,config)?.data_store_identifier(id).build()?;
+                    if let Some(id) = config.data_store_identifier {
+                        tauri::WebviewWindowBuilder::from_config(app, config)?
+                            .data_store_identifier(id)
+                            .build()?;
                     }
                 }
             }
@@ -314,7 +620,34 @@ fn main() {
             Ok(())
         })
         .on_menu_event(|app, event| menus::dispatch(app, event.id().as_ref()))
-        .invoke_handler(tauri::generate_handler![walk_diagnostics::expression_walk_observation,working_surface_lease::working_surface_takeover,working_surface_lease::working_surface_client_poll,working_surface_lease::working_surface_client_input,working_surface_lease::working_surface_client_resize,working_surface_lease::working_surface_release,terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, decision_episode_authorise, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_redock_surface, windows::window_focus_subject, windows::window_focus_main])
+        .invoke_handler(tauri::generate_handler![
+            walk_diagnostics::expression_walk_observation,
+            working_surface_lease::working_surface_takeover,
+            working_surface_lease::working_surface_client_poll,
+            working_surface_lease::working_surface_client_input,
+            working_surface_lease::working_surface_client_resize,
+            working_surface_lease::working_surface_release,
+            terminal::terminal_attach,
+            terminal::terminal_poll,
+            terminal::terminal_input,
+            terminal::terminal_resize,
+            terminal::terminal_checkpoint,
+            terminal::terminal_reconcile,
+            browser::browser_attach,
+            browser::browser_control,
+            browser::browser_reconcile,
+            ground_dialog::choose_central_folder,
+            menus::arrangement_menu,
+            decision_episode_authorise,
+            kernel_op,
+            kernel_event_log,
+            windows::window_detach,
+            windows::window_binding,
+            windows::window_redock,
+            windows::window_redock_surface,
+            windows::window_focus_subject,
+            windows::window_focus_main
+        ])
         .run(context)
         .expect("error while running the cradle");
 }

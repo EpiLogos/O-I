@@ -134,6 +134,23 @@ fn run_inner(
     }
 }
 
+/// Observe an owned child without releasing its PID/process-group custody.
+/// Callers that still owe group cleanup must not use Child::try_wait for liveness.
+pub(crate) fn child_exited_without_reaping(child: &std::process::Child) -> std::io::Result<bool> {
+    #[cfg(unix)]
+    {
+        unix::exited(child)
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = child;
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "Non-reaping native child observation is unavailable on this platform",
+        ))
+    }
+}
+
 #[cfg(unix)]
 mod unix {
     use super::*;
@@ -149,7 +166,7 @@ mod unix {
     // Child's PID remains reserved until pipe/deadline handling finishes. A
     // try_wait loop would reap an exited leader before signalling its retained
     // group, permitting PID reuse. WNOWAIT observes without releasing custody.
-    fn exited(child: &Child) -> io::Result<bool> {
+    pub(super) fn exited(child: &Child) -> io::Result<bool> {
         let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
         let result = unsafe {
             libc::waitid(

@@ -17,6 +17,8 @@ use std::{
 
 #[path = "native_expression_procedural.rs"]
 pub mod procedural;
+#[path = "native_expression_selected_scene.rs"]
+pub mod selected_scene;
 
 const MAX_REQUEST: usize = 32 * 1024 * 1024;
 const MAX_REPLY: usize = 64 * 1024 * 1024;
@@ -25,6 +27,15 @@ const TIMEOUT: Duration = Duration::from_secs(20);
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    OpenSelectedScene {
+        request: selected_scene::Request,
+    },
+    RecoverSelectedScene {
+        request: selected_scene::Request,
+    },
+    AbandonSelectedScene {
+        request: selected_scene::Request,
+    },
     ProceduralCompile {
         request: procedural::CompileRequest,
     },
@@ -71,6 +82,7 @@ pub struct Manager {
     sequence: u64,
     composed: u64,
     procedural_manual_completion: Option<procedural::manual::Completed>,
+    selected_scene_opening: Option<selected_scene::SelectedOpening>,
 }
 
 #[derive(Debug)]
@@ -477,7 +489,7 @@ fn run_bounded(
         let _ = child.wait();
     };
     let deadline = std::time::Instant::now() + timeout;
-    let (mut status, mut output) = (None, None);
+    let (mut exited, mut output) = (false, None);
     loop {
         if output.is_none() {
             match out_rx.try_recv() {
@@ -497,16 +509,25 @@ fn run_bounded(
                 }
             }
         }
-        if status.is_none() {
-            match child.try_wait() {
-                Ok(done) => status = done,
+        if !exited {
+            match crate::native_process::child_exited_without_reaping(&child) {
+                Ok(done) => exited = done,
                 Err(e) => {
                     kill(&mut child);
                     return Err(RunError::Io(e.to_string()));
                 }
             }
         }
-        if let (Some(status), true) = (status, output.is_some()) {
+        if exited && output.is_some() {
+            // Stop the owned group before the first reap, including descendants
+            // that inherited stderr after the leader finished its command.
+            #[cfg(unix)]
+            unsafe {
+                libc::kill(-(child.id() as libc::pid_t), libc::SIGKILL);
+            }
+            let status = child
+                .wait()
+                .map_err(|error| RunError::Io(error.to_string()))?;
             let stdout = output.take().unwrap_or_default();
             let stderr = err_rx
                 .recv_timeout(Duration::from_millis(200))
@@ -518,7 +539,7 @@ fn run_bounded(
             });
         }
         if std::time::Instant::now() >= deadline {
-            let held = status.is_some();
+            let held = exited;
             kill(&mut child);
             return Err(if held {
                 RunError::HeldOpen
@@ -537,6 +558,11 @@ mod native_act_channel;
 pub(crate) mod native_scene_source;
 
 impl Owner {
+    fn process_exited(&self) -> Result<bool, String> {
+        crate::native_process::child_exited_without_reaping(&self.child)
+            .map_err(|error| error.to_string())
+    }
+
     fn stop(&mut self) {
         if self.stopped {
             return;
@@ -590,6 +616,12 @@ impl Drop for Owner {
 impl Manager {
     pub fn apply(&mut self, client: &CentralClient, request: Request) -> Result<Value, String> {
         match request {
+            Request::OpenSelectedScene { .. }
+            | Request::RecoverSelectedScene { .. }
+            | Request::AbandonSelectedScene { .. } => Err(
+                "Selected-Scene opening/recovery requires its actual native Kernel Document owner"
+                    .into(),
+            ),
             Request::ProceduralCompile { request } => procedural::Prepared::new(request)?
                 .execute()
                 .map(|completed| completed.response),
@@ -711,7 +743,10 @@ impl Manager {
                     }
                 }
                 self.active.take();
-                Ok(json!({"schema":"oi.native-expression-closed/v1","lease":lease,"closed":true}))
+                let data =
+                    json!({"schema":"oi.native-expression-closed/v1","lease":lease,"closed":true});
+                self.retain_selected_scene_closure(&lease, &data);
+                Ok(data)
             }
         }
     }
@@ -1947,6 +1982,100 @@ mod tests {
     }
 
     use super::*;
+
+    /// Real owned OS child; no native World, Source, channel or ACK is fabricated.
+    #[cfg(unix)]
+    pub(super) fn owned_process_for_test(body: &str) -> Owner {
+        use std::os::unix::process::CommandExt;
+        let child = Command::new("/bin/sh")
+            .args(["-c", body])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .process_group(0)
+            .spawn()
+            .unwrap();
+        Owner {
+            lease: format!("physical-process:{}", child.id()),
+            native_field_epoch: String::new(),
+            child,
+            tx: None,
+            rx: mpsc::channel().1,
+            reader: None,
+            stderr_reader: None,
+            stderr: Arc::new(Mutex::new(Vec::new())),
+            config_path: PathBuf::new(),
+            identity: Value::Null,
+            procedural_source: Value::Null,
+            procedural_position: Value::Null,
+            procedural_executable: PathBuf::new(),
+            procedural_worker: PathBuf::new(),
+            procedural_definitions: BTreeMap::new(),
+            procedural_checkpoints: BTreeMap::new(),
+            last_request_id: 0,
+            stopped: false,
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            act_channel: None,
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            act_channel_unavailable: None,
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn actual_owner_exit_observation_retains_custody_until_group_cleanup() {
+        let mut owner = owned_process_for_test("exit 7");
+        let foreign = owned_process_for_test("exec sleep 60");
+        let deadline = std::time::Instant::now() + Duration::from_secs(3);
+        while !owner.process_exited().unwrap() {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "actual child did not exit"
+            );
+            thread::sleep(Duration::from_millis(1));
+        }
+        // A reaping observer makes the second WNOWAIT return ECHILD.
+        assert!(owner.process_exited().unwrap());
+        assert!(!foreign.process_exited().unwrap());
+        let pid = owner.child.id();
+        owner.stop();
+        assert!(owner.stopped);
+        assert_eq!(owner.child.wait().unwrap().code(), Some(7));
+        assert!(!foreign.process_exited().unwrap());
+        let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
+        assert_eq!(
+            unsafe {
+                libc::waitid(
+                    libc::P_PID,
+                    pid as libc::id_t,
+                    &mut info,
+                    libc::WEXITED | libc::WNOHANG | libc::WNOWAIT,
+                )
+            },
+            -1
+        );
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::ECHILD)
+        );
+        // Repeated stop does not send another signal after releasing custody.
+        owner.stop();
+        assert!(!foreign.process_exited().unwrap());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn actual_exited_setup_leader_keeps_owned_pipe_group_until_timeout_cleanup() {
+        let error = run_bounded(
+            "/bin/sh".as_ref(),
+            &["-c".as_ref(), "sleep 30 & exit 7".as_ref()],
+            Duration::from_millis(100),
+            1024,
+        )
+        .unwrap_err();
+        assert!(matches!(error, RunError::HeldOpen), "{error:?}");
+    }
+
     #[test]
     fn source_correspondence_is_not_inferred() {
         assert!(

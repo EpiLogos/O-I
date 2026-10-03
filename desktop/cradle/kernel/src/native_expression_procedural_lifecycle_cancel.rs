@@ -2,7 +2,7 @@
 //! Source settlement does not create a clock, queue withdrawal or release ACK.
 use crate::expression::procedural::lifecycle::{CancelIntent, RESPONSE_SCHEMA};
 use crate::expression::{Document, Request as ExpressionRequest};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 pub struct Prepared {
     before: Document,
@@ -71,7 +71,7 @@ impl crate::Kernel {
             .active
             .as_mut()
             .ok_or("Cancellation has no actual native Source owner")?;
-        if owner.stopped || owner.child.try_wait().map_err(|e| e.to_string())?.is_some() {
+        if owner.stopped || owner.process_exited()? {
             return Err("Cancellation actual native Source owner is closed".into());
         }
         let lease = owner.lease.clone();
@@ -152,7 +152,7 @@ impl crate::Kernel {
         if owner.lease != lease
             || owner.identity != identity
             || owner.stopped
-            || owner.child.try_wait().map_err(|e| e.to_string())?.is_some()
+            || owner.process_exited()?
         {
             return Err("Actual native cancellation owner changed during reading".into());
         }

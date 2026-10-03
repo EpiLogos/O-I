@@ -237,6 +237,17 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 if let KernelOp::NaraCoordinate { request } = op {
                     return oi_cradle_kernel::nara_coordinate::execute(request);
                 }
+                let selected_scene = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_native_selected_scene_open(&op)?;
+                if let Some(prepared) = selected_scene {
+                    let completed = prepared.execute()?;
+                    return kernel
+                        .lock()
+                        .expect("kernel mutex")
+                        .finish_native_selected_scene_open(completed);
+                }
                 let lifecycle = kernel
                     .lock()
                     .expect("kernel mutex")
