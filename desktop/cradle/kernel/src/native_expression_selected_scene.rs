@@ -312,7 +312,7 @@ impl RetainedWorld {
             .as_array_mut()
             .ok_or_else(|| refuse("Saved portable World has no original native owner roles"))?;
         retained_owners.sort_by_key(|row| row["role"].as_str().unwrap_or("").to_owned());
-        if !same_json(&portable, &retained) {
+        if !same_portable_world_json(&portable, &retained) {
             return Err(refuse(
                 "Complete actual native World differs from the saved portable World",
             ));
@@ -324,6 +324,15 @@ impl RetainedWorld {
 // change the binary64 value. Exact native constructor bytes remain separately
 // hashed above; this comparison permits only equivalent JSON number spelling.
 fn same_json(left: &Value, right: &Value) -> bool {
+    json_equal(left, right, false)
+}
+// The original complete binding/constructor bytes qualify the native values.
+// Ordinary JavaScript portable metadata additionally loses the sign of zero;
+// this comparison is confined to the final portable World, never native seals.
+fn same_portable_world_json(left: &Value, right: &Value) -> bool {
+    json_equal(left, right, true)
+}
+fn json_equal(left: &Value, right: &Value, portable_metadata: bool) -> bool {
     match (left, right) {
         (Value::Number(a), Value::Number(b)) => {
             if a == b {
@@ -343,17 +352,24 @@ fn same_json(left: &Value, right: &Value) -> bool {
                 return false;
             }
             match (a.as_f64(), b.as_f64()) {
-                (Some(a), Some(b)) => a.to_bits() == b.to_bits(),
+                (Some(a), Some(b)) => {
+                    (portable_metadata && a == 0.0 && b == 0.0) || a.to_bits() == b.to_bits()
+                }
                 _ => false,
             }
         }
         (Value::Array(a), Value::Array(b)) => {
-            a.len() == b.len() && a.iter().zip(b).all(|(a, b)| same_json(a, b))
+            a.len() == b.len()
+                && a.iter()
+                    .zip(b)
+                    .all(|(a, b)| json_equal(a, b, portable_metadata))
         }
         (Value::Object(a), Value::Object(b)) => {
             a.len() == b.len()
-                && a.iter()
-                    .all(|(key, value)| b.get(key).is_some_and(|other| same_json(value, other)))
+                && a.iter().all(|(key, value)| {
+                    b.get(key)
+                        .is_some_and(|other| json_equal(value, other, portable_metadata))
+                })
         }
         _ => left == right,
     }
@@ -644,5 +660,80 @@ impl crate::Kernel {
             receipts: Vec::new(),
             result: crate::KernelOpResult::NativeExpression { data },
         })
+    }
+}
+
+#[cfg(test)]
+mod portable_world_codec_tests {
+    use super::*;
+
+    fn captured_basis() -> (Value, Value) {
+        // Both fixtures originate in one retained actual CLI World. The native
+        // fixture is an unchanged complete lexical basis slice; the counterpart
+        // is actual Node JSON.parse/JSON.stringify output over that same basis.
+        // This is codec evidence, never a native Source/Owner constructor.
+        let native = serde_json::from_slice(include_bytes!(
+            "../tests/fixtures/native-world-76ada437.complete-basis.json"
+        ))
+        .unwrap();
+        let saved = serde_json::from_slice(include_bytes!(
+            "../tests/fixtures/native-world-76ada437.browser-basis.json"
+        ))
+        .unwrap();
+        (native, saved)
+    }
+
+    #[test]
+    fn actual_complete_native_basis_survives_ordinary_browser_numeric_codec() {
+        let (native, saved) = captured_basis();
+        for path in [
+            "/m1/carrier/opposite_quadrature/1",
+            "/m3/form/hinge_geometry/points/0/xyz/1",
+        ] {
+            assert_eq!(
+                native.pointer(path).unwrap().as_f64().unwrap().to_bits(),
+                (-0.0_f64).to_bits()
+            );
+            assert_eq!(saved.pointer(path).unwrap().as_u64(), Some(0));
+        }
+        // Retain the original refusal for exact native/sealed comparisons.
+        assert!(!same_json(&native, &saved));
+        assert!(same_portable_world_json(&native, &saved));
+        assert!(same_portable_world_json(&saved, &native));
+    }
+
+    #[test]
+    fn actual_complete_saved_basis_rejects_material_identity_and_structure_changes() {
+        let (native, saved) = captured_basis();
+        let mut changed = saved.clone();
+        changed["m1"]["music"]["tonic"] = json!(5);
+        assert!(!same_portable_world_json(&native, &changed));
+        changed = saved.clone();
+        changed["m1"]["clock"]["cycle"] = json!("1");
+        assert!(!same_portable_world_json(&native, &changed));
+        changed = saved.clone();
+        changed["m3"]["form"]["hinge_geometry"]["points"]
+            .as_array_mut()
+            .unwrap()
+            .reverse();
+        assert!(!same_portable_world_json(&native, &changed));
+        changed = saved.clone();
+        changed["input"]["source_receipts"]
+            .as_array_mut()
+            .unwrap()
+            .pop();
+        assert!(!same_portable_world_json(&native, &changed));
+        changed = saved.clone();
+        changed["additional_source"] = json!("foreign");
+        assert!(!same_portable_world_json(&native, &changed));
+        changed = saved.clone();
+        changed["m1"]["carrier"]["opposite_quadrature"][1] = json!(-f64::MIN_POSITIVE);
+        assert!(!same_portable_world_json(&native, &changed));
+        // Unsafe integer identities cannot be rounded into binary64 equality.
+        let mut unsafe_native = native.clone();
+        unsafe_native["m1"]["clock"]["tick12"] = json!(9_007_199_254_740_993_u64);
+        changed = saved.clone();
+        changed["m1"]["clock"]["tick12"] = json!(9_007_199_254_740_992_f64);
+        assert!(!same_portable_world_json(&unsafe_native, &changed));
     }
 }

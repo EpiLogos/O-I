@@ -1,0 +1,38 @@
+{
+  "schema": "oi.actual-native-world-codec-fixture/v1",
+  "standing": "Complete actual native CoupledBasis lexical slice and actual JS codec counterpart, numeric metadata regression only. Not original131 reconstruction/currentSource68/privateSource owner authority.",
+  "raw_world": {
+    "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/current-material-native/native-world-direct-timing-1/world.stdout.json",
+    "sha256": "dea8e5663af214c1799a7f771823078e0891184514aaac0555fecc8e2d91dc36",
+    "bytes": 1288298
+  },
+  "basis_lexical_slice": {
+    "utf8_byte_start": 9,
+    "utf8_byte_end": 151579,
+    "bytes": 151570,
+    "sha256": "a29fb3c7257671044917557411920ce1f628b1e95d8c9564773963b9c2ebb9aa",
+    "all_original_basis_fields_retained": true
+  },
+  "browser_basis": {
+    "path": "/Users/admin/Central/Control/agents/now/clearings/d21b90a94f65f1b21cf1c800334b72fde52c9c395caa00ae8745040d3687086d/T/independent_stage/actual-native-world-browser-codec2/basis-browser-saved.json",
+    "sha256": "eed1347087da00ae8c594aa3f97d632deeed22bdf62eea2344b5f7a784b30d76",
+    "bytes": 151239
+  },
+  "original_native_exit": 0,
+  "original_native_binary_sha256": "76ada437de5f7e85c4bca7fa48c228fc115b0b62790bbd3efb0da0f5e07e718e",
+  "original_receipt_sha256": "d6be5ecd80d620f6dce21060ff701146de4184d01e91ebe40e29317af09694f7",
+  "original_request_sha256": "a58fb0fbff92e16c014079242016bc92cf74812509d09813c7988e38cc985f71",
+  "complete_original_git_build_qualification": false,
+  "independent_codec_evidence": {
+    "path": "/Users/admin/Central/Control/agents/now/clearings/d21b90a94f65f1b21cf1c800334b72fde52c9c395caa00ae8745040d3687086d/T/independent_stage/actual-native-world-browser-codec2/evidence.json",
+    "sha256": "981e838d6f67bdcdd686cbdc5529b841ff8ab31f0e38144b939151acac6f1dd4"
+  },
+  "measurement": {
+    "complete_basis_numeric_leaves": 3258,
+    "native_binary64": 1115,
+    "safe_integral_float_spelling_changes": 166,
+    "actual_negative_zero_to_browser_zero": 2,
+    "other_number_bit_changes": 0,
+    "nonnumeric_structure_changes": 0
+  }
+}
