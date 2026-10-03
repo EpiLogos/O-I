@@ -43,10 +43,33 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
             return oi_cradle_kernel::nara_coordinate::execute(request);
         }
         let host = app.state::<KernelHost>();
+        let lifecycle = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_native_procedural_lifecycle(&op)?;
+        if let Some(prepared) = lifecycle {
+            let completed = prepared.execute()?;
+            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_native_procedural_lifecycle(completed)?;
+            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            return Ok(outcome);
+        }
+        let lifecycle = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_native_procedural_lifecycle_cancel(&op)?;
+        if let Some(prepared) = lifecycle {
+            let completed = prepared.execute()?;
+            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_native_procedural_lifecycle_cancel(completed)?;
+            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            return Ok(outcome);
+        }
+        let bootstrap = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_native_procedural_bootstrap(&op)?;
+        if let Some(prepared) = bootstrap {
+            let completed = prepared.execute()?;
+            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_native_procedural_bootstrap(completed)?;
+            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            return Ok(outcome);
+        }
         let epii = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii(&op)?;
         if let Some(prepared) = epii {
             let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_epii(completed)?;
+            let attribution = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii_attribution(&completed)?;
+            let attribution = attribution.map(|prepared| prepared.execute());
+            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_epii_with_attribution(completed, attribution)?;
             for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
             return Ok(outcome);
         }
@@ -54,7 +77,9 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         let act = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_expressive_act(&op)?;
         if let Some(prepared) = act {
             let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_expressive_act(completed)?;
+            let attribution = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_expressive_act_attribution(&completed)?;
+            let attribution = attribution.map(|prepared| prepared.execute());
+            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_expressive_act_with_attribution(completed, attribution)?;
             for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
             return Ok(outcome);
         }
@@ -92,6 +117,15 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         }
         // Composing may provision QL's dated sky for tens of seconds: run it
         // outside the lock; only the single-owner open is serialised.
+        let procedure=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_procedural_compile(&op)?;
+        if let Some(prepared)=procedure { let completed=prepared.execute()?; return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_procedural_compile(completed); }
+        let attribution=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_procedural_manual(&op);
+        if let Ok(Some(prepared))=attribution {
+            let completed=prepared.execute();
+            let outcome=host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_procedural_manual(completed)?;
+            for receipt in &outcome.receipts { let _=app.emit(KERNEL_EVENT_TOPIC,receipt); }
+            return Ok(outcome);
+        }
         let compose=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_compose(&op)?;
         if let Some(prepared)=compose{let composed=prepared.execute()?;return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_compose(composed);}
         let prepared = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_owner_read(&op);
@@ -216,13 +250,16 @@ fn main() {
                     &socket,
                     move |request| {
                         let host = handle.state::<KernelHost>();
-                        let value = owner.apply(
-                            &mut *host
-                                .0
-                                .lock()
-                                .map_err(|_| "native kernel lock unavailable")?,
-                            request,
-                        )?;
+                        let prepared=owner.prepare_native_procedural_manual(
+                            &*host.0.lock().map_err(|_|"native kernel lock unavailable")?,&request);
+                        let value=match prepared {
+                            Ok(Some(prepared))=> {
+                                let completed=prepared.execute();
+                                owner.finish_native_procedural_manual(
+                                    &mut *host.0.lock().map_err(|_|"native kernel lock unavailable")?,request,completed)?
+                            },
+                            _=>owner.apply(&mut *host.0.lock().map_err(|_|"native kernel lock unavailable")?,request)?,
+                        };
                         if let Some(receipts) = value["outcome"]["receipts"].as_array() {
                             for receipt in receipts {
                                 let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt);
@@ -249,7 +286,14 @@ fn main() {
                         oi_cradle_kernel::expression_transport::Request::Expression(request) => KernelOp::Expression { request },
                         oi_cradle_kernel::expression_transport::Request::World(request) => KernelOp::ExpressionWorld { request },
                     };
-                    let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.apply(op)?;
+                    let prepared=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_procedural_manual(&op);
+                    let outcome=match prepared {
+                        Ok(Some(prepared))=> {
+                            let completed=prepared.execute();
+                            host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_procedural_manual(completed)?
+                        },
+                        _=>host.0.lock().map_err(|_|"kernel lock unavailable")?.apply(op)?,
+                    };
                     for receipt in &outcome.receipts { let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt); }
                     serde_json::to_value(outcome).map_err(|e| e.to_string())
                 }) {

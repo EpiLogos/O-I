@@ -117,9 +117,14 @@ pub fn validate(
         "propertyTracks",
         "pointerScope",
         "research",
+        "procedural",
     ];
     if material.keys().any(|key| !KEYS.contains(&key.as_str())) {
         return Err("Unsupported authoring Scene field; original input was not rewritten".into());
+    }
+    crate::expression::procedural::validate_scene_sources(&presentation.scene)?;
+    if let Some(retained) = material.get("procedural") {
+        crate::expression::procedural::validate_retention(retained)?;
     }
     if material.get("id").and_then(Value::as_str) != Some(scene.scene_ref.as_str()) {
         return Err("Scene presentation addresses a different native Scene".into());
@@ -429,6 +434,73 @@ fn validate_note(value: &Value, depth: usize) -> Result<(), String> {
     Ok(())
 }
 
+// Proposal for expression_scene.rs. Exact nativeParameters.ts target grammar;
+// only the encoded Entity identity is remapped. Link/Driver IDs, clocks,
+// native paths, Source text and arbitrary strings remain unchanged.
+pub(crate) fn remap_automation_target(value: &mut Value, remap: &dyn Fn(&str) -> Option<String>) {
+    fn decode(input: &str) -> Option<String> {
+        let bytes = input.as_bytes();
+        let mut out = Vec::with_capacity(bytes.len());
+        let mut index = 0;
+        while index < bytes.len() {
+            if bytes[index] == b'%' {
+                out.push(u8::from_str_radix(input.get(index + 1..index + 3)?, 16).ok()?);
+                index += 3;
+            } else {
+                // encodeURIComponent has no form-urlencoded '+' convention.
+                out.push(bytes[index]);
+                index += 1;
+            }
+        }
+        String::from_utf8(out).ok()
+    }
+    fn encode(input: &str) -> String {
+        let mut output = String::new();
+        const HEX: &[u8] = b"0123456789ABCDEF";
+        for byte in input.bytes() {
+            if byte.is_ascii_alphanumeric() || b"-_.!~*'()".contains(&byte) {
+                output.push(byte as char);
+            } else {
+                output.push('%');
+                output.push(HEX[(byte >> 4) as usize] as char);
+                output.push(HEX[(byte & 15) as usize] as char);
+            }
+        }
+        output
+    }
+    let Some(target) = value.as_str() else { return };
+    let Some((kind, rest)) = target.split_once(':') else {
+        return;
+    };
+    if !matches!(kind, "entity" | "link") {
+        return;
+    }
+    let Some((encoded, suffix)) = rest.split_once(':') else {
+        return;
+    };
+    if suffix.is_empty() || kind == "link" && !suffix.contains(':') {
+        return;
+    }
+    let Some(reference) = decode(encoded) else {
+        return;
+    };
+    let Some(next) = remap(&reference) else {
+        return;
+    };
+    *value = Value::String(format!("{kind}:{}:{suffix}", encode(&next)));
+}
+
+pub(crate) fn remap_automation_lane(value: &mut Value, remap: &dyn Fn(&str) -> Option<String>) {
+    if let Some(reference) = value.get_mut("entityId") {
+        if let Some(next) = reference.as_str().and_then(remap) {
+            *reference = Value::String(next);
+        }
+    }
+    if let Some(target) = value.get_mut("target") {
+        remap_automation_target(target, remap);
+    }
+}
+
 /// Only known presentation-local identity fields are remapped on a native
 /// fork. Source refs, evidence and arbitrary caption text are never rewritten.
 pub fn fork(presentation: &mut Presentation, old: &str, new: &str) {
@@ -469,6 +541,11 @@ pub fn remap_refs(material: &mut Value, remap: &dyn Fn(&str) -> Option<String>) 
         if let Some(entities) = material["entities"].as_array_mut() {
             for entity in entities {
                 map(&mut entity["id"]);
+                if let Some(native) = entity.get_mut("native") {
+                    if let Some(reference) = native.get_mut("id") {
+                        map(reference);
+                    }
+                }
             }
         }
         if let Some(research) = material.get_mut("research") {
@@ -497,9 +574,7 @@ pub fn remap_refs(material: &mut Value, remap: &dyn Fn(&str) -> Option<String>) 
         for key in ["automation", "propertyTracks", "toolbelt"] {
             if let Some(values) = material.get_mut(key).and_then(Value::as_array_mut) {
                 for value in values {
-                    if value.get("entityId").is_some() {
-                        map(&mut value["entityId"]);
-                    }
+                    remap_automation_lane(value, remap);
                 }
             }
         }

@@ -44,6 +44,12 @@ pub mod dictation;
 pub mod encounter;
 pub mod events;
 pub mod expression;
+// Source6 private support children; original File/Act/performance families are
+// not replaced or enrolled by this contextual first-passage proposal.
+pub(crate) mod expression_procedural_source_budget;
+pub(crate) mod expression_procedural_source_codec;
+pub(crate) mod expression_procedural_field_source;
+pub(crate) mod expression_procedural_scene_reader;
 pub mod expression_act_store;
 pub mod expression_asset;
 pub mod expression_blueprint;
@@ -82,6 +88,8 @@ mod nara_voice_constitution;
 mod nara_voice_transport;
 pub mod nara_world_readiness;
 pub mod native_expression;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub mod native_parent_image;
 pub mod native_owner_transport;
 pub mod native_process;
 pub mod owner_read;
@@ -1915,22 +1923,8 @@ impl Kernel {
         if source.revision.revision != reviewed.identity_revision {
             return Err("The saved identity changed during Epii review".into());
         }
-        let (data, changes) = self.expressions.apply_reviewed_focus(
-            &self.client,
-            expression::Request::Propose {
-                expression_ref: reviewed.expression_ref.clone(),
-                expected_revision: reviewed.expected_revision,
-                proposal_ref: reviewed.proposal_ref,
-                actor: reviewed.proposed_by,
-                activity_ref: Some(reviewed.activity_ref),
-                continues_proposal_ref: None,
-                summary: reviewed.summary,
-                changes: vec![reviewed.change],
-                method_refs: reviewed.method_refs,
-                evidence_refs: reviewed.evidence_refs,
-            },
-            "human:expression-review".into(),
-            "Explicitly accepted source-bearing Epii focus proposal".into(),
+        let (data, changes) = self.apply_reviewed_focus_with_attribution(
+            native_expression::procedural::manual::epii_proposal(&reviewed),
         )?;
         self.nara_voice
             .invalidate_expression(&reviewed.expression_ref);
@@ -1963,6 +1957,7 @@ impl Kernel {
             result: KernelOpResult::NaraEpii {
                 data: serde_json::json!({
                     "schema":"oi.nara-epii-accepted/v1","document":data["document"],"provenance":reviewed.provenance,"applied":true,
+                    "native_procedural_source":data["native_procedural_source"],
                 }),
             },
         })
@@ -2070,9 +2065,10 @@ impl Kernel {
                         "This native host has reached its expressive checkpoint bound".into(),
                     );
                 }
-                let (data, changed) = self
-                    .expressions
-                    .apply(&self.client, focus.request.clone())?;
+                let (data, changed) = self.apply_native_expression_with_procedural_attribution(focus.request.clone())?;
+                if data["state"] != "ready" {
+                    return Err(data["reason"].as_str().unwrap_or("Native focus admission was refused").into());
+                }
                 if changed.is_none() {
                     return Err("The reviewed focus did not change the native selection".into());
                 }
@@ -2106,7 +2102,7 @@ impl Kernel {
                     .as_str()
                     .ok_or("Native checkpoint reference absent")?
                     .to_owned();
-                let (data, changed) = self.expressions.apply(&self.client, request)?;
+                let (data, changed) = self.apply_checkpoint_restore_with_attribution(request)?;
                 if let Some(entry) = self.nara_contexts.get_mut(&key) {
                     entry.checkpoint = None;
                 }
@@ -2152,6 +2148,7 @@ impl Kernel {
                     "checkpoint_ref":checkpoint_ref,"nara_ref":identity["nara_ref"],"expression_ref":reference,
                     "expression_revision":data["document"]["revision"],"document":data["document"],
                     "effect_applied":applied,"dynamic_checkpoint":false,
+                    "native_procedural_source":data["native_procedural_source"],
                 }),
             },
         })
@@ -2409,7 +2406,11 @@ impl Kernel {
                 })
             }
             KernelOp::NativeExpression { request } => {
-                let data = self.native_expression.apply(&self.client, request)?;
+                let data = match request {
+                    native_expression::Request::ProceduralConduct { request } => self.native_procedural_conduct(request)?,
+                    native_expression::Request::ProceduralSourceBootstrapRetry { request } => self.native_procedural_source_bootstrap_retry(request)?,
+                    request => self.native_expression.apply(&self.client, request)?,
+                };
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::NativeExpression { data },
@@ -2515,7 +2516,7 @@ impl Kernel {
                     }
                     _ => None,
                 };
-                let (data, changed) = self.expressions.apply(&self.client, request)?;
+                let (data, changed) = self.apply_native_expression_with_procedural_attribution(request)?;
                 if data["state"] == "closed" {
                     if let Some(reference) = closed_ref {
                         self.nara_contexts.retain(|_, entry| {
