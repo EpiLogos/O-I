@@ -51,6 +51,7 @@ let browser,page,frame,releaseHeld,captureDOM;
 // Failure-only observations do not read another native body, mutate admission,
 // or extend the original cold receiving deadline. HTTP status is not native ACK.
 let collectingInitialWitness=selectionOnly;
+let initialArrivalWaitStartedAt=null,initialArrivalWaitFailedAt=null;
 const initialRequestTimes=new WeakMap(),initialReplies=[],initialPageErrors=[];
 let initialReplyBytes=0,initialReplyDrops=0,initialPageErrorDrops=0;
 const shortError=value=>String(value).slice(0,2048);
@@ -60,6 +61,91 @@ function recordInitialReply(row){
  const size=Buffer.byteLength(JSON.stringify(row));initialReplies.push(row);initialReplyBytes+=size;
  while(initialReplies.length>128||initialReplyBytes>24*1024){initialReplyBytes-=Buffer.byteLength(JSON.stringify(initialReplies.shift()));initialReplyDrops++;}
 }
+
+// Passive phase observations are retained only when the original arrival
+// fails. The app/host still own every request, reply and admission decision.
+const initialCriticalRequests=[],initialCriticalByRequest=new WeakMap();let initialCriticalDrops=0;
+function observeInitialCriticalRequest(request,value,metadata,text){
+ if(!collectingInitialWitness||!(value.op==='nara_current'||value.op==='expression'&&['save','save_as'].includes(value.request?.operation)||value.op==='expression_recovery'&&value.request?.operation==='write'))return;
+ const row={ordinal:metadata.ordinal,op:shortTag(value.op),operation:shortTag(value.request?.operation),
+  issued_at:metadata.started,request_bytes:Buffer.byteLength(text),request_sha256:hash(text),
+  binding:{expression_ref:shortTag(value.request?.binding?.expression_ref),person_ref:shortTag(value.request?.binding?.person_ref),
+   nara_ref:shortTag(value.request?.binding?.nara_ref),role:shortTag(value.request?.binding?.role)},
+  expression_ref:shortTag(value.request?.expression_ref),expected_revision:Number.isSafeInteger(value.request?.expected_revision)?value.request.expected_revision:null,
+  file_location:{ref:shortTag(value.request?.location?.ref),root:typeof value.request?.location?.root==='string'?value.request.location.root.slice(0,512):null,path:typeof value.request?.location?.path==='string'?value.request.location.path.slice(0,512):null},
+  expected_file_revision:typeof value.request?.expected_file_revision==='string'?value.request.expected_file_revision.slice(0,512):null,response:null};
+ initialCriticalRequests.push(row);while(initialCriticalRequests.length>16){initialCriticalRequests.shift();initialCriticalDrops++;}initialCriticalByRequest.set(request,row);
+}
+function installInitialChannelPhaseObserver(){
+ const rows=[];let bytes=0,dropped=0;
+ const tag=value=>typeof value==='string'?value.slice(0,512):null;
+ const add=row=>{const size=new TextEncoder().encode(JSON.stringify(row)).length;rows.push(row);bytes+=size;
+  while(rows.length>32||bytes>8192){bytes-=new TextEncoder().encode(JSON.stringify(rows.shift())).length;dropped++;}};
+ Object.defineProperty(window,'__EPI_INITIAL_CHANNEL_PHASES__',{value:()=>({captured_at:Date.now(),rows:rows.map(row=>({...row})),dropped}),configurable:false});
+ window.addEventListener('message',event=>{
+  const d=event.data;if(!d||typeof d!=='object'||d.v!==1)return;
+  const fromParent=window.parent!==window&&event.source===window.parent;
+  const fromWorld=window.parent===window&&event.source===document.querySelector('#world')?.contentWindow;
+  if(!fromParent&&!fromWorld)return;
+  const base={at:Date.now(),monotonic_ms:performance.now(),side:fromParent?'application':'host',kind:tag(d.kind)};
+  if(fromWorld&&d.kind==='nara-instrument'&&Number.isSafeInteger(d.req)&&d.req>0&&
+   ['select_identity','release_identity','current_restore','current_read','current_pin'].includes(d.request?.operation)){
+   add({...base,phase:'request-received-by-host',req:d.req,operation:d.request.operation,
+    expression_ref:tag(d.request.basis?.expression_ref),source_ref:tag(d.request.basis?.source?.source_ref??d.request.source?.source_ref)});
+  }else if(fromWorld&&d.kind==='expression-file'&&Number.isSafeInteger(d.req)&&d.req>0&&['prepare','perform'].includes(d.request?.operation)){
+   const doc=d.request.document??d.request.intent?.document,destination=d.request.destination??d.request.intent?.destination;
+   add({...base,phase:'file-request-received-by-host',req:d.req,operation:d.request.operation,expression_ref:tag(doc?.expression_ref),document_revision:Number.isSafeInteger(doc?.revision)?doc.revision:null,file_revision:tag(destination?.revision),location_ref:tag(destination?.location?.ref)});
+  }else if(fromParent&&d.kind==='expression-file-result'&&Number.isSafeInteger(d.req)&&d.req>0){
+   const data=d.data,doc=data?.document??data?.artifact?.document,file=data?.file??data?.artifact?.file;
+   add({...base,phase:'file-reply-received-by-application',req:d.req,ok:d.ok===true,error:typeof d.error==='string'?d.error.slice(0,2048):null,
+    expression_ref:tag(doc?.expression_ref),document_revision:Number.isSafeInteger(doc?.revision)?doc.revision:null,location_ref:tag(file?.location?.ref),file_revision:tag(file?.revision)});
+  }else if(fromParent&&d.kind==='nara-instrument-result'&&Number.isSafeInteger(d.req)&&d.req>0){
+   const data=d.data;
+   if(d.ok===false||['oi.nara-instrument-state/v1','oi.nara-personal-current-context/v1'].includes(data?.schema))
+    add({...base,phase:'reply-received-by-application',req:d.req,ok:d.ok===true,schema:tag(data?.schema),status:tag(data?.status),
+     error:typeof d.error==='string'?d.error.slice(0,2048):null,person_ref:tag(data?.reading?.identity?.person_ref??data?.identity?.reading?.person_ref),
+     event_ref:tag(data?.context?.event_ref),reading_ref:tag(data?.context?.reading_ref),reading_revision:tag(data?.context?.reading_revision),
+     snapshot_ref:tag(data?.reading?.transit?.sky?.snapshot_ref)});
+  }else if(fromParent&&d.kind==='oi-nara-identity-released')add({...base,phase:'identity-release-received-by-application'});
+ });
+}
+async function retainInitialResponsePhases(){
+ const sampledAt=Date.now(),diagnosticDeadline=sampledAt+1000,rows=[];
+ const observe=async operation=>{const remaining=diagnosticDeadline-Date.now();if(remaining<=0)throw Error('Failure-only phase observation budget reached');let timer;
+  try{return await Promise.race([operation(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Failure-only phase observation budget reached')),remaining);})]);}finally{clearTimeout(timer);}};
+ for(const observation of initialCriticalRequests){
+  const {response,...row}=observation;row.sampled_at=Date.now();
+  // Do not wait for an unfinished response or issue another native operation.
+  // Read already completed actual HTTP bytes only after the failed30s gate.
+  if(response&&observation.finished_at&&observation.completion_error===null){
+   const declared=observation.declared_bytes;
+   if(Number.isSafeInteger(declared)&&declared>=0&&declared<=16*1024*1024){
+    try{
+     const raw=await observe(()=>response.body());row.actual_response_bytes=raw.length;row.actual_response_sha256=hash(raw);
+     if(raw.length!==declared||raw.length>16*1024*1024)row.response_observation_refused='Actual bytes differ from the bounded declared response';
+     else{
+      const value=JSON.parse(raw),data=value.outcome?.data;
+      row.native_reply={ok:value.ok===true,result:shortTag(value.outcome?.result),error:typeof value.error==='string'?shortError(value.error):null,
+       schema:shortTag(data?.schema),status:shortTag(data?.status),state:shortTag(data?.state),
+       expression_ref:shortTag(data?.document?.expression_ref),document_revision:Number.isSafeInteger(data?.document?.revision)?data.document.revision:null,
+       file_revision:typeof data?.file?.revision==='string'?data.file.revision.slice(0,512):null,location_ref:typeof data?.file?.location?.ref==='string'?data.file.location.ref.slice(0,512):null,person_ref:shortTag(data?.reading?.identity?.person_ref),
+       event_ref:shortTag(data?.context?.event_ref),reading_ref:shortTag(data?.context?.reading_ref),reading_revision:shortTag(data?.context?.reading_revision),
+       snapshot_ref:shortTag(data?.reading?.transit?.sky?.snapshot_ref)};
+     }
+    }catch(error){row.response_observation_error=shortError(error);}
+   }else row.response_observation_refused='No bounded declared completed response; native value remains unobserved';
+  }else row.response_value_unobserved='No successful HTTP completion observed at the failure sample';
+  rows.push(row);
+ }
+ const channel=async target=>{try{return await observe(()=>target.evaluate(()=>window.__EPI_INITIAL_CHANNEL_PHASES__?.()??null));}catch(error){return{read_error:shortError(error)};}};
+ const witness={schema:'epi.actual-cold-current-response-phases/v1',started_at:new Date(sampledAt).toISOString(),arrival_wait_started_unix_ms:initialArrivalWaitStartedAt,arrival_wait_failed_unix_ms:initialArrivalWaitFailedAt,arrival_wait_timeout_ms:30000,native_requests:rows,native_requests_dropped:initialCriticalDrops,
+  host_channel:await channel(page),application_channel:await channel(frame),
+  observation_budget_ms:1000,scope:'Failure-only actual current/Save/recovery request issue, HTTP completion/native reply scalar and passive same-window personal/file channel phases; full native bytes are hashed, not retained or admitted; no extra owner request, provider, mutation or receiving-deadline change; post-failure observation has one1000ms total budget'};
+ const bytes=JSON.stringify(witness,null,2)+'\n';assert.ok(Buffer.byteLength(bytes)<=64*1024,'Cold response-phase witness is bounded');
+ const name='initial-current-response-phases.json';await writeFile(resolve(cfg.output,name),bytes);
+ report.initial_current_response_phases={path:name,bytes:Buffer.byteLength(bytes),sha256:hash(bytes)};
+}
+
 async function retainInitialReceivingFailure(basis){
  const started=Date.now();
  let actual;
@@ -82,12 +168,13 @@ async function retainInitialReceivingFailure(basis){
     notice_visible:!!notice&&notice.getClientRects().length>0,conversation_visible:!!document.querySelector('#nara-instrument')?.getClientRects().length}};
  },basis);}catch(error){actual={read_failed:shortError(error)};}
  collectingInitialWitness=false;
- const witness={schema:'epi.actual-cold-receiving-failure-witness/v1',started_at:new Date(started).toISOString(),finished_at:new Date().toISOString(),basis,actual,
+ const witness={schema:'epi.actual-cold-receiving-failure-witness/v1',started_at:new Date(started).toISOString(),finished_at:new Date().toISOString(),arrival_wait_started_unix_ms:initialArrivalWaitStartedAt,arrival_wait_failed_unix_ms:initialArrivalWaitFailedAt,arrival_wait_timeout_ms:30000,basis,actual,
   page_errors:[...initialPageErrors],page_errors_dropped:initialPageErrorDrops,native_replies:initialReplies.map(row=>({...row})),native_replies_dropped:initialReplyDrops,
   native_protocol_body_read:false,scope:'Passive actual loaded scalar/DOM and HTTP completion/error observations after the unchanged30s fence fails; no native acquisition, body copy, mutation or ACK substitution'};
  const bytes=JSON.stringify(witness,null,2)+'\n';assert.ok(Buffer.byteLength(bytes)<=64*1024,'Cold receiving failure witness is bounded');
  const name='initial-receiving-failure.json';await writeFile(resolve(cfg.output,name),bytes);
  report.initial_receiving_failure={path:name,bytes:Buffer.byteLength(bytes),sha256:hash(bytes)};
+ try{await retainInitialResponsePhases();}catch(error){report.initial_current_response_phase_diagnostic_error=shortError(error);}
 }
 async function responseBytes(response,cap=64*1024*1024){assert.ok(response.ok,'Actual HTTP '+response.status);const reader=response.body.getReader(),parts=[];let size=0;try{for(;;){const r=await reader.read();if(r.done)break;size+=r.value.byteLength;if(size>cap)throw Error('Actual native reply exceeds its receiving bound');parts.push(Buffer.from(r.value));}}catch(e){await reader.cancel();throw e;}finally{reader.releaseLock();}return Buffer.concat(parts);}
 async function native(request){
@@ -188,13 +275,15 @@ function exactFocusOnly(before,after,sceneRef,entityRef){const expected=structur
 try{
  if(selectionOnly)await qualifyHostedOwner();
  browser=selectionOnly?await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']}):await chromium.launch({headless:true});page=selectionOnly?await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}):await browser.newPage({viewport:{width:1440,height:900}});
+ if(selectionOnly)await page.addInitScript(installInitialChannelPhaseObserver);
  const errors=[];page.on('pageerror',e=>{errors.push(String(e));if(collectingInitialWitness){if(initialPageErrors.length<8)initialPageErrors.push(shortError(e));else initialPageErrorDrops++;}});
- page.on('request',request=>{if(request.url()!==cfg.bridge+'/op'||request.method()!=='POST')return;const text=request.postData();if(!text||Buffer.byteLength(text)>32*1024*1024)return;try{const v=JSON.parse(text);report.requests.push({op:v.op,operation:v.request?.operation,action:v.request?.action,sha256:hash(text),bytes:Buffer.byteLength(text)});if(collectingInitialWitness)initialRequestTimes.set(request,{ordinal:report.requests.length-1,op:shortTag(v.op),operation:shortTag(v.request?.operation),started:Date.now()});}catch{report.requests.push({unreadable:true});}});
+ page.on('request',request=>{if(request.url()!==cfg.bridge+'/op'||request.method()!=='POST')return;const text=request.postData();if(!text||Buffer.byteLength(text)>32*1024*1024)return;try{const v=JSON.parse(text);report.requests.push({op:v.op,operation:v.request?.operation,action:v.request?.action,sha256:hash(text),bytes:Buffer.byteLength(text)});if(collectingInitialWitness){const metadata={ordinal:report.requests.length-1,op:shortTag(v.op),operation:shortTag(v.request?.operation),started:Date.now()};initialRequestTimes.set(request,metadata);observeInitialCriticalRequest(request,v,metadata,text);}}catch{report.requests.push({unreadable:true});}});
  page.on('response',response=>{
   const metadata=initialRequestTimes.get(response.request());if(!metadata||!collectingInitialWitness)return;
   const arrived=Date.now(),headers=response.headers(),length=headers['content-length'];
+  const critical=initialCriticalByRequest.get(response.request());if(critical){critical.response=response;critical.headers_at=arrived;critical.http_status=response.status();critical.declared_bytes=/^\d+$/.test(length??'')?Number(length):null;}
   recordInitialReply({...metadata,phase:'headers',at:arrived,elapsed_ms:arrived-metadata.started,http_status:response.status(),declared_bytes:typeof length==='string'?length.slice(0,32):null});
-  void response.finished().then(error=>{const at=Date.now();recordInitialReply({...metadata,phase:'finished',at,elapsed_ms:at-metadata.started,http_status:response.status(),error:error?shortError(error):null});}).catch(error=>recordInitialReply({...metadata,phase:'completion-error',at:Date.now(),error:shortError(error)}));
+  void response.finished().then(error=>{const at=Date.now();if(critical){critical.finished_at=at;critical.completion_error=error?shortError(error):null;}recordInitialReply({...metadata,phase:'finished',at,elapsed_ms:at-metadata.started,http_status:response.status(),error:error?shortError(error):null});}).catch(error=>{if(critical){critical.finished_at=Date.now();critical.completion_error=shortError(error);}recordInitialReply({...metadata,phase:'completion-error',at:Date.now(),error:shortError(error)});});
  });
  page.on('requestfailed',request=>{const metadata=initialRequestTimes.get(request);if(metadata)recordInitialReply({...metadata,phase:'request-failed',at:Date.now(),error:shortError(request.failure()?.errorText??'Unknown HTTP request failure')});});
  await page.goto(cfg.app_url);await page.waitForSelector('iframe',{timeout:30000});
@@ -207,13 +296,14 @@ try{
  }else {const candidates=page.frames().filter(f=>f.url().includes('field-studies'));assert.equal(candidates.length,1);frame=candidates[0];}
  await frame.waitForFunction(()=>!!window.__FIELD_STUDIES__?.nativeWorking(),null,{timeout:30000});
  if(selectionOnly){try{
+  initialArrivalWaitStartedAt=Date.now();
   await frame.waitForFunction(basis=>{
   const f=window.__FIELD_STUDIES__,w=f?.nativeWorking(),r=f?.epiWorld(),c=f?.epiCurrent();
   return w?.native_ref===basis.expression_ref&&!w.busy&&!w.pending&&!w.failed&&w.file?.location?.root===basis.world
    &&r?.world?.instance_ref===basis.expression_ref&&r.person_ref===basis.person_ref&&r.identity_source?.source_ref===basis.identity_source_ref
    &&r.world.event_ref===basis.event_ref&&c?.reading?.identity?.person_ref===basis.person_ref&&c.context?.event_ref===basis.event_ref;
  },{expression_ref:cfg.expression_ref,person_ref:cfg.person_ref,identity_source_ref:cfg.identity_source_ref,world:cfg.world,event_ref:q.event_ref},{timeout:30000});
- }catch(error){try{await retainInitialReceivingFailure({expression_ref:cfg.expression_ref,person_ref:cfg.person_ref,identity_source_ref:cfg.identity_source_ref,world:cfg.world,event_ref:q.event_ref});}catch(diagnostic){report.initial_receiving_diagnostic_error=shortError(diagnostic);}throw error;}finally{collectingInitialWitness=false;}}
+ }catch(error){initialArrivalWaitFailedAt=Date.now();try{await retainInitialReceivingFailure({expression_ref:cfg.expression_ref,person_ref:cfg.person_ref,identity_source_ref:cfg.identity_source_ref,world:cfg.world,event_ref:q.event_ref});}catch(diagnostic){report.initial_receiving_diagnostic_error=shortError(diagnostic);}throw error;}finally{collectingInitialWitness=false;}}
  const original=await inspect(),document=original.document;assert.equal(document.expression_ref,cfg.expression_ref);assert.equal(original.dirty,false);assert.ok(original.file);assert.equal(original.file.location.root,cfg.world);
  const carrier=document.scenes.find(s=>s.presentation?.scene?.epiWorld)?.presentation.scene.epiWorld;assert.ok(carrier);assert.equal(carrier.person_ref,cfg.person_ref);assert.equal(carrier.identity_source.source_ref,cfg.identity_source_ref);
  if(selectionOnly){assert.equal(carrier.person_ref,q.person_ref);assert.equal(carrier.world.event_ref,q.event_ref);assert.equal(carrier.world.snapshot_ref,q.snapshot_ref);assert.equal(carrier.world.instance_ref,q.instance_ref);await qualifyHostedAdmission(document);}
