@@ -320,9 +320,9 @@ impl Manager {
                 }
                 if mode == "performance-source" && value["status"] == "ok" {
                     let source = &value["result"]["source_artifact"];
+                    let expected_seed = declared_seed.ok_or("native seed lost")?.to_string();
                     if source["schema"] != "ql.retained-source-performance-fixture/v1"
-                        || source["basis"]["seed"]
-                            != declared_seed.ok_or("native seed lost")?.to_string()
+                        || source["basis"]["seed"].as_str() != Some(expected_seed.as_str())
                         || source["basis"]["identity"]["instance_ref"]
                             != owner.identity["instance_ref"]
                         || source["source_assets"]["native_basis"] != source["native_basis"]
