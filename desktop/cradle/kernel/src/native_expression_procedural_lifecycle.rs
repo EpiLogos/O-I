@@ -489,7 +489,7 @@ impl crate::Kernel {
         };
         let data = json!({"schema":RESPONSE_SCHEMA,"original_intent":original_intent,"state":state,"reason":reason,
             "native_receipt":native_receipt,"native_source_channel":channel_receipt,"preparation":preparation,"document":inspected["document"],
-            "source_current":["prepared","pending_reception"].contains(&state),"replayed":false});
+            "source_current":(["prepared","pending_reception"].contains(&state)),"replayed":false});
         let mut data = data;
         if !prepare_request.is_null() {
             data["prepare_request"] = prepare_request;
