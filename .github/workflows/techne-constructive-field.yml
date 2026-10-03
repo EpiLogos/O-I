@@ -7,6 +7,9 @@ on:
       - 'packages/**'
       - '.wayfinder/maps/techne-constructive-evidence.md'
       - '.github/workflows/techne-constructive-field.yml'
+      - 'scripts/prepare-retained-performance-fixture.py'
+      - 'scripts/retained-performance-ci-environment.py'
+      - 'scripts/retained-performance-environment-regressions.py'
   workflow_dispatch:
 
 permissions:
@@ -135,6 +138,33 @@ jobs:
           repository: ${{ matrix.repository }}
           ref: ${{ matrix.ref || github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - name: Read the separately qualified retained performance test source
+        id: retained-performance-source
+        if: matrix.owner == 'O-I'
+        run: |
+          python3 - <<'PY_SOURCE'
+          import json, os, re
+          from pathlib import Path
+          value = json.loads(Path('desktop/cradle/tests/fixtures/retained-performance/source-owner.json').read_text())
+          assert value['schema'] == 'oi.retained-performance-test-source-owner/v1'
+          assert value['repository'] == 'EpiLogos/QL-MEF'
+          assert value['consumer'] == 'retained-performance-native-kernel-tests'
+          assert re.fullmatch(r'[0-9a-f]{40}', value['revision'])
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('revision=' + value['revision'] + '\n')
+          PY_SOURCE
+      - uses: actions/checkout@v4
+        if: matrix.owner == 'O-I'
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ steps.retained-performance-source.outputs.revision }}
+          path: .native-owner/retained-performance/QL-MEF
+          persist-credentials: false
+      - name: Native retained performance codec dependency
+        if: matrix.owner == 'O-I'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libjson-c-dev
       - uses: dtolnay/rust-toolchain@1.98.0
       - uses: Swatinem/rust-cache@v2
         with:
@@ -143,6 +173,31 @@ jobs:
             .
             cli
             desktop/cradle/kernel
+      - name: Produce the actual retained source, Manager, full workload and native checkpoints
+        if: matrix.owner == 'O-I'
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/retained-performance/source-custody"
+          cp desktop/cradle/tests/fixtures/retained-performance/source-owner.json "$RUNNER_TEMP/retained-performance/source-custody/"
+          git -C "$GITHUB_WORKSPACE/.native-owner/retained-performance/QL-MEF" rev-parse HEAD > "$RUNNER_TEMP/retained-performance/source-custody/QL-MEF.revision"
+          git -C "$GITHUB_WORKSPACE/.native-owner/retained-performance/QL-MEF" archive --format=tar HEAD > "$RUNNER_TEMP/retained-performance/source-custody/QL-MEF.tar"
+          sha256sum "$RUNNER_TEMP/retained-performance/source-custody/"* > "$RUNNER_TEMP/retained-performance/source-custody.sha256"
+          python3 scripts/prepare-retained-performance-fixture.py \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/retained-performance/QL-MEF" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output "$RUNNER_TEMP/retained-performance" --timeout-seconds 900 \
+            > "$RUNNER_TEMP/retained-performance/result.json"
+          python3 scripts/retained-performance-environment-regressions.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" \
+            > "$RUNNER_TEMP/retained-performance/publication-counterproof.json" \
+            2> "$RUNNER_TEMP/retained-performance/publication-counterproof.log"
+          python3 scripts/retained-performance-ci-environment.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" --github-env "$GITHUB_ENV"
       - name: Build exact native source, with no owner data or live services
         shell: bash
         run: |
@@ -156,6 +211,13 @@ jobs:
         with:
           name: techne-native-${{ matrix.owner }}-${{ github.sha }}
           path: ${{ runner.temp }}/techne-native
+          retention-days: 7
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.owner == 'O-I'
+        with:
+          name: techne-retained-fixture-O-I-${{ github.sha }}
+          path: ${{ runner.temp }}/retained-performance
           retention-days: 7
           if-no-files-found: error
 

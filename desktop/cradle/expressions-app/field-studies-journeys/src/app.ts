@@ -517,6 +517,7 @@ function collectImported(documents:Journey[]){
  }
 }
 let nativeWorkspace:ReturnType<typeof installNativeWorkspace>|undefined;
+let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
 let privateEvidenceField:PrivateEvidenceField|null=null;
 // Private live presentation stays in this host closure; it is never exported,
 // persisted, or substituted for the native person/occasion basis.
@@ -1779,7 +1780,6 @@ async function saveNative(){
  if(kernelExpressionsAvailable()&&nativeWorkspace){const basis=epiSceneAuthoringBasis();if(epiDurationCommit)await epiDurationCommit;await prepareEpiSceneAuthoring(basis);requireEpiSceneAuthoring(basis);if(propertyTake)finishPropertyTake();const ok=await nativeWorkspace.commit();if(ok){closeEntryGate();toast('Saved.');}return;}
  deletedLibraryIds.delete(store.document.id);saveToLibrary(store.document);if(libraryOpen)renderLibrary();toast('Saved in this browser.');
 }
-let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
 function epiFileStatus():string{return nativeState?.busy?'Working…':nativeState?.file?.document_revision===nativeState?.identity?.revision&&nativeState?.file?'File saved':nativeState?.file?'Changes to save':'File unsaved';}
 function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){
  const previous=nativeState?.identity;nativeState=state;

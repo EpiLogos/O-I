@@ -648,7 +648,16 @@ try{
  receipt.browser.actual_gpu=await frame.evaluate(()=>{for(const c of document.querySelectorAll('canvas')){const g=c.getContext('webgl2')??c.getContext('webgl');if(!g)continue;const e=g.getExtension('WEBGL_debug_renderer_info');return{canvas:c.id,version:g.getParameter(g.VERSION),vendor:e?g.getParameter(e.UNMASKED_VENDOR_WEBGL):g.getParameter(g.VENDOR),renderer:e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):g.getParameter(g.RENDERER)};}return{unavailable:true};});
  check(receipt.browser.actual_gpu.canvas==='field-canvas'&&receipt.browser.actual_gpu.version?.includes('WebGL 2'),'The ordinary production field has an actual WebGL 2 receiving context');
  check(await frame.locator('[data-epi="identity"]').isVisible(),'Ordinary production Epi entrance is visible before construction');
- check(await frame.locator('[data-epi="identity"]').evaluate(button=>{const r=button.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('[data-epi="identity"]')===button;}),'The ordinary Epi identity entrance is actually reachable above every application gate');
+ const ordinaryEntranceHit=await frame.locator('[data-epi="identity"]').evaluate(button=>{
+  // Retain the original acquired-button centre-hit predicate. This witness
+  // distinguishes a replaced node from an actual current obstructing surface.
+  const r=button.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y);
+  const describe=node=>node instanceof Element?{tag:node.tagName,id:node.id,classes:[...node.classList].slice(0,8),epi:node.getAttribute('data-epi')}:null;
+  const hitPath=[];for(let node=hit;node&&hitPath.length<8;node=node.parentElement)hitPath.push(describe(node));
+  return{connected:button.isConnected,current_node_matches:document.querySelector('[data-epi="identity"]')===button,disabled:button instanceof HTMLButtonElement?button.disabled:null,bounds:{x:r.x,y:r.y,width:r.width,height:r.height},point:{x,y},button:describe(button),hit:describe(hit),hit_path:hitPath,passes:hit?.closest('[data-epi="identity"]')===button};
+ });
+ artifact('ordinary-epi-entrance-hit.json',ordinaryEntranceHit);
+ check(ordinaryEntranceHit.passes,'The ordinary Epi identity entrance is actually reachable above every application gate');
  check(await frame.evaluate(()=>window.__FIELD_STUDIES__.capabilities.kind)==='production','The actual production resident particle engine is loaded');
  await snapshot('00-ordinary-entry-at-rest');
  if(coldOpening){
