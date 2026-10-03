@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn,execFileSync} from 'node:child_process';
 import {once} from 'node:events';
-import {mkdtemp,mkdir,writeFile,readFile as readSourceBytes,readdir,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile as readSourceBytes,readdir,rm,rename,symlink,link} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createServer} from 'node:http';
 import {kernelOp} from '../src/kernel/bridge.ts';
@@ -189,6 +189,52 @@ test('native retained readings survive restart and missing branches but never by
    assert.equal(historicalPage.retained.reading.revision,pageBasis.revision);
    assert.equal(historicalPage.retained.standing,'last-native-reading');
    for(const operation of ['write','history','restore'])assert.equal(historicalPage.retained.reading.operations[operation].available,false);
+   // These are actual retained bytes written by this kernel after its real
+   // Central read. Physical refusal cannot turn them into current Source
+   // authority, delete them, or replace fresh admission with cache existence.
+   const physicalRecordBytes=await readSourceBytes(legacyRecord.path);
+   const physicalOriginal=join(home,'preserved-native-record');
+   const assertHistorical=async(label)=>{
+    const reading=await bounded(lastFileReading(transport,pageLocation),label);
+    assert.equal(reading.migration_allowed,true);assert.ok(reading.retained);
+    assert.equal(reading.retained.reading.content,savedBytes);
+    assert.equal(reading.retained.reading.revision,pageBasis.revision);
+    assert.deepEqual(reading.retained.reading.location,pageLocation);
+    assert.deepEqual(reading.retained.reading.source,ownerRead.data.source);
+    for(const operation of ['write','history','restore'])assert.equal(reading.retained.reading.operations[operation].available,false);
+   };
+   const physicalAlias=join(home,'ordinary-record-hardlink');
+   await link(legacyRecord.path,physicalAlias);
+   await assertHistorical('actual hardlinked native retained record');
+   assert.deepEqual(await readSourceBytes(physicalAlias),physicalRecordBytes);await rm(physicalAlias);
+   await rename(legacyRecord.path,physicalOriginal);
+   try{
+    await symlink(physicalOriginal,legacyRecord.path);
+    await assert.rejects(bounded(lastFileReading(transport,pageLocation),'native retained final symlink'),/symbolic link|symlink|loop/i);
+    assert.deepEqual(await readSourceBytes(physicalOriginal),physicalRecordBytes);await rm(legacyRecord.path);
+    execFileSync('mkfifo',[legacyRecord.path],{timeout:3000});
+    await assert.rejects(bounded(lastFileReading(transport,pageLocation),'native retained actual FIFO'),/Invalid native retained reading/);
+    assert.deepEqual(await readSourceBytes(physicalOriginal),physicalRecordBytes);await rm(legacyRecord.path);
+    await writeFile(legacyRecord.path,Buffer.alloc(8*1024*1024+1));
+    await assert.rejects(bounded(lastFileReading(transport,pageLocation),'native retained actual oversized record'),/Invalid native retained reading/);
+    assert.deepEqual(await readSourceBytes(physicalOriginal),physicalRecordBytes);
+   }finally{await rm(legacyRecord.path,{force:true});await rename(physicalOriginal,legacyRecord.path);}
+   await assertHistorical('native retained ordinary record after physical refusal');
+   const physicalDirectory=join(home,'preserved-native-record-directory');
+   await rename(retainedDirectory,physicalDirectory);
+   try{
+    await symlink(physicalDirectory,retainedDirectory);
+    await assertHistorical('actual configured retained-directory alias');
+    assert.deepEqual(await readSourceBytes(legacyRecord.path),physicalRecordBytes);
+   }finally{await rm(retainedDirectory,{force:true});await rename(physicalDirectory,retainedDirectory);}
+   const pageMarker=join(root,'Control/user/.no-agent-retrieval');
+   await writeFile(pageMarker,'');
+   try{
+    const withheld=await bounded(lastFileReading(transport,pageLocation),'current real owner marker excludes retained body');
+    assert.equal(withheld.retained,null);assert.equal(withheld.migration_allowed,false);
+    assert.deepEqual(await readSourceBytes(legacyRecord.path),physicalRecordBytes,'current refusal preserves historical bytes without disclosing them');
+   }finally{await rm(pageMarker);}
+   await assertHistorical('native retained admission after actual owner marker removal');
    await writeFile(join(root,pagePath),savedBytes);
    assert.deepEqual((await readFile(transport,pageLocation)).source,ownerRead.data.source);
    const beforeReadCount=nativeRequests;

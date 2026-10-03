@@ -131,6 +131,109 @@ jobs:
           spacetime build --module-path shared-field/spacetimedb
           spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb -y
 
+      - name: Test the exact retained reader on this native bundle host
+        env:
+          EXPECTED_OI_HEAD: ${{ github.sha }}
+          EXPECTED_TARGET: ${{ matrix.target }}
+        run: |
+          python3 - <<'PY_NATIVE_RETAINED'
+          import hashlib, json, os, platform, re, runpy, shutil
+          from pathlib import Path
+          repo = Path.cwd().resolve(strict=True)
+          out = Path(os.environ['RUNNER_TEMP']) / 'retained-file-kernel-tests'
+          out.mkdir(exist_ok=False)
+          report = {'schema':'oi.retained-file-native-unit-acceptance/v1','pass':False,
+                    'standing':'Actual native retained reader unit effects on the selected source; no installed, Ctrl roundtrip or two-human claim',
+                    'source_head':os.environ['EXPECTED_OI_HEAD'],'target':os.environ['EXPECTED_TARGET'],
+                    'host':platform.platform(),'uid':os.geteuid(),'cases':[]}
+          def digest(path):
+              checksum = hashlib.sha256()
+              with path.open('rb') as source:
+                  for chunk in iter(lambda: source.read(1024*1024), b''): checksum.update(chunk)
+              return checksum.hexdigest()
+          owners = runpy.run_path(str(repo/'desktop/cradle/tests/native-expression-local.py'))
+          def execute(args, name, cwd=repo, timeout=900):
+              log = out / (name + '.log')
+              cleanup = {}
+              receipt = {'argv':args,'cwd':str(cwd),'log':log.name,'cleanup':cleanup}
+              report.setdefault('commands', []).append(receipt)
+              try:
+                  # Stream output to the owned log; retain partial evidence on failure.
+                  # The existing owner keeps the leader unreaped until group signalling.
+                  with log.open('xb') as handle:
+                      code = owners['run_isolated'](args,cwd=cwd,env=dict(os.environ),stdout=handle,timeout=timeout,cleanup=cleanup)
+                  receipt['status'] = code
+                  if not cleanup.get('owned_group_absent_at_readback'):
+                      raise RuntimeError(name + ': owned group cleanup was not confirmed')
+                  if code: raise RuntimeError(name + ': native command failed; see retained log')
+                  assert log.stat().st_size <= 32*1024*1024, 'Native log exceeds the bounded text inspection budget'
+                  return log.read_text()
+              except BaseException as error:
+                  receipt['failure'] = str(error)
+                  raise
+              finally:
+                  if log.is_file():
+                      receipt['bytes'] = log.stat().st_size
+                      receipt['sha256'] = digest(log)
+          try:
+              assert os.geteuid() != 0, 'Actual EACCES proof requires a nonroot native runner'
+              assert 'OI_NATIVE_TEST_ROOT' not in os.environ, 'This gate requires the actual default Source Run-space fixture route'
+              execute(['python3','desktop/cradle/tests/native-expression-local.test.py'],'native-child-owner-tests',timeout=30)
+              assert execute(['git','rev-parse','HEAD'],'head-before').strip() == report['source_head']
+              paths = execute(['git','ls-files','desktop/cradle/kernel','desktop/cradle/tests/native-expression-local.py','desktop/cradle/tests/native-expression-local.test.py','.github/workflows/desktop-bundle.yml'],'source-paths').splitlines()
+              source_before = {name:digest(repo/name) for name in paths}
+              execute(['git','diff','--exit-code','HEAD','--','desktop/cradle/kernel','desktop/cradle/tests/native-expression-local.py','desktop/cradle/tests/native-expression-local.test.py','.github/workflows/desktop-bundle.yml'],'source-clean-before')
+              toolchain = execute(['rustc','--version','--verbose'],'rustc')
+              assert 'host: ' + report['target'] in toolchain
+              execute(['cargo','--version'],'cargo')
+              built = execute(['cargo','test','--locked','--manifest-path','desktop/cradle/kernel/Cargo.toml','--lib','--no-run','--message-format=json'],'native-test-build')
+              messages = [json.loads(line) for line in built.splitlines() if line.startswith('{')]
+              binaries = {m['executable'] for m in messages if m.get('reason')=='compiler-artifact' and m.get('profile',{}).get('test') and m.get('executable')}
+              assert len(binaries) == 1, 'Cargo must disclose exactly one current native library test binary'
+              binary = Path(binaries.pop()).resolve(strict=True); assert binary.is_file()
+              report['binary'] = {'path':str(binary),'sha256':digest(binary)}
+              shutil.copy2(binary, out/binary.name)
+              assert digest(out/binary.name) == report['binary']['sha256']
+              report['binary']['artifact'] = binary.name
+              prefix = 'retained_files::tests::'
+              listing = execute([str(binary),prefix,'--list'],'native-case-census')
+              cases = [line.removesuffix(': test') for line in listing.splitlines() if line.startswith(prefix) and line.endswith(': test')]
+              required = {'native_record_survives_restart_exactly_and_cannot_grant_operations',
+                          'actual_absent_cache_never_creates_a_directory_and_corrupt_record_stays_retained',
+                          'actual_stable_hardlink_and_configured_directory_alias_keep_read_compatibility',
+                          'actual_symlink_and_fifo_never_become_retained_body_reads',
+                          'actual_oversize_and_growth_after_held_open_refuse_without_truncated_success',
+                          'actual_hardlink_in_place_rewrite_between_held_passes_is_not_acknowledged',
+                          'actual_final_name_replacement_after_last_held_read_refuses_preserved_bytes',
+                          'actual_named_parent_replacement_and_root_alias_retarget_refuse_old_affiliation',
+                          'actual_file_permission_failure_keeps_original_private_io_errno'}
+              assert required <= {case.rsplit('::',1)[-1] for case in cases}, 'A required original or physical reader case is absent'
+              assert len(cases) == len(set(cases)) and len(cases) >= len(required)
+              run_space = repo/'ProjectCentral'/'now'/'tmp'; run_space.mkdir(parents=True,exist_ok=True)
+              output = execute([str(binary),prefix,'--nocapture','--test-threads=1','--color','never'],'native-retained-reader-tests',cwd=run_space,timeout=180)
+              successful = re.findall(r'^test (retained_files::tests::\S+) \.\.\. ok$',output,re.M)
+              assert set(successful) == set(cases) and len(successful) == len(cases), 'Every disclosed case must actually pass'
+              assert re.search(r'test result: ok\. '+str(len(cases))+r' passed; 0 failed; 0 ignored;',output)
+              assert digest(binary) == report['binary']['sha256'], 'The exact emitted test executable must remain unchanged'
+              source_after = {name:digest(repo/name) for name in paths}; assert source_after == source_before
+              execute(['git','diff','--exit-code','HEAD','--','desktop/cradle/kernel','desktop/cradle/tests/native-expression-local.py','desktop/cradle/tests/native-expression-local.test.py','.github/workflows/desktop-bundle.yml'],'source-clean-after')
+              assert execute(['git','rev-parse','HEAD'],'head-after').strip() == report['source_head']
+              report.update({'source_sha256':source_before,'source_unchanged':True,'cases':cases,'passed':len(cases),'failed':0,'ignored':0,'test_cwd':str(run_space),'pass':True})
+          except BaseException as error:
+              report['failure'] = str(error)
+              raise
+          finally:
+              (out/'receipt.json').write_text(json.dumps(report,indent=2)+'\n')
+          PY_NATIVE_RETAINED
+
+      - name: Retain exact native reader source, case census, executable identity and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retained-file-native-tests-${{ github.sha }}-${{ matrix.target }}
+          path: ${{ runner.temp }}/retained-file-kernel-tests
+          if-no-files-found: error
+
       - name: Package the desktop bundle (frontend, native shell, normalized archive)
         # This hosted development artifact has no Apple certificate. Ask the
         # native Tauri bundler to seal its complete app, including resources.

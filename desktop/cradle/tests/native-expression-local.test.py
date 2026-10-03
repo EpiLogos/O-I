@@ -112,6 +112,25 @@ class IsolatedExecutionTests(unittest.TestCase):
         self.assertEqual(signal.getsignal(signal.SIGTERM), previous)
         self.assertEqual(cleanup, {})
 
+    def test_native_membership_observes_only_its_owned_live_group_and_retirement(self):
+        process = subprocess.Popen([sys.executable, '-c', 'import time;time.sleep(30)'], start_new_session=True)
+        try:
+            before = packet.group_readback(process.pid)
+            self.assertFalse(before['absent'])
+            if sys.platform == 'darwin':
+                self.assertEqual(before['basis'], 'native proc_listpgrppids')
+                self.assertIn(process.pid, before['members'])
+                self.assertEqual(before['errno'], 0)
+        finally:
+            os.killpg(process.pid, signal.SIGKILL)
+            process.wait(timeout=2)
+        after = packet.group_readback(process.pid)
+        self.assertTrue(after['absent'], after)
+        if sys.platform == 'darwin':
+            self.assertEqual(after['basis'], 'native proc_listpgrppids')
+            self.assertEqual(after['count'], 0)
+            self.assertEqual(after['errno'], 0)
+
     def test_actual_packet_retains_a_source_preflight_failure(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

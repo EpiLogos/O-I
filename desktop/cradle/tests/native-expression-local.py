@@ -6,6 +6,7 @@ Default: read-only source/binary/machine preflight, exit 2 (runtime proof pendin
 namespace. This is not the installed WKWebView, audible speaker or Nara voice proof.
 """
 import argparse
+import ctypes
 import hashlib
 import json
 import math
@@ -33,12 +34,36 @@ def digest(path):
 
 
 
-def run_isolated(args, *, cwd, env, stdout, timeout=180, cleanup=None):
-    """Reap only this opt-in test's owned process group on timeout/interruption.
+def group_readback(group):
+    """Observe group membership without releasing or signalling its owner."""
+    try:
+        if sys.platform == 'darwin':
+            # Darwin can return EPERM for a retired group. Membership is an
+            # independent native observation, never an inference from EPERM.
+            native = ctypes.CDLL('/usr/lib/libproc.dylib', use_errno=True)
+            native.proc_listpgrppids.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_int]
+            native.proc_listpgrppids.restype = ctypes.c_int
+            members = (ctypes.c_int * 16384)()
+            ctypes.set_errno(0)
+            count = native.proc_listpgrppids(group, members, ctypes.sizeof(members))
+            error = ctypes.get_errno()
+            return {'absent': count == 0 and error == 0, 'basis': 'native proc_listpgrppids',
+                    'count': count, 'errno': error,
+                    'members': list(members[:count]) if 0 < count < len(members) else []}
+        os.killpg(group, 0)
+        return {'absent': False, 'basis': 'killpg group exists'}
+    except ProcessLookupError:
+        return {'absent': True, 'basis': 'killpg ESRCH'}
+    except (OSError, AttributeError) as error:
+        return {'absent': False, 'basis': 'group observation unavailable',
+                'errno': getattr(error, 'errno', None), 'error': str(error)}
 
-    Do not install persistent signal handlers or touch other suite processes.
-    Retain the leader's PID until group signalling; leader completion alone
-    says nothing about inherited bridge/browser descendants.
+
+def run_isolated(args, *, cwd, env, stdout, timeout=180, cleanup=None):
+    """Reap this opt-in test's owned group; preserve its unreaped PID fence.
+
+    Temporary handlers belong only to this command. Native membership must
+    qualify retirement independently; neither EPERM nor leader exit is absence.
     """
     process = None
     if not hasattr(os, 'waitid') or not hasattr(os, 'WNOWAIT'):
@@ -62,43 +87,55 @@ def run_isolated(args, *, cwd, env, stdout, timeout=180, cleanup=None):
                 raise RuntimeError('Isolated browser acceptance timed out')
             time.sleep(.005)
     finally:
-        # A second Ctrl-C or SIGTERM must not interrupt the bounded reap itself.
+        # A second interruption must not skip bounded cleanup or handler restore.
         for sig in previous:
             signal.signal(sig, signal.SIG_IGN)
         try:
             if process is not None:
-                reading = {'owned_pid_and_pgid': process.pid, 'leader_kept_unreaped_until_group_signal': True}
+                reading = {'owned_pid_and_pgid': process.pid,
+                           'leader_kept_unreaped_until_group_signal': True}
                 try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                    reading['owned_group_signalled'] = 'SIGKILL'
-                except ProcessLookupError:
-                    reading['owned_group_absent_before_reap'] = True
-                try:
-                    reading['leader_exit_code'] = process.wait(timeout=1)
-                except subprocess.TimeoutExpired as error:
-                    reading['cleanup_unknown'] = 'The signalled owned leader did not exit within one second'
-                    raise RuntimeError(reading['cleanup_unknown']) from error
+                    observed = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+                    exited = observed is not None and observed.si_pid == process.pid
+                    group = group_readback(process.pid)
+                    reading['group_before_final_wait'] = group
+                    only_exited_leader = exited and group.get('members') == [process.pid]
+                    reading['only_exited_leader_before_final_wait'] = only_exited_leader
+                    if group['absent']:
+                        reading['owned_group_absent_before_reap'] = True
+                    elif not only_exited_leader:
+                        try:
+                            os.killpg(process.pid, signal.SIGKILL)
+                            reading['owned_group_signalled'] = 'SIGKILL'
+                        except ProcessLookupError:
+                            reading['owned_group_absent_before_reap'] = True
+                        except OSError as error:
+                            reading['group_signal_error'] = {'errno': error.errno, 'error': str(error)}
                 finally:
-                    if cleanup is not None:
-                        cleanup.update(reading)
-                # Observation only after reaping: never signal a possibly
-                # reused numeric group once the leader's PID fence is released.
+                    # Reap even if native membership or group signalling failed.
+                    try:
+                        reading['leader_exit_code'] = process.wait(timeout=1)
+                        reading['owned_leader_reaped'] = True
+                    except subprocess.TimeoutExpired as error:
+                        reading['owned_leader_reaped'] = False
+                        reading['cleanup_unknown'] = 'The owned leader did not exit within one second'
+                        raise RuntimeError(reading['cleanup_unknown']) from error
+                    finally:
+                        if cleanup is not None:
+                            cleanup.update(reading)
+                # Read-only after wait: never signal a reused numeric group.
                 deadline = time.monotonic() + .5
                 while True:
-                    try:
-                        os.killpg(process.pid, 0)
-                        reading['owned_group_absent_at_readback'] = False
-                    except ProcessLookupError:
-                        reading['owned_group_absent_at_readback'] = True
-                    if reading['owned_group_absent_at_readback'] or time.monotonic() >= deadline:
+                    group = group_readback(process.pid)
+                    reading['group_readback'] = group
+                    reading['owned_group_absent_at_readback'] = group['absent']
+                    if group['absent'] or time.monotonic() >= deadline:
                         break
                     time.sleep(.005)
+                if not group['absent']:
+                    reading['cleanup_unknown'] = 'Owned group disappearance was not observed after retirement and leader reap'
                 if cleanup is not None:
                     cleanup.update(reading)
-                if not reading['owned_group_absent_at_readback']:
-                    reading['cleanup_unknown'] = 'Owned group disappearance was not observed after signalling and leader reap'
-                    if cleanup is not None:
-                        cleanup.update(reading)
         finally:
             for sig, handler in previous.items():
                 signal.signal(sig, handler)
