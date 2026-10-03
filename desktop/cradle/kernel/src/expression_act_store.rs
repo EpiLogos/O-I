@@ -11,12 +11,13 @@
 //! [`MAX_RECORDS`] acts — the same cap as the kernel's in-memory act set.
 //! Ended acts leave it by archiving: the record moves to `archive/` and is
 //! never deleted; archived acts stay readable (and replayable) by ref.
-use crate::expression_world::Act;
-use serde::{Deserialize, Serialize};
+use crate::expression_world::{Act, ActPhase};
 use sha2::{Digest, Sha256};
+use std::collections::BTreeMap;
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 pub const SCHEMA: &str = "oi.expression-act/v1";
@@ -24,41 +25,6 @@ pub const SCHEMA: &str = "oi.expression-act/v1";
 pub const MAX_RECORD_BYTES: u64 = 4 * 1024 * 1024;
 pub const MAX_RECORDS: usize = 256;
 const ARCHIVE: &str = "archive";
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-struct Record {
-    schema: String,
-    act: Act,
-}
-
-const RECORD_BOUND: &str =
-    "Act record exceeds its 4 MiB bound; retain this Act and continue in a successor Act";
-
-/// Serialization borrows the native Act and enforces the wire bound while
-/// writing. A refused record never allocates an unbounded complete encoding.
-#[derive(Serialize)]
-struct BorrowedRecord<'a> {
-    schema: &'static str,
-    act: &'a Act,
-}
-struct RecordBytes {
-    bytes: Vec<u8>,
-    exceeded: bool,
-}
-impl Write for RecordBytes {
-    fn write(&mut self, input: &[u8]) -> std::io::Result<usize> {
-        if input.len() > MAX_RECORD_BYTES as usize - self.bytes.len() {
-            self.exceeded = true;
-            return Err(std::io::Error::other(RECORD_BOUND));
-        }
-        self.bytes.extend_from_slice(input);
-        Ok(input.len())
-    }
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
 
 /// The CAS outcome of a write.
 #[derive(Debug, PartialEq, Eq)]
@@ -70,37 +36,52 @@ pub enum Written {
     },
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct ActStore {
     root: PathBuf,
+    // Revision-only proof, never retained body/current-Document authority.
+    // Every use still locks and reads the actual bounded file and hashes all
+    // its bytes. A changed/cold record receives the original complete decode.
+    qualifications: Arc<Mutex<BTreeMap<PathBuf, QualifiedRevision>>>,
 }
+
+#[derive(Clone, Debug)]
+struct QualifiedRevision {
+    sha256: [u8; 32],
+    bytes: usize,
+    revision: u64,
+    ended: bool,
+    archived: bool,
+}
+
+// Store identity remains its native root. Transient qualification metadata is
+// an optimization, excluded from WorldState semantic equality/serialization.
+impl PartialEq for ActStore {
+    fn eq(&self, other: &Self) -> bool {
+        self.root == other.root
+    }
+}
+impl Eq for ActStore {}
 
 impl ActStore {
     pub(crate) fn encoded_record(act: &Act) -> Result<Vec<u8>, String> {
-        let mut output = RecordBytes {
-            bytes: Vec::new(),
-            exceeded: false,
-        };
-        serde_json::to_writer_pretty(
-            &mut output,
-            &BorrowedRecord {
-                schema: SCHEMA,
+        crate::expression_act_storage::encode(act)
+    }
+    pub(crate) fn expanded_bytes(act: &Act) -> Result<usize, String> {
+        if act.material_contract.is_some() {
+            crate::expression_performance_act::retained_bytes(act)
+        } else {
+            crate::expression_act_storage::measure(
                 act,
-            },
-        )
-        .map_err(|error| {
-            if output.exceeded {
-                RECORD_BOUND.to_owned()
-            } else {
-                error.to_string()
-            }
-        })?;
-        Ok(output.bytes)
+                crate::expression_act_storage::EXPANDED_BYTES,
+            )
+        }
     }
     /// The store under an explicit O:I home (`<home>/desktop/expression-acts`).
     pub fn at_home(home: &Path) -> Self {
         Self {
             root: home.join("desktop").join("expression-acts"),
+            qualifications: Arc::new(Mutex::new(BTreeMap::new())),
         }
     }
 
@@ -180,7 +161,7 @@ impl ActStore {
             .count())
     }
 
-    fn read_path(path: &Path) -> Result<Option<Act>, String> {
+    fn read_bytes(path: &Path) -> Result<Option<Vec<u8>>, String> {
         let meta = match fs::symlink_metadata(path) {
             Ok(meta) => meta,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -192,16 +173,106 @@ impl ActStore {
                 path.display()
             ));
         }
-        let bytes = fs::read(path).map_err(|e| e.to_string())?;
-        let record: Record = serde_json::from_slice(&bytes)
-            .map_err(|e| format!("Act record {} is unreadable: {e}", path.display()))?;
-        if record.schema != SCHEMA {
-            return Err(format!(
-                "Act record {} has an unsupported schema",
-                path.display()
-            ));
+        let mut bytes = Vec::new();
+        fs::File::open(path)
+            .map_err(|e| e.to_string())?
+            .take(MAX_RECORD_BYTES + 1)
+            .read_to_end(&mut bytes)
+            .map_err(|e| e.to_string())?;
+        if bytes.len() as u64 > MAX_RECORD_BYTES {
+            return Err("Act record grew beyond its bounded read".into());
         }
-        Ok(Some(record.act))
+        Ok(Some(bytes))
+    }
+    fn read_path(
+        path: &Path,
+        available: usize,
+        require_archived: bool,
+    ) -> Result<Option<Act>, String> {
+        let Some(bytes) = Self::read_bytes(path)? else {
+            return Ok(None);
+        };
+        Self::decode_path_bytes(path, &bytes, available, require_archived).map(Some)
+    }
+
+    fn decode_path_bytes(
+        path: &Path,
+        bytes: &[u8],
+        available: usize,
+        require_archived: bool,
+    ) -> Result<Act, String> {
+        if require_archived {
+            let (_, ended, _, archived) = crate::expression_act_storage::header(bytes)?;
+            if !ended || !archived {
+                return Err("An archive-path record must be ended and marked archived before transient body admission".into());
+            }
+        }
+        let act = crate::expression_act_storage::decode(bytes, available)
+            .map_err(|e| format!("Act record {} is unreadable: {e}", path.display()))?;
+        if path.file_name().and_then(|s| s.to_str()) != Some(Self::name(&act.act_ref).as_str()) {
+            return Err("Act record is filed under another ref".into());
+        }
+        Ok(act)
+    }
+
+    fn remember_revision(&self, path: &Path, bytes: &[u8], act: &Act) -> Result<(), String> {
+        let mut qualified = self
+            .qualifications
+            .lock()
+            .map_err(|_| "Act revision qualification lock is unavailable")?;
+        qualified.insert(
+            path.to_owned(),
+            QualifiedRevision {
+                sha256: Sha256::digest(bytes).into(),
+                bytes: bytes.len(),
+                revision: act.revision,
+                ended: matches!(act.phase, ActPhase::Completed | ActPhase::Cancelled),
+                archived: act.archived,
+            },
+        );
+        // There is no extra Act/Document/catalog cache. Metadata also stays
+        // bounded when archived Acts are checked over a long-running session.
+        while qualified.len() > MAX_RECORDS {
+            let oldest_key = qualified.keys().next().unwrap().clone();
+            qualified.remove(&oldest_key);
+        }
+        Ok(())
+    }
+
+    fn current_revision(&self, path: &Path, require_archived: bool) -> Result<Option<u64>, String> {
+        let Some(bytes) = Self::read_bytes(path)? else {
+            self.qualifications
+                .lock()
+                .map_err(|_| "Act revision qualification lock is unavailable")?
+                .remove(path);
+            return Ok(None);
+        };
+        let hash: [u8; 32] = Sha256::digest(&bytes).into();
+        {
+            let mut qualified = self
+                .qualifications
+                .lock()
+                .map_err(|_| "Act revision qualification lock is unavailable")?;
+            if let Some(witness) = qualified.get(path) {
+                if witness.sha256 == hash && witness.bytes == bytes.len() {
+                    if require_archived && (!witness.ended || !witness.archived) {
+                        return Err("An archive-path record must be ended and marked archived before transient body admission".into());
+                    }
+                    return Ok(Some(witness.revision));
+                }
+            }
+            qualified.remove(path);
+        }
+        // Qualify exactly the bytes just read, rather than reading twice and
+        // joining the digest of one file with the body of a later successor.
+        let act = Self::decode_path_bytes(
+            path,
+            &bytes,
+            crate::expression_act_storage::LIVE_BYTES,
+            require_archived,
+        )?;
+        self.remember_revision(path, &bytes, &act)?;
+        Ok(Some(act.revision))
     }
 
     /// Every stored act, ordered by ref. Unreadable records are returned as
@@ -213,6 +284,8 @@ impl ActStore {
         let _lock = self.prepare()?;
         let mut acts = Vec::new();
         let mut errors = Vec::new();
+        let mut candidates = Vec::new();
+        let mut paths = Vec::new();
         let entries = fs::read_dir(&self.root).map_err(|e| e.to_string())?;
         for entry in entries {
             let entry = entry.map_err(|e| e.to_string())?;
@@ -225,15 +298,44 @@ impl ActStore {
             if path.extension().and_then(|e| e.to_str()) != Some("json") {
                 continue;
             }
-            match Self::read_path(&path) {
-                Ok(Some(act)) if self.path(&act.act_ref) == path => acts.push(act),
-                Ok(Some(act)) => errors.push(format!(
-                    "Act record {} is filed under another ref ({})",
-                    path.display(),
-                    act.act_ref
+            paths.push(path);
+            if paths.len() > MAX_RECORDS {
+                return Ok((vec![], vec!["Act live register exceeds 256 records; all stay stored but unloaded until the register is reconciled".into()]));
+            }
+        }
+        paths.sort();
+        for path in paths {
+            match Self::read_bytes(&path).and_then(|bytes| {
+                bytes
+                    .map(|b| crate::expression_act_storage::header(&b))
+                    .transpose()
+            }) {
+                Ok(Some((reference, ended, updated, _))) if self.path(&reference) == path => {
+                    candidates.push((ended, updated, reference, path))
+                }
+                Ok(Some(_)) => errors.push(format!(
+                    "Act record {} is filed under another ref",
+                    path.display()
                 )),
                 Ok(None) => {}
                 Err(error) => errors.push(error),
+            }
+        }
+        // Rank metadata before expanding bodies, using the same live ordering
+        // as WorldState::attach_store. Unloaded records remain on disk.
+        candidates.sort_by(|a, b| a.0.cmp(&b.0).then(b.1.cmp(&a.1)).then(a.2.cmp(&b.2)));
+        let mut available = crate::expression_act_storage::LIVE_BYTES;
+        for (_, _, _, path) in candidates {
+            match Self::read_path(&path, available, false) {
+                Ok(Some(act)) => {
+                    let weight = Self::expanded_bytes(&act)?;
+                    available = available
+                        .checked_sub(weight)
+                        .ok_or("Act live byte budget exceeded")?;
+                    acts.push(act);
+                }
+                Ok(None) => {}
+                Err(error) => errors.push(format!("{error}; record stays stored but unloaded")),
             }
         }
         acts.sort_by(|a, b| a.act_ref.cmp(&b.act_ref));
@@ -242,20 +344,69 @@ impl ActStore {
 
     /// Read one act by ref from the live register or the archive.
     pub fn read(&self, act_ref: &str) -> Result<Option<Act>, String> {
+        let act = self.read_with_budget(act_ref, crate::expression_act_storage::EXPANDED_BYTES)?;
+        if act.as_ref().is_some_and(|a| a.material_contract.is_some()) {
+            return Err("retained Act requires explicit read_retained material-v2 consumer".into());
+        }
+        Ok(act)
+    }
+    /// Explicit material-v2 caller; uses the same lock, file and archive owner.
+    pub fn read_retained(&self, act_ref: &str) -> Result<Option<Act>, String> {
+        let act = self.read_with_budget(act_ref, crate::expression_act_storage::LIVE_BYTES)?;
+        if act.as_ref().is_some_and(|a| {
+            a.material_contract.as_deref()
+                != Some(crate::expression_performance_act::MATERIAL_SCHEMA)
+        }) {
+            return Err("Act has not opted into retained-performance material-v2".into());
+        }
+        Ok(act)
+    }
+    pub(crate) fn read_with_budget(
+        &self,
+        act_ref: &str,
+        available: usize,
+    ) -> Result<Option<Act>, String> {
         let _lock = self.prepare()?;
-        Self::read_path(&self.locate(act_ref))
+        let path = self.locate(act_ref);
+        let archived = path == self.archived_path(act_ref);
+        let available = if archived {
+            crate::expression_act_storage::LIVE_BYTES
+        } else {
+            available
+        };
+        Self::read_path(&path, available, archived)
     }
 
     /// The compare-and-set precondition of a write, checked without writing:
     /// the store is lockable/writable and the record is at `expected`.
     pub fn check(&self, act_ref: &str, expected: Option<u64>) -> Result<Written, String> {
+        self.check_fields(act_ref, expected, true)
+    }
+
+    /// Qualify revision and writability before request validation can make
+    /// room in a full register. This does not reserve a slot: the ordinary
+    /// capacity check and CAS write must still run after qualified archival.
+    pub(crate) fn check_before_capacity(
+        &self,
+        act_ref: &str,
+        expected: Option<u64>,
+    ) -> Result<Written, String> {
+        self.check_fields(act_ref, expected, false)
+    }
+
+    fn check_fields(
+        &self,
+        act_ref: &str,
+        expected: Option<u64>,
+        capacity: bool,
+    ) -> Result<Written, String> {
         let _lock = self.prepare()?;
         let path = self.locate(act_ref);
-        let current = Self::read_path(&path)?.map(|a| a.revision);
+        let current = self.current_revision(&path, path == self.archived_path(act_ref))?;
         if current != expected {
             return Ok(Written::Conflict { current });
         }
-        if current.is_none() && self.live_count()? >= MAX_RECORDS {
+        if capacity && current.is_none() && self.live_count()? >= MAX_RECORDS {
             return Err(format!(
                 "Act store holds {MAX_RECORDS} live acts; archive ended acts first"
             ));
@@ -272,11 +423,17 @@ impl ActStore {
         let live = self.path(act_ref);
         if !live.exists() {
             return if self.archived_path(act_ref).exists() {
+                Self::read_path(
+                    &self.archived_path(act_ref),
+                    crate::expression_act_storage::LIVE_BYTES,
+                    true,
+                )?;
                 Ok(())
             } else {
                 Err("No stored act with this ref".into())
             };
         }
+        Self::read_path(&live, crate::expression_act_storage::LIVE_BYTES, true)?;
         let folder = self.root.join(ARCHIVE);
         fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
         fs::rename(&live, self.archived_path(act_ref)).map_err(|e| e.to_string())?;
@@ -291,9 +448,13 @@ impl ActStore {
     pub fn write(&self, act: &Act, expected: Option<u64>) -> Result<Written, String> {
         let _lock = self.prepare()?;
         let path = self.locate(&act.act_ref);
-        let current = Self::read_path(&path)?.map(|a| a.revision);
+        let archived = path == self.archived_path(&act.act_ref);
+        let current = self.current_revision(&path, archived)?;
         if current != expected {
             return Ok(Written::Conflict { current });
+        }
+        if archived && !act.archived {
+            return Err("An archive-path successor must remain marked archived".into());
         }
         if current.is_none() && self.live_count()? >= MAX_RECORDS {
             return Err(format!(
@@ -311,6 +472,10 @@ impl ActStore {
         if let Some(dir) = path.parent().and_then(|p| fs::File::open(p).ok()) {
             let _ = dir.sync_all();
         }
+        // The native encoder validated the full prospective Act before this
+        // atomic write. Issue only its exact-byte revision witness on success;
+        // a consumer read still follows the complete original admission.
+        self.remember_revision(&path, &bytes, act)?;
         Ok(Written::Written)
     }
 }

@@ -121,6 +121,9 @@ pub struct Scene {
     /// Full existing authoring Scene; no source or knowledge objects are copied.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub presentation: Option<crate::expression_scene::Presentation>,
+    /// Exact retained musical/physical performance in this native Scene.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub performance: Option<crate::expression_performance::Performance>,
     pub scene_ref: String,
     pub revision: u64,
     pub title: String,
@@ -557,6 +560,17 @@ pub enum Change {
     SceneRemove {
         scene_ref: String,
     },
+    ScenePerformanceSet {
+        scene_ref: String,
+        performance: crate::expression_performance::Performance,
+    },
+    ScenePerformanceEdit {
+        scene_ref: String,
+        operations: Vec<crate::expression_performance::PerformanceOperation>,
+    },
+    ScenePerformanceClear {
+        scene_ref: String,
+    },
     SceneNativeFieldSourceSet {
         scene_ref: String,
         source: Box<crate::expression_procedural_field_source::NativeFieldSource>,
@@ -853,7 +867,7 @@ pub fn capabilities() -> Value {
         "procedural":{"schema":procedural::SCHEMA,"owner":"existing Expression Application","operations":["read","read_source","read_outputs","read_driver","control","prepare","commit","inspect_operation","cancel"],"runtime_observation":"receiving native owner only","restoration":"configuration open interrupts unresolved operations; replay/checkpoint are explicit","operation_intent":"native journal inherited from actual current Document; output_readings attested by owner"},
         "operations":["procedural","capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
-        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
         "reuse":{"schema":REUSE_SCHEMA,"kinds":["character","scene","expression","gesture"],"accepts":["agent","object","text","value"],
             "law":"reusable material is an ordinary Expression document; roles are placeholders in Scene material (entities/text layers carrying role); refs must name this Expression's Scenes, entities and text layers",
@@ -1101,6 +1115,9 @@ impl Document {
             {
                 return Err("Scene contains duplicate, missing or too many entities".into());
             }
+            if let Some(performance) = &s.performance {
+                performance.validate()?;
+            }
             if let Some(presentation) = &s.presentation {
                 crate::expression_scene::validate(presentation, s, self)?;
             }
@@ -1297,6 +1314,7 @@ impl Document {
                     title,
                     entity_refs: vec![],
                     native_field_source: None,
+                    performance: None,
                     body: None,
                     triggers: vec![],
                 });
@@ -1327,6 +1345,27 @@ impl Document {
                 }
                 // Referencing triggers remain subject to document validation:
                 // remove/reconnect them explicitly in the same atomic edit.
+            }
+            Change::ScenePerformanceSet {
+                scene_ref,
+                performance,
+            } => {
+                performance.validate()?;
+                self.scene(&scene_ref)?.performance = Some(performance);
+            }
+            Change::ScenePerformanceEdit {
+                scene_ref,
+                operations,
+            } => {
+                let scene = self.scene(&scene_ref)?;
+                let old = scene
+                    .performance
+                    .as_ref()
+                    .ok_or("Scene has no retained performance")?;
+                scene.performance = Some(old.edited(operations)?);
+            }
+            Change::ScenePerformanceClear { scene_ref } => {
+                self.scene(&scene_ref)?.performance = None;
             }
             Change::SceneNativeFieldSourceSet { scene_ref, source } => {
                 source.validate()?;
@@ -1810,6 +1849,7 @@ impl Application {
                         title: "Main".into(),
                         entity_refs: vec![],
                         native_field_source: None,
+                        performance: None,
                         body: None,
                         triggers: vec![],
                     }],
@@ -1832,8 +1872,7 @@ impl Application {
             Request::Open { document, actor } => return self.open(*document, actor),
             Request::OpenFile { location, actor } => {
                 let file = files::read(client, &location)?;
-                let d: Document = serde_json::from_str(&file.content)
-                    .map_err(|e| format!("Invalid Expression file: {e}"))?;
+                let d = crate::expression_file::decode(&file.content)?;
                 let r = d.expression_ref.clone();
                 let revision = d.revision;
                 let (mut value, event) = self.open(d, actor)?;
@@ -2204,7 +2243,7 @@ impl Application {
                 let document = self
                     .procedural_runtime
                     .checkpoint_document(self.document(&expression_ref)?)?;
-                let content = serde_json::to_string_pretty(&document).map_err(|e| e.to_string())?;
+                let content = crate::expression_file::encode(&document)?;
                 // The explicit directory already supplies root identity. Suppress the
                 // generic project fallback before the strict file-owner call.
                 match client.run("central.files.create", json!({"project":null,"parent":parent,"name":name,"content":content,
@@ -2242,7 +2281,7 @@ impl Application {
                     ));
                 }
                 // Protect other ordinary material from an accidental Expression save target.
-                let original: Document = serde_json::from_str(&current.content)
+                let original = crate::expression_file::decode(&current.content)
                     .map_err(|_| "Save destination is not an Expression file")?;
                 original.validate()?;
                 if original.expression_ref != expression_ref {
@@ -2251,7 +2290,7 @@ impl Application {
                 let saved_document = self
                     .procedural_runtime
                     .checkpoint_document(self.document(&expression_ref)?)?;
-                let result=client.run("central.files.write",json!({"location":location,"expected_revision":expected_file_revision,"content":serde_json::to_string_pretty(&saved_document).map_err(|e|e.to_string())?,"actor":actor,"actor_kind":actor_kind}));
+                let result=client.run("central.files.write",json!({"location":location,"expected_revision":expected_file_revision,"content":crate::expression_file::encode(&saved_document)?,"actor":actor,"actor_kind":actor_kind}));
                 match result {
                     Ok(data) => {
                         // Central can refuse CAS in a successful protocol response.
@@ -2556,8 +2595,7 @@ impl Application {
             if data["revision"] != current.revision {
                 return Err("Native source changed before readback".into());
             }
-            let read: Document =
-                serde_json::from_str(&current.content).map_err(|e| e.to_string())?;
+            let read = crate::expression_file::decode(&current.content)?;
             read.validate()?;
             if &read != document {
                 return Err("Native readback differs from the saved Expression".into());

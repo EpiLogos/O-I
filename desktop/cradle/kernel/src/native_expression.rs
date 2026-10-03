@@ -50,6 +50,9 @@ pub enum Request {
     Compose {
         request: Value,
     },
+    PrepareWorld {
+        request: Value,
+    },
 }
 
 /// A rendering binding, not a new domain record. Native config goes unchanged
@@ -696,6 +699,11 @@ impl Manager {
                 let composed = prepared.execute()?;
                 self.finish_compose(composed)
             }
+            Request::PrepareWorld { request } => {
+                let prepared = self.prepare_world(&request)?;
+                let composed = prepared.execute()?;
+                self.finish_compose(composed)
+            }
             Request::Close { lease } => {
                 if let Some(owner) = &self.active {
                     if lease != owner.lease {
@@ -709,6 +717,15 @@ impl Manager {
     }
 
     fn open(&mut self, content: &str, source: Value) -> Result<Value, String> {
+        self.open_prepared(content, source, None)
+    }
+
+    fn open_prepared(
+        &mut self,
+        content: &str,
+        source: Value,
+        world_opening: Option<&NativeWorldOpening>,
+    ) -> Result<Value, String> {
         if content.len() > MAX_REQUEST {
             return Err("binding source exceeds 32 MiB".into());
         }
@@ -726,7 +743,7 @@ impl Manager {
         // Only installed/operator configuration chooses executable paths. The
         // binding and webview cannot supply shell strings, flags or programs.
         let (host, worker) = native_executables()?;
-        self.sequence = self
+        let next_sequence = self
             .sequence
             .checked_add(1)
             .ok_or("native lease sequence exhausted")?;
@@ -737,8 +754,15 @@ impl Manager {
         let lease = format!(
             "native-expression-{}-{stamp}-{}",
             std::process::id(),
-            self.sequence
+            next_sequence
         );
+        // The private native composition handle qualifies its original input
+        // before any process/configuration effect. Opened files do not acquire it.
+        let host_config = match world_opening {
+            Some(opening) => opening.configuration(&source, &binding.host, &lease)?,
+            None => binding.host.clone(),
+        };
+        self.sequence = next_sequence;
         let config_path = std::env::temp_dir().join(format!("{lease}.json"));
         let mut options = OpenOptions::new();
         options.write(true).create_new(true);
@@ -748,7 +772,7 @@ impl Manager {
             options.mode(0o600);
         }
         let mut file = options.open(&config_path).map_err(|e| e.to_string())?;
-        if let Err(e) = serde_json::to_writer(&mut file, &binding.host)
+        if let Err(e) = serde_json::to_writer(&mut file, &host_config)
             .and_then(|_| file.flush().map_err(serde_json::Error::io))
         {
             let _ = fs::remove_file(&config_path);
@@ -887,14 +911,14 @@ impl Manager {
         }
         self.active = Some(owner);
         Ok(
-            json!({"schema":"oi.native-expression-open/v1","lease":lease,"source":source,"presentation":binding.presentation,"receipt":receipt,"checkpoint":"same-live-GPU-only; no process or native rewind"}),
+            json!({"schema":"oi.native-expression-open/v1","lease":lease,"source":source,"native_host_configuration":host_config,"presentation":binding.presentation,"receipt":receipt,"checkpoint":"same-live-GPU-only; no process or native rewind"}),
         )
     }
 }
 
 /// Host operations a webview may relay. The K² determinant operations are
 /// the host's own; a supplied (non-K²) owner refuses them natively.
-const EXCHANGE_OPERATIONS: [&str; 8] = [
+const EXCHANGE_OPERATIONS: [&str; 12] = [
     "read",
     "inspect",
     "advance",
@@ -903,6 +927,10 @@ const EXCHANGE_OPERATIONS: [&str; 8] = [
     "m1-advance",
     "replace-event",
     "influence",
+    "set-damping",
+    "performance-prepare",
+    "performance-prepare-current",
+    "performance-exchange",
 ];
 
 fn exchange_admits(request: &Value) -> bool {
@@ -913,6 +941,7 @@ const MAX_PARTICLES: u64 = 1_048_576;
 const MAX_SKY: usize = 1024 * 1024;
 const SKY_TIMEOUT: Duration = Duration::from_secs(120);
 const BINDING_TIMEOUT: Duration = Duration::from_secs(30);
+const WORLD_BINDING_TIMEOUT: Duration = Duration::from_secs(120);
 const SKY_MAX_AGE_SECONDS: u64 = 3600;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -920,16 +949,58 @@ enum Sky {
     None,
     Now,
     Epoch(String),
+    Snapshot(Value),
 }
 
-/// The consumer's whole say in a composed binding. Geometry, material, field
-/// and every executable remain QL's or the installed suite's.
+/// The consumer may retain an explicitly declared D30 material policy.
+/// Geometry, field construction and executables remain native owners' authority.
 #[derive(Clone, Debug, PartialEq)]
 struct ComposeRequest {
     texture: [u32; 2],
     units_per_metre: f64,
     sky: Sky,
     event: Option<Value>,
+    world: Option<Value>,
+    snapshot_purpose: crate::nara_identity::SnapshotPurpose,
+}
+
+/// The same four-field Scene material contract used by the QL constructor.
+/// This validates a caller policy; QL validates it again before native admission.
+pub(crate) fn validate_scene_material(value: &Value) -> Result<(), String> {
+    let m = value
+        .as_object()
+        .ok_or("Scene material must be an object")?;
+    if m.len() != 4
+        || m.keys().any(|key| {
+            ![
+                "damping_per_second",
+                "strike_metres",
+                "audio_gain_per_metre",
+                "strike_on_event",
+            ]
+            .contains(&key.as_str())
+        })
+    {
+        return Err("Scene material requires exactly its four declared fields".into());
+    }
+    let number = |key: &str| {
+        m.get(key)
+            .and_then(Value::as_f64)
+            .filter(|v| v.is_finite())
+            .ok_or_else(|| format!("Scene material {key} must be finite"))
+    };
+    let damping = number("damping_per_second")?;
+    let strike = number("strike_metres")?;
+    let gain = number("audio_gain_per_metre")?;
+    if !(0.0..=1e6).contains(&damping)
+        || strike <= 0.0
+        || strike > 1.0
+        || gain.abs() > 1e6
+        || m["strike_on_event"].as_bool().is_none()
+    {
+        return Err("Scene material is outside the native Scene policy contract".into());
+    }
+    Ok(())
 }
 
 fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
@@ -937,10 +1008,18 @@ fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
     let obj = value
         .as_object()
         .ok_or_else(|| fail("request must be an object"))?;
-    if let Some(key) = obj
-        .keys()
-        .find(|k| !["texture", "units_per_metre", "sky", "event"].contains(&k.as_str()))
-    {
+    if let Some(key) = obj.keys().find(|k| {
+        ![
+            "texture",
+            "units_per_metre",
+            "sky",
+            "sky_snapshot",
+            "snapshot_purpose",
+            "event",
+            "world",
+        ]
+        .contains(&k.as_str())
+    }) {
         return Err(fail(&format!("unknown key {key}")));
     }
     let dims: Vec<u64> = obj
@@ -961,10 +1040,32 @@ fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
         .and_then(Value::as_f64)
         .filter(|u| u.is_finite() && *u > 0.0 && *u <= 1_000_000.0)
         .ok_or_else(|| fail("units_per_metre must be in (0, 1000000]"))?;
-    let sky = match obj.get("sky") {
-        Some(Value::String(s)) if s == "none" => Sky::None,
-        Some(Value::String(s)) if s == "now" => Sky::Now,
-        Some(Value::Object(o)) if o.len() == 1 && o.contains_key("epoch") => {
+    let sky = match (obj.get("sky"), obj.get("sky_snapshot")) {
+        (Some(_), Some(_)) | (None, None) => {
+            return Err(fail("exactly one sky selector or sky_snapshot is required"))
+        }
+        (None, Some(snapshot @ Value::Object(_))) => {
+            if snapshot["schema"] != "ql.sky-snapshot/v1"
+                || !snapshot["snapshot_ref"].as_str().is_some_and(nonempty)
+                || serde_json::to_vec(snapshot)
+                    .map_err(|error| fail(&error.to_string()))?
+                    .len()
+                    > MAX_SKY
+            {
+                return Err(fail(
+                    "sky_snapshot must be one bounded ql.sky-snapshot/v1 owner reading",
+                ));
+            }
+            Sky::Snapshot(snapshot.clone())
+        }
+        (None, Some(_)) => {
+            return Err(fail(
+                "sky_snapshot must be one bounded ql.sky-snapshot/v1 owner reading",
+            ))
+        }
+        (Some(Value::String(s)), None) if s == "none" => Sky::None,
+        (Some(Value::String(s)), None) if s == "now" => Sky::Now,
+        (Some(Value::Object(o)), None) if o.len() == 1 && o.contains_key("epoch") => {
             let epoch = o["epoch"]
                 .as_str()
                 .filter(|e| rfc3339_whole_second(e).is_some())
@@ -978,11 +1079,68 @@ fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
         Some(event @ Value::Object(_)) => Some(event.clone()),
         Some(_) => return Err(fail("event must be an object")),
     };
+    let snapshot_purpose = obj
+        .get("snapshot_purpose")
+        .map(|value| serde_json::from_value::<crate::nara_identity::SnapshotPurpose>(value.clone()))
+        .transpose()
+        .map_err(|_| fail("snapshot_purpose must be requested or retained-occasion"))?
+        .unwrap_or_default();
+    if snapshot_purpose == crate::nara_identity::SnapshotPurpose::RetainedOccasion
+        && !matches!(sky, Sky::Snapshot(_))
+    {
+        return Err(fail(
+            "a retained occasion requires an existing native sky snapshot",
+        ));
+    }
+    let world = match obj.get("world") {
+        None => None,
+        Some(Value::Object(world)) => {
+            if let Some(key) = world.keys().find(|key| {
+                !["instance_ref", "subject_ref", "start", "material"].contains(&key.as_str())
+            }) {
+                return Err(fail(&format!("unknown world key {key}")));
+            }
+            let reference = |key: &str| {
+                world
+                    .get(key)
+                    .and_then(Value::as_str)
+                    .filter(|value| nonempty(value) && value.contains(':'))
+                    .ok_or_else(|| fail(&format!("world {key} must be a qualified stable ref")))
+            };
+            reference("instance_ref")?;
+            reference("subject_ref")?;
+            if world.get("start").is_some_and(|start| !start.is_object()) {
+                return Err(fail("world start must be an owner recipe object"));
+            }
+            if let Some(material) = world.get("material") {
+                validate_scene_material(material).map_err(|why| fail(&why))?;
+            }
+            Some(Value::Object(world.clone()))
+        }
+        Some(_) => return Err(fail("world must be an object")),
+    };
+    if world.is_some() && event.is_some() {
+        return Err(fail(
+            "world admission and legacy event compose are mutually exclusive",
+        ));
+    }
+    if snapshot_purpose == crate::nara_identity::SnapshotPurpose::RetainedOccasion
+        && world.is_none()
+    {
+        return Err(fail("retained-occasion playback requires the qualified world contract; legacy scene binding admits requested snapshots"));
+    }
+    if world.is_some() && sky == Sky::None {
+        return Err(fail(
+            "world admission requires one full validated sky snapshot",
+        ));
+    }
     Ok(ComposeRequest {
         texture: [dims[0] as u32, dims[1] as u32],
         units_per_metre,
         sky,
         event,
+        world,
+        snapshot_purpose,
     })
 }
 
@@ -1088,7 +1246,7 @@ fn utc_whole_second(unix_seconds: i64) -> String {
 /// second so ql-sky's current mode (epoch ≤ now, within budget) holds.
 fn sky_request(sky: &Sky, now_unix_seconds: i64) -> Option<Value> {
     let (mode, epoch) = match sky {
-        Sky::None => return None,
+        Sky::None | Sky::Snapshot(_) => return None,
         Sky::Now => ("current", utc_whole_second(now_unix_seconds)),
         Sky::Epoch(epoch) => ("historical", epoch.clone()),
     };
@@ -1203,6 +1361,13 @@ fn compose_executables(needs_sky: bool) -> Result<ComposeExecutables, String> {
 pub struct PreparedCompose {
     request: ComposeRequest,
     token: String,
+    finish: ComposeFinish,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum ComposeFinish {
+    Open,
+    ReturnWorld,
 }
 
 /// A QL-composed binding document and its honest provenance.
@@ -1210,14 +1375,92 @@ pub struct PreparedCompose {
 pub struct ComposedBinding {
     content: String,
     source: Value,
+    finish: ComposeFinish,
+    world_opening: Option<NativeWorldOpening>,
+}
+
+/// Produced only by the actual QL composition below. Serialized World/source
+/// evidence, files and browser requests cannot deserialize this owner handle.
+#[derive(Debug, Clone)]
+struct NativeWorldOpening {
+    constructor_request: Value,
+    constructor_request_bytes: String,
+    snapshot_purpose: crate::nara_identity::SnapshotPurpose,
+}
+impl ComposedBinding {
+    /// The entire native composition, retained for the document source owner.
+    /// These read-only observations cannot reconstruct the private opening.
+    pub(crate) fn source(&self) -> &Value {
+        &self.source
+    }
+
+    pub(crate) fn binding_content(&self) -> &str {
+        &self.content
+    }
+}
+
+impl NativeWorldOpening {
+    fn configuration(&self, source: &Value, host: &Value, lease: &str) -> Result<Value, String> {
+        let refuse = |why: &str| format!("native-expression.compose_refused: {why}");
+        let request = &self.constructor_request;
+        let world = &source["world"];
+        if source["constructor_request"] != *request
+            || source["constructor_request_bytes"] != self.constructor_request_bytes
+            || serde_json::from_str::<Value>(&self.constructor_request_bytes)
+                .map_err(|e| e.to_string())?
+                != *request
+            || source["request_sha256"] != sha256_hex(self.constructor_request_bytes.as_bytes())
+            || request["schema"] != "ql.scene-world-request/v1"
+            || request["instance_ref"] != host["instance_ref"]
+            || request["instance_ref"] != world["instance_ref"]
+            || request["event_ref"] != world["event_ref"]
+            || request["subject_ref"] != world["subject_ref"]
+            || request["sky"] != world["sky"]
+        {
+            return Err(refuse("original native World constructor changed"));
+        }
+        if self.snapshot_purpose == crate::nara_identity::SnapshotPurpose::RetainedOccasion {
+            crate::nara_identity::validate_retained_admission(
+                &world["sky_admission"],
+                &request["sky"],
+            )?;
+        }
+        // snapshot_purpose is the CLI admission operation, not a WorldRequest
+        // constituent. Its exact bytes and native receipt remain in source.
+        // QL's private source factory independently classifies the COMPLETE sky;
+        // removing this CLI selector grants no public/private source standing.
+        let mut domain_request = request.clone();
+        domain_request
+            .as_object_mut()
+            .ok_or_else(|| refuse("World constructor is not an object"))?
+            .remove("snapshot_purpose");
+        let context_ref = host["instance_ref"]
+            .as_str()
+            .filter(|v| nonempty(v))
+            .ok_or_else(|| refuse("World owner instance absent"))?;
+        let receiving_context = json!({"kind":"world","private":false,
+            "context":{"reference":context_ref,"revision":lease},
+            "receiver":{"reference":lease,"revision":source["ql_executable_sha256"]},
+            "source_occasion":null,"protected_state":null,"consent":null,"required_assets":[]});
+        Ok(json!({"schema":"ql.field-host-world-config/v1",
+            "instance_ref":host["instance_ref"],"world_request":domain_request,
+            "receiving_context":receiving_context}))
+    }
 }
 
 impl PreparedCompose {
     pub fn execute(self) -> Result<ComposedBinding, String> {
-        let executables = compose_executables(self.request.sky != Sky::None)?;
+        let executables =
+            compose_executables(matches!(self.request.sky, Sky::Now | Sky::Epoch(_)))?;
+        let executable_sha256 = sha256_hex(&fs::read(&executables.ql).map_err(|error| {
+            format!("native-expression.unavailable: qualify QL executable: {error}")
+        })?);
         let now_ms = unix_ms()?;
         let mut sky_provenance = Value::Null;
-        let mut snapshot = None;
+        let mut snapshot = match &self.request.sky {
+            Sky::Snapshot(snapshot) => Some(snapshot.clone()),
+            _ => None,
+        };
         if let Some(request) = sky_request(&self.request.sky, (now_ms / 1000) as i64) {
             let unavailable =
                 |why: String| format!("native-expression.unavailable: dated sky: {why}");
@@ -1249,55 +1492,182 @@ impl PreparedCompose {
             snapshot = Some(reading);
         }
         let [width, height] = self.request.texture;
-        let mut binding_request = json!({"schema":"ql.scene-binding-request/v1",
-            "instance_ref":format!("oi:native-expression/{}", self.token),
-            "texture":[width, height],"units_per_metre":self.request.units_per_metre});
-        if let Some(event) = self.request.event {
-            binding_request["event"] = event; // QL's CoupledInput; passed untouched
-        }
-        if let Some(snapshot) = snapshot {
-            binding_request["sky"] = snapshot;
-        }
-        let bytes = serde_json::to_vec(&binding_request).map_err(|e| e.to_string())?;
+        let world_requested = self.request.world.is_some();
+        let owner_request = if let Some(world) = self.request.world {
+            let sky = snapshot.clone().ok_or("native-expression.invalid_compose: world admission requires one full validated sky snapshot")?;
+            let event_ref = sky["snapshot_ref"]
+                .as_str()
+                .filter(|value| nonempty(value))
+                .ok_or(
+                    "native-expression.compose_refused: ql-sky snapshot has no stable snapshot_ref",
+                )?;
+            let mut request = json!({"schema":"ql.scene-world-request/v1",
+                "instance_ref":world["instance_ref"],"event_ref":event_ref,"subject_ref":world["subject_ref"],
+                "sky":sky,"texture":[width,height],"units_per_metre":self.request.units_per_metre});
+            if self.request.snapshot_purpose
+                == crate::nara_identity::SnapshotPurpose::RetainedOccasion
+            {
+                request["snapshot_purpose"] = json!(self.request.snapshot_purpose);
+            }
+            if let Some(start) = world.get("start") {
+                request["start"] = start.clone();
+            }
+            if let Some(material) = world.get("material") {
+                request["material"] = material.clone();
+            }
+            request
+        } else {
+            let mut request = json!({"schema":"ql.scene-binding-request/v1",
+                "instance_ref":format!("oi:native-expression/{}", self.token),
+                "texture":[width, height],"units_per_metre":self.request.units_per_metre});
+            if self.request.snapshot_purpose
+                == crate::nara_identity::SnapshotPurpose::RetainedOccasion
+            {
+                request["snapshot_purpose"] = json!(self.request.snapshot_purpose);
+            }
+            if let Some(event) = self.request.event {
+                request["event"] = event; // QL's CoupledInput; passed untouched
+            }
+            if let Some(snapshot) = snapshot.clone() {
+                request["sky"] = snapshot;
+            }
+            request
+        };
+        let bytes = serde_json::to_vec(&owner_request).map_err(|e| e.to_string())?;
         if bytes.len() > MAX_REQUEST {
             return Err("native-expression.invalid_compose: request exceeds 32 MiB".into());
         }
         let request_sha256 = sha256_hex(&bytes);
+        let constructor_request_bytes =
+            String::from_utf8(bytes.clone()).map_err(|e| e.to_string())?;
         let file = PrivateFile::create(&format!("{}-scene.json", self.token), &bytes)?;
         let refused = |why: String| format!("native-expression.compose_refused: {why}");
+        let output_limit = if world_requested {
+            MAX_REPLY
+        } else {
+            MAX_REQUEST
+        };
+        let construction_timeout = if world_requested {
+            WORLD_BINDING_TIMEOUT
+        } else {
+            BINDING_TIMEOUT
+        };
         let ran = run_bounded(
             executables.ql.as_os_str(),
             &[
                 "scene".as_ref(),
-                "binding".as_ref(),
+                if world_requested {
+                    "world".as_ref()
+                } else {
+                    "binding".as_ref()
+                },
                 file.0.as_os_str(),
                 "--json".as_ref(),
             ],
-            BINDING_TIMEOUT,
-            MAX_REQUEST,
+            construction_timeout,
+            output_limit,
         )
         .map_err(|e| {
             format!(
-                "native-expression.unavailable: `{} scene binding` {}",
+                "native-expression.unavailable: `{} scene {}` {}",
                 executables.ql.display(),
-                e.describe(BINDING_TIMEOUT, MAX_REQUEST)
+                if world_requested { "world" } else { "binding" },
+                e.describe(construction_timeout, output_limit)
             )
         })?;
         drop(file);
+        if sha256_hex(&fs::read(&executables.ql).map_err(|error| {
+            format!("native-expression.unavailable: recheck QL executable: {error}")
+        })?) != executable_sha256
+        {
+            return Err(refused("QL executable changed during composition".into()));
+        }
         if !ran.status.success() {
             return Err(refused(format!(
-                "ql scene binding exited {}: {}",
+                "ql scene {} exited {}: {}",
+                if world_requested { "world" } else { "binding" },
                 ran.status,
                 diagnostic_text(&ran.stderr)
             )));
         }
-        let content = String::from_utf8(ran.stdout)
-            .map_err(|_| refused("ql scene binding output is not UTF-8".into()))?;
-        let source = json!({"schema":"oi.native-expression-composed-source/v1",
+        let (content, world, disclosed_sky) = if world_requested {
+            let world: Value = serde_json::from_slice(&ran.stdout)
+                .map_err(|error| refused(format!("ql scene world output is not JSON: {error}")))?;
+            if world["schema"] != "ql.scene-world/v1" || !world["binding"].is_object() {
+                return Err(refused(
+                    "ql scene world did not answer a ql.scene-world/v1 with a binding".into(),
+                ));
+            }
+            if self.request.snapshot_purpose
+                == crate::nara_identity::SnapshotPurpose::RetainedOccasion
+            {
+                crate::nara_identity::validate_retained_admission(
+                    &world["sky_admission"],
+                    snapshot.as_ref().unwrap(),
+                )?;
+            }
+            let event_ref = owner_request["event_ref"].clone();
+            let subject_ref = owner_request["subject_ref"].clone();
+            let instance_ref = owner_request["instance_ref"].clone();
+            let basis = &world["basis"];
+            if !basis.is_object()
+                || world["sky"] != owner_request["sky"]
+                || world["event_ref"] != event_ref
+                || world["snapshot_ref"] != event_ref
+                || world["subject_ref"] != subject_ref
+                || world["instance_ref"] != instance_ref
+                || world["binding"]["host"]["instance_ref"] != instance_ref
+                || world["event"] != basis["input"]
+                || world["binding"]["native_basis"] != *basis
+                || world["binding"]["scene"] != world["scene"]
+                || world["binding"]["native_readback"] != world["native_readback"]
+                || basis["input"]["m1"]["event_ref"] != event_ref
+                || basis["input"]["m2"]["stamp"]["identity"]["event_ref"] != event_ref
+                || basis["input"]["m3"]["stamp"]["identity"]["event_ref"] != event_ref
+                || basis["input"]["m3"]["subject_ref"] != subject_ref
+                || basis["m1"]["config"]["event_ref"] != event_ref
+                || basis["m2"]["identity"]["event_ref"] != event_ref
+                || basis["m3"]["identity"]["event_ref"] != event_ref
+                || basis["m3"]["subject_ref"] != subject_ref
+                || world["scene"]["event_ref"] != event_ref
+                || world["scene"]["snapshot_ref"] != event_ref
+                || world["scene"]["subject_ref"] != subject_ref
+            {
+                return Err(refused(
+                    "ql scene world did not preserve one sky/event/subject basis".into(),
+                ));
+            }
+            let content = serde_json::to_string(&world["binding"])
+                .map_err(|error| refused(error.to_string()))?;
+            let sky = world["sky"].clone();
+            (content, world, sky)
+        } else {
+            let content = String::from_utf8(ran.stdout)
+                .map_err(|_| refused("ql scene binding output is not UTF-8".into()))?;
+            (content, Value::Null, snapshot.unwrap_or(sky_provenance))
+        };
+        let mut source = json!({"schema":"oi.native-expression-composed-source/v1",
             "ql_executable":executables.ql,"ql_selection":executables.selection,
-            "ql_revision":executables.revision,"sky":sky_provenance,
-            "request_sha256":request_sha256,"composed_at_unix_ms":now_ms as u64});
-        Ok(ComposedBinding { content, source })
+            "ql_revision":executables.revision,"ql_executable_sha256":executable_sha256,"sky":disclosed_sky,"world":world,
+            "request_sha256":request_sha256,"constructor_request":owner_request,
+            "constructor_request_bytes":constructor_request_bytes,
+            "binding_sha256":sha256_hex(content.as_bytes()),"composed_at_unix_ms":now_ms as u64});
+        if !world_requested {
+            // The legacy scene compiler also returns qualified six-field
+            // material. Retain it whole rather than discard its source basis.
+            source["binding"] = serde_json::from_str(&content)
+                .map_err(|error| refused(format!("ql scene binding is not JSON: {error}")))?;
+        }
+        Ok(ComposedBinding {
+            content,
+            source,
+            finish: self.finish,
+            world_opening: world_requested.then_some(NativeWorldOpening {
+                constructor_request: owner_request,
+                constructor_request_bytes,
+                snapshot_purpose: self.request.snapshot_purpose,
+            }),
+        })
     }
 }
 
@@ -1307,6 +1677,92 @@ fn sha256_hex(bytes: &[u8]) -> String {
         .iter()
         .map(|b| format!("{b:02x}"))
         .collect()
+}
+
+/// Keep the qualified composition in its source carrier. The worker consumes
+/// the older closed rendering binding, not the complete source-bearing world.
+/// Projection happens only after exact admission; direct `Open` stays strict.
+fn composed_worker_binding(content: &str, source: &Value) -> Result<String, String> {
+    let refuse = |why: &str| format!("native-expression.compose_refused: {why}");
+    if content.len() > MAX_REQUEST {
+        return Err(refuse("binding source exceeds 32 MiB"));
+    }
+    let binding: Value = serde_json::from_str(content)
+        .map_err(|error| refuse(&format!("composed binding is not JSON: {error}")))?;
+    let fields = binding
+        .as_object()
+        .ok_or_else(|| refuse("composed binding must be an object"))?;
+    let world = &source["world"];
+    if !world.is_object() && fields.len() == 3 {
+        // A legacy three-field QL result is subject to exactly the authored
+        // binding parser too; this is not an unknown-field escape hatch.
+        serde_json::from_str::<Binding>(content)
+            .map_err(|error| refuse(&format!("invalid closed binding: {error}")))?;
+        return Ok(content.to_owned());
+    }
+    const QUALIFIED_FIELDS: [&str; 6] = [
+        "schema",
+        "host",
+        "presentation",
+        "scene",
+        "native_readback",
+        "native_basis",
+    ];
+    if fields.len() != QUALIFIED_FIELDS.len()
+        || QUALIFIED_FIELDS
+            .iter()
+            .any(|key| !fields.contains_key(*key))
+        || binding["schema"] != "oi.native-expression-binding/v1"
+        || !binding["native_basis"].is_object()
+        || !binding["native_readback"].is_object()
+    {
+        return Err(refuse(
+            "qualified binding requires exactly its six source fields",
+        ));
+    }
+    let has_source_sky = binding["host"]["basis"]["source_receipts"]
+        .as_array()
+        .is_some_and(|receipts| {
+            receipts
+                .iter()
+                .any(|receipt| receipt["schema"] == "ql.sky-snapshot/v1")
+        });
+    let lawful_unlocated_scene = !world.is_object()
+        && binding["scene"].is_null()
+        && source["sky"].is_null()
+        && !has_source_sky;
+    if !binding["scene"].is_object() && !lawful_unlocated_scene {
+        return Err(refuse(
+            "qualified sky composition requires its source scene",
+        ));
+    }
+    if source["schema"] != "oi.native-expression-composed-source/v1" {
+        return Err(refuse("qualified binding has no composed source"));
+    }
+    if source["binding_sha256"] != sha256_hex(content.as_bytes()) {
+        return Err(refuse(
+            "qualified binding differs from its exact native bytes",
+        ));
+    }
+    if world.is_object() {
+        if world["schema"] != "ql.scene-world/v1"
+            || binding != world["binding"]
+            || binding["native_basis"] != world["basis"]
+            || binding["scene"] != world["scene"]
+            || binding["native_readback"] != world["native_readback"]
+            || binding["host"]["instance_ref"] != world["instance_ref"]
+        {
+            return Err(refuse("qualified binding differs from its admitted world"));
+        }
+    } else if binding != source["binding"] {
+        return Err(refuse("qualified binding differs from its retained source"));
+    }
+    // host.basis is the original QL seed. QL completion attaches the admitted
+    // sky frequencies/resonator; requiring equality with completed native_basis
+    // would falsely reject the owner computation. Pass the seed unchanged.
+    serde_json::to_string(&json!({"schema":binding["schema"],
+        "host":binding["host"],"presentation":binding["presentation"]}))
+    .map_err(|error| refuse(&error.to_string()))
 }
 
 impl Manager {
@@ -1338,13 +1794,42 @@ impl Manager {
                 std::process::id(),
                 self.composed
             ),
+            finish: ComposeFinish::Open,
         })
+    }
+
+    pub fn prepare_world(&mut self, request: &Value) -> Result<PreparedCompose, String> {
+        let mut prepared = self.prepare_compose(request)?;
+        if prepared.request.world.is_none() {
+            return Err(
+                "native-expression.invalid_compose: prepare_world requires world refs".into(),
+            );
+        }
+        prepared.finish = ComposeFinish::ReturnWorld;
+        Ok(prepared)
     }
 
     /// The same open path as `Open`, over QL's composed document.
     pub fn finish_compose(&mut self, composed: ComposedBinding) -> Result<Value, String> {
         self.busy()?;
-        self.open(&composed.content, composed.source)
+        match composed.finish {
+            ComposeFinish::Open => {
+                let worker =
+                    composed_worker_binding(composed.binding_content(), composed.source())?;
+                self.open_prepared(&worker, composed.source, composed.world_opening.as_ref())
+            }
+            ComposeFinish::ReturnWorld => {
+                let binding: Value =
+                    serde_json::from_str(composed.binding_content()).map_err(|error| {
+                        format!(
+                        "native-expression.compose_refused: prepared binding is not JSON: {error}"
+                    )
+                    })?;
+                Ok(
+                    json!({"schema":"oi.native-expression-prepared-world/v1","source":composed.source,"binding":binding}),
+                )
+            }
+        }
     }
 }
 
@@ -1414,6 +1899,9 @@ impl crate::Kernel {
             crate::KernelOp::NativeExpression {
                 request: Request::Compose { request },
             } => self.native_expression.prepare_compose(request).map(Some),
+            crate::KernelOp::NativeExpression {
+                request: Request::PrepareWorld { request },
+            } => self.native_expression.prepare_world(request).map(Some),
             _ => Ok(None),
         }
     }
@@ -2161,5 +2649,301 @@ for line in sys.stdin:
         assert!(
             serde_json::from_value::<Request>(json!({"operation":"restart","lease":"x"})).is_err()
         );
+    }
+    /// Run explicitly against retained production input and real installed or
+    /// operator-qualified QL companions; this cannot pass with a fixture CLI.
+    #[test]
+    #[ignore = "requires an actual retained native compose request and real QL companions"]
+    fn actual_qualified_world_opens_the_native_worker_without_losing_source() {
+        let input = std::env::var("OI_NATIVE_WORLD_REPLAY_REQUEST")
+            .expect("set OI_NATIVE_WORLD_REPLAY_REQUEST to the retained production request");
+        let packet: Value = serde_json::from_slice(&fs::read(input).unwrap()).unwrap();
+        let request = &packet["request"]["request"]["request"];
+        assert!(request["world"].is_object());
+        let mut manager = Manager::default();
+        let composed = manager.prepare_world(request).unwrap().execute().unwrap();
+        let content = composed.binding_content().to_owned();
+        let source = composed.source().clone();
+        let opening = composed.world_opening.as_ref().unwrap().clone();
+        let prepared = manager.finish_compose(composed).unwrap();
+        assert_eq!(prepared["binding"], source["world"]["binding"]);
+        assert_eq!(source["constructor_request"], opening.constructor_request);
+        assert_eq!(source["binding_sha256"], sha256_hex(content.as_bytes()));
+        assert_eq!(
+            source["constructor_request_bytes"],
+            opening.constructor_request_bytes
+        );
+        assert_eq!(
+            source["request_sha256"],
+            sha256_hex(opening.constructor_request_bytes.as_bytes())
+        );
+        assert_eq!(
+            serde_json::from_str::<Value>(&opening.constructor_request_bytes).unwrap(),
+            opening.constructor_request
+        );
+        assert_eq!(prepared["binding"].as_object().unwrap().len(), 6);
+        assert!(manager.active.is_none());
+        let full: Value = serde_json::from_str(&content).unwrap();
+        let projected: Value =
+            serde_json::from_str(&composed_worker_binding(&content, &source).unwrap()).unwrap();
+        assert_eq!(projected.as_object().unwrap().len(), 3);
+        for key in ["schema", "host", "presentation"] {
+            assert_eq!(projected[key], full[key]);
+        }
+        let mut mutants = Vec::new();
+        for key in ["native_basis", "scene", "native_readback", "host"] {
+            let mut changed = full.clone();
+            changed[key]["foreign_revision"] = json!("foreign:source");
+            mutants.push(changed);
+        }
+        let mut unknown = full.clone();
+        unknown["unknown"] = json!(true);
+        mutants.push(unknown);
+        let mut missing = full.clone();
+        missing.as_object_mut().unwrap().remove("native_basis");
+        mutants.push(missing);
+        let mut instance = full.clone();
+        instance["host"]["instance_ref"] = json!("foreign:instance");
+        mutants.push(instance);
+        for mutant in mutants {
+            let error = manager
+                .finish_compose(ComposedBinding {
+                    content: mutant.to_string(),
+                    source: source.clone(),
+                    finish: ComposeFinish::Open,
+                    world_opening: Some(opening.clone()),
+                })
+                .unwrap_err();
+            assert!(error.contains("compose_refused"), "{error}");
+            assert!(manager.active.is_none());
+            assert_eq!(manager.sequence, 0);
+        }
+        let mut missing_constructor = source.clone();
+        missing_constructor
+            .as_object_mut()
+            .unwrap()
+            .remove("constructor_request");
+        assert!(opening
+            .configuration(&missing_constructor, &full["host"], "native-test-only")
+            .is_err());
+        let mut missing_constructor_bytes = source.clone();
+        missing_constructor_bytes
+            .as_object_mut()
+            .unwrap()
+            .remove("constructor_request_bytes");
+        assert!(opening
+            .configuration(
+                &missing_constructor_bytes,
+                &full["host"],
+                "native-test-only"
+            )
+            .is_err());
+        let mut changed_constructor_bytes = source.clone();
+        changed_constructor_bytes["constructor_request_bytes"] =
+            json!(format!("{} ", opening.constructor_request_bytes));
+        assert!(opening
+            .configuration(
+                &changed_constructor_bytes,
+                &full["host"],
+                "native-test-only"
+            )
+            .is_err());
+        let mut changed_binding_receipt = source.clone();
+        changed_binding_receipt["binding_sha256"] = json!("0".repeat(64));
+        assert!(composed_worker_binding(&content, &changed_binding_receipt).is_err());
+        for key in ["basis", "scene", "native_readback", "instance_ref"] {
+            let mut changed = source.clone();
+            changed["world"][key] = json!("foreign:source");
+            assert!(composed_worker_binding(&content, &changed).is_err());
+        }
+        assert!(manager
+            .open(&content, source.clone())
+            .unwrap_err()
+            .contains("unknown field"));
+        assert_eq!(manager.sequence, 0);
+        let opened = manager
+            .finish_compose(ComposedBinding {
+                content,
+                source: source.clone(),
+                finish: ComposeFinish::Open,
+                world_opening: Some(opening),
+            })
+            .unwrap();
+        assert_eq!(opened["source"], source);
+        assert_eq!(
+            opened["native_host_configuration"]["schema"],
+            "ql.field-host-world-config/v1"
+        );
+        let mut domain_request = source["constructor_request"].clone();
+        domain_request
+            .as_object_mut()
+            .unwrap()
+            .remove("snapshot_purpose");
+        assert_eq!(
+            opened["native_host_configuration"]["world_request"],
+            domain_request
+        );
+        assert_eq!(
+            opened["receipt"]["instance_ref"],
+            request["world"]["instance_ref"]
+        );
+        assert_eq!(opened["receipt"]["status"], "ready");
+        assert_eq!(opened["receipt"]["available"], true);
+        let owner = manager.active.as_ref().unwrap();
+        assert_eq!(owner.identity["event_ref"], source["world"]["event_ref"]);
+        assert_eq!(
+            owner.identity["subject_ref"],
+            source["world"]["subject_ref"]
+        );
+        let read = json!({"schema":"ql.field-host-request/v1",
+            "instance_ref":owner.identity["instance_ref"],
+            "event_ref":owner.identity["event_ref"],
+            "subject_ref":owner.identity["subject_ref"],
+            "request_id":(owner.last_request_id + 1).to_string(),
+            "expected_generation":opened["receipt"]["field"]["generation"],
+            "expected_samples_elapsed":opened["receipt"]["field"]["samples_elapsed"],
+            "command":{"operation":"read"}});
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let client = CentralClient::with("/nonexistent".into(), None, String::new());
+        let received = manager
+            .apply(
+                &client,
+                Request::Exchange {
+                    lease: lease.clone(),
+                    request: read,
+                },
+            )
+            .unwrap();
+        assert_eq!(received["available"], true);
+        assert_eq!(received["status"], "ok");
+        manager.apply(&client, Request::Close { lease }).unwrap();
+        assert!(manager.active.is_none());
+        let mut unsupported = request.clone();
+        unsupported.as_object_mut().unwrap().remove("world");
+        assert!(manager
+            .prepare_compose(&unsupported)
+            .unwrap_err()
+            .contains("qualified world contract"));
+        if let Ok(output) = std::env::var("OI_NATIVE_WORLD_REPLAY_OUTPUT") {
+            fs::write(
+                output,
+                serde_json::to_vec_pretty(
+                    &json!({"prepared":prepared,"opened":opened,"received":received}),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        }
+    }
+    /// Actual public World constructor -> same existing native host/worker
+    /// lease -> source-form/sparse preparation. It does not assert device sound.
+    #[test]
+    #[ignore = "requires actual World source, native configuration and qualified QL host/worker"]
+    fn actual_world_performance_activation_keeps_native_source_and_lease() {
+        let path =
+            std::env::var("OI_NATIVE_WORLD_REPLAY_REQUEST").expect("actual World replay request");
+        let packet: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+        let requested = &packet["request"]["request"]["request"];
+        assert!(requested["world"].is_object());
+        let config_path = std::env::var("OI_NATIVE_PERFORMANCE_CONFIG")
+            .expect("actual retained native performance configuration");
+        let retained: Value = serde_json::from_slice(&fs::read(config_path).unwrap()).unwrap();
+        let mut config = if retained["schema"] == "ql.retained-source-performance-config/v1" {
+            retained
+        } else {
+            retained["source_assets"]["configuration"].clone()
+        };
+        assert_eq!(config["schema"], "ql.retained-source-performance-config/v1");
+        assert!(config["sparse_condition"].is_object());
+        let mut manager = Manager::default();
+        let mut composed = manager.prepare_world(requested).unwrap().execute().unwrap();
+        let source = composed.source.clone();
+        let opening = composed.world_opening.as_ref().unwrap();
+        assert_eq!(opening.constructor_request, source["constructor_request"]);
+        config["controls"]["expected_m3_generation"] =
+            source["world"]["basis"]["m3"]["identity"]["profile_generation"].clone();
+        assert!(config["controls"]["expected_m3_generation"].is_u64());
+        composed.finish = ComposeFinish::Open;
+        let opened = manager.finish_compose(composed).unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let owner_pid = manager.active.as_ref().unwrap().child.id();
+        let command = json!({"operation":"performance-prepare","config":config});
+        let request = json!({"schema":"ql.field-host-request/v1",
+            "instance_ref":opened["receipt"]["instance_ref"],
+            "event_ref":opened["receipt"]["field"]["event_ref"],
+            "subject_ref":opened["receipt"]["field"]["subject_ref"],
+            "request_id":"1", "expected_generation":opened["receipt"]["field"]["generation"],
+            "expected_samples_elapsed":opened["receipt"]["field"]["samples_elapsed"], "command":command});
+        // Public World needs no identity source read; this client cannot supply
+        // a private profile, source witness, device timestamp or fake host.
+        let client = CentralClient::with("/nonexistent".into(), None, String::new());
+        let prepared = manager
+            .apply(
+                &client,
+                Request::Exchange {
+                    lease: lease.clone(),
+                    request,
+                },
+            )
+            .unwrap();
+        assert_eq!(prepared["status"], "ok", "{prepared}");
+        assert_eq!(prepared["performance"]["accepted"], true, "{prepared}");
+        let reading = &prepared["performance"]["reading"];
+        assert_eq!(
+            reading["physical"]["node_ids"].as_array().unwrap().len(),
+            12
+        );
+        assert_eq!(reading["keys"].as_array().unwrap().len(), 36);
+        assert_eq!(
+            reading["keys"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|key| key["available"] == true)
+                .count(),
+            21
+        );
+        assert_eq!(reading["samples_elapsed"], "0");
+        assert_eq!(reading["physical"]["samples_elapsed"], "0");
+        assert_eq!(
+            reading["consumer_roles"]["personal_nine_force_routes"]["available"],
+            false
+        );
+        let owner = manager.active.as_ref().unwrap();
+        assert_eq!(owner.lease, lease);
+        assert_eq!(owner.child.id(), owner_pid);
+        let inspect = json!({"schema":"ql.field-host-request/v1",
+            "instance_ref":owner.identity["instance_ref"],"event_ref":owner.identity["event_ref"],"subject_ref":owner.identity["subject_ref"],
+            "request_id":"2","expected_generation":prepared["field"]["generation"],
+            "expected_samples_elapsed":prepared["field"]["samples_elapsed"],"command":{"operation":"inspect"}});
+        let inspected = manager
+            .apply(
+                &client,
+                Request::Exchange {
+                    lease: lease.clone(),
+                    request: inspect,
+                },
+            )
+            .unwrap();
+        let assets = &inspected["performance_sources"];
+        assert_eq!(assets["source_context"]["available"], true, "{assets}");
+        assert_eq!(assets["source_context"]["context"]["kind"], "world");
+        assert_eq!(
+            assets["current_receiving"]["source_inputs"],
+            assets["receiving_source_inputs"]
+        );
+        assert_eq!(
+            assets["receiving_source_inputs"]["world_request"]["sky"],
+            source["world"]["sky"]
+        );
+        assert_eq!(
+            assets["current_receiving"]["source_payload_context"]["private"],
+            false
+        );
+        assert!(assets["receiving_source_inputs"]["identity_profile"].is_null());
+        assert!(assets["receiving_source_inputs"]["original_occasion"].is_null());
+        assert_eq!(manager.active.as_ref().unwrap().child.id(), owner_pid);
+        manager.apply(&client, Request::Close { lease }).unwrap();
+        assert!(manager.active.is_none());
     }
 }

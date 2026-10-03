@@ -44,17 +44,31 @@ pub mod dictation;
 pub mod encounter;
 pub mod events;
 pub mod expression;
-// Source6 private support children; original File/Act/performance families are
-// not replaced or enrolled by this contextual first-passage proposal.
+// Source6 support remains operative beside the original native File/Act/
+// Performance owners enrolled for the retained physical-musical instrument.
+pub mod expression_act_storage;
 pub mod expression_act_store;
-pub mod expression_asset;
-pub mod expression_blueprint;
-pub mod expression_carrier;
-pub mod expression_material;
+pub mod expression_file;
+pub mod expression_performance;
+pub mod expression_performance_act;
+pub mod expression_performance_assets;
+pub mod expression_performance_codec;
+pub mod expression_performance_delivery;
+pub mod expression_performance_management;
+pub mod expression_performance_reader;
+pub mod expression_performance_recording;
+pub mod expression_performance_reservation;
+pub mod expression_performance_source_asset;
+pub mod expression_performance_storage;
 pub(crate) mod expression_procedural_field_source;
 pub(crate) mod expression_procedural_scene_reader;
 pub(crate) mod expression_procedural_source_budget;
 pub(crate) mod expression_procedural_source_codec;
+
+pub mod expression_asset;
+pub mod expression_blueprint;
+pub mod expression_carrier;
+pub mod expression_material;
 pub mod expression_profile;
 pub mod expression_recovery;
 pub mod expression_scene;

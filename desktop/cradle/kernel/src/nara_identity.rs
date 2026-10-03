@@ -18,6 +18,42 @@ const PREFIX: &str = "Control/self/nara/identities/";
 const MAX_PROFILE: usize = 2 * 1024 * 1024;
 const MAX_OUTPUT: u64 = 16 * 1024 * 1024;
 
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum SnapshotPurpose {
+    #[default]
+    Requested,
+    RetainedOccasion,
+}
+
+pub(crate) fn validate_retained_admission(
+    admission: &Value,
+    snapshot: &Value,
+) -> Result<(), String> {
+    if admission["schema"] != "ql.sky-admission/v1"
+        || admission["purpose"] != "retained-occasion"
+        || admission["snapshot_ref"] != snapshot["snapshot_ref"]
+        || admission["original_mode"] != snapshot["request"]["mode"]
+        || admission["epoch_utc"] != snapshot["epoch_utc"]
+        || admission["receipt_utc"] != snapshot["receipt_utc"]
+        || admission["fresh_current_attested"] != false
+        || admission["validation"] != "immutable-snapshot-and-current-native-source"
+        || admission["validator_source"]["source_ref"] != "providers/sky/kerykeion_snapshot.py"
+        || !admission["validator_source"]["revision"]
+            .as_str()
+            .is_some_and(|r| {
+                r.strip_prefix("sha256:")
+                    .is_some_and(|h| h.len() == 64 && h.bytes().all(|c| c.is_ascii_hexdigit()))
+            })
+    {
+        return Err(
+            "QL did not qualify the exact retained occasion separately from fresh current sky"
+                .into(),
+        );
+    }
+    Ok(())
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {

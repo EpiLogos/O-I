@@ -433,6 +433,9 @@ pub struct Passage {
     /// restores this edition through the native document CAS operation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub edition: Option<Box<expression::Document>>,
+    /// Versioned immutable performance edition in this same Act's native custody.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub performance_edition: Option<crate::expression_performance_act::PerformanceEdition>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub file_ref: Option<String>,
     /// Material addressed as an open Expression (instead of a file).
@@ -491,6 +494,7 @@ impl Passage {
             index,
             kind,
             edition: None,
+            performance_edition: None,
             file_ref: None,
             expression_ref: None,
             revision: None,
@@ -578,6 +582,11 @@ pub struct Act {
     pub position: Option<usize>,
     #[serde(default)]
     pub sequence: Vec<Passage>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub performance_custody: Option<crate::expression_performance_storage::ActPerformanceCustody>,
+    /// Explicit native material contract; absent preserves complete legacy Editions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub material_contract: Option<String>,
     #[serde(default)]
     pub continuations: Vec<Continuation>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -630,6 +639,8 @@ impl Act {
             selection: None,
             position: None,
             sequence: vec![],
+            performance_custody: None,
+            material_contract: None,
             continuations: vec![],
             return_ref: None,
             result: None,
@@ -1031,6 +1042,48 @@ pub enum Request {
         activity_ref: Option<String>,
         changes: Vec<Change>,
     },
+    /// Explicit material-v2 transaction, never an automatic legacy upgrade.
+    ActRetainedPerform {
+        act_ref: String,
+        expression_ref: String,
+        expected_revision: u64,
+        #[serde(default)]
+        expected_act_revision: Option<u64>,
+        summary: String,
+        actor: String,
+        #[serde(default)]
+        activity_ref: Option<String>,
+        changes: Vec<Change>,
+    },
+    /// One native Act CAS indexes exact prior editions in the same store.
+    ActRetainedEnable {
+        act_ref: String,
+        expected_act_revision: u64,
+    },
+    /// Versioned index readback; every handle names one complete Document.
+    ActRetainedInspect {
+        act_ref: String,
+    },
+    /// Return the exact full selected edition without changing presentation.
+    ActRetainedEdition {
+        act_ref: String,
+        expected_act_revision: u64,
+        position: usize,
+    },
+    /// Complete selected native score/export material from the SAME Act owner.
+    /// Optional page reads use the existing codec under the same exact identity.
+    ActRetainedDelivery {
+        act_ref: String,
+        selection: crate::expression_performance_delivery::Selection,
+        #[serde(default)]
+        native_page: Option<usize>,
+    },
+    /// Complete stopped owner state for one checkpoint in the selected Act.
+    ActRetainedCheckpoint {
+        act_ref: String,
+        selection: crate::expression_performance_delivery::Selection,
+        checkpoint_index: usize,
+    },
     /// Human interruption: hold the act. Nothing reverts and nothing
     /// advances; the presentation stays exactly as the act left it.
     ActInterrupt {
@@ -1322,6 +1375,9 @@ pub struct WorldState {
     /// acts live only in this kernel instance.
     store: Option<crate::expression_act_store::ActStore>,
     store_errors: Vec<String>,
+    /// A retained resident body is not a successful adoption of a newer store
+    /// revision. Inspect retries the native read instead of returning this cache.
+    act_reload_errors: BTreeMap<String, String>,
 }
 
 impl WorldState {
@@ -1350,7 +1406,9 @@ impl WorldState {
                 .then(a.act_ref.cmp(&b.act_ref))
         });
         for mut act in acts {
-            if self.acts.len() < MAX_ACTS && !act.archived {
+            let available = self.available_act_bytes(&act.act_ref)?;
+            let fits = crate::expression_act_store::ActStore::expanded_bytes(&act)? <= available;
+            if self.acts.len() < MAX_ACTS && !act.archived && fits {
                 self.acts.insert(act.act_ref.clone(), act);
             } else if act.phase.ended() || act.archived {
                 let previous = act.revision;
@@ -1368,7 +1426,7 @@ impl WorldState {
                 }
             } else {
                 errors.push(format!(
-                    "Live act {} exceeds the {MAX_ACTS}-act budget; it stays stored but unloaded",
+                    "Live act {} exceeds the count or expanded-byte budget; it stays stored but unloaded",
                     act.act_ref
                 ));
             }
@@ -1376,6 +1434,22 @@ impl WorldState {
         self.store_errors = errors;
         self.store = Some(store);
         Ok(())
+    }
+
+    /// Shared expanded serialized-weight admission for startup, lazy reading,
+    /// CAS-conflict replacement and live commits. This is not heap RSS.
+    fn available_act_bytes(&self, replacing: &str) -> Result<usize, String> {
+        let mut available = crate::expression_act_storage::LIVE_BYTES;
+        for act in self
+            .acts
+            .values()
+            .filter(|a| !a.archived && a.act_ref != replacing)
+        {
+            available = available
+                .checked_sub(crate::expression_act_store::ActStore::expanded_bytes(act)?)
+                .ok_or("Live Acts exceed their 64 MiB expanded serialized-weight budget")?;
+        }
+        Ok(available)
     }
 
     /// Record the selection as moved from an Expression focus edit (the
@@ -1417,7 +1491,7 @@ pub fn capabilities() -> Value {
             "whole_bind", "whole_inspect", "whole_rebase",
             "material_list", "act_open", "act_select", "act_gesture", "act_text",
             "act_operate", "act_continue", "act_complete", "act_seek", "act_play", "act_archive",
-            "act_inspect", "act_list"
+            "act_inspect", "act_list", "act_retained_enable", "act_retained_perform", "act_retained_inspect", "act_retained_edition", "act_retained_delivery", "act_retained_checkpoint"
         ],
         "selection": {
             "origins": ["graph", "wiki", "constellation", "expression", "agent", "page"],
@@ -1472,6 +1546,30 @@ impl Kernel {
     /// only the wiring.
     pub fn expression_world(&mut self, request: Request) -> Result<KernelOpOutcome, String> {
         let mut receipts = Vec::new();
+        let (request, retained_expected) = match request {
+            Request::ActRetainedPerform {
+                act_ref,
+                expression_ref,
+                expected_revision,
+                expected_act_revision,
+                summary,
+                actor,
+                activity_ref,
+                changes,
+            } => (
+                Request::ActPerform {
+                    act_ref,
+                    expression_ref,
+                    expected_revision,
+                    summary,
+                    actor,
+                    activity_ref,
+                    changes,
+                },
+                Some(expected_act_revision),
+            ),
+            other => (other, None),
+        };
         let data = match request {
             Request::Capabilities => capabilities(),
             Request::SelectionSet {
@@ -1668,51 +1766,142 @@ impl Kernel {
                     if existing.phase.ended() {
                         return Err("Act has ended; open a new act".into());
                     }
-                } else {
-                    self.act_make_room()?;
                 }
-                let precheck = {
-                    let probe = self.world.acts.get(&act_ref).cloned().unwrap_or_else(|| {
-                        Act::new(
-                            act_ref.clone(),
-                            expression_ref.clone(),
-                            summary.clone(),
-                            actor.clone(),
-                            ActMode::Expressions,
-                        )
-                    });
-                    let existing = self.world.acts.contains_key(&act_ref);
-                    self.act_precheck(&probe, 1, false, existing)?
-                };
+                match (retained_expected,self.world.acts.get(&act_ref)) {
+                    (Some(Some(expected)),Some(act)) if expected!=act.revision => {
+                        return Ok(KernelOpOutcome {receipts,result:KernelOpResult::ExpressionWorld {data:act_conflict(act,expected)}});
+                    }
+                    (Some(None),Some(_)) | (Some(Some(_)),None) => return Err("retained operation must name the exact existing Act revision, or None for a new Act".into()),
+                    (Some(_),Some(act)) if act.material_contract.as_deref()!=Some(crate::expression_performance_act::MATERIAL_SCHEMA) => return Err("enable retained material-v2 before performing this legacy Act".into()),
+                    (None,Some(act)) if act.material_contract.is_some() => return Err("this Act requires act_retained_perform; legacy act_perform remains material-v1".into()),
+                    _=>{},
+                }
+                let (passages, act_revision, existing) = self
+                    .world
+                    .acts
+                    .get(&act_ref)
+                    .map_or((0, 1, false), |a| (a.sequence.len(), a.revision, true));
+                let precheck = self.act_precheck_fields_mode(
+                    &act_ref,
+                    passages,
+                    existing.then_some(act_revision),
+                    1,
+                    false,
+                    false,
+                )?;
                 if let Some(refusal) = precheck {
                     return Ok(KernelOpOutcome {
                         receipts,
                         result: KernelOpResult::ExpressionWorld { data: refusal },
                     });
                 }
-                let snapshot = self.act_snapshot(&expression_ref).ok();
-                if let Some(before) = &snapshot {
-                    if before.document.revision == expected_revision {
-                        let edition = before.document.edited(changes.clone())?;
-                        let mut prospective =
-                            self.world.acts.get(&act_ref).cloned().unwrap_or_else(|| {
-                                Act::new(
-                                    act_ref.clone(),
-                                    expression_ref.clone(),
-                                    summary.clone(),
-                                    actor.clone(),
-                                    ActMode::Expressions,
-                                )
-                            });
-                        let mut passage = Passage::new(
-                            prospective.sequence.len(),
-                            PassageKind::Edition,
-                            prospective.mode,
+                let before = self.act_snapshot(&expression_ref)?;
+                if before.document.revision != expected_revision {
+                    return Ok(KernelOpOutcome {
+                        receipts,
+                        result: KernelOpResult::ExpressionWorld {
+                            data: json!({
+                                "state":"revision_conflict","expression_ref":expression_ref,
+                                "expected_revision":expected_revision,"current_revision":before.document.revision,
+                            }),
+                        },
+                    });
+                }
+                let snapshot = Some(before);
+                // A qualified retained candidate may cross this synchronous
+                // owner operation only with its exact complete prospective
+                // Document. Store CAS is still rechecked before and at commit.
+                let mut prepared_retained: Option<(Act, Box<expression::Document>)> = None;
+                // The ordinary native pure edit and complete retained-record
+                // preflight must qualify BEFORE count-driven archival. The
+                // existing capacity/store checks repeat after make-room; this
+                // preflight is not a reservation across other store writers.
+                {
+                    let edition = snapshot
+                        .as_ref()
+                        .unwrap()
+                        .document
+                        .edited(changes.clone())?;
+                    let mut new_act = Act::new(
+                        act_ref.clone(),
+                        expression_ref.clone(),
+                        summary.clone(),
+                        actor.clone(),
+                        ActMode::Expressions,
+                    );
+                    if retained_expected.is_some() {
+                        new_act.material_contract =
+                            Some(crate::expression_performance_act::MATERIAL_SCHEMA.into());
+                        new_act.performance_custody = Some(
+                            crate::expression_performance_storage::ActPerformanceCustody::default(),
                         );
-                        passage.target_ref = Some(expression_ref.clone());
-                        passage.revision = Some(edition.revision.to_string());
-                        passage.summary = Some(summary.clone());
-                        passage.edition = Some(Box::new(edition));
+                    }
+                    let previous = self.world.acts.get(&act_ref).unwrap_or(&new_act);
+                    let mut passage =
+                        Passage::new(previous.sequence.len(), PassageKind::Edition, previous.mode);
+                    passage.target_ref = Some(expression_ref.clone());
+                    passage.revision = Some(edition.revision.to_string());
+                    passage.summary = Some(summary.clone());
+                    passage.edition = Some(Box::new(edition));
+                    let next_revision = if existing {
+                        act_revision
+                            .checked_add(1)
+                            .ok_or("Act revision exhausted")?
+                    } else {
+                        1
+                    };
+                    let mut available = self.world.available_act_bytes(&act_ref)?;
+                    if !existing && self.world.acts.len() >= MAX_ACTS {
+                        // Predict exactly the same ended concern make-room
+                        // will archive, without changing it or its file yet.
+                        let oldest = self.act_oldest_ended()?;
+                        available = available
+                            .checked_add(crate::expression_act_store::ActStore::expanded_bytes(
+                                oldest,
+                            )?)
+                            .filter(|n| *n <= crate::expression_act_storage::LIVE_BYTES)
+                            .ok_or("Invalid expanded Act admission accounting")?;
+                    }
+                    let retained_candidate = if retained_expected.is_some() {
+                        Some(crate::expression_performance_act::prepare_append(
+                            previous,
+                            &passage,
+                            passage.edition.as_ref().unwrap(),
+                            &summary,
+                            &actor,
+                            activity_ref.as_deref(),
+                            expected_revision,
+                            next_revision,
+                            available,
+                        )?)
+                    } else {
+                        None
+                    };
+                    let weight = if let Some(candidate) = &retained_candidate {
+                        crate::expression_performance_act::retained_bytes(candidate)?
+                    } else {
+                        crate::expression_act_storage::preflight_append(
+                            previous,
+                            &passage,
+                            &summary,
+                            &actor,
+                            activity_ref.as_deref(),
+                            expected_revision,
+                            next_revision,
+                        )?
+                    };
+                    if weight > available {
+                        return Err("Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit".into());
+                    }
+                    if let Some(candidate) = retained_candidate {
+                        crate::expression_act_store::ActStore::encoded_record(&candidate)?;
+                        let expected_document = passage
+                            .edition
+                            .take()
+                            .ok_or("retained prospective Document absent")?;
+                        prepared_retained = Some((candidate, expected_document));
+                    } else {
+                        let mut prospective = previous.clone();
                         prospective.position = Some(passage.index);
                         prospective.sequence.push(passage);
                         prospective.summary = summary.clone();
@@ -1721,13 +1910,21 @@ impl Kernel {
                             activity_ref.clone().or(prospective.activity_ref);
                         prospective.basis_revision = expected_revision;
                         prospective.phase = ActPhase::Running;
-                        prospective.revision = prospective
-                            .revision
-                            .checked_add(1)
-                            .ok_or("Act revision exhausted")?;
+                        prospective.revision = next_revision;
                         prospective.updated_at_unix_ms = unix_ms();
                         crate::expression_act_store::ActStore::encoded_record(&prospective)?;
                     }
+                }
+                if !existing {
+                    self.act_make_room()?;
+                }
+                if let Some(refusal) =
+                    self.act_precheck_fields(&act_ref, passages, act_revision, 1, false, existing)?
+                {
+                    return Ok(KernelOpOutcome {
+                        receipts,
+                        result: KernelOpResult::ExpressionWorld { data: refusal },
+                    });
                 }
                 // The act's edit is an ordinary atomic Expression edit: exact
                 // subjects, exact expected revision, stale input refuses.
@@ -1757,27 +1954,54 @@ impl Kernel {
                 let edition = self.world_document(&expression_ref)?;
                 let previous = self.world.acts.get(&act_ref).cloned();
                 let previous_revision = previous.as_ref().map(|a| a.revision);
-                let mut act = previous.unwrap_or_else(|| {
-                    Act::new(
-                        act_ref.clone(),
-                        expression_ref.clone(),
-                        summary.clone(),
-                        actor.clone(),
-                        ActMode::Expressions,
-                    )
-                });
-                let mut passage = Passage::new(act.sequence.len(), PassageKind::Edition, act.mode);
-                passage.target_ref = Some(expression_ref.clone());
-                passage.revision = Some(edition.revision.to_string());
-                passage.summary = Some(summary.clone());
-                passage.edition = Some(Box::new(edition.clone()));
-                act.position = Some(passage.index);
-                act.sequence.push(passage);
-                act.summary = summary;
-                act.actor = actor;
-                act.activity_ref = activity_ref.or(act.activity_ref);
-                act.phase = ActPhase::Running;
-                act.basis_revision = expected_revision;
+                let act = if let Some((mut candidate, expected_document)) = prepared_retained {
+                    // Exact actual owner output, not a declared digest or a
+                    // cached consumer, qualifies reuse of the preflight.
+                    if expected_document.as_ref() != &edition {
+                        if let Some(snapshot) = snapshot {
+                            self.act_rollback(snapshot, &mut receipts)?;
+                        }
+                        return Err("actual retained Expression edit differs from its complete prospective Document".into());
+                    }
+                    // The new passage retains the original post-edit native
+                    // creation time; preparation is not its public timestamp.
+                    candidate
+                        .sequence
+                        .get_mut(passages)
+                        .ok_or("prepared retained passage absent")?
+                        .at_unix_ms = unix_ms();
+                    candidate
+                } else {
+                    if retained_expected.is_some() {
+                        if let Some(snapshot) = snapshot {
+                            self.act_rollback(snapshot, &mut receipts)?;
+                        }
+                        return Err("retained performance preflight absent at commit".into());
+                    }
+                    let mut act = previous.unwrap_or_else(|| {
+                        Act::new(
+                            act_ref.clone(),
+                            expression_ref.clone(),
+                            summary.clone(),
+                            actor.clone(),
+                            ActMode::Expressions,
+                        )
+                    });
+                    let mut passage =
+                        Passage::new(act.sequence.len(), PassageKind::Edition, act.mode);
+                    passage.target_ref = Some(expression_ref.clone());
+                    passage.revision = Some(edition.revision.to_string());
+                    passage.summary = Some(summary.clone());
+                    passage.edition = Some(Box::new(edition.clone()));
+                    act.position = Some(passage.index);
+                    act.sequence.push(passage);
+                    act.summary = summary;
+                    act.actor = actor;
+                    act.activity_ref = activity_ref.or(act.activity_ref);
+                    act.phase = ActPhase::Running;
+                    act.basis_revision = expected_revision;
+                    act
+                };
                 let committed = self.act_commit(act, previous_revision);
                 if !matches!(committed, Ok(Ok(_))) {
                     if let Some(snapshot) = snapshot {
@@ -2074,6 +2298,12 @@ impl Kernel {
             | Request::ActPlay { .. }
             | Request::ActArchive { .. }
             | Request::ActInspect { .. }
+            | Request::ActRetainedEnable { .. }
+            | Request::ActRetainedInspect { .. }
+            | Request::ActRetainedEdition { .. }
+            | Request::ActRetainedDelivery { .. }
+            | Request::ActRetainedCheckpoint { .. }
+            | Request::ActRetainedPerform { .. }
             | Request::ActList { .. }) => {
                 // Any failure after an act edited its live target restores
                 // the target's pre-edit document: act and Expression agree.
@@ -2403,28 +2633,68 @@ impl Kernel {
         returning: bool,
         stored: bool,
     ) -> Result<Option<Value>, String> {
+        self.act_precheck_fields(
+            &act.act_ref,
+            act.sequence.len(),
+            act.revision,
+            add,
+            returning,
+            stored,
+        )
+    }
+
+    fn act_precheck_fields(
+        &mut self,
+        act_ref: &str,
+        passages: usize,
+        revision: u64,
+        add: usize,
+        returning: bool,
+        stored: bool,
+    ) -> Result<Option<Value>, String> {
+        self.act_precheck_fields_mode(
+            act_ref,
+            passages,
+            stored.then_some(revision),
+            add,
+            returning,
+            true,
+        )
+    }
+
+    fn act_precheck_fields_mode(
+        &mut self,
+        act_ref: &str,
+        passages: usize,
+        expected: Option<u64>,
+        add: usize,
+        returning: bool,
+        capacity: bool,
+    ) -> Result<Option<Value>, String> {
         let limit = MAX_PASSAGES + usize::from(returning);
-        if act.sequence.len() + add > limit {
+        if passages + add > limit {
             return Ok(Some(json!({
-                "state":"act_passage_limit","act_ref":act.act_ref,
-                "passages":act.sequence.len(),"limit":MAX_PASSAGES,
+                "state":"act_passage_limit","act_ref":act_ref,
+                "passages":passages,"limit":MAX_PASSAGES,
                 "detail":"This act holds its maximum passages; continue in a successor act: act_open a new act_ref (summary naming this act) with the same cast, then perform there. act_complete may still add the Return.",
             })));
         }
         if let Some(store) = &self.world.store {
             use crate::expression_act_store::Written;
-            let expected = stored.then_some(act.revision);
-            if let Written::Conflict { current } = store.check(&act.act_ref, expected)? {
+            let checked = if capacity {
+                store.check(act_ref, expected)?
+            } else {
+                store.check_before_capacity(act_ref, expected)?
+            };
+            if let Written::Conflict { current } = checked {
                 // Adopt the stored act so a re-read sees the other writer's work.
-                if let Ok(Some(stored)) = store.read(&act.act_ref) {
-                    if !stored.archived {
-                        self.world.acts.insert(stored.act_ref.clone(), stored);
-                    }
-                }
+                let reload_error = self.act_reload_conflict(act_ref, current);
                 return Ok(Some(json!({
-                    "state":"act_revision_conflict","act_ref":act.act_ref,
+                    "state":"act_revision_conflict","act_ref":act_ref,
                     "expected_act_revision":expected,"current_act_revision":current,
-                    "detail":"The stored act moved under this kernel; re-read it with act_inspect",
+                    "resident_revision":self.world.acts.get(act_ref).map(|a|a.revision),
+                    "stored_reload_error":reload_error,
+                    "detail":if reload_error.is_some() {"The stored successor could not be admitted. The retained resident is not current; Inspect retries the bounded native read."} else {"The stored act moved under this kernel; re-read it with act_inspect"},
                 })));
             }
         }
@@ -2436,6 +2706,45 @@ impl Kernel {
             target: target.to_owned(),
             document: self.world_document(target)?,
         })
+    }
+
+    fn act_reload_conflict(&mut self, act_ref: &str, current: Option<u64>) -> Option<String> {
+        let result = self
+            .world
+            .available_act_bytes(act_ref)
+            .and_then(|available| {
+                self.world
+                    .store
+                    .as_ref()
+                    .ok_or("No native Act store".to_owned())?
+                    .read_with_budget(act_ref, available)
+            });
+        let error = match result {
+            Ok(Some(act)) => {
+                if act.archived {
+                    self.world.acts.remove(act_ref);
+                } else {
+                    self.world.acts.insert(act_ref.to_owned(), act);
+                }
+                self.world.act_reload_errors.remove(act_ref);
+                return None;
+            }
+            Ok(None) => "The stored Act disappeared; the resident is not current".to_owned(),
+            Err(error) => error.chars().take(4096).collect(),
+        };
+        let detail =
+            format!("Act {act_ref} stored revision {current:?} could not be loaded: {error}");
+        if self.world.act_reload_errors.len() < MAX_ACTS
+            || self.world.act_reload_errors.contains_key(act_ref)
+        {
+            self.world
+                .act_reload_errors
+                .insert(act_ref.to_owned(), detail.clone());
+        }
+        if self.world.store_errors.len() < MAX_ACTS {
+            self.world.store_errors.push(detail.clone());
+        }
+        Some(detail)
     }
 
     /// Return the live target to its pre-edit document (an explicit restore:
@@ -2494,26 +2803,32 @@ impl Kernel {
         mut act: Act,
         previous: Option<u64>,
     ) -> Result<Result<Act, Value>, String> {
-        act.revision = previous.map_or(1, |r| r + 1);
+        act.revision =
+            previous.map_or(Ok(1), |r| r.checked_add(1).ok_or("Act revision exhausted"))?;
         act.updated_at_unix_ms = unix_ms().max(act.updated_at_unix_ms);
         if act.sequence.len() > MAX_PASSAGES + 1 {
             return Err("Act passage budget exceeded".into());
         }
+        if !act.archived
+            && crate::expression_act_store::ActStore::expanded_bytes(&act)?
+                > self.world.available_act_bytes(&act.act_ref)?
+        {
+            return Err("Live Acts exceed their 64 MiB expanded serialized-weight budget".into());
+        }
         if let Some(store) = &self.world.store {
             use crate::expression_act_store::Written;
             if let Written::Conflict { current } = store.write(&act, previous)? {
-                if let Ok(Some(stored)) = store.read(&act.act_ref) {
-                    if !stored.archived {
-                        self.world.acts.insert(stored.act_ref.clone(), stored);
-                    }
-                }
+                let reload_error = self.act_reload_conflict(&act.act_ref, current);
                 return Ok(Err(json!({
                     "state":"act_revision_conflict","act_ref":act.act_ref,
                     "expected_act_revision":previous,"current_act_revision":current,
-                    "detail":"The stored act moved under this kernel; re-read it with act_inspect",
+                    "resident_revision":self.world.acts.get(&act.act_ref).map(|a|a.revision),
+                    "stored_reload_error":reload_error,
+                    "detail":if reload_error.is_some() {"The stored successor could not be admitted. The retained resident is not current; Inspect retries the bounded native read."} else {"The stored act moved under this kernel; re-read it with act_inspect"},
                 })));
             }
         }
+        self.world.act_reload_errors.remove(&act.act_ref);
         if act.archived {
             self.world.acts.remove(&act.act_ref);
         } else {
@@ -2588,20 +2903,7 @@ impl Kernel {
         if self.world.acts.len() < MAX_ACTS {
             return Ok(());
         }
-        let oldest = self
-            .world
-            .acts
-            .values()
-            .filter(|a| a.phase.ended())
-            .min_by(|a, b| {
-                a.updated_at_unix_ms
-                    .cmp(&b.updated_at_unix_ms)
-                    .then(a.act_ref.cmp(&b.act_ref))
-            })
-            .cloned()
-            .ok_or(format!(
-                "Live act budget exceeded ({MAX_ACTS} running/held acts)"
-            ))?;
+        let oldest = self.act_oldest_ended()?.clone();
         match self.act_archive_one(oldest)? {
             Ok(_) => Ok(()),
             Err(conflict) => Err(format!(
@@ -2610,28 +2912,56 @@ impl Kernel {
         }
     }
 
+    /// The shared source-defined count victim, borrowed before admission.
+    /// Reusing this ordering keeps successful automatic archival unchanged.
+    fn act_oldest_ended(&self) -> Result<&Act, String> {
+        self.world
+            .acts
+            .values()
+            .filter(|a| a.phase.ended())
+            .min_by(|a, b| {
+                a.updated_at_unix_ms
+                    .cmp(&b.updated_at_unix_ms)
+                    .then(a.act_ref.cmp(&b.act_ref))
+            })
+            .ok_or_else(|| format!("Live act budget exceeded ({MAX_ACTS} running/held acts)"))
+    }
+
     /// An act by ref: memory, else lazily from the store (live register or
     /// archive). Archived acts are returned without entering memory.
     fn act_lookup(&mut self, act_ref: &str) -> Result<Option<Act>, String> {
-        if let Some(act) = self.world.acts.get(act_ref) {
+        if let Some(act) = self
+            .world
+            .acts
+            .get(act_ref)
+            .filter(|_| !self.world.act_reload_errors.contains_key(act_ref))
+        {
             return Ok(Some(act.clone()));
         }
+        let available = self.world.available_act_bytes(act_ref)?;
         let Some(stored) = self
             .world
             .store
             .as_ref()
-            .map(|s| s.read(act_ref))
+            .map(|s| s.read_with_budget(act_ref, available))
             .transpose()?
             .flatten()
         else {
             return Ok(None);
         };
         if !stored.archived {
-            self.act_make_room()?;
+            if !self.world.acts.contains_key(act_ref) {
+                self.act_make_room()?;
+            }
             self.world
                 .acts
                 .insert(stored.act_ref.clone(), stored.clone());
+        } else {
+            // A successfully read archived successor supersedes a cached live
+            // predecessor too. Clearing the stale marker must not revive it.
+            self.world.acts.remove(act_ref);
         }
+        self.world.act_reload_errors.remove(act_ref);
         Ok(Some(stored))
     }
 
@@ -3037,6 +3367,13 @@ impl Kernel {
             .checked_add(1)
             .ok_or("Act revision exhausted")?;
         prospective.updated_at_unix_ms = unix_ms().max(act.updated_at_unix_ms);
+        if crate::expression_act_store::ActStore::expanded_bytes(&prospective)?
+            > self.world.available_act_bytes(&act.act_ref)?
+        {
+            return Err(
+                "Native text pages exceed the live expanded Act budget before edits".into(),
+            );
+        }
         crate::expression_act_store::ActStore::encoded_record(&prospective)?;
         if let Some(refusal) = self.act_precheck(act, pages.len() + 1, false, true)? {
             return Ok(Some(refusal));
@@ -3501,12 +3838,12 @@ impl Kernel {
 
     /// Drift of one recorded passage's material (Scene/state/gesture file
     /// and every bound character) against its current revisions.
-    fn passage_drift(&mut self, passage: &Passage) -> Result<Option<Value>, String> {
+    fn passage_drift(&mut self, act: &Act, passage: &Passage) -> Result<Option<Value>, String> {
         if passage.kind == PassageKind::Edition {
             // This is the exact retained edition, independent of subsequent
             // changes to reusable material. Its own target/revision is checked
             // again before the native restore.
-            Self::validate_retained_edition(passage)?;
+            Self::validate_retained_edition(act, passage)?;
             return Ok(None);
         }
         if passage.file_ref.is_some() || passage.expression_ref.is_some() {
@@ -3578,17 +3915,8 @@ impl Kernel {
         Ok(false)
     }
 
-    fn validate_retained_edition(passage: &Passage) -> Result<(), String> {
-        let edition = passage
-            .edition
-            .as_ref()
-            .ok_or("Edition passage has no retained document")?;
-        if passage.target_ref.as_deref() != Some(edition.expression_ref.as_str())
-            || passage.revision.as_deref() != Some(edition.revision.to_string().as_str())
-        {
-            return Err("Retained edition target or revision mismatch".into());
-        }
-        edition.validate()
+    fn validate_retained_edition(act: &Act, passage: &Passage) -> Result<(), String> {
+        crate::expression_performance_act::validate_edition(act, passage)
     }
 
     fn retained_text_pages<'a>(act: &'a Act, source: &Passage) -> Result<Vec<&'a Passage>, String> {
@@ -3623,7 +3951,7 @@ impl Kernel {
             .ok_or("Retained text source has no Scene")?;
         let mut complete = String::new();
         for (index, page) in pages.iter().enumerate() {
-            Self::validate_retained_edition(page)?;
+            Self::validate_retained_edition(act, page)?;
             if page.index != source.index + index + 1
                 || page.target_ref.as_deref() != Some(target)
                 || page.expression_ref.as_deref() != Some(target)
@@ -3631,15 +3959,16 @@ impl Kernel {
                 || page.role != source.role
                 || page.field != source.field
                 || page.scene_ref != page.target_scene_ref
-                || page
-                    .edition
-                    .as_ref()
-                    .map(|edition| edition.selection.scene_ref.as_str())
-                    != page.scene_ref.as_deref()
+                || Some(
+                    crate::expression_performance_act::edition(act, page)?
+                        .selection
+                        .scene_ref
+                        .as_str(),
+                ) != page.scene_ref.as_deref()
             {
                 return Err("Retained text page does not match its source passage".into());
             }
-            let edition = page.edition.as_ref().unwrap();
+            let edition = crate::expression_performance_act::edition(act, page)?;
             if source_revision.checked_add(index as u64 + 1) != Some(edition.revision)
                 || !edition
                     .scenes
@@ -3695,10 +4024,7 @@ impl Kernel {
             .unwrap_or_else(|| act.expression_ref.clone());
         let target_scene = passage.target_scene_ref.as_deref();
         if passage.kind == PassageKind::Edition {
-            let edition = passage
-                .edition
-                .as_ref()
-                .ok_or("Edition passage has no retained document")?;
+            let edition = crate::expression_performance_act::edition(act, passage)?;
             if edition.expression_ref != target_ref
                 || passage.revision.as_deref() != Some(edition.revision.to_string().as_str())
             {
@@ -3717,7 +4043,7 @@ impl Kernel {
                 expression::Request::Restore {
                     expression_ref: target_ref,
                     expected_revision: current.revision,
-                    document: edition.clone(),
+                    document: Box::new(edition.into_owned()),
                     actor: actor.to_owned(),
                 },
             )?;
@@ -3839,6 +4165,45 @@ impl Kernel {
             );
         }
         Ok(None)
+    }
+
+    /// Attached durable Act custody is independently read under its existing
+    /// lock and budget. Cached world.acts cannot witness external currentness.
+    /// Without an attached store, this exclusive Kernel owns the in-memory Act.
+    fn native_act_delivery_lookup(&mut self, act_ref: &str) -> Result<Option<Act>, String> {
+        if let Some(store) = self.world.store.as_ref() {
+            let available = self.world.available_act_bytes(act_ref)?;
+            store.read_with_budget(act_ref, available)
+        } else {
+            self.act_lookup(act_ref)
+        }
+    }
+
+    /// Native host-only bridge: actual same-store Act lookup produces a closed
+    /// reader. Browser payloads/Selection labels cannot construct the reader.
+    /// Existing host lease/grants still authorize playback and disclosure.
+    pub fn with_native_act_delivery<T>(
+        &mut self,
+        act_ref: &str,
+        selection: &crate::expression_performance_delivery::Selection,
+        consumer: impl FnOnce(
+            &mut crate::expression_performance_reader::NativeActDeliveryReader,
+        ) -> Result<T, String>,
+    ) -> Result<T, String> {
+        text(act_ref)?;
+        let act = self
+            .native_act_delivery_lookup(act_ref)?
+            .ok_or("no native Act with this ref exists")?;
+        let mut reader =
+            crate::expression_performance_reader::NativeActDeliveryReader::from_native_act(
+                &act, selection,
+            )?;
+        let result = consumer(&mut reader);
+        let current = self
+            .native_act_delivery_lookup(act_ref)?
+            .ok_or("selected native Act disappeared during consumer operation")?;
+        reader.verify_current(&current)?;
+        result
     }
 
     fn world_act(&mut self, request: Request, receipts: &mut Receipts) -> Result<Value, String> {
@@ -4772,7 +5137,7 @@ impl Kernel {
                     // Edition integrity is never an optional material-drift
                     // override, and is checked before any presentation edit.
                     if passage.kind == PassageKind::Edition {
-                        Self::validate_retained_edition(passage)?;
+                        Self::validate_retained_edition(&act, passage)?;
                     }
                     if Self::validate_text_ancestry(&act, passage)? {
                         continue;
@@ -4781,7 +5146,7 @@ impl Kernel {
                         for binding in passage.bindings.values_mut() {
                             binding.character_revision = None;
                         }
-                    } else if let Some(mut refusal) = self.passage_drift(passage)? {
+                    } else if let Some(mut refusal) = self.passage_drift(&act, passage)? {
                         refusal["act_ref"] = json!(act.act_ref);
                         return Ok(refusal);
                     }
@@ -4864,7 +5229,41 @@ impl Kernel {
                     Err(conflict) => conflict,
                 })
             }
+            Request::ActRetainedEnable {act_ref,expected_act_revision} => {
+                let act=guard!(act_ref,Some(expected_act_revision));
+                if let Some(refusal)=self.act_precheck_fields_mode(&act_ref,act.sequence.len(),Some(expected_act_revision),0,false,false)? {return Ok(refusal);}
+                let candidate=crate::expression_performance_act::migrate(&act,self.world.available_act_bytes(&act_ref)?)?;
+                Ok(match self.act_commit(candidate,Some(expected_act_revision))? {
+                    Ok(act)=>json!({"state":"act_retained_enabled","material_contract":crate::expression_performance_act::MATERIAL_SCHEMA,"act":act}),
+                    Err(conflict)=>conflict,
+                })
+            }
+            Request::ActRetainedInspect {act_ref} => match self.act_lookup(&act_ref)? {
+                Some(act) if act.material_contract.as_deref()==Some(crate::expression_performance_act::MATERIAL_SCHEMA) => Ok(json!({"state":"act_retained","material_contract":crate::expression_performance_act::MATERIAL_SCHEMA,"act":act})),
+                Some(_)=>Err("Act has not opted into retained-performance material-v2".into()),
+                None=>Ok(json!({"state":"unknown_act","act_ref":act_ref})),
+            },
+            Request::ActRetainedEdition {act_ref,expected_act_revision,position} => {
+                let act=guard!(act_ref,Some(expected_act_revision));
+                let document=crate::expression_performance_act::selected_document(&act,position)?;
+                Ok(json!({"state":"act_retained_edition","material_contract":crate::expression_performance_act::MATERIAL_SCHEMA,"act_ref":act_ref,"act_revision":act.revision,"position":position,"document":document}))
+            }
+            Request::ActRetainedDelivery {act_ref,selection,native_page} => {
+                let act=guard!(act_ref,Some(selection.expected_act_revision));
+                let selected=crate::expression_performance_delivery::SelectedPerformance::from_act(&act,&selection)?;
+                match native_page {
+                    Some(index)=>selected.native_page(index),
+                    None=>selected.native_payload(),
+                }
+            }
+            Request::ActRetainedCheckpoint {act_ref,selection,checkpoint_index} => {
+                let act=guard!(act_ref,Some(selection.expected_act_revision));
+                let selected=crate::expression_performance_delivery::SelectedPerformance::from_act(&act,&selection)?;
+                selected.native_checkpoint(checkpoint_index)
+            }
+            Request::ActRetainedPerform {..} => Err("retained perform must pass the native Expression transaction dispatcher".into()),
             Request::ActInspect { act_ref } => match self.act_lookup(&act_ref)? {
+                Some(act) if act.material_contract.is_some()=>Err("this Act requires act_retained_inspect; legacy inspection retains complete material-v1 Editions".into()),
                 Some(act) => Ok(json!({"state":"act","act":act})),
                 None => Ok(json!({"state":"unknown_act","act_ref":act_ref})),
             },
@@ -4884,7 +5283,14 @@ impl Kernel {
                             .is_none_or(|r| &a.expression_ref == r)
                     })
                     .filter(|a| phase.is_none_or(|p| a.phase == p))
-                    .map(act_summary)
+                    .map(|act| {
+                        let mut row = act_summary(act);
+                        if let Some(error) = self.world.act_reload_errors.get(&act.act_ref) {
+                            row["resident_currentness"] = json!("stored_successor_unloaded");
+                            row["stored_reload_error"] = json!(error);
+                        }
+                        row
+                    })
                     .collect();
                 Ok(
                     json!({"state":"acts","acts":acts,"persistent":self.world.store.is_some(),"store_errors":self.world.store_errors,
