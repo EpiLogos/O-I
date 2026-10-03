@@ -12,8 +12,71 @@ const MAX_BYTES: usize = 1_048_576;
 static SEQUENCE: AtomicU64 = AtomicU64::new(0);
 #[path = "native_expression_procedural_conduct.rs"]
 pub mod conduct;
+#[path = "native_expression_procedural_control.rs"]
+pub mod control;
 #[path = "native_expression_procedural_manual.rs"]
 pub mod manual;
+
+/// Fixed internal Source operations share the product's bounded installed
+/// executable owner. Public JSON never selects an executable or this verb.
+pub(crate) fn execute_stateless(
+    verb: &'static str,
+    operation: &'static str,
+    request: Value,
+    max_bytes: usize,
+) -> Result<Value, String> {
+    let payload = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
+    if payload.len() > max_bytes {
+        return Err("Native procedural Source intake exceeds its declared byte bound".into());
+    }
+    let executables = compose_executables(false)?;
+    let now = unix_ms()?;
+    let serial = SEQUENCE
+        .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
+        .map_err(|_| "Native Source sequence exhausted")?;
+    let file = PrivateFile::create(
+        &format!("{verb}-{}-{now}-{serial}.json", std::process::id()),
+        &payload,
+    )?;
+    let args: Vec<&std::ffi::OsStr> = vec![
+        "scene".as_ref(),
+        "procedural".as_ref(),
+        verb.as_ref(),
+        file.0.as_os_str(),
+        "--json".as_ref(),
+    ];
+    let output = run_bounded(
+        executables.ql.as_os_str(),
+        &args,
+        BINDING_TIMEOUT,
+        max_bytes,
+    )
+    .map_err(|e| {
+        format!(
+            "native-expression.procedural_source_unavailable: {}",
+            e.describe(BINDING_TIMEOUT, max_bytes)
+        )
+    })?;
+    if !output.status.success() {
+        return Err(format!(
+            "native-expression.procedural_source_refused: ql scene procedural {verb} exited {}: {}",
+            output.status,
+            diagnostic_text(&output.stderr)
+        ));
+    }
+    let result: Value = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("Invalid native procedural Source response: {e}"))?;
+    if result["schema"] != "ql.scene-procedural-response/v1" || result["operation"] != operation {
+        return Err("Native procedural Source returned another operation/schema".into());
+    }
+    crate::expression_scene::data(&result, 0)?;
+    Ok(
+        json!({"schema":"oi.expression-procedure-source-response/v1","native_result":result,
+        "source":{"schema":"oi.native-expression-composed-source/v1","ql_executable":executables.ql,"ql_selection":executables.selection,
+            "ql_revision":executables.revision,"request_sha256":sha256_hex(&payload),"original_request":request,
+            "result_sha256":sha256_hex(&output.stdout),"compiled_at_unix_ms":now}}),
+    )
+}
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Command {

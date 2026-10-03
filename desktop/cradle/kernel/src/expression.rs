@@ -690,7 +690,9 @@ pub enum Change {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
-    Procedural { request: procedural::Request },
+    Procedural {
+        request: procedural::Request,
+    },
     Capabilities,
     List,
     Inspect {
@@ -874,7 +876,7 @@ pub struct Application {
 
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "procedural":{"schema":procedural::SCHEMA,"owner":"existing Expression Application","operations":["read","read_source","read_outputs","prepare","commit","inspect_operation","cancel"],"runtime_observation":"receiving native owner only","restoration":"configuration open interrupts unresolved operations; replay/checkpoint are explicit","operation_intent":"native journal inherited from actual current Document; output_readings attested by owner"},
+        "procedural":{"schema":procedural::SCHEMA,"owner":"existing Expression Application","operations":["read","read_source","read_outputs","read_driver","control","prepare","commit","inspect_operation","cancel"],"runtime_observation":"receiving native owner only","restoration":"configuration open interrupts unresolved operations; replay/checkpoint are explicit","operation_intent":"native journal inherited from actual current Document; output_readings attested by owner"},
         "operations":["procedural","capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
         "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
@@ -1055,8 +1057,14 @@ impl Document {
     pub(crate) fn edited(&self, changes: Vec<Change>) -> Result<Self, String> {
         self.edited_with_journal(changes, false)
     }
-    pub(crate) fn edited_with_journal(&self, changes: Vec<Change>, owner_write: bool) -> Result<Self, String> {
-        if !owner_write { procedural::guard_journal_edit(self, &changes)?; }
+    pub(crate) fn edited_with_journal(
+        &self,
+        changes: Vec<Change>,
+        owner_write: bool,
+    ) -> Result<Self, String> {
+        if !owner_write {
+            procedural::guard_journal_edit(self, &changes)?;
+        }
         let mut next = self.clone();
         for change in changes {
             next.change(change)?;
@@ -2035,11 +2043,7 @@ impl Application {
                 d.selection.relation_ref = d.selection.relation_ref.map(|r| map(&r));
                 d.representations.clear();
                 d.refinements.clear();
-                procedural::fork_document_retention(
-                    &mut d,
-                    &expression_ref,
-                    &new_expression_ref,
-                );
+                procedural::fork_document_retention(&mut d, &expression_ref, &new_expression_ref)?;
                 return self.open(d, actor);
             }
             Request::Edit {
@@ -2192,7 +2196,12 @@ impl Application {
                 }
                 let mut d = before.clone();
                 if decision == RefinementState::Accepted {
-                    let reviewed: Vec<_> = proposal.changes.iter().cloned().chain(corrections.iter().cloned()).collect();
+                    let reviewed: Vec<_> = proposal
+                        .changes
+                        .iter()
+                        .cloned()
+                        .chain(corrections.iter().cloned())
+                        .collect();
                     procedural::guard_journal_edit(before, &reviewed)?;
                     for change in proposal
                         .changes
@@ -2265,7 +2274,9 @@ impl Application {
                 if let Some(conflict) = self.conflict(&expression_ref, expected_revision)? {
                     return Ok((conflict, None));
                 }
-                let document = self.procedural_runtime.checkpoint_document(self.document(&expression_ref)?)?;
+                let document = self
+                    .procedural_runtime
+                    .checkpoint_document(self.document(&expression_ref)?)?;
                 let content = crate::expression_file::encode(&document)?;
                 // The explicit directory already supplies root identity. Suppress the
                 // generic project fallback before the strict file-owner call.
@@ -2311,7 +2322,9 @@ impl Application {
                 if original.expression_ref != expression_ref {
                     return Err("Save destination belongs to another Expression".into());
                 }
-                let saved_document = self.procedural_runtime.checkpoint_document(self.document(&expression_ref)?)?;
+                let saved_document = self
+                    .procedural_runtime
+                    .checkpoint_document(self.document(&expression_ref)?)?;
                 let result=client.run("central.files.write",json!({"location":location,"expected_revision":expected_file_revision,"content":crate::expression_file::encode(&saved_document)?,"actor":actor,"actor_kind":actor_kind}));
                 match result {
                     Ok(data) => {

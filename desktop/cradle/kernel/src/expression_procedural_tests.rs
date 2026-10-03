@@ -1743,6 +1743,7 @@ fn complete_layer_document() -> Document {
     .unwrap();
     let material = &mut presentation["scene"];
     material["id"] = json!(d.scenes[0].scene_ref);
+    material["name"] = json!(d.scenes[0].title);
     material["entities"][0]["id"] = json!(format!("{EXPRESSION}:entity:a"));
     material["entities"][1]["id"] = json!(format!("{EXPRESSION}:entity:b"));
     let mut state_layer = material["entities"][0]["layers"][0].clone();
@@ -2918,6 +2919,7 @@ fn a07_a14_source_current_contribution_intake_re_attests_material_without_granti
     let second = format!("{EXPRESSION}:scene:projection");
     let mut projected = presentation.clone();
     projected.scene["id"] = json!(second);
+    projected.scene["name"] = json!("Whole output projection");
     projected.scene["entities"] = json!([]);
     projected.scene["procedural"] = independent_retained_basis(&d, vec![atlas.clone()]);
     let d = d
@@ -3397,6 +3399,7 @@ fn independent_shared_source_document() -> Document {
     let entity_ref = format!("{EXPRESSION}:entity:a");
     let mut presentation = d.scenes[0].presentation.clone().unwrap();
     presentation.scene["id"] = json!(second);
+    presentation.scene["name"] = json!("Second location of the continuing subject");
     presentation.scene["entities"] = json!(
         presentation.scene["entities"]
             .as_array()
@@ -3897,13 +3900,27 @@ fn a13_native_runtime_retirement_and_reopen_resynchronise_without_prior_life_del
         .unwrap();
     assert!(!before["deltas"].as_array().unwrap().is_empty());
     let other = "expression:other-retirement-owner";
-    app.apply(
-        &client,
-        ExpressionRequest::Create {
-            expression_ref: other.into(),
-            title: "Other native material".into(),
-            actor: "agent:independent".into(),
-        },
+    // Actual unjournaled authored native material supplies the neighbour.
+    // Its fresh native Fork transfers no procedural owner or receipts.
+    let mut material_owner = Application::default();
+    material_owner
+        .open(document(), "agent:independent".into())
+        .unwrap();
+    let source_revision = material_owner.document(EXPRESSION).unwrap().revision;
+    material_owner
+        .apply(
+            &client,
+            ExpressionRequest::Fork {
+                expression_ref: EXPRESSION.into(),
+                expected_revision: source_revision,
+                new_expression_ref: other.into(),
+                actor: "agent:independent".into(),
+            },
+        )
+        .unwrap();
+    app.open(
+        material_owner.document(other).unwrap().clone(),
+        "agent:independent".into(),
     )
     .unwrap();
     let mut other_intent = envelope(app.document(other).unwrap(), Scope::Expression, "a");
@@ -4156,4 +4173,1165 @@ fn a13_native_fork_preserves_prefixed_layer_state_and_driver_coordinates() {
         )
         .unwrap();
     assert_eq!(read["snapshot"].as_array().unwrap().len(), 3);
+}
+
+// Append after the shared-global Source reader helpers. Actual native Document,
+// Parameter automation, preview and Application ReadDriver route only. A read
+// never grants Source/control custody or creates a live receiving ACK.
+fn independent_driver_document() -> Document {
+    let entity_ref = format!("{EXPRESSION}:entity:a");
+    independent_shared_source_document()
+        .edited(vec![
+            Change::ParameterSet {
+                entity_ref: entity_ref.clone(),
+                parameter: "force_radius".into(),
+                value: json!(80.0),
+            },
+            Change::ParameterAutomate {
+                entity_ref,
+                parameter: "force_radius".into(),
+                automation: super::super::Automation {
+                    min: 40.0,
+                    max: 160.0,
+                    rate_hz: 0.25,
+                    waveform: super::super::Waveform::Sine,
+                },
+            },
+        ])
+        .unwrap()
+}
+
+#[test]
+fn a02_a04_a06_native_driver_read_preserves_actual_automation_units_and_all_scene_locations() {
+    let d = independent_driver_document();
+    let before = d.clone();
+    let entity_ref = format!("{EXPRESSION}:entity:a");
+    let actual = source_parameter_driver(&d, &entity_ref, "force_radius", None).unwrap();
+    assert_eq!(actual["schema"], "ql.native-parameter-driver/v1");
+    assert_eq!(
+        actual["native_parameter"],
+        serde_json::to_value(&d.entities[&entity_ref].parameters["force_radius"]).unwrap()
+    );
+    assert_eq!(actual["native_parameter"]["value"], 80.0);
+    assert_eq!(
+        actual["native_parameter"]["automation"],
+        json!({"min":40.0,"max":160.0,"rate_hz":0.25,"waveform":"sine"})
+    );
+    let addresses: Vec<Address> = serde_json::from_value(actual["addresses"].clone()).unwrap();
+    assert_eq!(addresses.len(), 2);
+    assert_eq!(actual["scenes"].as_array().unwrap().len(), 2);
+    for (target, row) in addresses.iter().zip(actual["scenes"].as_array().unwrap()) {
+        assert_eq!(target.component, Component::Force);
+        assert_eq!(target.property.as_deref(), Some("radius"));
+        assert_eq!(target.entity_ref.as_deref(), Some(entity_ref.as_str()));
+        assert_eq!(row["scene_ref"], json!(target.scene_ref));
+        assert!(
+            row["entity_refs"]
+                .as_object()
+                .unwrap()
+                .values()
+                .any(|reference| reference == &json!(entity_ref))
+        );
+        let entity = row["presentation"]["scene"]["entities"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entity| entity["id"] == entity_ref)
+            .unwrap();
+        assert_eq!(
+            entity["force"]["radius"], 0.2,
+            "native radius was copied into authored units"
+        );
+        assert!(row["parameter_candidate"].is_null());
+        let mut expected = serde_json::to_value(
+            d.scenes
+                .iter()
+                .find(|scene| Some(&scene.scene_ref) == target.scene_ref.as_ref())
+                .unwrap()
+                .presentation
+                .as_ref()
+                .unwrap(),
+        )
+        .unwrap();
+        if expected["scene"]["procedural"].is_object() {
+            expected["scene"]["procedural"]["operations"] = json!([]);
+        }
+        assert_eq!(
+            row["presentation"], expected,
+            "driver read lost Source/overrides/dormant/material fields"
+        );
+    }
+    let mut app = Application::default();
+    let client = CentralClient::discover();
+    app.open(d.clone(), "agent:independent".into()).unwrap();
+    let (read, changed) = app
+        .procedural(
+            &client,
+            Request::ReadDriver {
+                expression_ref: EXPRESSION.into(),
+                expected_revision: d.revision,
+                address: addresses[0].clone(),
+                parameter: "force_radius".into(),
+            },
+        )
+        .unwrap();
+    assert!(changed.is_none());
+    assert_eq!(read["native_parameter_driver"], actual);
+    assert_eq!(app.document(EXPRESSION).unwrap(), &before);
+    assert!(app.procedural_runtime.operations.is_empty());
+    assert!(app.procedural_runtime.producers.is_empty());
+}
+
+#[test]
+fn a04_a06_native_driver_preview_uses_native_parameter_conversion_without_replacing_original_driver_or_source()
+ {
+    let d = independent_driver_document();
+    let original = serde_json::to_vec(&d).unwrap();
+    let entity_ref = format!("{EXPRESSION}:entity:a");
+    let actual =
+        source_parameter_driver(&d, &entity_ref, "force_radius", Some(&json!(120.0))).unwrap();
+    assert_eq!(actual["native_parameter"]["value"], 80.0);
+    assert!(actual["native_parameter"]["automation"].is_object());
+    let native_candidate = d
+        .edited(vec![
+            Change::ParameterManual {
+                entity_ref: entity_ref.clone(),
+                parameter: "force_radius".into(),
+            },
+            Change::ParameterSet {
+                entity_ref: entity_ref.clone(),
+                parameter: "force_radius".into(),
+                value: json!(120.0),
+            },
+        ])
+        .unwrap();
+    assert_eq!(
+        native_candidate.entities[&entity_ref].parameters["force_radius"].value,
+        json!(120.0)
+    );
+    assert!(
+        native_candidate.entities[&entity_ref].parameters["force_radius"]
+            .automation
+            .is_none()
+    );
+    for row in actual["scenes"].as_array().unwrap() {
+        let mut current = row["presentation"].clone();
+        let mut preview = row["parameter_candidate"].clone();
+        let before = current["scene"]["entities"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|entity| entity["id"] == entity_ref)
+            .unwrap();
+        let after = preview["scene"]["entities"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|entity| entity["id"] == entity_ref)
+            .unwrap();
+        assert_eq!(before["force"]["radius"], 0.2);
+        assert_eq!(after["force"]["radius"], 0.3);
+        before["force"]["radius"] = Value::Null;
+        after["force"]["radius"] = Value::Null;
+        assert_eq!(
+            current, preview,
+            "preview changed a sibling, Source, retained override, driver or journal field"
+        );
+    }
+    for value in [json!(0.0), json!(1601.0), json!("wrong units")] {
+        assert!(source_parameter_driver(&d, &entity_ref, "force_radius", Some(&value)).is_err());
+    }
+    assert!(source_parameter_driver(&d, &entity_ref, "unknown_native_parameter", None).is_err());
+    let mut bad = d.clone();
+    bad.entities
+        .get_mut(&entity_ref)
+        .unwrap()
+        .parameters
+        .get_mut("force_radius")
+        .unwrap()
+        .value = json!(1601.0);
+    assert!(source_parameter_driver(&bad, &entity_ref, "force_radius", None).is_err());
+    assert_eq!(
+        serde_json::to_vec(&d).unwrap(),
+        original,
+        "read/preview/refusal mutated native Document"
+    );
+}
+
+#[test]
+fn a02_a05_a06_native_driver_route_refuses_foreign_scope_siblings_outside_subject_and_stale_cas() {
+    let d = independent_driver_document();
+    let before = d.clone();
+    let actual =
+        source_parameter_driver(&d, &format!("{EXPRESSION}:entity:a"), "force_radius", None)
+            .unwrap();
+    let target: Address = serde_json::from_value(actual["addresses"][0].clone()).unwrap();
+    let client = CentralClient::discover();
+    let mut app = Application::default();
+    app.open(d.clone(), "agent:independent".into()).unwrap();
+    for case in [
+        "sibling",
+        "whole_entity",
+        "wrong_component",
+        "foreign_expression",
+        "outside_scene",
+        "missing_subject",
+    ] {
+        let mut address = target.clone();
+        let mut parameter = "force_radius";
+        match case {
+            "sibling" => parameter = "force_strength",
+            "whole_entity" => {
+                address.component = Component::Entity;
+                address.property = None;
+            }
+            "wrong_component" => address.component = Component::Entity,
+            "foreign_expression" => address.expression_ref = "expression:foreign".into(),
+            "outside_scene" => address.scene_ref = Some(format!("{EXPRESSION}:scene:missing")),
+            _ => address.entity_ref = Some(format!("{EXPRESSION}:entity:missing")),
+        }
+        assert!(
+            app.procedural(
+                &client,
+                Request::ReadDriver {
+                    expression_ref: EXPRESSION.into(),
+                    expected_revision: d.revision,
+                    address,
+                    parameter: parameter.into()
+                }
+            )
+            .is_err(),
+            "driver read admitted {case}"
+        );
+        assert_eq!(app.document(EXPRESSION).unwrap(), &before);
+    }
+    let (reply, changed) = app
+        .procedural(
+            &client,
+            Request::ReadDriver {
+                expression_ref: EXPRESSION.into(),
+                expected_revision: d.revision - 1,
+                address: target,
+                parameter: "force_radius".into(),
+            },
+        )
+        .unwrap();
+    assert_eq!(reply["state"], "revision_conflict");
+    assert!(changed.is_none());
+    assert_eq!(app.document(EXPRESSION).unwrap(), &before);
+    assert!(app.procedural_runtime.operations.is_empty());
+}
+
+// Actual authoring/control producer fixture -> real Application::Fork -> exact
+// serialized Document -> real TS registry/native converter/release consumer.
+// Include in the custodian's expression_procedural test module. No Source
+// qualification, physical/audio receipt or live clock is fabricated here.
+
+#[test]
+fn a06_a13_actual_control_fork_preserves_persistent_configuration() {
+    let source: Value = serde_json::from_str(include_str!("fork-control-source.json")).unwrap();
+    assert_eq!(source["schema"], "oi.procedural-control-fork-source/v1");
+    let client = CentralClient::discover();
+    let mut artifact = json!({"schema":"oi.procedural-control-fork-application/v1"});
+    for (input, output, original_key, fork_key) in [(&source, "fork_ref", "original", "fork")] {
+        let original: Document = serde_json::from_value(input["original"].clone()).unwrap();
+        original.validate().unwrap();
+        let original_wire = serde_json::to_value(&original).unwrap();
+        assert_eq!(
+            original_wire, input["original"],
+            "fixture diverged from actual typed Document"
+        );
+        let mut app = Application::default();
+        app.open(original.clone(), "human:owner".into()).unwrap();
+        let reference = input[output].as_str().unwrap();
+        let (_, changed) = app
+            .apply(
+                &client,
+                ExpressionRequest::Fork {
+                    expression_ref: original.expression_ref.clone(),
+                    expected_revision: original.revision,
+                    new_expression_ref: reference.into(),
+                    actor: "human:fork-owner".into(),
+                },
+            )
+            .unwrap();
+        assert_eq!(changed.unwrap().expression_ref, reference);
+        assert_eq!(app.document(&original.expression_ref).unwrap(), &original);
+        let fork = app.document(reference).unwrap();
+        assert!(journal(fork).unwrap().is_empty());
+        assert!(
+            app.procedural_runtime
+                .operations
+                .values()
+                .all(|operation| operation.envelope.expression_ref != reference)
+        );
+        assert!(
+            app.procedural_runtime
+                .producers
+                .values()
+                .all(|producer| producer.expression_ref != reference)
+        );
+        let scene = &fork.scenes[0].presentation.as_ref().unwrap().scene;
+        let retained = &scene["procedural"];
+
+        let control = &retained["controls"][0];
+        assert_eq!(
+            control["takeover"],
+            input["original"]["scenes"][0]["presentation"]["scene"]["procedural"]["controls"][0]["takeover"],
+            "persistent authored takeover provenance/lifetime was discarded"
+        );
+        let target = format!(
+            "entity:expression%3Aindependent-native-fork-controls%3Aentity%3Aa:forces.strength"
+        );
+        assert_eq!(
+            control["target"], target,
+            "actual encoded target still names the original Entity"
+        );
+        for track in control["dormant_tracks"].as_array().unwrap() {
+            assert_eq!(track["entityId"], format!("{reference}:entity:a"));
+        }
+        for dormant in control["dormant_overrides"].as_array().unwrap() {
+            for key in ["overrides", "takeover_overrides"] {
+                for overlay in dormant[key].as_array().unwrap() {
+                    assert_eq!(overlay["address"]["expression_ref"], reference);
+                    assert_eq!(
+                        overlay["address"]["entity_ref"],
+                        format!("{reference}:entity:a")
+                    );
+                }
+            }
+        }
+
+        assert_eq!(
+            scene["entities"][0]["source"],
+            original.scenes[0].presentation.as_ref().unwrap().scene["entities"][0]["source"]
+        );
+        assert_eq!(
+            scene["entities"][0]["sequence"]["steps"][0]["id"],
+            input["expected"]["step_ref"]
+        );
+        artifact[original_key] = original_wire;
+        artifact[fork_key] = serde_json::to_value(fork).unwrap();
+    }
+    if let Ok(path) = std::env::var("TA_ONTA_NATIVE_FORK_CONTROL_OUTPUT") {
+        std::fs::write(path, serde_json::to_vec_pretty(&artifact).unwrap()).unwrap();
+    }
+}
+
+#[test]
+fn a13_actual_fork_remaps_only_typed_parameter_and_atlas_basis_reference_slots() {
+    let source: Value = serde_json::from_str(include_str!("fork-control-source.json")).unwrap();
+    let mut original: Document = serde_json::from_value(source["original"].clone()).unwrap();
+    let expression = original.expression_ref.clone();
+    let reference = "expression:independent-native-fork-typed-basis";
+    let mut owned: Address = serde_json::from_value(
+        original.scenes[0].presentation.as_ref().unwrap().scene["procedural"]["controls"][0]
+            ["address"]
+            .clone(),
+    )
+    .unwrap();
+    let native_basis = json!({"schema":"ql.native-parameter-state/v1","address":owned,"addresses":[owned],"parameter":"force_strength","value":0.8,"target_revision":original.entities[owned.entity_ref.as_ref().unwrap()].revision});
+    let whole = Address {
+        expression_ref: expression.clone(),
+        scene_ref: None,
+        entity_ref: None,
+        component: Component::Expression,
+        constituent_ref: None,
+        parent_ref: None,
+        property: None,
+    };
+    let flow_basis = json!({"schema":"ql.native-atlas-state/v1","expression_ref":expression,"focus":original.selection,"scene_order":[original.scenes[0].scene_ref]});
+    let mut row =
+        original.scenes[0].presentation.as_ref().unwrap().scene["procedural"]["contributions"][0]
+            .clone();
+    row["contribution_ref"] = json!(format!("{expression}:contribution:parameter"));
+    row["occurrence_ref"] = json!(owned.entity_ref);
+    row["owned_addresses"] = json!([owned]);
+    row["generated_basis"] = native_basis;
+    row["authored_overrides"] = json!([]);
+    let mut flow = row.clone();
+    flow["contribution_ref"] = json!(format!("{expression}:contribution:atlas"));
+    flow["occurrence_ref"] = json!(expression);
+    flow["owned_addresses"] = json!([whole]);
+    flow["generated_basis"] = flow_basis;
+    original.scenes[0].presentation.as_mut().unwrap().scene["procedural"]["contributions"]
+        .as_array_mut()
+        .unwrap()
+        .extend([row, flow]);
+    let client = CentralClient::discover();
+    let mut app = Application::default();
+    app.open(original.clone(), "human:owner".into()).unwrap();
+    app.apply(
+        &client,
+        ExpressionRequest::Fork {
+            expression_ref: expression.clone(),
+            expected_revision: original.revision,
+            new_expression_ref: reference.into(),
+            actor: "human:fork-owner".into(),
+        },
+    )
+    .unwrap();
+    let fork = app.document(reference).unwrap();
+    let rows = &fork.scenes[0].presentation.as_ref().unwrap().scene["procedural"]["contributions"];
+    owned.expression_ref = reference.into();
+    owned.scene_ref = Some(format!("{reference}:scene:main"));
+    owned.entity_ref = Some(format!("{reference}:entity:a"));
+    assert_eq!(rows[1]["generated_basis"]["address"], json!(owned));
+    assert_eq!(rows[1]["generated_basis"]["addresses"], json!([owned]));
+    assert_eq!(rows[1]["generated_basis"]["parameter"], "force_strength");
+    assert_eq!(rows[1]["generated_basis"]["value"], 0.8);
+    assert_eq!(rows[2]["generated_basis"]["expression_ref"], reference);
+    assert_eq!(
+        rows[2]["generated_basis"]["focus"]["scene_ref"],
+        format!("{reference}:scene:main")
+    );
+    assert_eq!(
+        rows[2]["generated_basis"]["scene_order"],
+        json!([format!("{reference}:scene:main")])
+    );
+    assert_eq!(
+        rows[1]["subject_refs"],
+        json!([format!("{expression}:source:literal")])
+    );
+    assert_eq!(app.document(&expression).unwrap(), &original);
+}
+
+#[test]
+fn a06_a13_legacy_gesture_without_exact_native_parameter_base_refuses_fork_unchanged() {
+    let source: Value = serde_json::from_str(include_str!("fork-control-source.json")).unwrap();
+    let original: Document = serde_json::from_value(source["gesture"]["original"].clone()).unwrap();
+    let client = CentralClient::discover();
+    let mut app = Application::default();
+    app.open(original.clone(), "human:owner".into()).unwrap();
+    let fork_ref = source["gesture"]["fork_ref"].as_str().unwrap();
+    let result = app.apply(
+        &client,
+        ExpressionRequest::Fork {
+            expression_ref: original.expression_ref.clone(),
+            expected_revision: original.revision,
+            new_expression_ref: fork_ref.into(),
+            actor: "human:fork-owner".into(),
+        },
+    );
+    assert!(
+        result.is_err(),
+        "legacy gesture inferred a native driver/unit baseline"
+    );
+    assert_eq!(app.document(&original.expression_ref).unwrap(), &original);
+    assert!(app.document(fork_ref).is_err());
+    assert!(app.procedural_runtime.operations.is_empty());
+    assert!(app.procedural_runtime.producers.is_empty());
+}
+
+// Append after Source, current-output and shared-global independent helpers.
+// Actual native Document/Scene material, counted serde output and public manual
+// Prepare only. No producer map, qualified operation, compiler or ACK injection.
+fn independent_budget_document(shared: bool, count: usize, character_bytes: usize) -> Document {
+    let d = if shared {
+        independent_shared_source_document()
+    } else {
+        independent_source_read_document()
+    };
+    let d = d
+        .edited(vec![Change::ParameterSet {
+            entity_ref: format!("{EXPRESSION}:entity:a"),
+            parameter: "force_strength".into(),
+            value: json!(0.2),
+        }])
+        .unwrap();
+    let mut contributions = Vec::new();
+    for index in 0..count {
+        let mut contribution = if shared {
+            independent_shared_force_contribution(&d)
+        } else {
+            independent_output_contribution(
+                &d,
+                "force",
+                &format!("{EXPRESSION}:entity:a"),
+                vec![addr(Component::Force, Some("a"), None, Some("strength"))],
+                json!({"parameter":"force_strength","value":0.2}),
+            )
+        };
+        contribution["contribution_ref"] =
+            json!(format!("contribution:independent:budget-{index}"));
+        contribution["output_slot"] = json!(format!("budget-{index}"));
+        contributions.push(contribution);
+    }
+    let changes = d
+        .scenes
+        .iter()
+        .map(|scene| {
+            let mut presentation = scene.presentation.clone().unwrap();
+            presentation.scene["character"] = json!("c".repeat(character_bytes));
+            presentation.scene["procedural"] =
+                independent_retained_basis(&d, contributions.clone());
+            Change::SceneMaterialSet {
+                scene_ref: scene.scene_ref.clone(),
+                presentation,
+            }
+        })
+        .collect();
+    d.edited(changes).unwrap()
+}
+fn independent_budget_current(document: &Document) -> Vec<Value> {
+    document.scenes[0].presentation.as_ref().unwrap().scene["procedural"]["contributions"].as_array().unwrap().iter().map(|contribution|
+        json!({"contribution_ref":contribution["contribution_ref"],"material":source_current_output_basis(document,contribution).unwrap(),"overlays":[]})
+    ).collect()
+}
+#[test]
+fn a10_a16_borrowed_material_and_entity_refs_count_exact_escaped_native_serialization() {
+    let d = independent_budget_document(false, 1, 0);
+    let mut presentation = d.scenes[0].presentation.clone().unwrap();
+    presentation.scene["character"] = json!("é\n\"\\\u{0000}");
+    presentation.saved = Some(presentation.scene.clone());
+    let d = d
+        .edited(vec![Change::SceneMaterialSet {
+            scene_ref: d.scenes[0].scene_ref.clone(),
+            presentation,
+        }])
+        .unwrap();
+    let scene = &d.scenes[0];
+    let material = manual::scene_material(scene).unwrap();
+    let count = serde_json::to_vec(&material).unwrap().len();
+    let mut exact = budget::Budget::new();
+    exact.reserve(budget::SOURCE_BYTES - count).unwrap();
+    exact
+        .material(scene.presentation.as_ref().unwrap())
+        .unwrap();
+    assert!(
+        exact.reserve(1).is_err(),
+        "borrowed Material missed escaped/multibyte/saved bytes"
+    );
+    let mut short = budget::Budget::new();
+    short.reserve(budget::SOURCE_BYTES - count + 1).unwrap();
+    assert!(
+        short
+            .material(scene.presentation.as_ref().unwrap())
+            .is_err()
+    );
+    let refs = manual::scene_entity_refs(&d, scene).unwrap();
+    let count = serde_json::to_vec(&refs).unwrap().len();
+    let mut exact = budget::Budget::new();
+    exact.reserve(budget::SOURCE_BYTES - count).unwrap();
+    exact
+        .entity_refs(scene.presentation.as_ref().unwrap())
+        .unwrap();
+    assert!(exact.reserve(1).is_err());
+}
+#[test]
+fn a05_a14_borrowed_envelope_match_is_structural_complete_and_keeps_json_number_identity() {
+    let d = independent_source_read_document();
+    let mut intent = envelope(&d, Scope::Expression, "a");
+    intent.changes.push(Change::SceneMaterialSet {
+        scene_ref: d.scenes[0].scene_ref.clone(),
+        presentation: d.scenes[0].presentation.clone().unwrap(),
+    });
+    intent.changes[0] = Change::ParameterSet {
+        entity_ref: format!("{EXPRESSION}:entity:a"),
+        parameter: "force_strength".into(),
+        value: json!(1.0),
+    };
+    let raw = serde_json::to_value(&intent).unwrap();
+    assert!(budget::matches_borrowed(&intent, &raw));
+    let reparsed: Value = serde_json::from_slice(&serde_json::to_vec(&raw).unwrap()).unwrap();
+    assert!(budget::matches_borrowed(&intent, &reparsed));
+    for case in [
+        "missing",
+        "extra",
+        "source",
+        "material",
+        "numeric_kind",
+        "timing",
+    ] {
+        let mut wrong = raw.clone();
+        match case {
+            "missing" => {
+                wrong.as_object_mut().unwrap().remove("cause_ref");
+            }
+            "extra" => wrong["unissued_basis"] = json!(true),
+            "source" => {
+                wrong["sources"] =
+                    json!([{"ref":"foreign","revision":"1","availability":"available"}])
+            }
+            "material" => {
+                wrong["changes"][1]["presentation"]["scene"]["character"] =
+                    json!("different actual Source")
+            }
+            "numeric_kind" => wrong["changes"][0]["value"] = json!(1),
+            _ => {
+                wrong["timing"] = json!({"kind":"owner_boundary","owner":"foreign","instance_ref":"unissued","cursor":0})
+            }
+        }
+        assert!(
+            !budget::matches_borrowed(&intent, &wrong),
+            "borrowed full envelope comparison accepted {case}"
+        );
+    }
+}
+#[test]
+fn a10_a16_context_cardinality_precedes_byte_count_and_actual_scene_copy() {
+    let d = independent_budget_document(true, 1025, 0);
+    d.validate().unwrap();
+    let rows = independent_budget_current(&d);
+    assert_eq!(rows.len(), 1025);
+    let before = serde_json::to_vec(&d).unwrap();
+    let error = budget::preflight_event_contexts(&d, &rows).unwrap_err();
+    assert!(
+        error.contains("context bound exceeded before allocation"),
+        "cardinality was hidden by another bound: {error}"
+    );
+    let error = source_event_intervention_contexts(&d, &rows).unwrap_err();
+    assert!(error.contains("context bound exceeded before allocation"));
+    assert_eq!(serde_json::to_vec(&d).unwrap(), before);
+}
+#[test]
+fn a10_a16_few_shared_contexts_refuse_repeated_real_material_byte_expansion() {
+    let d = independent_budget_document(true, 5, 1024 * 1024);
+    d.validate().unwrap();
+    let rows = independent_budget_current(&d);
+    assert_eq!(rows.len(), 5);
+    let before = serde_json::to_vec(&d).unwrap();
+    assert!(before.len() < budget::SOURCE_BYTES);
+    let error = budget::preflight_event_contexts(&d, &rows).unwrap_err();
+    assert!(error.contains("aggregate intake byte budget exceeded before allocation"));
+    let error = source_event_intervention_contexts(&d, &rows).unwrap_err();
+    assert!(error.contains("aggregate intake byte budget exceeded before allocation"));
+    assert_eq!(serde_json::to_vec(&d).unwrap(), before);
+    assert!(
+        Runtime::default()
+            .output_readings(&d, "procedure:independent:basis")
+            .is_err(),
+        "byte admission became Source qualification"
+    );
+}
+#[test]
+fn a10_a16_output_cardinality_is_aggregate_across_real_scenes_before_byte_count() {
+    let d = independent_budget_document(true, 1025, 0);
+    let mut changes = Vec::new();
+    for (index, scene) in d.scenes.iter().enumerate() {
+        let mut presentation = scene.presentation.clone().unwrap();
+        let rows = presentation.scene["procedural"]["contributions"]
+            .as_array_mut()
+            .unwrap();
+        if index == 1 {
+            rows.pop();
+            for (offset, row) in rows.iter_mut().enumerate() {
+                row["contribution_ref"] =
+                    json!(format!("contribution:independent:second-{offset}"));
+            }
+        }
+        changes.push(Change::SceneMaterialSet {
+            scene_ref: scene.scene_ref.clone(),
+            presentation,
+        });
+    }
+    let d = d.edited(changes).unwrap();
+    d.validate().unwrap();
+    let before = serde_json::to_vec(&d).unwrap();
+    let error =
+        budget::preflight_source_outputs(&d, "procedure:independent:basis", &Runtime::default())
+            .unwrap_err();
+    assert!(error.contains("cardinality exceeded before allocation"));
+    assert_eq!(serde_json::to_vec(&d).unwrap(), before);
+}
+#[test]
+fn a07_a10_a16_projection_counts_generated_material_once_and_excludes_unshipped_overrides() {
+    let d = independent_source_read_document();
+    let mut generated = d.scenes[0].presentation.clone().unwrap();
+    generated.scene["character"] = json!("g".repeat(3 * 1024 * 1024 / 4));
+    let contribution = independent_output_contribution(
+        &d,
+        "scene",
+        &d.scenes[0].scene_ref,
+        vec![addr(Component::Scene, None, None, None)],
+        serde_json::to_value(generated).unwrap(),
+    );
+    let mut presentation = d.scenes[0].presentation.clone().unwrap();
+    presentation.scene["character"] = json!("a".repeat(13 * 1024 * 1024 / 2));
+    presentation.scene["procedural"] = independent_retained_basis(&d, vec![contribution]);
+    assert!(
+        serde_json::to_vec(&presentation.scene["procedural"])
+            .unwrap()
+            .len()
+            <= 1024 * 1024,
+        "test input must pass the actual native journal admission"
+    );
+    let d = d
+        .edited(vec![Change::SceneMaterialSet {
+            scene_ref: d.scenes[0].scene_ref.clone(),
+            presentation,
+        }])
+        .unwrap();
+    d.validate().unwrap();
+    let retained = &d.scenes[0].presentation.as_ref().unwrap().scene["procedural"];
+    assert!(
+        serde_json::to_vec(&d).unwrap().len() < budget::SOURCE_BYTES,
+        "test input must fit the actual native document admission"
+    );
+    let projection = budget::OutputProjection {
+        document: &d,
+        procedure: &retained["procedures"][0],
+        contribution: &retained["contributions"][0],
+        current_scene: d.scenes[0].presentation.as_ref(),
+        current_other: None,
+        creation: None,
+    };
+    let projected = serde_json::to_value(&projection).unwrap();
+    assert!(projected.get("authored_overrides").is_none());
+    assert!(
+        projected.get("applied_operation").is_none(),
+        "unqualified configuration invented native creation"
+    );
+    assert_eq!(
+        projected["generated_basis"],
+        retained["contributions"][0]["generated_basis"]
+    );
+    assert_eq!(
+        projected["current_basis"],
+        manual::scene_material(&d.scenes[0]).unwrap()
+    );
+    let exact = serde_json::to_vec(&projected).unwrap().len();
+    assert!(exact + 4099 < budget::SOURCE_BYTES);
+    assert!(
+        exact + serde_json::to_vec(&retained["contributions"][0]["generated_basis"])
+            .unwrap()
+            .len()
+            > budget::SOURCE_BYTES,
+        "counting the retained generated material twice must exceed the bound"
+    );
+    let mut stream = budget::Budget::new();
+    stream.reserve(budget::SOURCE_BYTES - exact).unwrap();
+    stream.value(&projection).unwrap();
+    assert!(stream.reserve(1).is_err());
+    budget::preflight_source_outputs(&d, "procedure:independent:basis", &Runtime::default())
+        .unwrap();
+    assert!(
+        Runtime::default()
+            .output_readings(&d, "procedure:independent:basis")
+            .is_err(),
+        "accurate accounting granted Source ownership to retained labels"
+    );
+}
+#[test]
+fn a05_a14_budget_creation_selector_refuses_actual_public_manual_preparation_as_source_authority() {
+    let d = independent_budget_document(false, 1, 0);
+    let contribution =
+        d.scenes[0].presentation.as_ref().unwrap().scene["procedural"]["contributions"][0].clone();
+    let mut app = Application::default();
+    let client = CentralClient::discover();
+    app.open(d.clone(), "agent:independent".into()).unwrap();
+    let intent = envelope(&d, Scope::Expression, "a");
+    app.procedural(
+        &client,
+        Request::Prepare {
+            envelope: Box::new(intent),
+        },
+    )
+    .unwrap();
+    let accepted = app.document(EXPRESSION).unwrap();
+    let journal = budget::borrowed_journal(accepted).unwrap();
+    assert_eq!(journal.len(), 1);
+    assert!(
+        budget::first_valid_creation(
+            accepted,
+            "procedure:independent:basis",
+            &contribution,
+            &app.procedural_runtime,
+            &journal
+        )
+        .unwrap()
+        .is_none()
+    );
+    assert!(app.procedural_runtime.producers.is_empty());
+    assert!(app.procedural_runtime.qualified_operations.is_empty());
+    assert!(
+        app.procedural_runtime
+            .output_readings(accepted, "procedure:independent:basis")
+            .is_err()
+    );
+}
+
+// Append after the actual native budget/source helpers. No Source grant/cache.
+#[test]
+fn a10_a16_manual_count_refuses_65_actual_affected_outputs_before_qualification_or_entry_cloning() {
+    let d = independent_budget_document(false, 65, 0);
+    let mut app = Application::default();
+    app.open(d.clone(), "human:owner".into()).unwrap();
+    let request = ExpressionRequest::Edit {
+        expression_ref: EXPRESSION.into(),
+        expected_revision: d.revision,
+        actor: "human:owner".into(),
+        changes: vec![Change::ParameterSet {
+            entity_ref: format!("{EXPRESSION}:entity:a"),
+            parameter: "force_strength".into(),
+            value: json!(0.875),
+        }],
+    };
+    let error = app.prepare_procedural_manual_edit(&request).unwrap_err();
+    assert!(
+        error.contains("batch budget exceeded before allocation"),
+        "qualification/byte materialization preceded complete native count: {error}"
+    );
+    assert_eq!(app.document(EXPRESSION).unwrap(), &d);
+    assert!(app.procedural_runtime.producers.is_empty());
+    assert!(app.procedural_runtime.qualified_operations.is_empty());
+}
+#[test]
+fn a02_a10_a16_affected_material_comparison_borrows_exact_selected_leaf_and_preserves_sibling_scope()
+ {
+    let d = independent_budget_document(false, 1, 1024 * 1024);
+    let target = addr(Component::Force, Some("a"), None, Some("strength"));
+    let root =
+        &d.scenes[0].presentation.as_ref().unwrap().scene["entities"][0]["force"]["strength"];
+    let actual = manual::borrowed_material(&d, &target).unwrap();
+    assert!(
+        std::ptr::eq(actual, root),
+        "material comparison manufactured a copied field"
+    );
+    let mut presentation = d.scenes[0].presentation.clone().unwrap();
+    presentation.scene["character"] = json!("unrelated actual human Scene writing");
+    let candidate = d
+        .edited(vec![Change::SceneMaterialSet {
+            scene_ref: d.scenes[0].scene_ref.clone(),
+            presentation,
+        }])
+        .unwrap();
+    assert!(
+        !manual::affected_without_scene_copy(&d, &candidate, &target),
+        "sibling Scene material widened selected force scope"
+    );
+    assert!(manual::affected_without_scene_copy(
+        &d,
+        &candidate,
+        &addr(Component::Scene, None, None, None)
+    ));
+    let candidate = d
+        .edited(vec![Change::ParameterSet {
+            entity_ref: format!("{EXPRESSION}:entity:a"),
+            parameter: "force_strength".into(),
+            value: json!(0.875),
+        }])
+        .unwrap();
+    assert!(manual::affected_without_scene_copy(&d, &candidate, &target));
+    assert!(!manual::affected_without_scene_copy(
+        &d,
+        &candidate,
+        &addr(Component::Entity, Some("a"), None, Some("position.x"))
+    ));
+    assert_eq!(
+        manual::borrowed_material(&candidate, &target).unwrap(),
+        &json!(0.875)
+    );
+}
+
+// Append after the shared Source/driver helpers. Actual public Application
+// requests and native private-preparation refusal only. Configured Source labels
+// never replace a producer admission. No private live cache/ACK is injected.
+fn independent_control_request(d: &Document) -> Request {
+    let driver =
+        source_parameter_driver(d, &format!("{EXPRESSION}:entity:a"), "force_radius", None)
+            .unwrap();
+    Request::Control {
+        expression_ref: d.expression_ref.clone(),
+        expected_revision: d.revision,
+        procedure_ref: "procedure:independent:basis".into(),
+        address: serde_json::from_value(driver["addresses"][0].clone()).unwrap(),
+        parameter: "force_radius".into(),
+        actor: "human:owner".into(),
+        operation_ref: "operation:independent-native-control".into(),
+        action: control::Action::Takeover {
+            value: json!(120.0),
+            lifetime: control::Lifetime::Persistent,
+        },
+    }
+}
+#[test]
+fn a02_a05_a06_native_control_rejects_unqualified_configured_procedure_and_all_foreign_scalar_intakes()
+ {
+    let d = independent_budget_document(true, 1, 0);
+    let before = serde_json::to_vec(&d).unwrap();
+    let client = CentralClient::discover();
+    let baseline = serde_json::to_value(independent_control_request(&d)).unwrap();
+    for case in [
+        "configured_only",
+        "wrong_key",
+        "sibling",
+        "other_expression",
+        "foreign_scene",
+        "missing_entity",
+        "stale_cas",
+        "invalid_value",
+    ] {
+        let mut raw = baseline.clone();
+        match case {
+            "wrong_key" => raw["parameter"] = json!("force_strength"),
+            "sibling" => raw["address"]["property"] = json!("strength"),
+            "other_expression" => raw["address"]["expression_ref"] = json!("expression:foreign"),
+            "foreign_scene" => {
+                raw["address"]["scene_ref"] = json!(format!("{EXPRESSION}:scene:missing"))
+            }
+            "missing_entity" => {
+                raw["address"]["entity_ref"] = json!(format!("{EXPRESSION}:entity:missing"))
+            }
+            "stale_cas" => raw["expected_revision"] = json!(d.revision - 1),
+            "invalid_value" => raw["action"]["value"] = json!(1601.0),
+            _ => {}
+        }
+        let request: Request = serde_json::from_value(raw).unwrap();
+        let mut app = Application::default();
+        app.open(d.clone(), "agent:independent".into()).unwrap();
+        let original = ExpressionRequest::Procedural {
+            request: request.clone(),
+        };
+        let prepared = app.prepare_procedural_control(&original);
+        if case == "stale_cas" {
+            assert!(prepared.unwrap().is_none());
+        } else {
+            assert!(
+                prepared.is_err(),
+                "native control prepared {case} from configured labels"
+            );
+        }
+        let (refused, changed) = app.procedural(&client, request).unwrap();
+        assert!(changed.is_none());
+        assert_eq!(
+            refused["state"],
+            if case == "stale_cas" {
+                "revision_conflict"
+            } else {
+                "source_refused"
+            }
+        );
+        assert_eq!(refused["native_procedural_receipts"], json!([]));
+        assert_eq!(
+            serde_json::to_vec(app.document(EXPRESSION).unwrap()).unwrap(),
+            before
+        );
+        assert!(app.procedural_runtime.controls.is_empty());
+        assert!(app.procedural_runtime.producers.is_empty());
+        assert!(app.procedural_runtime.qualified_operations.is_empty());
+    }
+}
+#[test]
+fn a05_a06_control_wire_refuses_unknown_action_and_public_cached_or_source_receipt_fields() {
+    let d = independent_driver_document();
+    let baseline = serde_json::to_value(independent_control_request(&d)).unwrap();
+    for case in [
+        "action_kind",
+        "cached",
+        "source_reply",
+        "native_ack",
+        "producer_grant",
+    ] {
+        let mut raw = baseline.clone();
+        match case {
+            "action_kind" => raw["action"]["kind"] = json!("compiled_takeover"),
+            "cached" => {
+                raw["cache"] = json!({"provenance":"live_native_owner","document_sha256":"caller"})
+            }
+            "source_reply" => raw["native_result"] = json!({"operation":"control","result":{}}),
+            "native_ack" => raw["native_procedural_receipts"] = json!([{"status":"ok"}]),
+            _ => raw["producer_ref"] = json!("producer:caller"),
+        }
+        assert!(
+            serde_json::from_value::<Request>(raw).is_err(),
+            "public native control accepted {case}"
+        );
+    }
+    for value in [
+        json!("120"),
+        json!(null),
+        json!([120.0]),
+        json!({"value":120.0}),
+    ] {
+        let mut raw = baseline.clone();
+        raw["action"]["value"] = value;
+        let request: Request = serde_json::from_value(raw).unwrap();
+        let mut app = Application::default();
+        app.open(d.clone(), "agent:independent".into()).unwrap();
+        assert!(
+            app.prepare_procedural_control(&ExpressionRequest::Procedural { request })
+                .is_err()
+        );
+        assert_eq!(app.document(EXPRESSION).unwrap(), &d);
+    }
+}
+#[test]
+fn a05_a13_cold_saved_control_operation_identity_and_labels_do_not_authorize_retry() {
+    let d = independent_budget_document(true, 1, 0);
+    let client = CentralClient::discover();
+    let encoded = serde_json::to_vec(&d).unwrap();
+    let reopened: Document = serde_json::from_slice(&encoded).unwrap();
+    let request = independent_control_request(&reopened);
+    let mut app = Application::default();
+    app.open(reopened.clone(), "human:owner".into()).unwrap();
+    for request in [request.clone(), {
+        let mut raw = serde_json::to_value(&request).unwrap();
+        raw["action"]["value"] = json!(160.0);
+        serde_json::from_value(raw).unwrap()
+    }] {
+        let (refused, changed) = app.procedural(&client, request).unwrap();
+        assert!(changed.is_none());
+        assert_eq!(refused["state"], "source_refused");
+        assert_eq!(refused["cache"]["provenance"], "unqualified");
+        assert_eq!(refused["cache"]["restored"], true);
+        assert_eq!(refused["native_procedural_receipts"], json!([]));
+        assert_eq!(app.document(EXPRESSION).unwrap(), &reopened);
+        assert!(app.procedural_runtime.controls.is_empty());
+    }
+}
+
+#[test]
+fn a13_native_export_observes_ordinary_material_without_creating_procedural_keys() {
+    let (mut app, client) = opened();
+    let before = app.document(EXPRESSION).unwrap().clone();
+    assert!(before.scenes.iter().all(|s| {
+        s.presentation
+            .as_ref()
+            .unwrap()
+            .scene
+            .get("procedural")
+            .is_none()
+    }));
+    let (exported, changed) = app
+        .apply(
+            &client,
+            ExpressionRequest::Export {
+                expression_ref: EXPRESSION.into(),
+                expected_revision: before.revision,
+            },
+        )
+        .unwrap();
+    assert!(changed.is_none());
+    assert_eq!(exported["document"], serde_json::to_value(&before).unwrap());
+    assert_eq!(app.document(EXPRESSION).unwrap(), &before);
+    let decoded: Document = serde_json::from_value(exported["document"].clone()).unwrap();
+    let mut reopened = Application::default();
+    reopened.open(decoded, "human:owner".into()).unwrap();
+    reopened
+        .apply(
+            &client,
+            ExpressionRequest::Fork {
+                expression_ref: EXPRESSION.into(),
+                expected_revision: before.revision,
+                new_expression_ref: "expression:plain-export-fork".into(),
+                actor: "human:owner".into(),
+            },
+        )
+        .unwrap();
+    assert!(
+        reopened
+            .document("expression:plain-export-fork")
+            .unwrap()
+            .scenes
+            .iter()
+            .all(|s| s
+                .presentation
+                .as_ref()
+                .unwrap()
+                .scene
+                .get("procedural")
+                .is_none())
+    );
+    assert!(reopened.procedural_runtime.producers.is_empty());
+}
+
+#[test]
+fn a13_native_restore_retains_actual_receipts_without_mutating_unjournaled_neighbor() {
+    let (mut app, client) = opened();
+    let op = prepared(&mut app, &client);
+    app.procedural(
+        &client,
+        Request::Commit {
+            operation_ref: op.envelope.operation_ref,
+        },
+    )
+    .unwrap();
+    let before = app.document(EXPRESSION).unwrap().clone();
+    let neighbor = format!("{EXPRESSION}:scene:plain-neighbor");
+    let mut material = before.scenes[0].presentation.clone().unwrap();
+    material.scene.as_object_mut().unwrap().remove("procedural");
+    material.scene["id"] = json!(neighbor);
+    material.scene["name"] = json!("Plain neighbor");
+    let before = before
+        .edited(vec![
+            Change::SceneCreate {
+                scene_ref: neighbor.clone(),
+                title: "Plain neighbor".into(),
+            },
+            Change::SceneCompose {
+                scene_ref: neighbor.clone(),
+                entity_refs: before.scenes[0].entity_refs.clone(),
+            },
+            Change::SceneMaterialSet {
+                scene_ref: neighbor.clone(),
+                presentation: material.clone(),
+            },
+        ])
+        .unwrap();
+    let original_journal = journal(&before).unwrap();
+    assert!(!original_journal.is_empty());
+    let mut candidate = before.clone();
+    retain_journal_on_restore(&before, &mut candidate).unwrap();
+    assert_eq!(journal(&candidate).unwrap(), original_journal);
+    let plain = candidate
+        .scenes
+        .iter()
+        .find(|s| s.scene_ref == neighbor)
+        .unwrap()
+        .presentation
+        .as_ref()
+        .unwrap();
+    assert_eq!(plain, &material);
+    assert!(plain.scene.get("procedural").is_none());
+    candidate.validate().unwrap();
+}
+
+// Append after actual independent_budget_document; genuine Document/API only.
+// Source qualification is deliberately absent, never injected as a fixture.
+#[test]
+fn a10_a16_manual_aggregate_bytes_refuse_before_any_source_qualification_or_entry_copy() {
+    let d = independent_budget_document(false, 3, 1536 * 1024);
+    let changes = vec![Change::ParameterSet {
+        entity_ref: format!("{EXPRESSION}:entity:a"),
+        parameter: "force_strength".into(),
+        value: json!(0.875),
+    }];
+    let candidate = d.edited(changes.clone()).unwrap();
+    let before_bytes = serde_json::to_vec(&manual::scene_material(&d.scenes[0]).unwrap())
+        .unwrap()
+        .len();
+    let after_bytes = serde_json::to_vec(&manual::scene_material(&candidate.scenes[0]).unwrap())
+        .unwrap()
+        .len();
+    assert!(
+        serde_json::to_vec(&d).unwrap().len() < budget::SOURCE_BYTES,
+        "detector must start with a genuinely bounded native Document"
+    );
+    assert!(
+        before_bytes + after_bytes < budget::SOURCE_BYTES,
+        "the first entry alone must fit; this detects aggregate ordering"
+    );
+    assert!(
+        3 * (before_bytes + after_bytes) > budget::SOURCE_BYTES,
+        "actual repeated native material must exceed the complete batch limit"
+    );
+    let mut app = Application::default();
+    app.open(d.clone(), "human:owner".into()).unwrap();
+    assert!(app.procedural_runtime.producers.is_empty());
+    assert!(app.procedural_runtime.qualified_operations.is_empty());
+    let request = ExpressionRequest::Edit {
+        expression_ref: d.expression_ref.clone(),
+        expected_revision: d.revision,
+        actor: "human:owner".into(),
+        changes,
+    };
+    let error = app.prepare_procedural_manual_edit(&request).unwrap_err();
+    assert!(
+        error.contains("aggregate intake byte budget exceeded before allocation"),
+        "a partial entry reached Source qualification/copy before total bytes: {error}"
+    );
+    assert_eq!(app.document(EXPRESSION).unwrap(), &d);
+    assert!(app.procedural_runtime.producers.is_empty());
+    assert!(app.procedural_runtime.qualified_operations.is_empty());
 }

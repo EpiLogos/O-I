@@ -61,7 +61,9 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         let epii = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii(&op)?;
         if let Some(prepared) = epii {
             let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_epii(completed)?;
+            let attribution = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii_attribution(&completed)?;
+            let attribution = attribution.map(|prepared| prepared.execute());
+            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_epii_with_attribution(completed, attribution)?;
             for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, kernel_event_hint(receipt)); }
             return Ok(outcome);
         }
@@ -69,7 +71,9 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         let act = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_expressive_act(&op)?;
         if let Some(prepared) = act {
             let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_expressive_act(completed)?;
+            let attribution = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_expressive_act_attribution(&completed)?;
+            let attribution = attribution.map(|prepared| prepared.execute());
+            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_expressive_act_with_attribution(completed, attribution)?;
             for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, kernel_event_hint(receipt)); }
             return Ok(outcome);
         }
@@ -240,13 +244,16 @@ fn main() {
                     &socket,
                     move |request| {
                         let host = handle.state::<KernelHost>();
-                        let value = owner.apply(
-                            &mut *host
-                                .0
-                                .lock()
-                                .map_err(|_| "native kernel lock unavailable")?,
-                            request,
-                        )?;
+                        let prepared=owner.prepare_native_procedural_manual(
+                            &*host.0.lock().map_err(|_|"native kernel lock unavailable")?,&request);
+                        let value=match prepared {
+                            Ok(Some(prepared))=> {
+                                let completed=prepared.execute();
+                                owner.finish_native_procedural_manual(
+                                    &mut *host.0.lock().map_err(|_|"native kernel lock unavailable")?,request,completed)?
+                            },
+                            _=>owner.apply(&mut *host.0.lock().map_err(|_|"native kernel lock unavailable")?,request)?,
+                        };
                         if let Some(receipts) = value["outcome"]["receipts"].as_array() {
                             for receipt in receipts {
                                 // The native owner already recorded this exact receipt.

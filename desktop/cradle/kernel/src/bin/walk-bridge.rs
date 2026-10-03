@@ -249,10 +249,13 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                     .prepare_nara_epii(&op)?;
                 if let Some(prepared) = epii {
                     let completed = prepared.execute()?;
+                    let attribution = kernel.lock().expect("kernel mutex")
+                        .prepare_nara_epii_attribution(&completed)?;
+                    let attribution = attribution.map(|prepared| prepared.execute());
                     return kernel
                         .lock()
                         .expect("kernel mutex")
-                        .finish_nara_epii(completed);
+                        .finish_nara_epii_with_attribution(completed, attribution);
                 }
                 let act = kernel
                     .lock()
@@ -260,10 +263,13 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                     .prepare_nara_expressive_act(&op)?;
                 if let Some(prepared) = act {
                     let completed = prepared.execute()?;
+                    let attribution = kernel.lock().expect("kernel mutex")
+                        .prepare_nara_expressive_act_attribution(&completed)?;
+                    let attribution = attribution.map(|prepared| prepared.execute());
                     return kernel
                         .lock()
                         .expect("kernel mutex")
-                        .finish_nara_expressive_act(completed);
+                        .finish_nara_expressive_act_with_attribution(completed, attribution);
                 }
                 let presence = kernel
                     .lock()

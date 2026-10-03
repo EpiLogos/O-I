@@ -10,6 +10,10 @@ use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "expression_procedural_budget.rs"]
+pub(crate) mod budget;
+#[path = "expression_procedural_control.rs"]
+pub(crate) mod control;
 #[path = "expression_procedural_manual.rs"]
 pub(crate) mod manual;
 
@@ -184,6 +188,22 @@ pub enum Request {
         property_keys: Vec<String>,
         scene_profile: Option<ReadingRef>,
     },
+    ReadDriver {
+        expression_ref: String,
+        expected_revision: u64,
+        address: Address,
+        parameter: String,
+    },
+    Control {
+        expression_ref: String,
+        expected_revision: u64,
+        procedure_ref: String,
+        address: Address,
+        parameter: String,
+        actor: String,
+        operation_ref: String,
+        action: control::Action,
+    },
     Prepare {
         envelope: Box<Envelope>,
     },
@@ -208,6 +228,7 @@ pub struct Runtime {
     producers: BTreeMap<String, ProducerAdmission>,
     /// Live native qualification is not reconstructed from a saved label.
     qualified_operations: BTreeMap<String, String>,
+    controls: BTreeMap<String, control::Replay>,
     pub(super) owner_write: bool,
 }
 
@@ -1103,6 +1124,146 @@ fn source_parameter_addresses(
     Ok(expected.into_iter().collect())
 }
 
+/// Driver disclosure uses the actual global native Parameter and every real
+/// Scene manifestation. A requested value is previewed by Document::edited;
+/// this owner does not reproduce the authored/native unit conversion.
+pub(crate) fn source_parameter_driver(
+    document: &Document,
+    entity_ref: &str,
+    parameter: &str,
+    preview_value: Option<&Value>,
+) -> Result<Value, String> {
+    let (component, property) = match parameter {
+        "force_strength" => (Component::Force, "strength"),
+        "force_spin" => (Component::Force, "spin"),
+        "force_radius" => (Component::Force, "radius"),
+        "x" => (Component::Entity, "position.x"),
+        "y" => (Component::Entity, "position.y"),
+        "z" => (Component::Entity, "position.z"),
+        "scale" => (Component::Entity, "scale"),
+        "rotation" => (Component::Entity, "rotation"),
+        _ => return Err("This Parameter has no current native authored driver mapping".into()),
+    };
+    let entity = document
+        .entities
+        .get(entity_ref)
+        .ok_or("Unknown native driver occurrence")?;
+    let native = entity
+        .parameters
+        .get(parameter)
+        .ok_or("Actual native driver Parameter unavailable")?;
+    super::parameter(parameter, native)?;
+    let mut intake_budget = budget::Budget::new();
+    let mut locations = 0usize;
+    for scene in document
+        .scenes
+        .iter()
+        .filter(|s| s.entity_refs.iter().any(|r| r == entity_ref))
+    {
+        locations = locations
+            .checked_add(1)
+            .ok_or("Native driver location overflow")?;
+        if locations > MAX_TARGETS {
+            return Err("Native driver manifestation bound exceeded before allocation".into());
+        }
+        let presentation = scene
+            .presentation
+            .as_ref()
+            .ok_or("Actual driver material unavailable")?;
+        intake_budget.reserve(4096)?;
+        intake_budget.value(presentation)?;
+        intake_budget.entity_refs(presentation)?;
+        if preview_value.is_some() {
+            intake_budget.value(presentation)?;
+        }
+    }
+    let candidate = preview_value
+        .map(|value| {
+            document.edited(vec![
+                Change::ParameterManual {
+                    entity_ref: entity_ref.into(),
+                    parameter: parameter.into(),
+                },
+                Change::ParameterSet {
+                    entity_ref: entity_ref.into(),
+                    parameter: parameter.into(),
+                    value: value.clone(),
+                },
+            ])
+        })
+        .transpose()?;
+    let mut addresses = Vec::new();
+    let mut scenes = Vec::new();
+    for scene in document
+        .scenes
+        .iter()
+        .filter(|scene| scene.entity_refs.iter().any(|r| r == entity_ref))
+    {
+        let address = canonical_address(
+            document,
+            &Address {
+                expression_ref: document.expression_ref.clone(),
+                scene_ref: Some(scene.scene_ref.clone()),
+                entity_ref: Some(entity_ref.into()),
+                component: component.clone(),
+                parent_ref: None,
+                constituent_ref: None,
+                property: Some(property.into()),
+            },
+        )?;
+        let entity_refs = manual::scene_entity_refs(document, scene)?;
+        if !entity_refs
+            .values()
+            .any(|reference| reference == entity_ref)
+        {
+            return Err("Native driver occurrence has no actual authored material identity".into());
+        }
+        let mut presentation = serde_json::to_value(
+            scene
+                .presentation
+                .as_ref()
+                .ok_or("Actual driver Scene material unavailable")?,
+        )
+        .map_err(|e| e.to_string())?;
+        if presentation["scene"]["procedural"].is_object() {
+            presentation["scene"]["procedural"]["operations"] = json!([]);
+        }
+        let parameter_candidate = candidate
+            .as_ref()
+            .map(|candidate| {
+                let scene = candidate
+                    .scenes
+                    .iter()
+                    .find(|next| next.scene_ref == scene.scene_ref)
+                    .ok_or("Native Parameter preview lost its Scene")?;
+                let mut value = serde_json::to_value(
+                    scene
+                        .presentation
+                        .as_ref()
+                        .ok_or("Native Parameter preview lost its material")?,
+                )
+                .map_err(|e| e.to_string())?;
+                if value["scene"]["procedural"].is_object() {
+                    value["scene"]["procedural"]["operations"] = json!([]);
+                }
+                Ok::<Value, String>(value)
+            })
+            .transpose()?;
+        addresses.push(address);
+        scenes.push(json!({"scene_ref":scene.scene_ref,"entity_refs":entity_refs,"presentation":presentation,"parameter_candidate":parameter_candidate}));
+    }
+    if addresses.is_empty() || addresses.len() > MAX_TARGETS {
+        return Err("Native driver has no bounded actual Scene manifestations".into());
+    }
+    addresses.sort();
+    scenes.sort_by(|a, b| a["scene_ref"].as_str().cmp(&b["scene_ref"].as_str()));
+    Ok(
+        json!({"schema":"ql.native-parameter-driver/v1","expression_ref":document.expression_ref,
+        "document_revision":document.revision,"entity_ref":entity_ref,"parameter":parameter,
+        "native_parameter":native,"addresses":addresses,"scenes":scenes}),
+    )
+}
+
 fn source_current_output_basis(document: &Document, contribution: &Value) -> Result<Value, String> {
     let generated = &contribution["generated_basis"];
     let owned: Vec<Address> = serde_json::from_value(contribution["owned_addresses"].clone())
@@ -1220,6 +1381,7 @@ pub(crate) fn source_event_intervention_contexts(
     document: &Document,
     current: &[Value],
 ) -> Result<Vec<Value>, String> {
+    budget::preflight_event_contexts(document, current)?;
     let mut contexts = Vec::new();
     let mut seen = BTreeSet::new();
     for row in current {
@@ -2527,9 +2689,206 @@ pub fn empty_retention() -> Value {
     json!({"schema":SCHEMA,"bindings":[],"procedures":[],"contributions":[],"controls":[],"operations":[],"scene_flow":[],"time_mappings":[],"source_basis":[]})
 }
 
+fn end_fork_gestures(
+    material: &mut Value,
+) -> Result<Vec<(Address, super::Parameter, Value)>, String> {
+    let controls = material["procedural"]["controls"]
+        .as_array()
+        .ok_or("Missing fork controls")?
+        .clone();
+    let mut retained = Vec::new();
+    let mut bases = Vec::new();
+    for control in controls {
+        if control["takeover"]["lifetime"] != "gesture" {
+            retained.push(control);
+            continue;
+        }
+        let address = retained_address(&control["address"])?;
+        let native_base: super::Parameter = serde_json::from_value(control.get("native_base").ok_or("Legacy gesture has no exact native driver base; release it through its source owner before Fork")?.clone()).map_err(|e| e.to_string())?;
+        let native_value = control["takeover"]
+            .get("native_value")
+            .ok_or("Gesture lost its exact native takeover value")?
+            .clone();
+        super::parameter(fork_parameter_key(&address)?, &native_base)?;
+
+        if address.constituent_ref.is_some() || address.parent_ref.is_some() {
+            return Err("Gesture has no scalar owning parameter operation".into());
+        }
+        let property = address
+            .property
+            .as_deref()
+            .ok_or("Gesture has no scalar property")?;
+        let base = control["authored_base"]
+            .as_f64()
+            .filter(|v| v.is_finite())
+            .ok_or("Gesture lost its scalar authored base")?;
+        let target = control["target"]
+            .as_str()
+            .ok_or("Gesture lost its parameter target")?;
+        let dormant = control["dormant_lanes"]
+            .as_array()
+            .ok_or("Gesture lost its dormant lanes")?;
+        let tracks = control["dormant_tracks"]
+            .as_array()
+            .ok_or("Gesture lost its dormant tracks")?;
+        let current_lanes = material["automation"]
+            .as_array()
+            .ok_or("Gesture has no actual automation container")?;
+        if let Some(suspended) = control.get("suspended_lanes").and_then(Value::as_array) {
+            for expected in suspended {
+                if current_lanes
+                    .iter()
+                    .find(|lane| lane["id"] == expected["id"])
+                    != Some(expected)
+                {
+                    return Err(
+                        "Gesture retained automation group changed; reconcile before Fork".into(),
+                    );
+                }
+            }
+        }
+        if current_lanes.iter().any(|lane| lane["target"] == target) {
+            return Err("A new driver owns the gesture target; reconcile before Fork".into());
+        }
+        let bind = match address.component.clone() {
+            Component::Force => format!("entity.force.{property}"),
+            Component::Entity => format!("entity.{property}"),
+            Component::Sequence => format!("entity.sequence.{property}"),
+            Component::Field => format!("field.{property}"),
+            Component::Property if address.entity_ref.is_none() => property.to_owned(),
+            _ => return Err("Gesture has no actual scalar release operation".into()),
+        };
+        let current_tracks = material
+            .get("propertyTracks")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        if current_tracks.iter().any(|track| {
+            track["bind"] == bind && track["entityId"].as_str() == address.entity_ref.as_deref()
+        }) {
+            return Err(
+                "A new property track owns the gesture target; reconcile before Fork".into(),
+            );
+        }
+        let prior = control
+            .get("dormant_overrides")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let contributions = material["procedural"]["contributions"]
+            .as_array_mut()
+            .ok_or("Gesture lost its retained contributions")?;
+        for contribution in contributions {
+            let saved = prior
+                .iter()
+                .find(|saved| saved["contribution_ref"] == contribution["contribution_ref"]);
+            let owns = contribution["owned_addresses"]
+                .as_array()
+                .ok_or("Contribution lost its addresses")?
+                .iter()
+                .map(|value| {
+                    serde_json::from_value::<Address>(value.clone()).map_err(|e| e.to_string())
+                })
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+                .any(|owned| covers(owned, &address));
+            if !owns && saved.is_none() {
+                continue;
+            }
+            let saved = saved.ok_or("Gesture ownership changed; reconcile before Fork")?;
+            let overrides = contribution["authored_overrides"]
+                .as_array_mut()
+                .ok_or("Contribution lost its overrides")?;
+            let actual: Vec<Value> = overrides
+                .iter()
+                .filter(|row| row["address"] == control["address"])
+                .cloned()
+                .collect();
+            if actual
+                != *saved["takeover_overrides"]
+                    .as_array()
+                    .ok_or("Gesture lost its override release basis")?
+            {
+                return Err("Gesture intervention changed; reconcile before Fork".into());
+            }
+            overrides.retain(|row| row["address"] != control["address"]);
+            overrides.extend(
+                saved["overrides"]
+                    .as_array()
+                    .ok_or("Gesture lost its prior intervention")?
+                    .iter()
+                    .cloned(),
+            );
+        }
+        // The property path is the admitted native Address, never Source text.
+        let mut root = if let Some(entity) = address.entity_ref.as_deref() {
+            material["entities"]
+                .as_array_mut()
+                .ok_or("Gesture target has no entity container")?
+                .iter_mut()
+                .find(|item| item["id"] == entity)
+                .ok_or("Gesture target disappeared")?
+        } else {
+            &mut *material
+        };
+        root = match address.component.clone() {
+            Component::Force => root.get_mut("force").ok_or("Gesture lost its Force")?,
+            Component::Sequence => root
+                .get_mut("sequence")
+                .ok_or("Gesture lost its Sequence")?,
+            Component::Field => root.get_mut("field").ok_or("Gesture lost its Field")?,
+            _ => root,
+        };
+        for segment in property.split('.') {
+            root = root
+                .get_mut(segment)
+                .ok_or("Gesture scalar path disappeared")?;
+        }
+        if *root != control["takeover"]["value"] {
+            return Err("Gesture effective authored value changed; reconcile before Fork".into());
+        }
+        *root = json!(base);
+        let ids: BTreeSet<&str> = dormant
+            .iter()
+            .filter_map(|lane| lane["id"].as_str())
+            .collect();
+        let lanes = material["automation"].as_array_mut().unwrap();
+        lanes.retain(|lane| !lane["id"].as_str().is_some_and(|id| ids.contains(id)));
+        lanes.extend(dormant.iter().cloned());
+        material["propertyTracks"] = json!(
+            current_tracks
+                .into_iter()
+                .chain(tracks.iter().cloned())
+                .collect::<Vec<_>>()
+        );
+        bases.push((address, native_base, native_value));
+    }
+    material["procedural"]["controls"] = json!(retained);
+    Ok(bases)
+}
+
+fn fork_parameter_key(address: &Address) -> Result<&'static str, String> {
+    // Exact declared native key aliases only; no numeric reconstruction.
+    match (address.component.clone(), address.property.as_deref()) {
+        (Component::Force, Some("strength")) => Ok("force_strength"),
+        (Component::Force, Some("spin")) => Ok("force_spin"),
+        (Component::Force, Some("radius")) => Ok("force_radius"),
+        (Component::Entity, Some("position.x")) => Ok("x"),
+        (Component::Entity, Some("position.y")) => Ok("y"),
+        (Component::Entity, Some("position.z")) => Ok("z"),
+        (Component::Entity, Some("rotation")) => Ok("rotation"),
+        (Component::Entity, Some("scale")) => Ok("scale"),
+        _ => Err("Gesture has no exact native Parameter release mapping".into()),
+    }
+}
+
 /// A fork copies authored material, not another Expression's operation owner.
 /// Original receipts remain unchanged in the original document and runtime.
-pub(super) fn fork_document_retention(document: &mut Document, old: &str, new: &str) {
+pub(super) fn fork_document_retention(
+    document: &mut Document,
+    old: &str,
+    new: &str,
+) -> Result<(), String> {
     let prefix = format!("{old}:");
     let remap = |reference: &str| {
         if reference == old {
@@ -2554,14 +2913,20 @@ pub(super) fn fork_document_retention(document: &mut Document, old: &str, new: &
             }
         }
     };
+    let mut parameter_bases: BTreeMap<(String, String), (super::Parameter, Value)> =
+        BTreeMap::new();
     for scene in &mut document.scenes {
         let Some(presentation) = &mut scene.presentation else {
             continue;
         };
-        for material in
-            std::iter::once(&mut presentation.scene).chain(presentation.saved.iter_mut())
+        for (material_index, material) in std::iter::once(&mut presentation.scene)
+            .chain(presentation.saved.iter_mut())
+            .enumerate()
         {
-            let Some(retained) = material.get_mut("procedural") else {
+            let Some(retained) = material
+                .get_mut("procedural")
+                .filter(|value| value.is_object())
+            else {
                 continue;
             };
             retained["operations"] = json!([]);
@@ -2573,7 +2938,46 @@ pub(super) fn fork_document_retention(document: &mut Document, old: &str, new: &
                     for row in rows {
                         map_address(&mut row["address"]);
                         if key == "controls" {
-                            row.as_object_mut().unwrap().remove("takeover");
+                            if let Some(target) = row.get_mut("target") {
+                                crate::expression_scene::remap_automation_target(target, &remap);
+                            }
+                            for lanes in ["dormant_lanes", "suspended_lanes"] {
+                                if let Some(values) =
+                                    row.get_mut(lanes).and_then(Value::as_array_mut)
+                                {
+                                    for value in values {
+                                        crate::expression_scene::remap_automation_lane(
+                                            value, &remap,
+                                        );
+                                    }
+                                }
+                            }
+                            if let Some(tracks) = row["dormant_tracks"].as_array_mut() {
+                                for track in tracks {
+                                    if let Some(entity) = track.get_mut("entityId") {
+                                        map_ref(entity);
+                                    }
+                                }
+                            }
+                            if let Some(groups) = row
+                                .get_mut("dormant_overrides")
+                                .and_then(Value::as_array_mut)
+                            {
+                                for group in groups {
+                                    map_ref(&mut group["contribution_ref"]);
+                                    for key in ["overrides", "takeover_overrides"] {
+                                        if let Some(overrides) = group[key].as_array_mut() {
+                                            for overlay in overrides {
+                                                map_address(&mut overlay["address"]);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // Persistent takeover is authored configuration,
+                            // retaining its original actor/op/source lineage.
+                            // Ephemeral gestures end below with their actual
+                            // retained drivers/base/overrides, never a timer.
                         }
                     }
                 }
@@ -2602,6 +3006,28 @@ pub(super) fn fork_document_retention(document: &mut Document, old: &str, new: &
                     }
                     // The basis is material with the same known native Scene
                     // identity fields. Literal source definitions stay exact.
+                    if row["generated_basis"]["schema"] == "ql.native-parameter-state/v1" {
+                        map_address(&mut row["generated_basis"]["address"]);
+                        if let Some(addresses) = row["generated_basis"]["addresses"].as_array_mut()
+                        {
+                            for address in addresses {
+                                map_address(address);
+                            }
+                        }
+                    } else if row["generated_basis"]["schema"] == "ql.native-atlas-state/v1" {
+                        let basis = &mut row["generated_basis"];
+                        map_ref(&mut basis["expression_ref"]);
+                        for key in ["scene_ref", "entity_ref", "relation_ref"] {
+                            if let Some(reference) = basis["focus"].get_mut(key) {
+                                map_ref(reference);
+                            }
+                        }
+                        if let Some(order) = basis["scene_order"].as_array_mut() {
+                            for reference in order {
+                                map_ref(reference);
+                            }
+                        }
+                    }
                     if let Some(basis) = row["generated_basis"].as_object_mut() {
                         if let Some(scene) = basis.get_mut("scene") {
                             crate::expression_scene::remap_refs(scene, &remap);
@@ -2619,8 +3045,41 @@ pub(super) fn fork_document_retention(document: &mut Document, old: &str, new: &
                     row["cursor"] = json!(0);
                 }
             }
+            // Release changes only this cold configuration. No original
+            // operation owner, cursor, body or Source admission is copied.
+            let released = end_fork_gestures(material)?;
+            if material_index == 0 {
+                for (address, base, native_value) in released {
+                    let key = fork_parameter_key(&address)?;
+                    let entity = address
+                        .entity_ref
+                        .ok_or("Gesture parameter has no Entity")?;
+                    let tuple = (entity, key.to_owned());
+                    let basis = (base, native_value);
+                    if parameter_bases.get(&tuple).is_some_and(|old| old != &basis) {
+                        return Err(
+                            "Shared gesture native driver bases disagree; reconcile before Fork"
+                                .into(),
+                        );
+                    }
+                    parameter_bases.insert(tuple, basis);
+                }
+            }
         }
     }
+    for ((entity, key), (base, native_value)) in parameter_bases {
+        let parameter = document
+            .entities
+            .get_mut(&entity)
+            .and_then(|entity| entity.parameters.get_mut(&key))
+            .ok_or("Gesture actual native Parameter disappeared")?;
+        if parameter.value != native_value || parameter.automation.is_some() {
+            return Err("Actual native gesture driver changed; reconcile before Fork".into());
+        }
+        super::parameter(&key, &base)?;
+        *parameter = base;
+    }
+    Ok(())
 }
 
 /// Only the actual native request owner changes durable operation receipts.
@@ -2669,11 +3128,12 @@ pub fn retain_journal_on_restore(before: &Document, after: &mut Document) -> Res
         return guard_document_journal(before, after);
     }
     for scene in &mut after.scenes {
-        if let Some(rows) = scene
-            .presentation
-            .as_mut()
-            .and_then(|p| p.scene["procedural"]["operations"].as_array_mut())
-        {
+        if let Some(rows) = scene.presentation.as_mut().and_then(|p| {
+            p.scene
+                .get_mut("procedural")
+                .and_then(|retained| retained.get_mut("operations"))
+                .and_then(Value::as_array_mut)
+        }) {
             rows.clear();
         }
     }
@@ -3090,6 +3550,8 @@ impl Runtime {
             .retain(|_, p| p.expression_ref != expression_ref);
         self.deltas
             .retain(|row| row["delta"]["expression_ref"] != expression_ref);
+        self.controls
+            .retain(|_, control| control.expression_ref != expression_ref);
         self.retired_through = Some(self.cursor);
     }
 
@@ -3099,7 +3561,8 @@ impl Runtime {
         procedure_ref: &str,
     ) -> Result<Vec<Value>, String> {
         super::text(procedure_ref)?;
-        let retained_journal = journal(document)?;
+        budget::preflight_source_outputs(document, procedure_ref, self)?;
+        let retained_journal = budget::borrowed_journal(document)?;
         let mut out: Vec<Value> = Vec::new();
         for scene in &document.scenes {
             let Some(presentation) = &scene.presentation else {
@@ -3133,46 +3596,15 @@ impl Runtime {
                 for address in &owned {
                     addressed(document, address)?;
                 }
-                let mut creation = None;
-                for (id, raw) in &retained_journal {
-                    let retained_op: Operation =
-                        serde_json::from_value(raw.clone()).map_err(|e| e.to_string())?;
-                    // A deserialized Applied row is historical data, not a
-                    // live receiving-owner witness of creation. Configuration
-                    // restore never grants producer-owned continuation.
-                    if self.restored.contains(id)
-                        || self.qualified_operations.get(id).map(String::as_str)
-                            != Some(procedure_ref)
-                    {
-                        continue;
-                    }
-                    let Some(op) = self.operations.get(id) else {
-                        continue;
-                    };
-                    if op.fingerprint != retained_op.fingerprint
-                        || op.envelope != retained_op.envelope
-                    {
-                        continue;
-                    }
-                    let scene_constructor = generated_basis["schema"] == "oi.journey-scene/v1";
-                    let constructed = !scene_constructor || op.envelope.changes.iter().any(|c| matches!(c, Change::SceneCreate {scene_ref,..} if scene_ref == occurrence)) && op.envelope.changes.iter().any(|c| matches!(c, Change::SceneMaterialSet {scene_ref,..} if scene_ref == occurrence));
-                    let original_contribution = op.envelope.changes.iter().any(|change| matches!(change, Change::SceneMaterialSet {presentation,..} if presentation.scene["procedural"]["contributions"].as_array().is_some_and(|rows| rows.iter().any(|row| row["contribution_ref"]==contribution["contribution_ref"] && row["procedure_ref"]==procedure_ref && ["output_slot", "subject_refs", "occurrence_ref", "owned_addresses"].iter().all(|key| row[*key] == contribution[*key])))));
-                    if op.envelope.expression_ref == document.expression_ref
-                        && op.status == Status::Applied
-                        && op.envelope.output_readings.is_empty()
-                        && op.applied_revision.is_some_and(|r| r <= document.revision)
-                        && constructed
-                        && original_contribution
-                        && owned
-                            .iter()
-                            .all(|a| op.targets.iter().any(|t| covers(t, a)))
-                    {
-                        creation = Some(serde_json::to_value(op).map_err(|e| e.to_string())?);
-                        break;
-                    }
-                }
-                let creation = creation
-                    .ok_or("Retained output lacks its applied original native creation receipt")?;
+                let creation = budget::first_valid_creation(
+                    document,
+                    procedure_ref,
+                    contribution,
+                    self,
+                    &retained_journal,
+                )?
+                .ok_or("Retained output lacks its applied original native creation receipt")?;
+                let creation = serde_json::to_value(creation).map_err(|e| e.to_string())?;
                 let mut reading = contribution
                     .as_object()
                     .ok_or("Invalid contribution")?
@@ -3226,7 +3658,12 @@ impl Runtime {
         let mut out = document.clone();
         for scene in &mut out.scenes {
             if let Some(p) = &mut scene.presentation {
-                if let Some(rows) = p.scene["procedural"]["operations"].as_array_mut() {
+                if let Some(rows) = p
+                    .scene
+                    .get_mut("procedural")
+                    .and_then(|retained| retained.get_mut("operations"))
+                    .and_then(Value::as_array_mut)
+                {
                     for row in rows {
                         if let Some(op) = row["envelope"]["operation_ref"]
                             .as_str()
@@ -4135,6 +4572,44 @@ impl Application {
         request: Request,
     ) -> Result<(Value, Option<Changed>), String> {
         match request {
+            request @ Request::Control { .. } => {
+                Ok((self.replay_procedural_control(&request)?, None))
+            }
+            Request::ReadDriver {
+                expression_ref,
+                expected_revision,
+                address,
+                parameter,
+            } => {
+                if let Some(conflict) = self.conflict(&expression_ref, expected_revision)? {
+                    return Ok((conflict, None));
+                }
+                let document = self.document(&expression_ref)?;
+                let target = canonical_address(document, &address)?;
+                if target.expression_ref != expression_ref || target.property.is_none() {
+                    return Err("Read the exact current native scalar driver address".into());
+                }
+                source_native_property(document, &target, &parameter)?;
+                let driver = source_parameter_driver(
+                    document,
+                    target
+                        .entity_ref
+                        .as_deref()
+                        .ok_or("Scalar driver has no actual occurrence")?,
+                    &parameter,
+                    None,
+                )?;
+                if !driver["addresses"]
+                    .as_array()
+                    .is_some_and(|rows| rows.contains(&json!(target)))
+                {
+                    return Err("Selected address does not denote this native scalar driver".into());
+                }
+                Ok((
+                    json!({"schema":SCHEMA,"expression_ref":expression_ref,"document_revision":document.revision,"native_parameter_driver":driver}),
+                    None,
+                ))
+            }
             Request::ReadSource {
                 expression_ref,
                 expected_revision,

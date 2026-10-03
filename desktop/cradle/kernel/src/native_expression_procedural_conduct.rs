@@ -22,8 +22,47 @@ impl crate::Kernel {
         &mut self,
         request: crate::expression::Request,
     ) -> Result<(Value, Option<crate::expression::Changed>), String> {
-        let crate::expression::Request::Edit { expression_ref, .. } = &request else {
-            return self.expressions.apply(&self.client, request);
+        if let crate::expression::Request::Procedural {
+            request: control @ crate::expression::procedural::Request::Control { .. },
+        } = &request
+        {
+            if let Some(completed) = self.native_expression.procedural_manual_completion.take() {
+                if completed.original() != &request {
+                    return self.native_procedural_control_refusal(
+                        control,
+                        "Private completion has another original control intent".into(),
+                    );
+                }
+                let super::manual::Completed::Control(completed) = completed else {
+                    return self.native_procedural_control_refusal(
+                        control,
+                        "Manual attribution cannot grant native control".into(),
+                    );
+                };
+                return match completed.finish(&mut self.expressions, &self.client) {
+                    Ok(result) => Ok(result),
+                    Err(reason) => self.native_procedural_control_refusal(control, reason),
+                };
+            }
+            return match self.expressions.prepare_procedural_control(&request) {
+                Ok(None) => self.expressions.apply(&self.client, request.clone()),
+                Ok(Some(_)) => self.native_procedural_control_refusal(
+                    control,
+                    "Native control requires Source prepare/execute/finish outside the Kernel lock"
+                        .into(),
+                ),
+                Err(reason) => self.native_procedural_control_refusal(control, reason),
+            };
+        }
+        let expression_ref = match &request {
+            crate::expression::Request::Edit { expression_ref, .. }
+            | crate::expression::Request::Restore { expression_ref, .. } => expression_ref,
+            crate::expression::Request::Review {
+                expression_ref,
+                decision,
+                ..
+            } if *decision == crate::expression::RefinementState::Accepted => expression_ref,
+            _ => return self.expressions.apply(&self.client, request),
         };
         if let Some(completed) = self.native_expression.procedural_manual_completion.take() {
             if completed.original() != &request {
@@ -44,7 +83,10 @@ impl crate::Kernel {
                 }
             };
         }
-        match self.expressions.prepare_procedural_manual_edit(&request) {
+        match self
+            .expressions
+            .prepare_procedural_manual_request(&self.client, &request)
+        {
             Ok(None) => match self.expressions.apply(&self.client, request.clone()) {
                 Ok((mut result, changed)) => {
                     result["native_procedural_receipts"] = json!([]);
@@ -83,6 +125,38 @@ impl crate::Kernel {
         state["reason"] = json!(reason);
         state["native_procedural_receipts"] = json!([]);
         Ok((state, None))
+    }
+
+    fn native_procedural_control_refusal(
+        &mut self,
+        request: &crate::expression::procedural::Request,
+        reason: String,
+    ) -> Result<(Value, Option<crate::expression::Changed>), String> {
+        let crate::expression::procedural::Request::Control {
+            expression_ref,
+            expected_revision,
+            operation_ref,
+            ..
+        } = request
+        else {
+            return Err(reason);
+        };
+        let inspected = self
+            .expressions
+            .apply(
+                &self.client,
+                crate::expression::Request::Inspect {
+                    expression_ref: expression_ref.clone(),
+                },
+            )?
+            .0;
+        Ok((
+            json!({"schema":crate::expression::procedural::SCHEMA,"operation":"control","operation_ref":operation_ref,"original_intent":request,
+            "state":if inspected["document"]["revision"].as_u64()!=Some(*expected_revision){"revision_conflict"}else{"source_refused"},
+            "reason":reason,"document":inspected["document"],"native_procedural_receipts":[],
+            "cache":{"provenance":"unqualified","restored":true,"replayed":false}}),
+            None,
+        ))
     }
 
     pub fn native_procedural_conduct(&mut self, input: Request) -> Result<Value, String> {
