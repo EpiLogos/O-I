@@ -1456,7 +1456,7 @@ mod tests {
         fs::write(&script, r#"#!/usr/bin/env python3
 import json,subprocess,sys,time
 subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'])
-print(json.dumps({'schema':'ql.field-host-receipt/v1','status':'ready','available':True,'instance_ref':'test:instance','last_request_id':'0','field':{'event_ref':'test:event','subject_ref':'test:subject'}}),flush=True)
+print(json.dumps({'schema':'ql.field-host-receipt/v1','status':'ready','available':True,'instance_ref':'test:instance','last_request_id':'0','field':{'event_ref':'test:event','subject_ref':'test:subject','generation':'0','samples_elapsed':'0'}}),flush=True)
 for line in sys.stdin: time.sleep(60)
 "#).unwrap();
         fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
@@ -1796,7 +1796,7 @@ for line in sys.stdin: time.sleep(60)
             let script = dir.join("host.py");
             fs::write(&script, r#"#!/usr/bin/env python3
 import json,sys
-base={'schema':'ql.field-host-receipt/v1','available':True,'instance_ref':'test:instance','field':{'event_ref':'test:event','subject_ref':'test:subject'}}
+base={'schema':'ql.field-host-receipt/v1','available':True,'instance_ref':'test:instance','field':{'event_ref':'test:event','subject_ref':'test:subject','generation':'0','samples_elapsed':'0'}}
 print(json.dumps(dict(base,status='ready',last_request_id='0')),flush=True)
 for line in sys.stdin:
   r=json.loads(line)
