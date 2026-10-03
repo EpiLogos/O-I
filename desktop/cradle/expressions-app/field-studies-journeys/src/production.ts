@@ -94,10 +94,13 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
    this.connectionRows=frame.connections;this.selectedConnection=frame.selectedConnection;
    this.connections?.configure(frame.connections??[],frame.selectedConnection?[frame.selectedConnection]:[]);
   }
+  // An explicit entity list is authoritative even when a lossless import
+  // retains a deprecated source selector. Only undeclared legacy entities
+  // may use that migration input as admission.
   // Empty authored formations do not own the native node pool. Preserve
   // independent cymatic/declared media and native fields; relation-tail
   // draw membership stays with its existing native connection metadata.
-  this.engine.setNodePoolVisibility(Boolean(this.hasNativeField() || config.sourceType!=='composition' || config.medium?.enabled || config.cymatics?.enabled || config.entities?.some(e=>e.kind==='formation'&&e.enabled)));
+  this.engine.setNodePoolVisibility(Boolean(this.hasNativeField() || (!Array.isArray(config.entities)&&config.sourceType!=='composition') || config.medium?.enabled || config.cymatics?.enabled || config.entities?.some(e=>e.kind==='formation'&&e.enabled)));
   this.engine.setSelection(frame.selectedIds);this.engine.setGridMode(frame.scaffold??'off');
   const {a,b}=basis(frame.camera),o=stageCentre(this.width,this.height);
   this.engine.setHostView({width:this.width,height:this.height,pixelRatio:this.dpr,originX:o.x+frame.camera.panX,originY:o.y+frame.camera.panY,pixelsPerUnit:stageScale(this.width,this.height)*frame.camera.zoom/WORLD_SCALE,right:a,up:b});

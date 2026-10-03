@@ -46,7 +46,7 @@ const read=async label=>{
    return {index,link:value,candidateSource:signature?{source:JSON.parse(signature),candidates:candidates?.length??0}:{kind:'shape',shape:value?.shape??entity?.shape}};
   };
   const state=e.inspectState(),hit=centre?s.hitTest('ascii-regression',centre.x,centre.y):null,nativeHit=centre?s.adapter.hitEntity(centre.x,centre.y):null;
-  return {bodyPixels,bodyInkPixels,background,clearAlpha:e.renderer.getClearAlpha(),connections:e.nativeConnectionRuntime().inspect(),medium:{enabled:e.config.medium?.enabled??false,cymatic:e.config.cymatics?.enabled??false},hit,nativeHit,physical:{simTime:state.simTime,steps:state.steps,seeds:state.seeds,particleCount:state.particleCount},renderedBody:{enabled:entity?.enabled??null,partition:p?{start:p.start,end:p.end}:null,entityCount:e.entities.uniforms.count,transition:s.telemetry()?.transition??null,activeConfigEntityIds:e.config.entities.filter(v=>v.enabled!==false).map(v=>v.id)},frames:s.frameCount,nonfinite_candidates:pool?.filter(c=>Object.values(c).some(v=>typeof v==='number'&&!Number.isFinite(v))).length??0,nonfinite_targets:p?Array.from(e.entities.dataA.slice(p.start*4,p.end*4)).filter(v=>!Number.isFinite(v)).length:0,analysis:e.getSourceAnalysis(id),activeSequence:sequence?{...sequence,current:link(sequence.linkIndex),next:link(sequence.nextIndex)}:null,screen,errors:window.failures,sameCanvas:s.canvas===window.originalCanvas,sameContext:s.canvas.getContext('webgl2')===window.originalContext};
+  return {bodyPixels,bodyInkPixels,background,clearAlpha:e.renderer.getClearAlpha(),drawAdmission:{sourceType:e.config.sourceType,declaredEntities:Array.isArray(e.config.entities),nodePoolVisible:e.particleMaterial.uniforms.uNodePoolVisible.value,nativeDomain:s.adapter.nativeDomain,retainedTargetAdmitted:Boolean(s.adapter.retained?.external)},connections:e.nativeConnectionRuntime().inspect(),medium:{enabled:e.config.medium?.enabled??false,cymatic:e.config.cymatics?.enabled??false},hit,nativeHit,physical:{simTime:state.simTime,steps:state.steps,seeds:state.seeds,particleCount:state.particleCount},renderedBody:{enabled:entity?.enabled??null,partition:p?{start:p.start,end:p.end}:null,entityCount:e.entities.uniforms.count,transition:s.telemetry()?.transition??null,activeConfigEntityIds:e.config.entities.filter(v=>v.enabled!==false).map(v=>v.id)},frames:s.frameCount,nonfinite_candidates:pool?.filter(c=>Object.values(c).some(v=>typeof v==='number'&&!Number.isFinite(v))).length??0,nonfinite_targets:p?Array.from(e.entities.dataA.slice(p.start*4,p.end*4)).filter(v=>!Number.isFinite(v)).length:0,analysis:e.getSourceAnalysis(id),activeSequence:sequence?{...sequence,current:link(sequence.linkIndex),next:link(sequence.nextIndex)}:null,screen,errors:window.failures,sameCanvas:s.canvas===window.originalCanvas,sameContext:s.canvas.getContext('webgl2')===window.originalContext};
  },body.id);
  evidence.readings.push({label,...reading});if(out)await page.screenshot({path:resolve(out,label+'.png')});return reading;
 };
@@ -97,6 +97,9 @@ try{
  const quiescent=await read('required-body-removed-no-medium');
  assert.equal(quiescent.clearAlpha,0);assert.equal(quiescent.bodyInkPixels,0,'An unowned node pool must draw no contour in any colour');
  assert.equal(quiescent.hit,null);assert.equal(quiescent.nativeHit,null);assert.equal(quiescent.physical.seeds,restored.physical.seeds);
+ assert.equal(quiescent.drawAdmission.sourceType,first.drawAdmission.sourceType,'The deprecated native import selector remains losslessly retained');
+ assert.equal(quiescent.drawAdmission.declaredEntities,true);assert.equal(quiescent.drawAdmission.nodePoolVisible,0,'Explicit disabled native entities override the legacy source selector');
+ assert.equal(quiescent.drawAdmission.nativeDomain,false);assert.equal(quiescent.drawAdmission.retainedTargetAdmitted,false);
  // Pin-only exact native relations own the existing tail, independently of
  // the formation pool. Exercise actual authoring, targets, GPU draw and pick.
  await page.evaluate(async()=>{
@@ -134,7 +137,18 @@ try{
  assert.equal(rebuilt.physical.simTime,countBefore.simTime,'Paused first-draw admission keeps the same native clock');
  assert.equal(rebuilt.clearAlpha,0);assert.equal(rebuilt.bodyInkPixels,0,'The unowned pool must stay absent during the material rebuild');
  assert.ok(rebuilt.physical.simTime>=endpointRemoved.physical.simTime,'Count resize preserves the same native clock');
+ // Genuine old native input without an entity declaration uses the existing
+ // migration at the normal stage entry, rather than a fabricated legacy body.
+ await page.evaluate(()=>{
+  const legacy=structuredClone(window.config);delete legacy.entities;legacy.sourceType='glyph';legacy.glyph='◉';legacy.cymatics.enabled=false;legacy.medium.enabled=false;
+  window.surface.presentConfig('ascii-regression',legacy,window.sceneRef,[],'authored');
+ });
+ const legacy=await read('legacy-source-migrated-native-body');
+ assert.ok(legacy.renderedBody.entityCount>0,'The actual native legacy migration must produce admitted formations');
+ assert.equal(legacy.drawAdmission.nodePoolVisible,1);assert.ok(legacy.bodyInkPixels>0,'The migrated legacy body must actually draw');
+ const legacyPick=await page.evaluate(()=>{const s=window.surface,e=s.adapter.engine,entity=e.config.entities.find(v=>v.kind==='formation'&&v.enabled),pose=e.lastPoses.find(p=>p.entityId===entity.id),point=e.projectWorldToScreen(pose.x,pose.y,pose.z??0);return{entity_ref:entity.id,nativeHit:s.adapter.hitEntity(point.x,point.y),sharedHit:s.hitTest('ascii-regression',point.x,point.y)};});
+ assert.equal(legacyPick.nativeHit,legacyPick.entity_ref);assert.equal(legacyPick.sharedHit?.entity_ref,legacyPick.entity_ref);
  assert.ok(evidence.readings.every(r=>r.sameCanvas&&r.sameContext));assert.deepEqual(pageErrors,[]);
- evidence.acceptance={originalVisible:true,requiredRemovalFailed:true,restoredOnSameBody:true,emptyCymaticMediumPreserved:true,unownedNodePoolAbsent:true,pinOnlyRelationPreserved:true,disabledEndpointRelationAbsent:true,countRebuildAbsencePreserved:true,claim:'Required body presence and finiteness; authored sequence and retained screenshots qualify contour identity. Browser component proof, not installed or two-human acceptance.'};
+ evidence.acceptance={originalVisible:true,requiredRemovalFailed:true,restoredOnSameBody:true,emptyCymaticMediumPreserved:true,unownedNodePoolAbsent:true,pinOnlyRelationPreserved:true,disabledEndpointRelationAbsent:true,countRebuildAbsencePreserved:true,legacySourceMigratedAndRendered:true,claim:'Required body presence and finiteness; authored sequence and retained screenshots qualify contour identity. Browser component proof, not installed or two-human acceptance.'};
  await Promise.all(moduleReads);evidence.loadedModules=loadedModules;console.log(JSON.stringify(evidence));
 }finally{await Promise.allSettled(moduleReads);evidence.loadedModules=loadedModules;if(out)await writeFile(resolve(out,'acceptance.json'),JSON.stringify({...evidence,pageErrors},null,2)+'\n');await page.evaluate(()=>window.surface?.dispose()).catch(()=>{});await browser.close();await server.close();}
