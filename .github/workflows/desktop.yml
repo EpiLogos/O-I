@@ -152,6 +152,8 @@ jobs:
         run: node tests/collection-browser.mjs
       - name: Prove Expression page placement and capture on one WebGL context
         working-directory: desktop/cradle
+        env:
+          OI_ASCII_EVIDENCE_DIR: tests/artifacts/shared-expression-resources/ascii-required-body
         run: |
           node tests/expression-stage-placement.mjs
           node tests/expression-stage-ascii.mjs
