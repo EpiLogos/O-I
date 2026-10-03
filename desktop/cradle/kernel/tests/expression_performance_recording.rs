@@ -2429,7 +2429,15 @@ fn actual_late_request_zero_resolves_128_and_reopens_pending_then_reconciles_ori
             }])
             .unwrap();
         assert_eq!(
-            queued.native_recordings[0].batch().unwrap().receipts.len(),
+            serde_json::from_slice::<Value>(
+                &queued.native_recordings[0]
+                    .canonical_decoded_bytes()
+                    .unwrap()
+            )
+            .unwrap()["value"]["receipts"]
+                .as_array()
+                .unwrap()
+                .len(),
             1
         );
         assert_eq!(queued.native_reservations.len(), 2);

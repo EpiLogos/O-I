@@ -18,12 +18,36 @@ concurrency:
 jobs:
   canvas:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Read the separately qualified retained performance test source
+        id: retained-performance-source
+        run: |
+          python3 - <<'PY_SOURCE'
+          import json, os, re
+          from pathlib import Path
+          value = json.loads(Path('desktop/cradle/tests/fixtures/retained-performance/source-owner.json').read_text())
+          assert value['schema'] == 'oi.retained-performance-test-source-owner/v1'
+          assert value['repository'] == 'EpiLogos/QL-MEF'
+          assert value['consumer'] == 'retained-performance-native-kernel-tests'
+          assert re.fullmatch(r'[0-9a-f]{40}', value['revision'])
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('revision=' + value['revision'] + '\n')
+          PY_SOURCE
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ steps.retained-performance-source.outputs.revision }}
+          path: .native-owner/retained-performance/QL-MEF
+          persist-credentials: false
+      - name: Native retained performance codec dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libjson-c-dev
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -66,8 +90,23 @@ jobs:
       - name: Production bundle
         working-directory: desktop/cradle
         run: set -o pipefail; npx vite build 2>&1 | tee ../../canvas-build.log
+      - name: Produce the actual retained source, Manager, full workload and native checkpoints
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/retained-performance"
+          python3 scripts/prepare-retained-performance-fixture.py \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/retained-performance/QL-MEF" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output "$RUNNER_TEMP/retained-performance" --timeout-seconds 900 \
+            > "$RUNNER_TEMP/retained-performance/result.json"
+          python3 scripts/retained-performance-ci-environment.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" --github-env "$GITHUB_ENV"
       - name: Kernel adapter compatibility
-        run: set -o pipefail; cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets 2>&1 | tee canvas-kernel.log
+        timeout-minutes: 35
+        run: set -o pipefail; cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets --no-fail-fast -- --nocapture 2>&1 | tee canvas-kernel.log
       - name: Existing experience-source integrity
         run: |
           python3 -m unittest discover -s tests/experience -p 'test_*.py'
@@ -78,6 +117,7 @@ jobs:
           name: canvas-editor-context-proof
           path: |
             source-head.txt
+            ${{ runner.temp }}/retained-performance
             canvas-*.log
             desktop/canvas-*.log
             desktop/cradle/tests/artifacts/canvas-editor

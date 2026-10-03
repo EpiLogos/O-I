@@ -862,7 +862,7 @@ fn size_refusal_basis(
         .and_then(|measured| remainder_formula_bytes.map(|formula| formula == measured));
     // An over-bound refused public Value must not cause another full image walk.
     let images = if public.status == "complete" {
-        bounded_image_metrics(&record.value, evidence.dictionary_entries)
+        bounded_image_metrics(record.value, evidence.dictionary_entries)
     } else {
         json!({
             "eligible_occurrences": null,
@@ -880,7 +880,7 @@ fn size_refusal_basis(
         "diagnostic_status": if complete { "measured_at_native_size_refusal" } else { "partial_measurement_at_native_size_refusal" },
         "failure_branch": branch,
         "operation_context": null,
-        "record_address_sha256": draft_address_sha256(record.scope, record.kind, &record.id),
+        "record_address_sha256": draft_address_sha256(record.scope, record.kind, record.id),
         "record_scope": record.scope, "record_kind": record.kind,
         "record_revision": record.revision,
         "record_revision_role": if branch == "legacy_raw_value_decode" { "stored" } else if branch == "inbound_component_preflight" { "unallocated_inbound" } else { "proposed_not_acknowledged" },

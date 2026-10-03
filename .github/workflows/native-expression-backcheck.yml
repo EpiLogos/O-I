@@ -108,7 +108,7 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/w5-checks
           cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge 2>&1 | tee /tmp/w5-checks/kernel-build.log
-          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets --no-fail-fast 2>&1 | tee /tmp/w5-checks/kernel.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets --no-fail-fast -- --nocapture 2>&1 | tee /tmp/w5-checks/kernel.log
       - name: Qualify the native regression source after all original tests
         if: always()
         env:

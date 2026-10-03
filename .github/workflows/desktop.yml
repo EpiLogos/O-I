@@ -83,7 +83,7 @@ jobs:
       - name: Complete cradle kernel integration tests
         if: always()
         timeout-minutes: 15
-        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test '*' --no-fail-fast
+        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test '*' --no-fail-fast -- --nocapture
       - name: Lint all cradle kernel targets
         if: always()
         timeout-minutes: 15
