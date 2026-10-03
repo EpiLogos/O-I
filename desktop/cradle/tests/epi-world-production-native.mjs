@@ -8,6 +8,7 @@ import {readFileSync,writeFileSync,mkdirSync,openSync,readSync,closeSync} from '
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {spawn} from 'node:child_process';
 import {createServer} from 'vite';
 import react from '@vitejs/plugin-react';
 import {build} from 'esbuild';
@@ -19,6 +20,13 @@ import {qualifyPortableNativeSourceExpectation,qualifyPortableRuntimeExecution,r
 
 assert.ok(process.argv[2],'Supply a JSON configuration with bridge, output and two identity_files');
 const config=JSON.parse(readFileSync(resolve(process.argv[2]),'utf8'));
+const selectionStage=['selected-conversation-setup','selected-conversation-case'].includes(config.stage);
+if(selectionStage){
+ assert.ok(config.reopen_file&&config.selection_custody_file&&config.selection_custody_sha256,'Selection qualification requires actual file admission and source-built owner custody');
+ assert.ok(!config.reopen_acknowledgement_file&&!config.reopen_expected&&!config.existing_expression_ref,'This isolated gate cannot substitute for the original whole/restart continuation');
+ if(config.stage==='selected-conversation-case')assert.ok(['positive','native-refusal','native-changed','local-changed'].includes(config.selection_case));
+}
+
 if(config.reopen_file!==undefined)assert.equal(typeof config.reopen_file,'string','reopen_file must be the actual Central-relative path accepted by the production app file-opening API');
 if(config.reopen_acknowledgement_file)assert.ok(config.reopen_file,'Fresh process arrival requires ordinary file opening through the native file owner');
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
@@ -68,6 +76,7 @@ const receipt={schema:'oi.epi-world-production-native-proof/v1',passed:false,
  verifier_projection_units:{owner:scaleSource,sha256:sha(readFileSync(scaleSource)),world_scale:WORLD_SCALE,meaning:'Resident GPU coordinates divided by the actual authored-stage WORLD_SCALE before production projectNative; QL torus presentation units remain distinct'},
  independent_source_expectations:(config.independent_expectation_files??[]).map(path=>({path:resolve(path),sha256:sha(readFileSync(resolve(path)))})),
  source:Object.fromEntries(['src/expressions/hostedApp.ts','src/expressions/nativeChannel.ts','src/expressions/naraChannel.ts','expressions-app/field-studies-journeys/src/app.ts','expressions-app/field-studies-journeys/src/epiWorldProduction.ts','expressions-app/field-studies-journeys/src/sceneWorkflow.ts','expressions-app/field-studies-journeys/src/sceneCorrespondence.ts','expressions-app/field-studies-journeys/src/native-field/channel.ts','expressions-app/field-studies-journeys/src/epiWorldMaterial.ts','expressions-app/field-studies-journeys/src/nativeWorkspace.ts','expressions-app/field-studies-journeys/src/naraEvidenceField.ts','expressions-app/field-studies-journeys/src/naraInstrument.tsx','expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts','expressions-app/src/engine/fieldModel.ts','expressions-app/src/engine/PointCloudField.ts','expressions-app/src/engine/LocalizedResonanceBank.ts','expressions-app/src/engine/localizedResonanceProjection.ts'].map(p=>[p,sha(readFileSync(resolve(root,p)))]))};
+if(selectionStage){receipt.schema='oi.epi-selected-conversation-hosted-stage/v1';receipt.selection_case=config.selection_case??null;receipt.scope='Actual isolated source-built ordinary file admission and selected-focus receiving only; whole/answer/provider/Keep/restart/installed/H remain unaccepted';}
 let server,browser,page,frame,phase='setup',heartbeat;const nativeComposes=[],nativePrepared=[],nativeFrames=[],nativeInspections=[],nativeM3=[];
 const check=(value,label)=>{assert.ok(value,label);receipt.checks.push(label);console.log('PASS',label);json('receipt.json',receipt);};
 const artifact=(name,value)=>{json(name,value);receipt.artifacts.push(name);};
@@ -593,6 +602,76 @@ try{
  phase='controlled person A ordinary construction';
  if(config.reopen_file){const opened=await frame.evaluate(path=>window.__FIELD_STUDIES__.openNativeFile(path),config.reopen_file);assert.equal(opened,true,'The actual native file open must be acknowledged before the world replay: '+JSON.stringify(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking())));}else if(config.existing_expression_ref){await readyCurrent(identities[0].reading.person_ref);await action('save');}else await frame.evaluate(identity=>window.__FIELD_STUDIES__.enterEpiWorld(identity),identities[0]);
  await noAlert();await readyCurrent(identities[0].reading.person_ref);
+ // Separate selection-only cases stop before any original cosmic/tick/whole
+ // gate. The acknowledged ordinary producer may first repair its known stale
+ // caption/current pointer; that setup is retained, not erased or relabelled.
+ if(selectionStage){
+  phase='isolated actual selected-conversation admission';
+  const ownerRef={path:resolve(config.selection_custody_file),sha256:config.selection_custody_sha256};
+  const ownerBytes=hashFileReadOnly(ownerRef.path);assert.ok(ownerBytes.bytes<=2*1024*1024);assert.equal(ownerBytes.sha256,ownerRef.sha256);
+  const custody=JSON.parse(readFileSync(ownerRef.path,'utf8'));assert.equal(custody.schema,'epi.hosted-native-selection-owner-custody/v1');
+  assert.equal(custody.world,resolve(custody.owned_output_root,'world'));assert.equal(custody.native_process.url,config.bridge);
+  assert.equal(custody.source_cuts.oi.cut,config.binaries.oi.source_cut);assert.equal(custody.source_cuts.ql.cut,config.binaries.quaternal_logic.source_cut);
+  assert.equal(custody.all_five.sha256,config.binaries.quaternal_logic.manifest.sha256);assert.deepEqual(custody.identity_ref,{path:resolve(config.identity_files[0]),...hashFileReadOnly(resolve(config.identity_files[0]))});
+  const working=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
+  assert.ok(!working.busy&&!working.pending&&!working.failed&&working.file,'The actual ordinary admitted file must be clean/current');
+  const document=await nativeDocument(working.native_ref),saved=await savedFile(working,'selection-ordinary-admitted');
+  assert.deepEqual(document,saved,'Selection starts only on a complete actual native save/file admission');
+  assert.equal(document.expression_ref,custody.expression_ref);assert.equal(document.selection.scene_ref,document.expression_ref+':scene:personal');
+  const records=document.scenes.filter(scene=>scene.presentation?.scene?.epiWorld);assert.equal(records.length,1);
+  const carrier=records[0].presentation.scene.epiWorld,target=carrier.receiving.personal.locus_entity_ref;
+  assert.equal(document.selection.entity_ref,target);assert.equal(document.entities[target].subject.subject_ref,'ql:m-coordinate:bimba:M4.4.4.4');
+  assert.equal(carrier.person_ref,identities[0].reading.person_ref);assert.equal(carrier.identity_source.source_ref,identities[0].source.source_ref);
+  assert.deepEqual(document.scenes.map(scene=>scene.entity_refs.length),[32,9,7],'Selection setup cannot omit any original cosmic/personal/branch members');
+  const file=JSON.parse(readFileSync(resolve(out,'selection-ordinary-admitted-file.json'),'utf8'));
+  const admission={schema:'epi.hosted-native-selected-admission/v1',expression_ref:document.expression_ref,file:working.file,document,
+   content_sha256:file.content_sha256,content_bytes:file.content_bytes,owner_decode:file.owner_decode,
+   source_evidence_ref:{path:resolve(out,'selection-ordinary-admitted-file.json'),...hashFileReadOnly(resolve(out,'selection-ordinary-admitted-file.json'))},
+   standing:'Actual ordinary producer admission/native save/file decoder; no model body/provider/whole proof'};
+  json('selection-native-admission.json',admission);
+  const admissionRef={path:resolve(out,'selection-native-admission.json'),...hashFileReadOnly(resolve(out,'selection-native-admission.json'))};
+  if(config.stage==='selected-conversation-case'){
+   assert.ok(custody.admission_ref,'Each case needs the independently acknowledged preceding setup basis');
+   const previous=qualifiedJson(custody.admission_ref,'Prior complete ordinary selection setup');assert.equal(previous.schema,admission.schema);
+   assert.deepEqual(admission.document,previous.document,'A fresh isolated owner must admit every same native document value without normalisation');
+   assert.deepEqual(admission.file,previous.file);assert.equal(admission.content_sha256,previous.content_sha256);assert.equal(admission.content_bytes,previous.content_bytes);
+  }
+  receipt.selection_admission_ref=admissionRef;
+  receipt.selection_owner_custody={...ownerRef,bytes:ownerBytes.bytes};
+  if(config.stage==='selected-conversation-case'){
+   const actualParentUrl=url+'&expression='+encodeURIComponent(document.expression_ref);
+   const host={...receipt.immutable_assets.host,path:receipt.immutable_assets.host.file,bytes:hashFileReadOnly(receipt.immutable_assets.host.file).bytes};
+   const application={...receipt.immutable_assets.application,path:receipt.immutable_assets.application.file,bytes:hashFileReadOnly(receipt.immutable_assets.application.file).bytes};
+   const qualification={...custody,schema:'oi.epi-selected-conversation-source-built-hosted/v1',scope:'selection-only-no-provider',
+    expression_ref:document.expression_ref,person_ref:carrier.person_ref,identity_source_ref:carrier.identity_source.source_ref,
+    event_ref:carrier.world.event_ref,snapshot_ref:carrier.world.snapshot_ref,instance_ref:carrier.world.instance_ref,
+    admission_ref:custody.admission_ref,aikit:custody.host_owners.aikit,
+    frontend:{actual_parent_url:actualParentUrl,iframe_id:'world',application_path:'/__epi_application',receiver_path:'/__epi_host_receiver',host,application}};
+   delete qualification.selection_case;
+   json('selection-current-qualification.json',qualification);
+   const qualificationRef={path:resolve(out,'selection-current-qualification.json'),...hashFileReadOnly(resolve(out,'selection-current-qualification.json'))};
+   assert.ok(qualificationRef.bytes<=2*1024*1024);
+   const selectedConfig={bridge:config.bridge,app_url:actualParentUrl,world:custody.world,output:resolve(out,'actual-case'),
+    expression_ref:document.expression_ref,person_ref:carrier.person_ref,identity_source_ref:carrier.identity_source.source_ref,
+    selection_case:config.selection_case,qualification_mode:'source-built-hosted-selection-only',qualification:qualificationRef.path,qualification_sha256:qualificationRef.sha256};
+   json('selected-case-config.json',selectedConfig);
+   // Close the initial admission frame before the unchanged four-case driver
+   // opens its own real production host. The immutable receiver/server remain.
+   clearInterval(heartbeat);heartbeat=null;await browser.close();browser=null;frame=null;page=null;
+   const stdout=openSync(resolve(out,'selected-case.stdout'),'wx'),stderr=openSync(resolve(out,'selected-case.stderr'),'wx');
+   const child=spawn(process.execPath,[resolve(root,'tests/epi-selected-conversation-native.mjs'),resolve(out,'selected-case-config.json')],{cwd:root,env:process.env,stdio:['ignore',stdout,stderr]});
+   receipt.selected_child={pid:child.pid,argv:[process.execPath,resolve(root,'tests/epi-selected-conversation-native.mjs'),resolve(out,'selected-case-config.json')],cwd:root,qualification:qualificationRef};json('receipt.json',receipt);
+   let exit;try{exit=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('exit',(code,signal)=>resolve({code,signal}));});}finally{closeSync(stdout);closeSync(stderr);}
+   receipt.selected_child.exit=exit;assert.equal(exit.code,0,'The actual selected-case child failed; retain its stdout/stderr and owned family');assert.equal(exit.signal,null);
+   const selectedReceiptPath=resolve(out,'actual-case/receipt.json'),selected=qualifiedJson({path:selectedReceiptPath,...hashFileReadOnly(selectedReceiptPath)},'Actual selected-case proof');
+   assert.equal(selected.schema,'oi.epi-selected-conversation-native-gate/v1');assert.equal(selected.passed,true);assert.equal(selected.failure,undefined);assert.equal(selected.selection_case,config.selection_case);
+   receipt.selected_case_ref={path:selectedReceiptPath,...hashFileReadOnly(selectedReceiptPath)};
+   const durable=await op({op:'expression',request:{operation:'inspect_file',location:admission.file.location,expected_file_revision:admission.file.revision}});
+   assert.equal(durable.data.state,'ready');assert.deepEqual(durable.data.document,admission.document);assert.deepEqual(durable.data.file,admission.file);
+  }
+  check(true,'Isolated selection-only ordinary native admission and outcome preserved the complete durable controlled personal world');
+  receipt.passed=true;const stop=Error('Selection-only stage complete; original whole/restart not executed in this lifetime');stop.intentionalStop=true;throw stop;
+ }
  // A saved Expression reopens its actual selected scene, including a reviewed
  // personal coordinate adoption. Preserve that arrival, then use the ordinary
  // world navigation before requiring the cosmic field's source consumers.
@@ -654,6 +733,19 @@ try{
   if(!config.reopen_acknowledgement_file)await action('save');
  }
  await frame.waitForFunction(()=>{const values=Object.values(window.__FIELD_STUDIES__.telemetry().sourceStatus);return values.length>=6&&values.every(value=>value.includes('source active'));},null,{timeout:30000});
+ // A semantic Save opens the normal controls. Close that actual disclosure
+ // before the commissioned rest view; preserve the complete current world.
+ const restBeforeControls=await nativeDocument((await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking())).native_ref);
+ const restWorkingBefore=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
+ const restBasis=()=>frame.evaluate(()=>{const f=window.__FIELD_STUDIES__,s=f.getState(),n=f.native();return{sceneIndex:s.sceneIndex,selected:s.selected,scenePlaying:s.scenePlaying,journeyPlaying:s.journeyPlaying,fieldPaused:s.fieldPaused,camera:s.camera,native:{status:n.status,lease:n.lease,lifetime:n.lifetime}};});
+ const restStateBefore=await restBasis();assert.equal(restStateBefore.native.status,'manual');assert.equal(restStateBefore.native.lease,null);
+ assert.equal(restStateBefore.native.lifetime.admission_pending,false);assert.equal(restStateBefore.native.lifetime.close_pending,false);assert.equal(restStateBefore.native.lifetime.operation_pending,0);assert.equal(restStateBefore.native.lifetime.close_error,null);
+ const restDisclosure=frame.locator('.epi-world-entrance details.epi-play');assert.equal(await restDisclosure.count(),1);
+ if(await restDisclosure.evaluate(details=>details.open))await restDisclosure.locator('summary').click();
+ assert.equal(await restDisclosure.evaluate(details=>details.open),false,'The ordinary Shape & play disclosure is closed before the first rest capture');
+ assert.deepEqual(await nativeDocument(restWorkingBefore.native_ref),restBeforeControls,'Closing ordinary controls preserves the complete authored/native Document');
+ assert.deepEqual(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking()),restWorkingBefore,'Closing ordinary controls preserves current native admission');
+ assert.deepEqual(await restBasis(),restStateBefore,'Closing ordinary controls preserves current manual scene/selection');
  const a=await snapshot('01-person-a-cosmic-at-rest',true);
  check(a.record.world.subject_ref===identities[0].reading.person_ref&&a.record.receiving.personal.canonical_locus==='ql:m-coordinate:bimba:M4.4.4.4','The actual person is bound to the Personal Pratibimba locus in one native world instance');
  check(a.record.world.event_ref===a.record.world.snapshot_ref&&a.current.context.event_ref===a.record.world.event_ref,'Cosmic event and protected PersonalCurrent encounter one admitted native sky occasion');

@@ -34,6 +34,7 @@ D30_TEMPLATE_SHA256 = 'd16c3ee6f757cff878939c2c5cd768a8412c20ae6e43b59cfe87364b2
 D30_SUCCESSION_SHA256 = '2c36eb34c388903d7d6dd97c3a36f2b399c164d0974680f09bfe9d0958fabd8f'
 LOCUS = 'ql:m-coordinate:bimba:M4.4.4.4'
 OI_SCOPE = [
+    'desktop/cradle/tests/epi-selected-conversation-native.mjs',
     'desktop/cradle/tests/epi-world-production-native.mjs',
     'desktop/cradle/tests/epi-personal-native-proof.mjs',
     'desktop/cradle/tests/epi-scene-damping-native-proof.mjs',
@@ -627,6 +628,54 @@ class Replay:
         self.report['explicit_profile_repair'] = file_ref(self.out / 'explicit-profile-repair.json')
         return received, decoded
 
+    def selected_stage(self, name, config, custody, deadline):
+        """Actual production admission/selected-focus proof; never whole/body GO."""
+        remaining = deadline - time.monotonic()
+        require(remaining > 0, 'Selection-only aggregate engineering envelope expired')
+        custody_path = self.out / f'{name}-owner-custody.json'
+        save(custody_path, custody)
+        target = self.out / f'{name}-config.json'
+        save(target, {**config, 'bridge': self.url, 'output': str(self.out / name),
+                      'selection_custody_file': str(custody_path),
+                      'selection_custody_sha256': file_ref(custody_path)['sha256']})
+        self.command(name, ['node', self.repo / 'desktop/cradle/tests/epi-world-production-native.mjs', target],
+                     self.repo / 'desktop/cradle', timeout=min(300, remaining))
+        path = self.out / name / 'receipt.json'
+        receipt = read_json(path)
+        require(receipt['schema'] == 'oi.epi-selected-conversation-hosted-stage/v1'
+                and receipt['passed'] is True and 'failure' not in receipt
+                and not receipt['entry']['changed_on_disk'], 'Actual isolated selection stage failed')
+        self.report.setdefault('selected_conversation', {'scope': 'Selection/focus/ordinary conversation opening only; no question/provider answer/Keep/restart/installed/H',
+            'aggregate_seconds': 1500, 'case_operation_deadlines_unchanged': True,
+            'queue_superseded_invalidated': 'Still required and unexecuted by these four cases', 'stages': []})['stages'].append(file_ref(path))
+        save(self.out / 'receipt.json', self.report)
+        return receipt
+
+    def selected_custody(self, owner, document, acknowledged, oi_sources, manifest_path, admission_ref=None):
+        require(self.bridge_process.pid == owner['pid'] and proc_stat(owner['pid'])['starttime'] == owner['starttime'],
+                'Selection custody must name this actual live owned bridge')
+        records = [scene['presentation']['scene']['epiWorld'] for scene in document['scenes']
+                   if scene.get('presentation', {}).get('scene', {}).get('epiWorld')]
+        require(len(records) == 1, 'Exactly one source-bearing Epi world carrier required')
+        record = records[0]
+        require(record['person_ref'] == PERSONS[0]
+                and record['identity_source']['source_ref'] == read_json(acknowledged[0])['source']['source_ref'],
+                'Only actual controlled A native identity may supply selection custody')
+        value = {'schema': 'epi.hosted-native-selection-owner-custody/v1',
+                 'world': str(self.world), 'owned_output_root': str(self.out), 'expression_ref': document['expression_ref'],
+                 'source_cuts': self.report['source_cuts'], 'oi_sources': oi_sources,
+                 'native_process': owner, 'all_five': file_ref(manifest_path),
+                 'host_owners': self.report['host_owners'],
+                 'host_build_operations': [next(row for row in self.report['commands'] if row['name'] == name)
+                      for name in ('oi-cli-build', 'oi-kernel-build', 'central-build', 'aikit-build')],
+                 'identity_ref': file_ref(acknowledged[0]),
+                 'identity_source_ref': record['identity_source']['source_ref'],
+                 'native_source_expectation_ref': self.selection_source_expectation_ref,
+                 'original_world_ref': self.selection_original_world_ref}
+        if admission_ref is not None:
+            value['admission_ref'] = admission_ref
+        return value
+
     def driver(self, phase, config):
         target = self.out / f'{phase}-config.json'
         config = {**config, 'bridge': self.url, 'output': str(self.out / phase)}
@@ -850,7 +899,7 @@ class Replay:
         self.report['owned_environment']['PLAYWRIGHT_BROWSERS_PATH'] = self.env.get('PLAYWRIGHT_BROWSERS_PATH')
         self.command('central-controlled-init', [ctrl, '--json', '--root', self.world, 'init'], self.out, timeout=120)
         require(self.world.is_dir(), 'Actual Central init did not create the owned world')
-        first = self.start_bridge('whole')
+        first = self.start_bridge('selection-setup')
         acknowledged = []
         for index, relative in enumerate(fm['identity_files']):
             historical = read_json(fixture / relative)
@@ -897,6 +946,91 @@ class Replay:
                   'consumer_replays': True, 'binaries': {'quaternal_logic': {'source_cut': self.args.expected_ql_head,
                     'custody': 'source-built-hosted', 'manifest': file_ref(manifest_path)},
                     'oi': {'source_cut': self.args.expected_oi_head}, 'central': {'source_cut': self.args.expected_central_head}}}
+        # These source/selection cases are admission tests, not a shortened
+        # whole proof. The first real ordinary open may acknowledge current
+        # caption/personal refs through the unchanged producer. Preserve both
+        # complete native documents, then fence the resulting durable basis.
+        selection_deadline = time.monotonic() + 1500
+        self.selection_source_expectation_ref = file_ref(expectation)
+        self.selection_original_world_ref = file_ref(fixture / fm['original_world'])
+        setup_custody = self.selected_custody(first, document, acknowledged, oi_sources, manifest_path)
+        setup = self.selected_stage('selected-conversation-setup', {**common, 'reopen_file': relative,
+                                    'stage': 'selected-conversation-setup'}, setup_custody, selection_deadline)
+        setup_reading, setup_document = self.file_admission(relative, 'after-ordinary-selection-setup')
+        baseline_ref = setup['selection_admission_ref']
+        baseline = read_json(baseline_ref['path'])
+        require(file_ref(baseline_ref['path']) == baseline_ref
+                and baseline['schema'] == 'epi.hosted-native-selected-admission/v1'
+                and baseline['document'] == setup_document
+                and baseline['file'] == {'location': setup_reading['location'], 'revision': setup_reading['revision']}
+                and baseline['content_sha256'] == hashlib.sha256(setup_reading['content'].encode()).hexdigest()
+                and baseline['content_bytes'] == len(setup_reading['content'].encode()),
+                'The selection baseline must be the full actual ordinary-admission native save/readback')
+        save(self.out / 'selected-ordinary-admission-before-after.json', {
+            'schema': 'epi.hosted-native-selection-ordinary-admission/v1',
+            'before_document': document, 'after_document': setup_document,
+            'before_file': {'location': reading['location'], 'revision': reading['revision']},
+            'after_file': baseline['file'], 'after_acknowledgement_ref': baseline_ref,
+            'scope': 'Actual current producer admission, including recorded native migrations; these before/after documents are not claimed equal'})
+        self.report['selected_conversation']['ordinary_admission_ref'] = file_ref(self.out / 'selected-ordinary-admission-before-after.json')
+        self.report['selected_conversation']['baseline_ref'] = baseline_ref
+        self.stop_bridge()
+        original_env = dict(self.env)
+        try:
+            for selection_case in ('positive', 'native-refusal', 'native-changed', 'local-changed'):
+                name = 'selected-conversation-' + selection_case
+                case_root = self.out / (name + '-owner')
+                require(not case_root.exists(), 'Each selection case needs a fresh owned owner location')
+                case_root.mkdir()
+                # The controlled Central identity/material and owned AIKit
+                # source-context ground remain the same. Native OI state,
+                # pending selection, socket and browser are case-local; no
+                # provider/body/session/answer is acquired or substituted.
+                self.env.update({'OI_HOME': str(case_root / 'oi-home'), 'OI_DATA_HOME': str(case_root / 'oi-data'),
+                                 'OI_CRADLE_STATE': str(case_root / 'cradle-state.json'),
+                                 'OI_EXPRESSION_SOCKET': str(case_root / 'expression.sock')})
+                owner = self.start_bridge(name)
+                require(all(owner['native_generation'] != prior['native_generation']
+                            and (owner['pid'], owner['starttime']) != (prior['pid'], prior['starttime'])
+                            for prior in self.report['phases'][:-1]),
+                        'Each case requires an actually fresh native owner lifetime')
+                prior_reading, prior_document = self.file_admission(relative, name + '-before', baseline['file']['revision'])
+                require(prior_reading['content'] == setup_reading['content'] and prior_document == setup_document,
+                        'A prior selection case changed the independent durable setup basis')
+                custody = self.selected_custody(owner, setup_document, acknowledged, oi_sources, manifest_path, baseline_ref)
+                case = self.selected_stage(name, {**common, 'reopen_file': relative, 'stage': 'selected-conversation-case',
+                                           'selection_case': selection_case}, custody, selection_deadline)
+                selected_path = case['selected_case_ref']['path']
+                require(file_ref(selected_path) == case['selected_case_ref'], 'Exact actual selected-case receipt changed')
+                selected = read_json(selected_path, 2 * 1024 * 1024)
+                require(selected['schema'] == 'oi.epi-selected-conversation-native-gate/v1'
+                        and selected['selection_case'] == selection_case and selected['passed'] is True
+                        and 'failure' not in selected and len(selected['durable_conservation']) == 2,
+                        'Every original selection case must execute with before/after complete durable conservation')
+                after_reading, after_document = self.file_admission(relative, name + '-after', baseline['file']['revision'])
+                require(after_reading['content'] == setup_reading['content'] and after_document == setup_document,
+                        'An actual refused/pending selection altered the complete native saved world')
+                observed = self.owned.evidence()
+                require(not observed['errors'] and any(row.get('loaded_native_role') == 'walk-bridge'
+                        and row['root_pid'] == owner['pid'] and row['root_starttime'] == owner['starttime']
+                        and row['actual_image']['sha256'] == owner['bridge']['sha256'] for row in observed['records']),
+                        'Each case requires independently observed actual owned bridge image custody')
+                self.stop_bridge()
+        finally:
+            # Leave refused/pending state in its terminated private owner;
+            # never rollback or clean it into the original whole lifetime.
+            self.stop_bridge()
+            self.env = original_env
+        require(len(self.report['selected_conversation']['stages']) == 5, 'Setup and all four actual cases are mandatory')
+        self.report['selected_conversation']['passed'] = True
+        self.report['selected_conversation']['elapsed_seconds'] = 1500 - (selection_deadline - time.monotonic())
+        first = self.start_bridge('whole')
+        require(all(first['native_generation'] != phase['native_generation']
+                and (first['pid'], first['starttime']) != (phase['pid'], phase['starttime'])
+                for phase in self.report['phases'][:-1]), 'The original whole must start in a separate fresh native owner')
+        reading, document = self.file_admission(relative, 'before-original-whole-after-selection', baseline['file']['revision'])
+        require(reading['content'] == setup_reading['content'] and document == setup_document,
+                'The original whole must receive the exact complete independently acknowledged setup basis')
         whole = self.driver('whole-production', {**common, 'reopen_file': relative})
         for name in ('personal_modal', 'personal_release', 'personal_cold_draft'):
             require(whole.get(name, {}).get('passed') is True, 'Full production driver omitted required personal gate: ' + name)

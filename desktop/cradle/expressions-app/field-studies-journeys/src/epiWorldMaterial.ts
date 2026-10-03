@@ -15,6 +15,29 @@ import type {NativeCurrentReading} from '../../../src/nara/nativeCurrent.js';
 export const PERSONAL_LOCUS={coordinate:'#4.4.4.4',canonical:'ql:m-coordinate:bimba:M4.4.4.4',uuid:'dcb274c1-fbbc-5914-b27d-dea979c78558'} as const;
 export const EPI_CLOCK_A_CAPTION='Gold circle and diamond. Advance one tick moves the M1/M3 source clocks by 30° and aligns Clock A with their new position.';
 export const EPI_OLD_CLOCK_A_CAPTION='Gold circle and diamond. Advance one native tick to turn the inscription by 30°.';
+export const EPI_WORLD_AUTHORED_REVISION='epi-world-20261001-v6';
+/** Authored placement, distinct from every native source/clock reading. The
+ * original 1020×819 encounter measured a 146.703125px introductory block; its
+ * old .13-height separation from Earth was only 106.47px. The wider authored
+ * gaps preserve the same five complete captions and typography. */
+export const EPI_COSMIC_CAPTION_GEOMETRY={
+ before_y:[.16,.29,.43,.56,.69],after_y:[.16,.36,.51,.67,.81],
+ source:{ref:'material:epi-world:epi-world-20261001-v6:cosmic-caption-geometry',revision:EPI_WORLD_AUTHORED_REVISION,availability:'available' as const}
+} as const;
+/** One generated cohort owns both new material and exact legacy recognition.
+ * Personal/branch captions keep their independent authored presentation. */
+export function epiCosmicCaptionCohort(sceneRef:string,legacy=false):Scene['text']{
+ const y=legacy?EPI_COSMIC_CAPTION_GEOMETRY.before_y:EPI_COSMIC_CAPTION_GEOMETRY.after_y;
+ const caption={id:`${sceneRef}:caption`,visible:true,kicker:'Epi-Logos',title:'Cosmic field',italic:'',body:'Earth, played torus and seven centres share this geocentric occasion. Select a body to follow its source.',x:.045,y:y[0],width:230,size:21,align:'left' as const,role:'caption'};
+ const labels=[
+  ['earth','⊕ Earth · observer','The origin of this sky reading. Planetary positions retain their actual geocentric longitudes.'],
+  ['clock-a','Clock A · inscription',EPI_CLOCK_A_CAPTION],
+  ['clock-b','Clock B · lens','Blue circle and diamond. Its continuous phase is distinct from the selected reading aperture.'],
+  ['register','Source registers','360 degrees · 24 governors · 36 decans\n64 codons · 72 skins · 18 aperture and ground readings']
+ ] as const;
+ return[caption,...labels.map(([role,title,body],index)=>({id:`${sceneRef}:label-${role}`,visible:true,kicker:'',title,italic:'',body,x:.045,y:y[index+1],width:230,size:15,align:'left' as const,role:`${role}.caption`}))];
+}
+
 /** Authored seven-centre mixture, recovered from the existing Kundalini
  * presentation. This is no native M2 coefficient; native driver frequencies,
  * shares and orientation remain owner readings. The shared resonator stays off. */
@@ -531,13 +554,7 @@ export function buildEpiWorldMaterial(input:EpiMaterialInput):EpiWorldMaterialPl
  }
  if(definitions.length>64)throw Error(`The actual native 64-profile definition budget is exceeded (${definitions.length}); recover reusable grammar at its owner instead of omitting bodies.`);
  const overview=sceneMaterial(overviewRef,'Cosmic field',occurrences.filter(o=>o.purpose!=='branch').map(o=>clone(o.material)),'Earth, played torus and seven centres share this geocentric occasion. Select a body to follow its source.');
- const label=(role:string,title:string,body:string,y:number)=>({id:`${overviewRef}:label-${role}`,visible:true,kicker:'',title,italic:'',body,x:.045,y,width:230,size:15,align:'left' as const,role:`${role}.caption`});
- overview.text.push(
-  label('earth','⊕ Earth · observer','The origin of this sky reading. Planetary positions retain their actual geocentric longitudes.',.29),
-  label('clock-a','Clock A · inscription',EPI_CLOCK_A_CAPTION,.43),
-  label('clock-b','Clock B · lens','Blue circle and diamond. Its continuous phase is distinct from the selected reading aperture.',.56),
-  label('register','Source registers','360 degrees · 24 governors · 36 decans\n64 codons · 72 skins · 18 aperture and ground readings',.69)
- );
+ overview.text=epiCosmicCaptionCohort(overviewRef);
  const personalMembers=occurrences.filter(o=>['earth','centre','locus'].includes(o.purpose));
  const personalEntities=personalMembers.map(o=>{const e=clone(o.material);if(o.purpose==='centre'){const ordinal=CHAKRA_DEFINITIONS.find(d=>d.id===e.native?.chakraId)!.order;e.position={x:0,y:-.8+ordinal*.267,z:.08};e.size={x:.17,y:.17};e.share=3;}else if(o.purpose==='earth'){e.position={x:0,y:-1.04,z:0};e.size={x:.2,y:.2};}else{e.position={x:0,y:0,z:-.12};e.size={x:1.72,y:2.34};e.share=1;}return e;});
  const personalScene=sceneMaterial(personalRef,'Personal Pratibimba',personalEntities,'Your situated body at M4.4.4.4. Identity, lived history and the present cosmic occasion meet here. Return to the cosmic field without changing this person or event.');personalScene.view={mode:'2d',yaw:0,pitch:0,zoom:.60,panX:0,panY:.01,nativeScaffold:'off'};

@@ -1,7 +1,7 @@
 /** Ordinary native production: one admitted occasion → reusable material →
  * one Expression CAS → owner readback → the existing application loader.
  * This coordinator contains no domain solver and no second document store. */
-import {buildEpiWorldMaterial,verifyEpiWorldReadback,rebindEpiPersonalSubjects,PERSONAL_WAVE_PRESENTATION,EPI_CLOCK_A_CAPTION,EPI_OLD_CLOCK_A_CAPTION,type EpiWorldMaterialPlan,type PersonalInstance,type CoordinateSource,type RegisterRole} from './epiWorldMaterial.js';
+import {buildEpiWorldMaterial,verifyEpiWorldReadback,rebindEpiPersonalSubjects,PERSONAL_WAVE_PRESENTATION,EPI_CLOCK_A_CAPTION,EPI_OLD_CLOCK_A_CAPTION,EPI_WORLD_AUTHORED_REVISION,EPI_COSMIC_CAPTION_GEOMETRY,epiCosmicCaptionCohort,type EpiWorldMaterialPlan,type PersonalInstance,type CoordinateSource,type RegisterRole} from './epiWorldMaterial.js';
 import {coordinateSourceFromNative,prepareEpiMaterialInputFromNative,requiredEpiWorldCoordinates,type NativeSceneWorldReading,type BimbaInventoryPage,type BimbaCoordinateContent} from './epiWorldSource.js';
 import {validateCoordinateExpression,type CoordinateExpressionResult,type CoordinateProfile} from '../../../src/nara/coordinateExpression.js';
 import type {ExpressionDocument,ExpressionRequest,ExpressionResult,ReadingRef,SubjectBinding} from '../../../src/expression/types.js';
@@ -23,6 +23,11 @@ export interface PreparedEpiWorld {
  source:{schema:'oi.native-expression-composed-source/v1';world:NativeSceneWorldReading;sky:NativeSkySnapshot;ql_revision:string|null;ql_selection:'installed'|'operator-override';ql_executable_sha256:string;request_sha256:string;[key:string]:unknown};
  binding:Record<string,unknown>;
 }
+export interface EpiCaptionGeometryAdjustment {
+ schema:'oi.epi-instance-caption-geometry-adjustment/v1';standing:'authored-presentation';actor:'agent:codex:epi-fidelity-lead';purpose:'Separate the complete generated cosmic caption cohort without changing source, bodies or typography';
+ basis_revision:number;scene_ref:string;event_ref:string;person_ref:string;
+ source:ReadingRef;before_y:number[];after_y:number[];
+}
 export interface EpiWorldRecord {
  kept_answers?:import('../../../src/nara/nativeKeptAnswer').KeptAnswer[];
  schema:'oi.epi-world-material/v1';world:Omit<NativeSceneWorldReading,'schema'|'native_owner_sources'> & {schema:'oi.epi-portable-world/v1';native_owner_sources:{role:'constructor'|'coupled'|'field';reading:ReadingRef}[]};native_source:Omit<PreparedEpiWorld['source'],'world'> & {world_ref:ReadingRef};
@@ -30,6 +35,7 @@ export interface EpiWorldRecord {
  identity_source:InstrumentIdentity['source'];identity_input_revision:string;person_ref:string;nara_ref:string;
  presentation_adjustments?:{schema:'oi.epi-instance-presentation-adjustment/v1';actor:string;purpose:string;basis_revision:number;entity_ref:string;scene_ref:string;parameter:'share';before:number;after:number;event_ref:string;person_ref:string}[];
  scene_field_adjustments?:{schema:'oi.epi-instance-scene-field-adjustment/v1';actor:string;purpose:string;basis_revision:number;scene_ref:string;parameter:'cymatics.dominance';before:number;after:number;event_ref:string;person_ref:string;source:ReadingRef}[];
+ caption_geometry_adjustment?:EpiCaptionGeometryAdjustment;
  authored_revision:string;receiving:EpiWorldMaterialPlan['receiving'];register_members:EpiWorldMaterialPlan['register_members'];
  inventory:Awaited<ReturnType<typeof prepareEpiMaterialInputFromNative>>['inventory'];
  source_basis:EpiWorldMaterialPlan['source_basis'];profile_definitions:ExpressionRequest[];
@@ -150,7 +156,7 @@ export function createEpiWorldProduction(port:EpiProductionPort){
    const qualifySource=(ref:string):ReadingRef=>Object.values(world.native_owner_sources).find(source=>source.ref===ref)??({ref,revision:/^(#|M\d|bimba:|bimba-source:|ql:m-coordinate:)/.test(ref)?world.scene.sources.sky_revision:p.source.ql_revision??`sha256:${p.source.ql_executable_sha256}`,availability:'available'});
    const personal:PersonalInstance={person:{ref:person,revision:identity.reading.input_revision,availability:'available'},identity:{ref:identity.source.source_ref,revision:identity.source.revision,availability:'available'},instance_ref:instance,nara_ref:identity.reading.nara_ref,event_ref:world.event_ref,snapshot_ref:world.snapshot_ref};
    const skySubject:SubjectBinding={subject_ref:world.snapshot_ref,native_owner:'ql-mef',presentation_role:'thing',sources:[{ref:world.snapshot_ref,revision:world.snapshot_ref,availability:'available'}],readings:[reading],actions:[]};
-   const authored_revision='epi-world-20261001-v5';
+   const authored_revision=EPI_WORLD_AUTHORED_REVISION;
    const input=await prepareEpiMaterialInputFromNative({document:created.document,actor:'human:epi-world',authored_revision,world,world_reading:reading,coordinates,inventory_pages:pages,sky_subject:skySubject,personal,qualifySource,canvas:port.canvas});
    const plan=buildEpiWorldMaterial(input);
    port.status('Resolving reusable form through the native profile owner…');
@@ -261,6 +267,26 @@ export function createEpiWorldProduction(port:EpiProductionPort){
    const received=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
    if(!received.document||!sameSceneData(readEpiWorldRecord(received.document),record)||!sameSceneData(received.document.scenes.find(s=>s.scene_ref===record.receiving.scene_ref)?.presentation,captionChanges[0].presentation)||epiClockCaptionCorrection(received.document,record).length)throw Error('The native clock caption correction was not acknowledged.');
   }
+  const geometryDocument=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
+  if(!geometryDocument.document)throw Error('The saved cosmic captions cannot be read for their authored geometry.');
+  const geometryCorrection=epiCosmicCaptionGeometryCorrection(geometryDocument.document,record);
+  if(geometryCorrection.changes.length){
+   if(!port.presentationRest())throw Error('Reopen this saved world at rest to separate its generated captions; live field continuity was preserved.');
+   port.status('Separating the complete authored cosmic captions…');
+   // SceneMaterialSet changes exactly this presentation; the native owner
+   // advances its containing Scene and Document once. No other body may drift.
+   const expectedDocument=structuredClone(geometryDocument.document),expectedScene=expectedDocument.scenes.find(scene=>scene.scene_ref===record.receiving.scene_ref);
+   if(!expectedScene)throw Error('The caption geometry correction lost its containing Scene.');
+   expectedDocument.revision++;expectedScene.revision=expectedDocument.revision;expectedScene.presentation=geometryCorrection.changes[0].presentation;
+   await port.edit(document=>{
+    if(!sameSceneData(document,geometryDocument.document))throw Error('The native world changed before its caption geometry edit.');
+    return epiCosmicCaptionGeometryCorrection(document,record).changes;
+   });
+   const received=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
+   const acknowledged=received.document&&readEpiWorldRecord(received.document);
+   if(!received.document||!acknowledged||!sameSceneData(received.document,expectedDocument)||!sameSceneData(acknowledged,geometryCorrection.record)||!sameSceneData(received.document.scenes.find(scene=>scene.scene_ref===record.receiving.scene_ref)?.presentation,geometryCorrection.changes[0].presentation)||epiCosmicCaptionGeometryCorrection(received.document,acknowledged).changes.length)throw Error('The exact native live/saved caption geometry correction was not acknowledged.');
+   record=acknowledged;
+  }
   const updated={...record,identity_source:identity.source,identity_input_revision:identity.reading.input_revision};
   const current=await pin(updated),context=current.context!;
   const previous:PersonalInstance={person:record.receiving.personal.person,identity:record.receiving.personal.identity,instance_ref:record.world.instance_ref,nara_ref:record.nara_ref,event_ref:record.world.event_ref,snapshot_ref:record.world.snapshot_ref,...(record.receiving.personal.current?{current:record.receiving.personal.current}:{})};
@@ -300,6 +326,42 @@ export function epiClockCaptionCorrection(document:ExpressionDocument,record:Epi
   if(object(label)&&label.role==='clock-a.caption'&&label.title==='Clock A · inscription'&&label.body===EPI_OLD_CLOCK_A_CAPTION){label.body=EPI_CLOCK_A_CAPTION;changed=true;}
  }
  return changed?[{change:'scene_material_set',scene_ref:sceneRef,presentation}]:[];
+}
+
+/** One-time authored geometry correction of the complete former generated
+ * cohort only. Unknown wording/layout/visibility is a person's material and
+ * is left untouched. An acknowledged receipt never re-normalises later edits. */
+function captionGeometryAdjustment(document:ExpressionDocument,record:EpiWorldRecord):EpiCaptionGeometryAdjustment{
+ return{schema:'oi.epi-instance-caption-geometry-adjustment/v1',standing:'authored-presentation',actor:'agent:codex:epi-fidelity-lead',purpose:'Separate the complete generated cosmic caption cohort without changing source, bodies or typography',basis_revision:document.revision,scene_ref:record.receiving.scene_ref,event_ref:record.world.event_ref,person_ref:record.person_ref,source:structuredClone(EPI_COSMIC_CAPTION_GEOMETRY.source),before_y:[...EPI_COSMIC_CAPTION_GEOMETRY.before_y],after_y:[...EPI_COSMIC_CAPTION_GEOMETRY.after_y]};
+}
+export function epiCosmicCaptionGeometryCorrection(document:ExpressionDocument,record:EpiWorldRecord):{changes:Extract<import('../../../src/expression/types.js').Change,{change:'scene_material_set'}>[];record:EpiWorldRecord}{
+ const actual=readEpiWorldRecord(document),sceneRef=`${document.expression_ref}:scene:cosmic`;
+ if(!actual||!sameSceneData(actual,record)||record.world.instance_ref!==document.expression_ref||record.receiving.scene_ref!==sceneRef||record.receiving.subject_ref!==record.person_ref||record.receiving.event_ref!==record.world.event_ref||record.receiving.snapshot_ref!==record.world.snapshot_ref||record.world.sky.snapshot_ref!==record.world.snapshot_ref)throw Error('The caption geometry correction lost its exact native world, person, instance or occasion.');
+ const adjustment=record.caption_geometry_adjustment;
+ if(adjustment!==undefined){
+  if(!object(adjustment)||!Number.isSafeInteger(adjustment.basis_revision)||adjustment.basis_revision<1||adjustment.basis_revision>document.revision||!sameSceneData(adjustment,{...captionGeometryAdjustment(document,record),basis_revision:adjustment.basis_revision}))throw Error('The caption geometry receipt belongs to another source or occasion.');
+  return{changes:[],record};
+ }
+ // Fresh v6 already has this layout; its later quiet/custom choices belong
+ // to the person. Unsupported material requires its own authored account.
+ if(!['epi-world-20261001-v3','epi-world-20261001-v4','epi-world-20261001-v5'].includes(record.authored_revision))return{changes:[],record};
+ const material=document.scenes.find(scene=>scene.scene_ref===sceneRef)?.presentation;
+ if(!object(material?.scene)||!object(material?.saved)||material.scene.id!==sceneRef||material.saved.id!==sceneRef||!Array.isArray(material.scene.text)||!Array.isArray(material.saved.text)||material.saved.epiWorld||document.scenes.filter(scene=>object(scene.presentation?.scene?.epiWorld)).length!==1||document.scenes.some(scene=>object(scene.presentation?.saved?.epiWorld)))throw Error('The caption correction requires sole live world custody and complete live/saved cosmic material.');
+ const expected=epiCosmicCaptionCohort(sceneRef,true);
+ for(const scene of [material.scene,material.saved]){
+  const layers=scene.text as unknown[];
+  for(const label of expected)if(layers.filter(value=>object(value)&&value.id===label.id).length>1)throw Error('The generated caption cohort has an ambiguous authored identity.');
+  if(layers.length!==expected.length)return{changes:[],record};
+  // Exact property equality preserves custom bodySize and any other authored
+  // extension, not just the known position fields. Legacy Clock A wording
+  // remains the separate existing wording correction's responsibility.
+  if(layers.some((value,index)=>!object(value)||!sameSceneData(value.id===`${sceneRef}:label-clock-a`&&value.body===EPI_OLD_CLOCK_A_CAPTION?{...value,body:EPI_CLOCK_A_CAPTION}:value,expected[index])))return{changes:[],record};
+ }
+ const held:EpiWorldRecord={...record,caption_geometry_adjustment:captionGeometryAdjustment(document,record)};
+ const corrected=structuredClone(material);
+ for(const scene of [corrected.scene,corrected.saved])for(const [index,label] of (scene!.text as unknown as Scene['text']).entries())label.y=EPI_COSMIC_CAPTION_GEOMETRY.after_y[index];
+ corrected.scene.epiWorld=held;
+ return{changes:[{change:'scene_material_set',scene_ref:sceneRef,presentation:corrected}],record:held};
 }
 
 /** Admission uses the renderer's actual allocation owners, including native
@@ -365,9 +427,9 @@ export function epiPersonalResonanceCorrection(document:ExpressionDocument,recor
   // This one-time migration never re-enables or normalises their live choice.
   return{changes:[],record};
  }
- // Fresh v5 material already authors this mixture. Subsequent live edits
+ // Fresh v5/v6 material already authors this mixture. Subsequent live edits
  // remain user choices, including an explicitly quiet zero reading.
- if(record.authored_revision==='epi-world-20261001-v5')return{changes:[],record};
+ if(['epi-world-20261001-v5',EPI_WORLD_AUTHORED_REVISION].includes(record.authored_revision))return{changes:[],record};
  if(before===after&&resetBefore===after)return{changes:[],record};
  if(!['epi-world-20261001-v3','epi-world-20261001-v4'].includes(record.authored_revision)||before!==0||resetBefore!==0)throw Error('This personal wave mixture needs an explicitly reviewed authored correction.');
  const cosmic=document.scenes.find(s=>s.scene_ref===record.receiving.scene_ref)?.presentation;
