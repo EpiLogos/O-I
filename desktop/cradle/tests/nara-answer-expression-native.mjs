@@ -192,6 +192,46 @@ try{
  }catch(error){report.restoration_error=String(error);if(primaryFailure)report.primary_error=String(primaryFailure);throw new AggregateError(primaryFailure?[primaryFailure,error]:[error],'Actual native attribution gate/restoration failed');}
  if(primaryFailure)throw primaryFailure;
  const finalSaved=await owner.readNativeAnswerExpression(transport,cfg.binding.expression_ref),bytes=await bounded(join(cfg.world,finalSaved.file.location.path));
+ // Exercise the actual receiver on this newly completed native answer, not
+ // a fixture body or supplied answer. This separate receiver writes only its
+ // own regular test checkpoint; the ordinary native file/Act remain unchanged.
+ const {NativeWorking}=await server.ssrLoadModule('/expressions-app/field-studies-journeys/src/nativeWorking.ts');
+ const receiverCheckpoint=join(cfg.output,'actual-answer-receiver-checkpoint.json');
+ const receiving=new NativeWorking({expression:request=>op({op:'expression',request}),
+  file:async()=>{throw Error('This read-only receiver test does not authorise file publication');},
+  checkpoint:async(_id,record)=>{await writeFile(receiverCheckpoint,JSON.stringify(record));assert.deepEqual(JSON.parse(await bounded(receiverCheckpoint)),record);},
+  mint:()=>{throw Error('This receiver must use the actual acknowledged answer Expression');}});
+ const attachedFile={...finalSaved.file,expression_ref:finalSaved.document.expression_ref,document_revision:finalSaved.document.revision};
+ await receiving.adopt(finalSaved.document,attachedFile);
+ const answerView=receiving.acknowledgedView;
+ assert.deepEqual(answerView.document,finalSaved.document);assert.strictEqual(receiving.acknowledgedView,answerView);
+ const assertFrozen=value=>{if(value&&typeof value==='object'){assert.equal(Object.isFrozen(value),true);for(const child of Object.values(value))assertFrozen(child);}};
+ assertFrozen(answerView);
+ const actualReadings=await material.readKeptAnswers(answerView.document),actualReading=actualReadings.find(r=>r.record.answer_ref===receipt.answer_ref);
+ assert.ok(actualReading);assert.equal(actualReading.body,answer.answer);
+ const actualEdition=await op({op:'expression_world',request:{operation:'act_inspect',act_ref:actualReading.record.act_ref}});
+ assert.strictEqual(receiving.acknowledgedView,answerView,'An unchanged full answer basis survives an actual awaited native Edition read');
+ await material.verifyStoredAnswerEdition(answerView.document,actualReading,actualEdition);
+ assert.strictEqual(receiving.acknowledgedView,answerView);
+ assert.throws(()=>{answerView.document.scenes[0].title='Caller-only unadmitted title';},TypeError);
+ const receiverBefore=receiving.state,summary=receiving.inspect();
+ summary.notes.push('Detached test note');summary.bindings[Object.keys(summary.bindings)[0]].member_refs.length=0;
+ const caller=receiving.state;caller.view.document.title='Detached caller title';
+ assert.deepEqual(receiving.state,receiverBefore);
+ const returningEdition=op({op:'expression_world',request:{operation:'act_inspect',act_ref:actualReading.record.act_ref}});
+ receiving.detach();assert.equal(receiving.acknowledgedView,undefined);
+ await material.verifyStoredAnswerEdition(answerView.document,actualReading,await returningEdition);
+ assert.notStrictEqual(receiving.acknowledgedView,answerView,'A genuine returning native read cannot restore an abandoned receiving basis');
+ receiving.restore(receiverBefore,receiverBefore.view.journey);
+ assert.notStrictEqual(receiving.acknowledgedView,answerView,'Even equal restoration is a new receiving lifetime for awaited-read fences');
+ assert.deepEqual(receiving.acknowledgedView.document,finalSaved.document);assertFrozen(receiving.acknowledgedView);
+ const receiverAfter=await owner.readNativeAnswerExpression(transport,cfg.binding.expression_ref);
+ assert.deepEqual(receiverAfter,finalSaved);assert.ok((await bounded(join(cfg.world,finalSaved.file.location.path))).equals(bytes));
+ assert.ok((await readActBytes()).bytes.equals(immutableActBefore.bytes));
+ report.immutable_answer_receiver={document_revision:finalSaved.document.revision,answer_ref:receipt.answer_ref,
+  checkpoint:{path:receiverCheckpoint,bytes:(await stat(receiverCheckpoint)).size,sha256:hash(await bounded(receiverCheckpoint))},
+  scope:'Actual newly completed native answer/Edition, detached immutable NativeWorking view and regular test checkpoint; no mounted Read/Recovery-owner/restart/installed claim'};
+ checks.push('Actual complete fresh answer retains unchanged awaited native read identity, refuses caller mutation and invalidates detached/restored read basis without changing native Document/file/Act');
  const finalProcessReadback=await inspectOwnedProcess();assert.deepEqual(finalProcessReadback,launchReadback);
  Object.assign(report,{standing:'passed actual native receiving only',receipt,answer,document:finalSaved.document,file:{location:finalSaved.file.location,revision:finalSaved.file.revision,bytes:bytes.length,sha256:hash(bytes)},native_process_after:finalProcessReadback,submitted_turn:{path:cfg.submitted_turn_receipt,sha256:cfg.submitted_turn_sha256},excludes:['independent new-process restart','mounted Return gesture','ordinary DOM/capture','engine/GPU/audio effects','installed/H','full256 Act-register occupancy refusal']});
 }catch(error){report.standing='failed';report.error=String(error);process.exitCode=1;}

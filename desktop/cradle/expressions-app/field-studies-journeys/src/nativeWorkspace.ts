@@ -351,7 +351,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    }
    catch(error){if(generation===restoreGeneration&&current()){lastFailure=true;status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },
-  inspect(){const state=work.state;return {native_ref:state?.view?.document.expression_ref,revision:state?.view?.document.revision,file:state?.file,pending:state?.pending?.kind,notice,failed:lastFailure,busy,notes:state?.view?.notes??[],bindings:state?.view?.bindings};},
+  inspect(){const state=work.inspect();return {native_ref:state.native_ref,revision:state.revision,file:state.file,pending:state.pending,notice,failed:lastFailure,busy,notes:state.notes,bindings:state.bindings};},
   idle:async()=>{while(busy)await ownerIdle;},
   /** `changes` may be computed from the flushed native view (after the
    * working draft commits) — e.g. a reuse block naming committed refs. */
@@ -399,7 +399,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    });
    if(!succeeded)throw new Error(notice||'The native source insertion was not acknowledged.');
   },
-  nativeView:()=>work.state?.view,
+  nativeView:()=>work.acknowledgedView,
   blueprint:async(intent:BlueprintIntent):Promise<void>=>{
    const captured=clone(intent);
    const succeeded=await mutate(async()=>{
@@ -423,12 +423,12 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   receiveKeptAnswer:async(receipt:import('../../../src/nara/instrumentProtocol').NativeExpressionAnswerReceipt):Promise<boolean>=>{
    if(receipt.schema!=='oi.nara-expression-answer-receipt/v1'||receipt.state!=='saved')throw Error('The native answer is kept but its same-file save is unconfirmed. Reconcile its existing native file before reading.');
    while(busy)await ownerIdle;
-   const before=work.state?.view;
+   const before=work.acknowledgedView;
    if(!before||before.document.expression_ref!==receipt.expression_ref||before.document.revision!==receipt.previous_revision
      ||localEdits(before)||work.state?.pending)throw Error('The saved answer was kept natively; resolve this retained local draft before receiving its revision.');
    const version=host.version(),intent=intentGeneration,generation=followGeneration;
    return run(async()=>{
-    const current=()=>host.version()===version&&intentGeneration===intent&&followGeneration===generation&&work.state?.view===before;
+    const current=()=>host.version()===version&&intentGeneration===intent&&followGeneration===generation&&work.acknowledgedView===before;
     const native=await inspectReference(receipt.expression_ref);if(!current())throw Error('The current view changed; the saved answer remains in its native file.');
     if(native.document.revision!==receipt.revision||!native.file||native.file.revision!==receipt.file.revision
       ||JSON.stringify(native.file.location)!==JSON.stringify(receipt.file.location))throw Error('The native answer receipt does not match this exact saved file and revision.');

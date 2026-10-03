@@ -1125,16 +1125,20 @@ window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({s
  probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{sessionPresence.dispose();researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
 function applyNativeView(view:KernelConversion,preservePosition=false){
  nativeKeptReadings=[];
- const nativeAnswerDocument=view.document as unknown as ExpressionDocument;
- if(readEpiWorldRecord(nativeAnswerDocument))void readKeptAnswers(nativeAnswerDocument).then(async readings=>{
+ // The returned conversion may carry a local unsaved Journey. Qualify only
+ // its complete acknowledged Document against the actual immutable view;
+ // preserve the supplied Journey and fence every awaited answer read on it.
+ const answerView=nativeWorkspace?.nativeView();
+ const nativeAnswerDocument=answerView&&sameAnswerValue(answerView.document,view.document)?answerView.document as unknown as ExpressionDocument:null;
+ if(nativeAnswerDocument&&readEpiWorldRecord(nativeAnswerDocument))void readKeptAnswers(nativeAnswerDocument).then(async readings=>{
   for(const reading of readings){
-   if(nativeWorkspace?.nativeView()?.document!==view.document)return;
+   if(nativeWorkspace?.nativeView()!==answerView)return;
    const retained=await worldRequest({operation:'act_inspect',act_ref:reading.record.act_ref});
-   if(nativeWorkspace?.nativeView()?.document!==view.document)return;
+   if(nativeWorkspace?.nativeView()!==answerView)return;
    await verifyStoredAnswerEdition(nativeAnswerDocument,reading,retained);
   }
-  if(nativeWorkspace?.nativeView()?.document===view.document){nativeKeptReadings=readings;renderText();}
- }).catch(failure=>{if(nativeWorkspace?.nativeView()?.document===view.document)toast('Attributed answer material could not be qualified: '+String(failure),7000);});
+  if(nativeWorkspace?.nativeView()===answerView){nativeKeptReadings=readings;renderText();}
+ }).catch(failure=>{if(nativeWorkspace?.nativeView()===answerView)toast('Attributed answer material could not be qualified: '+String(failure),7000);});
  awaitingNativeBoot=false;startupRecoveryPending=false;
  const previousEpiInstance=epiWorld?.world.instance_ref;
  epiWorld=readEpiWorldRecord(view.document as unknown as ExpressionDocument);

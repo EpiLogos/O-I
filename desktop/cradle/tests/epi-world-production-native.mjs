@@ -821,9 +821,16 @@ try{
     const current=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
     const remaining=deadline-Date.now();
     assert.ok(remaining>0,'The ordinary canonical hub choice must receive its actual native focus acknowledgement in30s');
-    const readback=await nativeDocument(document.expression_ref,AbortSignal.timeout(remaining));
-    assert.ok(Date.now()<deadline,'A late native reply cannot qualify the original30s focus admission');
-    if(!current.busy&&!current.pending&&!current.failed&&current.revision===readback.revision&&readback.selection.entity_ref===target){focused=readback;break;}
+    // A still-pending local checkpoint cannot qualify this iteration. Poll
+    // that genuine acknowledgement first; never contend with it by reading
+    // another complete owner Document which this snapshot must reject.
+    if(!current.busy&&!current.pending&&!current.failed){
+     const readback=await nativeDocument(document.expression_ref,AbortSignal.timeout(remaining));
+     assert.ok(Date.now()<deadline,'A late native reply cannot qualify the original30s focus admission');
+     const received=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
+     assert.ok(Date.now()<deadline,'A late local acknowledgement cannot qualify the original30s focus admission');
+     if(!received.busy&&!received.pending&&!received.failed&&received.native_ref===document.expression_ref&&received.revision===readback.revision&&readback.selection.entity_ref===target){focused=readback;break;}
+    }
     await new Promise(resolve=>setTimeout(resolve,100));
    }
    const expected=structuredClone(before);

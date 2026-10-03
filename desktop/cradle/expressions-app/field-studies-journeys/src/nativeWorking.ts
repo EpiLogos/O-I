@@ -276,13 +276,39 @@ export class NativeWorking {
  private record?:NativeWorkingRecord;
  private epoch=0;
  private inFlight=false;
+ private viewSource?:KernelConversion;
+ private viewSnapshot?:KernelConversion;
+ private replaceRecord(record:NativeWorkingRecord|undefined):void{
+  this.record=record;this.viewSource=undefined;this.viewSnapshot=undefined;
+ }
+ /** Readonly receivers share one detached immutable snapshot of this exact
+  * acknowledged view. No identity/revision/content-key can qualify another
+  * view, and replacing even an equal record invalidates the old snapshot. */
+ get acknowledgedView():KernelConversion|undefined{
+  const view=this.record?.view;
+  if(!view)return undefined;
+  if(this.viewSource!==view){
+   const snapshot=clone(view);
+   const freeze=(value:unknown):void=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}};
+   freeze(snapshot);this.viewSource=view;this.viewSnapshot=snapshot;
+  }
+  return this.viewSnapshot;
+ }
+ /** Status never needs a copy of complete Document/Journey/pending bodies.
+  * Its object fields remain detached, just like the original state getter. */
+ inspect(){
+  const record=this.record,view=record?.view;
+  return {native_ref:view?.document.expression_ref,revision:view?.document.revision,
+   file:record?.file?clone(record.file):undefined,pending:record?.pending?.kind,
+   notes:clone(view?.notes??[]),bindings:view?clone(view.bindings):undefined};
+ }
  constructor(private readonly ports:NativeWorkingPorts){}
  get state():NativeWorkingRecord|undefined{return this.record?clone(this.record):undefined;}
  get busy():boolean{return this.inFlight;}
  /** Late results are checkpointed for the old work, never adopted into a
   * newly selected inquiry. Navigation does not cancel an authorised act. */
- detach():void{this.epoch++;this.record=undefined;}
- restore(raw:unknown,journey:Journey):void{this.epoch++;this.record=validateWorkingRecord(raw,journey);}
+ detach():void{this.epoch++;this.replaceRecord(undefined);}
+ restore(raw:unknown,journey:Journey):void{this.epoch++;this.replaceRecord(validateWorkingRecord(raw,journey));}
  /** Reopen an acknowledged native basis after process restart. Local draft
   * edits and interrupted operations remain recovery data; none is replayed. */
  async reopenCheckpoint(raw:unknown,journey:Journey,accept:()=>boolean=()=>true):Promise<KernelConversion>{
@@ -303,13 +329,13 @@ export class NativeWorking {
     if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while recovery was returning; its native basis was not replaced');
     await this.ports.checkpoint(record.draft_id,clone(refreshed));
     if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while recovery was returning; its native basis was not replaced');
-    this.record=refreshed;
+    this.replaceRecord(refreshed);
     return clone(view);
    }
    const reopened=readDocument(result,record.view.document.expression_ref);
    if(!same(reopened,record.view.document))throw new Error('Native work changed; the recovery draft was retained separately');
    if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while recovery was returning; its native basis was not replaced');
-   this.record=record;
+   this.replaceRecord(record);
    return {...clone(record.view),journey:clone(journey)};
   }finally{this.inFlight=false;}
  }
@@ -324,7 +350,7 @@ export class NativeWorking {
    // Returning durable data is not permission to replace the selected work.
    // Check before changing the basis, so a later navigation needs no rollback.
    if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while opening; its native basis was not replaced');
-   this.record=clone(record);return view;
+   this.replaceRecord(clone(record));return view;
   }finally{this.inFlight=false;}
  }
  /** Adopt a newer owner revision of the SAME Expression (advanced by another
@@ -347,7 +373,7 @@ export class NativeWorking {
  }
  private async persist(record:NativeWorkingRecord,epoch:number):Promise<void>{
   await this.ports.checkpoint(record.draft_id,clone(record));
-  if(epoch===this.epoch)this.record=clone(record);
+  if(epoch===this.epoch)this.replaceRecord(clone(record));
  }
  private begin():number{if(this.inFlight)throw new Error('A native operation is already in flight');this.inFlight=true;return this.epoch;}
  /** Adopt an owner document whose reply semantics cannot be validated against
