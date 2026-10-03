@@ -79,7 +79,8 @@ def main() -> None:
         receipt["elapsed_seconds"] = time.monotonic() - start
         (run / "receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
-    def execute(command: list[str], name: str, stdout: Path | None = None) -> None:
+    def execute(command: list[str], name: str, stdout: Path | None = None,
+                environment: dict[str, str] | None = None) -> None:
         remaining = args.timeout_seconds - (time.monotonic() - start)
         if remaining <= 0:
             raise RuntimeError("native fixture preparation exhausted admitted time bound")
@@ -88,8 +89,11 @@ def main() -> None:
         then = time.monotonic()
         with (run / (name + ".log")).open("wb") as log:
             with (stdout.open("wb") if stdout else (run / (name + ".stdout")).open("wb")) as out:
+                child_environment = os.environ.copy()
+                if environment:
+                    child_environment.update(environment)
                 child = subprocess.Popen(command, cwd=source, stdout=out, stderr=log,
-                                         start_new_session=True, env=os.environ.copy())
+                                         start_new_session=True, env=child_environment)
                 try:
                     record["exit_code"] = child.wait(timeout=remaining)
                 except subprocess.TimeoutExpired:
@@ -140,11 +144,34 @@ def main() -> None:
         order_native=native_dir/"performance_managed_application_order_packet-test"
         workload_native=native_dir/"performance_retained_workload_packet-test"
         reservation_native=native_dir/"performance_score_reservation_packet-test"
+        worker_native=native_dir/"ql-field-worker"
+        receiving_native=native_dir/"current_performance_receiving_wire-test"
         # CPP's selected build directory is absolute, while its actual C owner
         # library lives in c/build. Recursive make inherits command-line
         # BUILD_DIR, so build the native C owner explicitly at its own path.
         execute(["make", "-C", "c", "BUILD_DIR=build", "all"], "native-c-owner-build")
-        execute(["make", "-C", "cpp", "BUILD_DIR=" + str(native_dir), str(native), str(management_native),str(order_native),str(workload_native),str(reservation_native)], "native-checkpoint-build")
+        execute(["make", "-C", "cpp", "BUILD_DIR=" + str(native_dir), str(native), str(management_native),str(order_native),str(workload_native),str(reservation_native),str(worker_native),str(receiving_native)], "native-checkpoint-build")
+        receiving_dir=run/"current-receiving"
+        # Both ignored tests exercise the actual Control consumer and SAME
+        # FieldHost/worker, then retain the final activated source owner.
+        execute(["cargo", "test", "--locked", "-p", "ql-mef", "--test",
+                 "current_performance_receiving_native_wire", "--", "--ignored"],
+                "actual-current-receiving-field-host-and-cpp-consumer",
+                environment={"QL_NATIVE_FIELD_WORKER": str(worker_native),
+                             "QL_NATIVE_WIRE_TEST": str(receiving_native),
+                             "QL_CURRENT_RECEIVING_ARTIFACT_OUTPUT": str(receiving_dir)})
+        for kind in ["world", "personal", "shared"]:
+            path=receiving_dir/(kind+".source-performance.json")
+            if not path.is_file() or not 0 < path.stat().st_size < 16*1024*1024:
+                raise RuntimeError("actual activated receiving source omitted/exceeded its original bound")
+            actual=json.loads(path.read_bytes())
+            assets=actual.get("source_assets",{})
+            if (actual.get("schema")!="ql.retained-source-performance-fixture/v1"
+                    or assets.get("source_context",{}).get("context",{}).get("kind")!=kind
+                    or assets.get("current_receiving",{}).get("source_inputs")!=assets.get("receiving_source_inputs")
+                    or assets.get("current_receiving",{}).get("source_context")!=assets.get("source_context")
+                    or assets.get("current_receiving",{}).get("receiving_definition")!=assets.get("receiving_definition")):
+                raise RuntimeError("actual activated original receiving/source contract differs")
         execute([str(native), str(rust_fixture)], "actual-native-play-checkpoint-replay", checkpoint_fixture)
         management_dir = run / "native-management"
         management_dir.mkdir(mode=0o700)
@@ -161,6 +188,21 @@ def main() -> None:
             raise RuntimeError("actual native workload was truncated or substituted")
         if len(workload.get("editions",[]))!=180 or sum(p.stat().st_size for p in workload_dir.glob("*.json"))>512*1024*1024:
             raise RuntimeError("actual native workload output count/declared artifact budget differs")
+        source_workload_dir=run/"native-retained-source-workload"
+        execute([str(workload_native),str(packet_dir),str(source_workload_dir),
+                 str(receiving_dir/"world.source-performance.json")],
+                "actual-native-source-form-full-fifteen-minute-workload")
+        source_workload=json.loads((source_workload_dir/"manifest.json").read_bytes())
+        if source_workload.get("schema")!="ql.retained-native-workload/v1" or any(source_workload.get(k)!=v for k,v in
+                [("sample_rate","48000"),("duration_samples","43200000"),("voice_count","24"),("application_count","45000"),("edition_count","180")]):
+            raise RuntimeError("actual SourceForm native workload was truncated or substituted")
+        if len(source_workload.get("editions",[]))!=180 or sum(p.stat().st_size for p in source_workload_dir.glob("*.json"))>512*1024*1024:
+            raise RuntimeError("actual SourceForm native workload count/declared artifact budget differs")
+        if (source_workload.get("source_performance")!="source-performance.json"
+                or source_workload.get("initial_checkpoint")!="initial.checkpoint.json"
+                or json.loads((source_workload_dir/"source-performance.json").read_bytes())!=json.loads((receiving_dir/"world.source-performance.json").read_bytes())
+                or json.loads((source_workload_dir/"initial.checkpoint.json").read_bytes())["native_pair"]["audio"]["cursor"]!="0"):
+            raise RuntimeError("actual SourceForm workload lost initial native checkpoint or whole original source")
         for name in ["release","panic"]:
             order=json.loads((order_dir/(name+".history.json")).read_bytes())
             before=json.loads((order_dir/(name+".checkpoint.json")).read_bytes())
@@ -223,24 +265,29 @@ def main() -> None:
         checked_git(source, "diff", "--cached", "--exit-code")
         if checked_git(source, "rev-parse", "HEAD") != args.expected_ql_head:
             raise RuntimeError("native source changed during actual fixture production")
+        delivery_dir=run/"native-act-delivery"
+        delivery_dir.mkdir(mode=0o700)
         values = {"QL_RETAINED_PERFORMANCE_FIXTURE": str(rust_fixture),
                   "QL_RETAINED_SOURCE_PERFORMANCE_FIXTURE": str(source_fixture),
                   "QL_RETAINED_PERFORMANCE_CONTEXT_FIXTURE": str(context_fixture),
                   "QL_RETAINED_PERFORMANCE_WORKLOAD_DIRECTORY": str(workload_dir),
+                  "QL_RETAINED_SOURCE_WORKLOAD_DIRECTORY": str(source_workload_dir),
                   "QL_RETAINED_PERFORMANCE_RESERVATION_DIRECTORY": str(reservation_dir),
                   "QL_RETAINED_PERFORMANCE_CHECKPOINT_FIXTURE": str(checkpoint_fixture),
                   "QL_RETAINED_PERFORMANCE_MANAGEMENT_FIXTURE": str(management_fixture),
                   "QL_RETAINED_PERFORMANCE_MANAGEMENT_DIRECTORY": str(management_dir),
                   "QL_RETAINED_PERFORMANCE_MANAGED_ORDER_DIRECTORY":str(order_dir),
+                  "QL_CURRENT_RECEIVING_ARTIFACT_DIRECTORY": str(receiving_dir),
+                  "OI_NATIVE_PERFORMANCE_DELIVERY_DIRECTORY": str(delivery_dir),
                   "OI_RETAINED_PERFORMANCE_TEST_HOME": str(act_home)}
         env_file = run / "environment.sh"
         env_file.write_text("".join("export " + name + "=" + shlex.quote(value) + "\n" for name, value in values.items()))
         receipt.update(status="ready", environment_file=str(env_file),
                        fixtures=[{"path": str(path), "sha256": sha(path), "bytes": path.stat().st_size}
                                  for path in [rust_fixture, source_fixture, context_fixture, checkpoint_fixture, management_fixture,
-                                              *sorted(packet_dir.glob("*.json")), *sorted(management_dir.glob("*.json")),*sorted(order_dir.glob("*.json")),*sorted(workload_dir.glob("*.json")),*sorted(reservation_dir.glob("*.json"))]],
+                                              *sorted(receiving_dir.glob("*.json")),*sorted(packet_dir.glob("*.json")), *sorted(management_dir.glob("*.json")),*sorted(order_dir.glob("*.json")),*sorted(workload_dir.glob("*.json")),*sorted(source_workload_dir.glob("*.json")),*sorted(reservation_dir.glob("*.json"))]],
                        native_binaries=[{"path": str(path), "sha256": sha(path)}
-                                        for path in [native, management_native,order_native,workload_native,reservation_native]],
+                                        for path in [native, management_native,order_native,workload_native,reservation_native,worker_native,receiving_native]],
                        standing="actual native source/played checkpoint fixture; no installed app/device or whole C acceptance")
         print(json.dumps({"environment_file": str(env_file), "receipt": str(run / "receipt.json")}, sort_keys=True))
     except Exception as error:

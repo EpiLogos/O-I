@@ -637,14 +637,26 @@ fn actual_native_receipts_are_atomic_lossless_scene_parts_and_survive_authored_e
 
 #[test]
 fn full_actual_fifteen_minute_committed_workload_survives_native_act_file_and_180_editions() {
+    full_workload(false);
+}
+#[test]
+fn full_actual_source_form_fifteen_minute_45k_native_delivery_keeps_original_source_and_180_editions(
+) {
+    full_workload(true);
+}
+fn full_workload(source_required: bool) {
     use oi_cradle_kernel::expression_act_store::{ActStore, Written};
     use oi_cradle_kernel::expression_performance_storage::ActPerformanceCustody;
     use oi_cradle_kernel::{
         expression::Document, expression_file, Kernel, KernelOp, KernelOpResult,
     };
     let directory = std::path::PathBuf::from(
-        std::env::var("QL_RETAINED_PERFORMANCE_WORKLOAD_DIRECTORY")
-            .expect("normal native gate must execute the complete real 45k/24voice/15min producer"),
+        std::env::var(if source_required {
+            "QL_RETAINED_SOURCE_WORKLOAD_DIRECTORY"
+        } else {
+            "QL_RETAINED_PERFORMANCE_WORKLOAD_DIRECTORY"
+        })
+        .expect("normal native gate must execute the complete real 45k/24voice/15min producer"),
     );
     let manifest = read(directory.join("manifest.json"));
     assert_eq!(manifest["schema"], "ql.retained-native-workload/v1");
@@ -653,6 +665,67 @@ fn full_actual_fifteen_minute_committed_workload_survives_native_act_file_and_18
     assert_eq!(manifest["voice_count"], "24");
     assert_eq!(manifest["editions"].as_array().unwrap().len(), 180);
     let (mut performance, _, _, _) = actual();
+    if source_required {
+        use oi_cradle_kernel::expression_performance_source_asset::NativePerformanceSourceAsset;
+        assert_eq!(manifest["source_performance"], "source-performance.json");
+        let source = read(directory.join("source-performance.json"));
+        assert_eq!(
+            source["schema"],
+            "ql.retained-source-performance-fixture/v1"
+        );
+        let basis: PerformanceBasis = serde_json::from_value(source["basis"].clone()).unwrap();
+        let basis = basis.seal().unwrap();
+        let asset =
+            NativePerformanceSourceAsset::from_native(&basis, source["source_assets"].clone())
+                .unwrap();
+        asset.require_source_context(&basis).unwrap();
+        performance.bases = vec![basis];
+        performance.pitches = serde_json::from_value(source["pitches"].clone()).unwrap();
+        performance.native_sources = vec![asset];
+        performance.schema = SOURCE_SCHEMA.into();
+        assert_eq!(source["native_basis"], read(directory.join("basis.json")));
+        assert_eq!(performance.bases[0].context.kind, ContextKind::World);
+        assert!(!performance.bases[0].context.private);
+        assert_eq!(
+            source["source_assets"]["current_receiving"]["source_payload_context"]["private"],
+            false
+        );
+        assert_eq!(
+            performance.bases[0].prepared_body["request"]["sample_rate"],
+            48000
+        );
+        assert_eq!(
+            performance.pitches.len(),
+            21,
+            "three actual registers of seven available source keys; no missing-key filler"
+        );
+        assert_ne!(
+            performance.bases[0].prepared_body,
+            actual().0.bases[0].prepared_body,
+            "genuine SourceForm workload must not relabel the old two-node fixture"
+        );
+        performance = performance.seal().unwrap();
+        let wire = read(directory.join("initial.checkpoint.json"));
+        assert_eq!(wire["native_pair"]["audio"]["cursor"], "0");
+        let checkpoint = CheckpointBinding::from_native_management(
+            CheckpointReceipt {
+                checkpoint_ref: "native:source-workload/initial".into(),
+                identity: performance.bases[0].identity.clone(),
+                sample: Counter(0),
+                basis_digest: performance.bases[0].content_digest.clone(),
+                event_prefix_digest: performance.prefix_digest(0).unwrap(),
+                queued_events: vec![],
+                acknowledged_stopped: true,
+            },
+            wire,
+        )
+        .unwrap();
+        performance = performance
+            .edited(vec![PerformanceOperation::Checkpoint {
+                checkpoint: Box::new(checkpoint),
+            }])
+            .unwrap();
+    }
     performance.parameters = [
         ("force-newtons", "N", 0.0, 1.0),
         ("cutoff-hertz", "Hz", 10.0, 20000.0),
@@ -707,7 +780,12 @@ fn full_actual_fifteen_minute_committed_workload_survives_native_act_file_and_18
             .expect("normal native gate must supply unique bounded Act custody"),
     )
     .join(format!(
-        "native-committed-fifteen-minute-act-{}",
+        "native-committed-fifteen-minute-act-{}-{}",
+        if source_required {
+            "source-form"
+        } else {
+            "reference"
+        },
         std::process::id()
     ));
     assert!(!home.exists(), "preserve original native test custody");
@@ -868,6 +946,183 @@ fn full_actual_fifteen_minute_committed_workload_survives_native_act_file_and_18
     let reopened = ActPerformanceCustody::read(custody.snapshot()).unwrap();
     assert_eq!(reopened.restore(0).unwrap(), first.unwrap());
     assert_eq!(reopened.restore(179).unwrap(), document);
+    // The full REAL committed45k/180-edition native Act is the consumer source.
+    // Only one existing codec page expands at a time; every receipt is read.
+    let selected =
+        oi_cradle_kernel::expression_performance_delivery::SelectedPerformance::from_act(
+            &act,
+            &oi_cradle_kernel::expression_performance_delivery::Selection {
+                expected_act_revision: act.revision,
+                edition_position: 179,
+                scene_ref: document.scenes[0].scene_ref.clone(),
+                expected_expression_revision: document.revision,
+                expected_scene_revision: document.scenes[0].revision,
+                performance_digest: performance.fingerprint().unwrap(),
+            },
+        )
+        .unwrap();
+    let delivered = selected.native_payload().unwrap();
+    assert_eq!(
+        delivered["performance"],
+        serde_json::to_value(&performance).unwrap()
+    );
+    assert_eq!(
+        delivered["native_recording_parts"]
+            .as_array()
+            .unwrap()
+            .len(),
+        180
+    );
+    let mut dropped_prefix = delivered.clone();
+    dropped_prefix["performance"]["native_recordings"]
+        .as_array_mut()
+        .unwrap()
+        .remove(0);
+    dropped_prefix["native_recording_parts"]
+        .as_array_mut()
+        .unwrap()
+        .remove(0);
+    for (index, part) in dropped_prefix["native_recording_parts"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .enumerate()
+    {
+        part["page_index"] = json!(index);
+    }
+    assert_eq!(
+        dropped_prefix["canonical_performance_bytes"],
+        delivered["canonical_performance_bytes"]
+    );
+    assert_eq!(
+        dropped_prefix["selected_performance_sha256"],
+        delivered["selected_performance_sha256"]
+    );
+    assert_ne!(
+        serde_json::from_str::<Value>(
+            dropped_prefix["canonical_performance_bytes"]
+                .as_str()
+                .unwrap()
+        )
+        .unwrap(),
+        dropped_prefix["performance"],
+        "complete original 180-page bytes detect leading-page loss with retained labels"
+    );
+    // A self-consistent shortened JSON/SHA is still not this native selected
+    // Act. The closed Kernel reader supplies all original 180 pages itself.
+    let mut self_consistent_shortened = dropped_prefix.clone();
+    let shortened_bytes = serde_json::to_vec(&self_consistent_shortened["performance"]).unwrap();
+    self_consistent_shortened["canonical_performance_bytes"] =
+        json!(String::from_utf8(shortened_bytes.clone()).unwrap());
+    self_consistent_shortened["selected_performance_sha256"] =
+        json!(format!("sha256:{:x}", Sha256::digest(&shortened_bytes)));
+    let selection = oi_cradle_kernel::expression_performance_delivery::Selection {
+        expected_act_revision: act.revision,
+        edition_position: 179,
+        scene_ref: document.scenes[0].scene_ref.clone(),
+        expected_expression_revision: document.revision,
+        expected_scene_revision: document.scenes[0].revision,
+        performance_digest: performance.fingerprint().unwrap(),
+    };
+    kernel
+        .with_native_act_delivery(&act.act_ref, &selection, |reader| {
+            assert!(
+                reader
+                    .require_exact_manifest(&self_consistent_shortened)
+                    .is_err(),
+                "valid shortened bytes/SHA cannot replace the native selected full180 Act"
+            );
+            reader.require_exact_manifest(&delivered)?;
+            reader.compile_with(|native, reader| {
+                assert_eq!(native, &delivered);
+                assert_eq!(
+                    native["native_recording_parts"].as_array().unwrap().len(),
+                    180
+                );
+                for index in 0..180 {
+                    let original = reader.page(index)?;
+                    assert_eq!(original["witness"], native["native_recording_parts"][index]);
+                }
+                assert!(reader.page(180).is_err());
+                Ok(())
+            })
+        })
+        .unwrap();
+    let output = std::env::var_os("OI_NATIVE_PERFORMANCE_DELIVERY_DIRECTORY").map(|root| {
+        let dir = std::path::PathBuf::from(root).join(if source_required {
+            "actual-source-form-45k-180-editions"
+        } else {
+            "actual-45k-180-editions"
+        });
+        assert!(
+            !dir.exists(),
+            "preserve prior actual native delivery artifact"
+        );
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("delivery.json"),
+            serde_json::to_vec(&delivered).unwrap(),
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("original.act.json"),
+            oi_cradle_kernel::expression_performance_act::encode(&act).unwrap(),
+        )
+        .unwrap();
+        dir
+    });
+    if let Some(dir) = &output {
+        for index in 0..performance.checkpoints.len() {
+            std::fs::write(
+                dir.join(format!("native-checkpoint-{index}.json")),
+                serde_json::to_vec(&selected.native_checkpoint(index).unwrap()).unwrap(),
+            )
+            .unwrap();
+        }
+        if source_required {
+            std::fs::copy(
+                directory.join("source-performance.json"),
+                dir.join("source-performance.json"),
+            )
+            .unwrap();
+        }
+    }
+    assert_eq!(
+        delivered["canonical_performance_bytes"]
+            .as_str()
+            .unwrap()
+            .as_bytes(),
+        serde_json::to_vec(&performance).unwrap()
+    );
+    let mut applications = 0_u64;
+    for index in 0..180 {
+        let page = selected.native_page(index).unwrap();
+        assert_eq!(page["witness"], delivered["native_recording_parts"][index]);
+        let raw = page["canonical_decoded_bytes"].as_str().unwrap().as_bytes();
+        assert_eq!(
+            page["witness"]["decoded_sha256"],
+            format!("sha256:{:x}", Sha256::digest(raw))
+        );
+        let receipts = page["decoded"]["value"]["receipts"].as_array().unwrap();
+        assert_eq!(receipts.len(), 250);
+        for receipt in receipts {
+            applications += 1;
+            assert_eq!(
+                receipt["application"]["applied_application_ordinal"],
+                json!(applications.to_string())
+            );
+            assert!(receipt["application"]["requested_sample"].is_string());
+        }
+        if let Some(dir) = &output {
+            std::fs::write(
+                dir.join(format!("native-page-{index}.json")),
+                serde_json::to_vec(&page).unwrap(),
+            )
+            .unwrap();
+        }
+    }
+    assert_eq!(applications, 45000);
+    assert_eq!(selected.performance().duration_samples, Counter(43200000));
     drop(kernel); // crash/restart equivalent: reopen SAME real native store/file
     let mut restarted = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
     restarted.attach_act_store(&home).unwrap();
@@ -1018,6 +1273,33 @@ fn genuine_accepted_future_score_occurrence_reconciles_once_without_inventing_pl
     assert_eq!(reservations[0].native_sequence, Counter(2));
     assert_eq!(reservations[0].recorded_sequence, Counter(3));
     assert_eq!(reservations[0].original_occurrence, authored_future);
+    assert_eq!(
+        reservations[0].require_requested_sample().unwrap(),
+        Counter(48000)
+    );
+    assert_eq!(reservations[0].effective_sample, Counter(48000));
+    let mut missing = reservations[0].clone();
+    missing
+        .native_operation
+        .as_object_mut()
+        .unwrap()
+        .remove("requested_sample");
+    assert!(missing.require_requested_sample().is_err());
+    // Historical no-field bytes retain the unchanged score operand, but cannot
+    // claim exact original native request provenance or match a fresh receipt.
+    missing.validate(&authored).unwrap();
+    for requested in [
+        json!("47999"),
+        json!("48001"),
+        json!("048000"),
+        json!(48000),
+        Value::Null,
+    ] {
+        let mut changed = reservations[0].clone();
+        changed.native_operation["requested_sample"] = requested;
+        assert!(changed.validate(&authored).is_err());
+    }
+
     let queued = authored
         .edited(vec![PerformanceOperation::ReserveNative { reservations }])
         .unwrap();
@@ -1059,6 +1341,18 @@ fn genuine_accepted_future_score_occurrence_reconciles_once_without_inventing_pl
     assert_eq!(resolved.reservation.native_sequence, Counter(2));
     assert_eq!(resolved.application_ordinal, Counter(3));
     assert_eq!(resolved.applied_sample, Counter(48000));
+    assert!(missing
+        .reconcile(&reconciled.receipts()[0].application)
+        .is_err());
+    assert_eq!(
+        reconciled.receipts()[0].application.requested_sample,
+        Some(Counter(48000))
+    );
+    assert_eq!(
+        reconciled.receipts()[0].application.admitted_sample,
+        Counter(48000)
+    );
+
     assert_eq!(reconciled.prospective().native_recordings.len(), 1);
     assert!(queued
         .edited(vec![PerformanceOperation::RemoveEvent {
@@ -1908,4 +2202,414 @@ fn actual_original_requested_time_survives_late_resolution_and_legacy_absence_st
     assert_eq!(future.admitted_sample, Counter(48000));
     assert_eq!(future.applied_sample, Counter(48000));
     assert_eq!(continued.sample, Counter(48128));
+}
+
+fn actual_pre_callback_late_queue(
+    prefix: &str,
+) -> (
+    Performance,
+    CheckpointBinding,
+    Vec<Value>,
+    Vec<InputHistoryEntry>,
+    Value,
+) {
+    let (performance, _, mut apps, mut journal) = managed_order(prefix, true);
+    let directory = std::path::PathBuf::from(
+        std::env::var("QL_RETAINED_PERFORMANCE_MANAGED_ORDER_DIRECTORY").unwrap(),
+    );
+    let wire = read(directory.join(format!("{prefix}.pending-checkpoint.json")));
+    assert_eq!(wire["native_pair"]["audio"]["cursor"], "128");
+    assert_eq!(
+        wire["native_pair"]["audio"]["applied_application_ordinal"],
+        "1"
+    );
+    assert_eq!(wire["transport_epoch"], "1");
+    let admissions = read(directory.join(format!("{prefix}.score-admissions.json")));
+    assert_eq!(admissions.as_array().unwrap().len(), 3);
+    let late = &admissions[2];
+    assert_eq!(late["schema"], "ql.native-score-admission/v1");
+    assert_eq!(late["queued"], true);
+    assert_eq!(late["queue_cursor"], "128");
+    assert_eq!(late["queue_horizon"], "128");
+    assert_eq!(late["transport_epoch"], "1");
+    assert_eq!(late["event"]["sequence"], "3");
+    assert_eq!(late["event"]["requested_sample"], "0");
+    assert_eq!(late["event"]["sample"], "128");
+    assert_eq!(late["event"]["late_admitted"], true);
+    assert_eq!(
+        late["event"]["identity"],
+        wire["native_pair"]["audio"]["determination"]["identity"]
+    );
+    assert_eq!(late["source"]["identity"], late["event"]["identity"]);
+    assert_eq!(admissions[1]["event"]["requested_sample"], "48000");
+    assert_eq!(admissions[1]["event"]["sample"], "48000");
+    if prefix == "release" {
+        assert_eq!(late["input_ref"], "native-score:original-pointer/42");
+    } else {
+        assert!(late["input_ref"].is_null());
+    }
+    apps.truncate(1);
+    let last: Counter =
+        serde_json::from_value(wire["input_history"]["last_ordinal"].clone()).unwrap();
+    journal.retain(|entry| entry.ordinal <= last);
+    let source_prefix = format!(
+        "sha256:{:x}",
+        Sha256::digest(
+            serde_json::to_vec(&wire["native_pair"]["audio"]["source_schedule"]).unwrap(),
+        )
+    );
+    let checkpoint = CheckpointBinding::from_native_management(
+        CheckpointReceipt {
+            checkpoint_ref: format!("native:managed-order/{prefix}/pending-checkpoint"),
+            identity: performance.bases[0].identity.clone(),
+            sample: Counter(128),
+            basis_digest: performance.bases[0].content_digest.clone(),
+            event_prefix_digest: source_prefix,
+            queued_events: vec![
+                QueuedEventReceipt {
+                    native_sequence: Counter(3),
+                    recorded_sequence: Counter(2),
+                    effective_sample: Counter(128),
+                },
+                QueuedEventReceipt {
+                    native_sequence: Counter(2),
+                    recorded_sequence: Counter(3),
+                    effective_sample: Counter(48000),
+                },
+            ],
+            acknowledged_stopped: true,
+        },
+        wire,
+    )
+    .unwrap();
+    (performance, checkpoint, apps, journal, admissions)
+}
+
+#[test]
+fn actual_late_request_zero_resolves_128_and_reopens_pending_then_reconciles_original_occurrence_once(
+) {
+    use oi_cradle_kernel::expression_act_store::ActStore;
+    use oi_cradle_kernel::expression_performance_reservation::{
+        reserve_checkpoint_occurrences, ReservationStanding,
+    };
+    use oi_cradle_kernel::{
+        expression::Document, expression_file, Kernel, KernelOp, KernelOpResult,
+    };
+    fn invoke(kernel: &mut Kernel, request: Value, world: bool) -> Value {
+        let op = if world {
+            KernelOp::ExpressionWorld {
+                request: serde_json::from_value(request).unwrap(),
+            }
+        } else {
+            KernelOp::Expression {
+                request: serde_json::from_value(request).unwrap(),
+            }
+        };
+        match kernel.apply(op).unwrap().result {
+            KernelOpResult::Expression { data } | KernelOpResult::ExpressionWorld { data } => data,
+            _ => panic!("actual native result absent"),
+        }
+    }
+    let bindings = [ParameterBinding {
+        native_parameter: 4,
+        performance_parameter: 0,
+    }];
+    for variant in ["release", "panic"] {
+        let (performance, mut checkpoint, apps, journal, admissions) =
+            actual_pre_callback_late_queue(variant);
+        let state = NativeRecordState::from_checkpoint(&performance.bases[0], &checkpoint).unwrap();
+        let prefix =
+            prepare_recording(&performance, admission(&state, &bindings), &apps, &journal).unwrap();
+        assert_eq!(prefix.receipts().len(), 1);
+        assert_eq!(prefix.prospective().events().next().unwrap().sample(), 37);
+        let target: oi_cradle_kernel::expression_performance_management::NativeNoteTarget =
+            serde_json::from_value(apps[0]["note"].clone()).unwrap();
+        let original = TimedEvent(
+            Counter(2),
+            Counter(0),
+            0,
+            0,
+            if variant == "release" {
+                EventAction::NoteOff(target.touch)
+            } else {
+                EventAction::Panic
+            },
+        );
+        let mut resolved = original.clone();
+        resolved.1 = Counter(128);
+        let future = TimedEvent(
+            Counter(3),
+            Counter(48000),
+            0,
+            0,
+            EventAction::Parameter(0, scalar(0.2), None),
+        );
+        let authored = prefix
+            .prospective()
+            .edited(vec![PerformanceOperation::Record {
+                events: vec![resolved.clone(), future.clone()],
+            }])
+            .unwrap();
+        let reservations = reserve_checkpoint_occurrences(
+            &authored,
+            &checkpoint,
+            &bindings,
+            std::slice::from_ref(&original),
+        )
+        .unwrap();
+        let late = reservations
+            .iter()
+            .find(|r| r.native_sequence == Counter(3))
+            .unwrap();
+        assert_eq!(late.original_occurrence, original);
+        assert_eq!(late.queued_occurrence().unwrap(), resolved);
+        assert_eq!(late.require_requested_sample().unwrap(), Counter(0));
+        assert_eq!(late.effective_sample, Counter(128));
+        assert_eq!(late.queue_receipt_cursor, Counter(128));
+        assert_eq!(
+            late.native_operation["requested_sample"],
+            admissions[2]["event"]["requested_sample"]
+        );
+        let untouched = reservations
+            .iter()
+            .find(|r| r.native_sequence == Counter(2))
+            .unwrap();
+        assert_eq!(untouched.original_occurrence, future);
+        assert_eq!(untouched.queued_occurrence().unwrap(), future);
+        assert_eq!(
+            untouched.require_requested_sample().unwrap(),
+            Counter(48000)
+        );
+        // No original mapping is inferred from the native request or reset to
+        // 128. The explicitly authored original and queue must agree exactly.
+        assert!(reserve_checkpoint_occurrences(&authored, &checkpoint, &bindings, &[]).is_err());
+        let mut wrong = original.clone();
+        wrong.1 = Counter(1);
+        assert!(
+            reserve_checkpoint_occurrences(&authored, &checkpoint, &bindings, &[wrong]).is_err()
+        );
+        let mut wrong = original.clone();
+        wrong.0 = Counter(99);
+        assert!(
+            reserve_checkpoint_occurrences(&authored, &checkpoint, &bindings, &[wrong]).is_err()
+        );
+        assert!(reserve_checkpoint_occurrences(
+            &authored,
+            &checkpoint,
+            &bindings,
+            &[original.clone(), original.clone()]
+        )
+        .is_err());
+        let mut historical = late.clone();
+        historical
+            .native_operation
+            .as_object_mut()
+            .unwrap()
+            .remove("requested_sample");
+        assert!(historical.require_requested_sample().is_err());
+        assert!(historical.validate(&authored).is_err());
+        for field in ["sample", "requested_sample", "sequence"] {
+            let mut wrong = late.clone();
+            wrong.native_operation[field] = json!("129");
+            assert!(wrong.validate(&authored).is_err());
+        }
+        let mut wrong = late.clone();
+        wrong.native_operation["late_admitted"] = json!(false);
+        assert!(wrong.validate(&authored).is_err());
+        let queued = authored
+            .edited(vec![PerformanceOperation::ReserveNative {
+                reservations: reservations.clone(),
+            }])
+            .unwrap();
+        checkpoint.event_prefix_digest = queued.prefix_digest(128).unwrap();
+        checkpoint = checkpoint.seal().unwrap();
+        let queued = queued
+            .edited(vec![PerformanceOperation::Checkpoint {
+                checkpoint: Box::new(checkpoint.clone()),
+            }])
+            .unwrap();
+        assert_eq!(
+            queued.native_recordings[0].batch().unwrap().receipts.len(),
+            1
+        );
+        assert_eq!(queued.native_reservations.len(), 2);
+        let basis = &queued.bases[0];
+        let current = basis
+            .sources
+            .iter()
+            .chain(&basis.required_assets)
+            .chain([&basis.context.context, &basis.context.receiver])
+            .map(|r| (r.r#ref.clone(), r.clone()))
+            .collect();
+        let plan = ReplayPlan::prepare(&queued, &current, false).unwrap();
+        let replay = plan
+            .prepare_window(
+                &ReplayCursor {
+                    instance_ref: queued.bases[0].identity.instance_ref.clone(),
+                    event_ref: queued.bases[0].identity.event_ref.clone(),
+                    subject_ref: queued.bases[0].identity.subject_ref.clone(),
+                    sample: Counter(128),
+                    last_sequence: Counter(3),
+                    checkpoint_digest: Some(checkpoint.content_digest.clone()),
+                },
+                512,
+            )
+            .unwrap();
+        assert!(
+            replay.operations.is_empty(),
+            "restored native queued release must not be enqueued twice"
+        );
+        let expression_ref = format!("expression:actual-late-{variant}");
+        let act_ref = format!("act:actual-late-{variant}");
+        let home =
+            std::path::PathBuf::from(std::env::var("OI_RETAINED_PERFORMANCE_TEST_HOME").unwrap())
+                .join(format!(
+                    "native-late-reservation-{variant}-{}",
+                    std::process::id()
+                ));
+        assert!(
+            !home.exists(),
+            "preserve any previous actual custody failure"
+        );
+        let mut kernel = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
+        kernel.attach_act_store(&home).unwrap();
+        invoke(
+            &mut kernel,
+            json!({"operation":"create","expression_ref":expression_ref,"title":"Original native requested timing","actor":"agent:timing-regression"}),
+            false,
+        );
+        let initial: Document = serde_json::from_value(
+            invoke(
+                &mut kernel,
+                json!({"operation":"inspect","expression_ref":expression_ref}),
+                false,
+            )["document"]
+                .clone(),
+        )
+        .unwrap();
+        let result = invoke(
+            &mut kernel,
+            json!({"operation":"act_retained_perform","act_ref":act_ref,"expression_ref":expression_ref,
+            "expected_revision":initial.revision,"expected_act_revision":null,"actor":"agent:timing-regression","summary":"Retain original requested and native queue times",
+            "changes":[{"change":"scene_performance_set","scene_ref":initial.scenes[0].scene_ref,"performance":queued}]}),
+            true,
+        );
+        assert_eq!(result["state"], "act_running");
+        let stored = ActStore::at_home(&home)
+            .read_retained(&act_ref)
+            .unwrap()
+            .unwrap();
+        let doc = stored
+            .performance_custody
+            .as_ref()
+            .unwrap()
+            .restore(0)
+            .unwrap();
+        let reopened_doc =
+            expression_file::decode(&expression_file::encode(&doc).unwrap()).unwrap();
+        let reopened = reopened_doc.scenes[0].performance.as_ref().unwrap();
+        assert_eq!(reopened, &queued);
+        assert_eq!(
+            reopened
+                .native_reservations
+                .iter()
+                .find(|r| r.native_sequence == Counter(3))
+                .unwrap()
+                .original_occurrence
+                .sample(),
+            0
+        );
+        assert_eq!(reopened.checkpoints[0].sample, Counter(128));
+        drop(kernel);
+        let mut restarted = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
+        restarted.attach_act_store(&home).unwrap();
+        let loaded = invoke(
+            &mut restarted,
+            json!({"operation":"act_retained_inspect","act_ref":act_ref}),
+            true,
+        );
+        assert_eq!(loaded["act"]["revision"], stored.revision);
+        let (_, after, all_apps, all_journal) = managed_order(variant, true);
+        let after_state = NativeRecordState::from_checkpoint(&queued.bases[0], &after).unwrap();
+        let previous_input = journal.last().map_or(Counter(0), |e| e.ordinal);
+        let later_apps: Vec<_> = all_apps
+            .into_iter()
+            .filter(|a| a["applied_application_ordinal"] != "1")
+            .collect();
+        let later_journal: Vec<_> = all_journal
+            .into_iter()
+            .filter(|e| e.ordinal > previous_input)
+            .collect();
+        let applied = prepare_recording(
+            reopened,
+            RecordAdmission {
+                state: &after_state,
+                basis: 0,
+                layer: 0,
+                previous_applied_application_ordinal: Counter(1),
+                expected_transport_epoch: Counter(1),
+                previous_input_ordinal: previous_input,
+                parameter_bindings: &bindings,
+            },
+            &later_apps,
+            &later_journal,
+        )
+        .unwrap();
+        assert_eq!(applied.prospective().event_count(), 3);
+        assert!(applied.prospective().native_reservations.is_empty());
+        assert_eq!(
+            applied
+                .receipts()
+                .iter()
+                .map(|r| r.application.sequence.0)
+                .collect::<Vec<_>>(),
+            vec![3, 2]
+        );
+        let original_receipt = applied.receipts()[0].reservation.as_ref().unwrap();
+        assert_eq!(original_receipt.reservation.original_occurrence, original);
+        assert_eq!(original_receipt.standing, ReservationStanding::Executed);
+        assert_eq!(original_receipt.applied_sample, Counter(128));
+        assert_eq!(
+            applied.receipts()[0].application.requested_sample,
+            Some(Counter(0))
+        );
+        assert_eq!(
+            applied.receipts()[0].performed_event.as_ref(),
+            Some(&resolved)
+        );
+        assert_eq!(
+            applied.receipts()[1].performed_event.as_ref(),
+            Some(&future)
+        );
+        assert_eq!(
+            applied.receipts()[1].application.requested_sample,
+            Some(Counter(48000))
+        );
+        applied
+            .verify_replay(
+                reopened,
+                RecordAdmission {
+                    state: &after_state,
+                    basis: 0,
+                    layer: 0,
+                    previous_applied_application_ordinal: Counter(1),
+                    expected_transport_epoch: Counter(1),
+                    previous_input_ordinal: previous_input,
+                    parameter_bindings: &bindings,
+                },
+                &later_apps,
+                &later_journal,
+            )
+            .unwrap();
+        assert!(applied
+            .prospective()
+            .edited(applied.record_operations())
+            .is_err());
+        let saved =
+            oi_cradle_kernel::expression_performance_assets::PerformancePartCatalog::default()
+                .appended(applied.prospective())
+                .unwrap();
+        assert_eq!(saved.restore(0).unwrap(), *applied.prospective());
+        std::fs::remove_dir_all(home).unwrap();
+    }
 }

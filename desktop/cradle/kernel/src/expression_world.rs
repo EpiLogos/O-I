@@ -1071,6 +1071,20 @@ pub enum Request {
         expected_act_revision: u64,
         position: usize,
     },
+    /// Complete selected native score/export material from the SAME Act owner.
+    /// Optional page reads use the existing codec under the same exact identity.
+    ActRetainedDelivery {
+        act_ref: String,
+        selection: crate::expression_performance_delivery::Selection,
+        #[serde(default)]
+        native_page: Option<usize>,
+    },
+    /// Complete stopped owner state for one checkpoint in the selected Act.
+    ActRetainedCheckpoint {
+        act_ref: String,
+        selection: crate::expression_performance_delivery::Selection,
+        checkpoint_index: usize,
+    },
     /// Human interruption: hold the act. Nothing reverts and nothing
     /// advances; the presentation stays exactly as the act left it.
     ActInterrupt {
@@ -1474,7 +1488,7 @@ pub fn capabilities() -> Value {
             "whole_bind", "whole_inspect", "whole_rebase",
             "material_list", "act_open", "act_select", "act_gesture", "act_text",
             "act_operate", "act_continue", "act_complete", "act_seek", "act_play", "act_archive",
-            "act_inspect", "act_list", "act_retained_enable", "act_retained_perform", "act_retained_inspect", "act_retained_edition"
+            "act_inspect", "act_list", "act_retained_enable", "act_retained_perform", "act_retained_inspect", "act_retained_edition", "act_retained_delivery", "act_retained_checkpoint"
         ],
         "selection": {
             "origins": ["graph", "wiki", "constellation", "expression", "agent", "page"],
@@ -2264,6 +2278,8 @@ impl Kernel {
             | Request::ActRetainedEnable { .. }
             | Request::ActRetainedInspect { .. }
             | Request::ActRetainedEdition { .. }
+            | Request::ActRetainedDelivery { .. }
+            | Request::ActRetainedCheckpoint { .. }
             | Request::ActRetainedPerform { .. }
             | Request::ActList { .. }) => {
                 // Any failure after an act edited its live target restores
@@ -4109,6 +4125,45 @@ impl Kernel {
         Ok(None)
     }
 
+    /// Attached durable Act custody is independently read under its existing
+    /// lock and budget. Cached world.acts cannot witness external currentness.
+    /// Without an attached store, this exclusive Kernel owns the in-memory Act.
+    fn native_act_delivery_lookup(&mut self, act_ref: &str) -> Result<Option<Act>, String> {
+        if let Some(store) = self.world.store.as_ref() {
+            let available = self.world.available_act_bytes(act_ref)?;
+            store.read_with_budget(act_ref, available)
+        } else {
+            self.act_lookup(act_ref)
+        }
+    }
+
+    /// Native host-only bridge: actual same-store Act lookup produces a closed
+    /// reader. Browser payloads/Selection labels cannot construct the reader.
+    /// Existing host lease/grants still authorize playback and disclosure.
+    pub fn with_native_act_delivery<T>(
+        &mut self,
+        act_ref: &str,
+        selection: &crate::expression_performance_delivery::Selection,
+        consumer: impl FnOnce(
+            &mut crate::expression_performance_reader::NativeActDeliveryReader,
+        ) -> Result<T, String>,
+    ) -> Result<T, String> {
+        text(act_ref)?;
+        let act = self
+            .native_act_delivery_lookup(act_ref)?
+            .ok_or("no native Act with this ref exists")?;
+        let mut reader =
+            crate::expression_performance_reader::NativeActDeliveryReader::from_native_act(
+                &act, selection,
+            )?;
+        let result = consumer(&mut reader);
+        let current = self
+            .native_act_delivery_lookup(act_ref)?
+            .ok_or("selected native Act disappeared during consumer operation")?;
+        reader.verify_current(&current)?;
+        result
+    }
+
     fn world_act(&mut self, request: Request, receipts: &mut Receipts) -> Result<Value, String> {
         macro_rules! guard {
             ($act_ref:expr, $expected:expr) => {{
@@ -5082,6 +5137,19 @@ impl Kernel {
                 let act=guard!(act_ref,Some(expected_act_revision));
                 let document=crate::expression_performance_act::selected_document(&act,position)?;
                 Ok(json!({"state":"act_retained_edition","material_contract":crate::expression_performance_act::MATERIAL_SCHEMA,"act_ref":act_ref,"act_revision":act.revision,"position":position,"document":document}))
+            }
+            Request::ActRetainedDelivery {act_ref,selection,native_page} => {
+                let act=guard!(act_ref,Some(selection.expected_act_revision));
+                let selected=crate::expression_performance_delivery::SelectedPerformance::from_act(&act,&selection)?;
+                match native_page {
+                    Some(index)=>selected.native_page(index),
+                    None=>selected.native_payload(),
+                }
+            }
+            Request::ActRetainedCheckpoint {act_ref,selection,checkpoint_index} => {
+                let act=guard!(act_ref,Some(selection.expected_act_revision));
+                let selected=crate::expression_performance_delivery::SelectedPerformance::from_act(&act,&selection)?;
+                selected.native_checkpoint(checkpoint_index)
             }
             Request::ActRetainedPerform {..} => Err("retained perform must pass the native Expression transaction dispatcher".into()),
             Request::ActInspect { act_ref } => match self.act_lookup(&act_ref)? {

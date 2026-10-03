@@ -49,6 +49,32 @@ fn count(value: &Value) -> Result<Counter, String> {
     serde_json::from_value(value.clone()).map_err(|e| e.to_string())
 }
 impl NativeScoreReservation {
+    /// Original requested time belongs to native admission, independently of
+    /// the resolved deadline. Historical absence stays explicitly unavailable.
+    pub fn require_requested_sample(&self) -> Result<Counter, String> {
+        count(
+            self.native_operation
+                .get("requested_sample")
+                .ok_or("original reserved native requested time unavailable")?,
+        )
+    }
+
+    /// The native resolved occurrence is the operative score operand while
+    /// pending. Original authored timing remains in original_occurrence and
+    /// requested_sample; a late release must not precede its original attack
+    /// in the current replay score. This does not manufacture an application.
+    pub fn queued_occurrence(&self) -> Result<TimedEvent, String> {
+        let delay = self.source_route.as_ref().map_or(0, |r| r.delay_samples.0);
+        let mut queued = self.original_occurrence.clone();
+        queued.1 = Counter(
+            self.effective_sample
+                .0
+                .checked_sub(delay)
+                .ok_or("resolved reservation precedes original route delay")?,
+        );
+        Ok(queued)
+    }
+
     pub fn validate(&self, performance: &Performance) -> Result<(), String> {
         let operation = &self.native_operation;
         let event = &self.original_occurrence;
@@ -143,10 +169,28 @@ impl NativeScoreReservation {
         {
             return Err("nonparameter reservation carries unrelated route authority".into());
         }
-        if self.original_occurrence.sample().checked_add(delay) != Some(self.effective_sample.0) {
-            return Err(
-                "reservation effective sample differs from original score plus route delay".into(),
-            );
+        let original_request = self
+            .original_occurrence
+            .sample()
+            .checked_add(delay)
+            .ok_or("original reservation route timing overflow")?;
+        match operation.get("requested_sample") {
+            Some(value) => {
+                let requested = count(value)?;
+                if requested.0 != original_request
+                    || requested > self.effective_sample
+                    || (requested < self.effective_sample
+                        && (operation["late_admitted"] != true
+                            || !matches!(operation["kind"].as_u64(), Some(1 | 4))))
+                {
+                    return Err(
+                        "reservation lost original requested time or resolved native deadline"
+                            .into(),
+                    );
+                }
+            }
+            None if original_request == self.effective_sample.0 => {}
+            None => return Err("late reserved original native requested time unavailable".into()),
         }
         Ok(())
     }
@@ -154,7 +198,18 @@ impl NativeScoreReservation {
         &self,
         application: &NativeApplication,
     ) -> Result<ReservationApplication, String> {
-        if application.sequence != self.native_sequence
+        let requested = self
+            .native_operation
+            .get("requested_sample")
+            .map(count)
+            .transpose()?;
+        if requested != application.requested_sample
+            || requested.is_some_and(|sample| {
+                sample > self.effective_sample
+                    || (sample < self.effective_sample && !application.late_admitted)
+            })
+            || self.native_operation["late_admitted"] != json!(application.late_admitted)
+            || application.sequence != self.native_sequence
             || application.admitted_sample != self.effective_sample
             || application.body_revision != self.body_revision
             || application.identity
@@ -208,8 +263,30 @@ pub fn reserve_checkpoint(
     checkpoint: &CheckpointBinding,
     parameters: &[ParameterBinding],
 ) -> Result<Vec<NativeScoreReservation>, String> {
+    reserve_checkpoint_occurrences(performance, checkpoint, parameters, &[])
+}
+
+/// Native acceptance resolves timing; the author retains the original request.
+/// Late occurrences therefore require an explicit original mapping, qualified
+/// by the complete actual stopped queue. Every supplied mapping must be used
+/// exactly once and differ from the operative occurrence only in its sample.
+pub fn reserve_checkpoint_occurrences(
+    performance: &Performance,
+    checkpoint: &CheckpointBinding,
+    parameters: &[ParameterBinding],
+    original_occurrences: &[TimedEvent],
+) -> Result<Vec<NativeScoreReservation>, String> {
     performance.validate()?;
     checkpoint.validate()?;
+    if original_occurrences.len() > 320 {
+        return Err("original reservation mappings exceed native queue bound".into());
+    }
+    let mut originals = BTreeMap::new();
+    for original in original_occurrences {
+        if originals.insert(original.0, original).is_some() {
+            return Err("duplicate original authored reservation mapping".into());
+        }
+    }
     let epoch = checkpoint
         .management
         .as_ref()
@@ -330,7 +407,7 @@ pub fn reserve_checkpoint(
             basis_digest: basis.content_digest.clone(),
             body_revision: count(&checkpoint.audio["determination"]["body_revision"])?,
             checkpoint_ref: checkpoint.checkpoint_ref.clone(),
-            original_occurrence: event.clone(),
+            original_occurrence: originals.remove(&event.0).unwrap_or(event).clone(),
             source_parameter: match &event.4 {
                 EventAction::Parameter(index, _, _) => {
                     performance.parameters.get(usize::from(*index)).cloned()
@@ -346,7 +423,13 @@ pub fn reserve_checkpoint(
             native_operation: operation.clone(),
         };
         reservation.validate(performance)?;
+        if reservation.queued_occurrence()? != *event {
+            return Err("original authored reservation differs from resolved occurrence".into());
+        }
         result.push(reservation);
+    }
+    if !originals.is_empty() {
+        return Err("original authored reservation has no actual queued operation".into());
     }
     Ok(result)
 }
@@ -372,9 +455,10 @@ pub fn validate_pending(performance: &Performance) -> Result<(), String> {
                 "native queued reservation route/parameter changed before reconciliation".into(),
             );
         }
+        let queued = r.queued_occurrence()?;
         if !operations.insert((r.transport_epoch, r.native_sequence))
             || !occurrences.insert(r.recorded_sequence)
-            || !performance.events().any(|e| e == &r.original_occurrence)
+            || !performance.events().any(|e| e == &queued)
         {
             return Err(
                 "native reservation duplicated or authored occurrence altered while pending".into(),

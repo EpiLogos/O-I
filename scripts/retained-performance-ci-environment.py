@@ -17,11 +17,14 @@ KEYS = frozenset({
     "QL_RETAINED_SOURCE_PERFORMANCE_FIXTURE",
     "QL_RETAINED_PERFORMANCE_CONTEXT_FIXTURE",
     "QL_RETAINED_PERFORMANCE_WORKLOAD_DIRECTORY",
+    "QL_RETAINED_SOURCE_WORKLOAD_DIRECTORY",
     "QL_RETAINED_PERFORMANCE_RESERVATION_DIRECTORY",
     "QL_RETAINED_PERFORMANCE_CHECKPOINT_FIXTURE",
     "QL_RETAINED_PERFORMANCE_MANAGEMENT_FIXTURE",
     "QL_RETAINED_PERFORMANCE_MANAGEMENT_DIRECTORY",
     "QL_RETAINED_PERFORMANCE_MANAGED_ORDER_DIRECTORY",
+    "QL_CURRENT_RECEIVING_ARTIFACT_DIRECTORY",
+    "OI_NATIVE_PERFORMANCE_DELIVERY_DIRECTORY",
     "OI_RETAINED_PERFORMANCE_TEST_HOME",
 })
 DIRECTORIES = frozenset(key for key in KEYS if key.endswith("DIRECTORY") or key.endswith("HOME"))
@@ -104,7 +107,9 @@ def verified_environment(result: Path, expected: str, output_root: Path) -> dict
         if key in DIRECTORIES:
             if not path.is_dir():
                 raise ValueError("native fixture directory custody missing")
-            if key != "OI_RETAINED_PERFORMANCE_TEST_HOME" and not any(p.is_relative_to(path) for p in inventory):
+            # These two are the actual C owner's fresh output destinations.
+            # Every native INPUT directory still needs qualified producer bytes.
+            if key not in {"OI_RETAINED_PERFORMANCE_TEST_HOME", "OI_NATIVE_PERFORMANCE_DELIVERY_DIRECTORY"} and not any(p.is_relative_to(path) for p in inventory):
                 raise ValueError("native fixture directory has no actual qualified artifacts")
         elif path not in inventory:
             raise ValueError("native fixture path is absent from actual inventory")

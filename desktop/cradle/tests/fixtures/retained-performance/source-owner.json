@@ -1,7 +1,7 @@
 {
   "schema": "oi.retained-performance-test-source-owner/v1",
   "repository": "EpiLogos/QL-MEF",
-  "revision": "b938edbd5a7a6de2baa2650ef4a1dabb3d410ba5",
+  "revision": "09d37cddb020207afd37689a85043eb1a7d38094",
   "consumer": "retained-performance-native-kernel-tests",
   "installed_frontend_relation": "independent source qualification; existing native-field/ql/PROVENANCE.json remains unchanged"
 }

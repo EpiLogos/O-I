@@ -1661,7 +1661,7 @@ impl Performance {
                         .iter()
                         .position(|e| e.0 == reservation.recorded_sequence)
                         .ok_or("resolved original score occurrence absent")?;
-                    if all[event] != reservation.original_occurrence {
+                    if all[event] != reservation.queued_occurrence()? {
                         return Err("pending score occurrence changed before application".into());
                     }
                     if let Some(replacement) = replacement {

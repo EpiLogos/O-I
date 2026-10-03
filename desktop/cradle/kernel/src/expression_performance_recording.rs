@@ -779,6 +779,15 @@ pub struct NativeRecordingPage {
     encoded: crate::expression_performance_codec::EncodedPage,
 }
 impl NativeRecordingPage {
+    /// Exact original canonical bytes from the existing codec, for another
+    /// native consumer. The codec and private typed content validate before
+    /// delivery; rebuilding a Value cannot replace this byte-order custody.
+    pub fn canonical_decoded_bytes(&self) -> Result<Vec<u8>, String> {
+        self.validate()?;
+        self.encoded.read::<NativeRecordingContent>()?;
+        self.encoded.bytes()
+    }
+
     fn from_native(batch: NativeRecordingBatch) -> Result<Self, String> {
         Ok(Self {
             schema: NATIVE_PAGE_SCHEMA.into(),
