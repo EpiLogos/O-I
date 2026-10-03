@@ -124,8 +124,8 @@ export const EVENT_INVENTORY: readonly InventoryEntry[] = [
   {id: "attempt.receiving", family: "continuation", source: "factory-attempt", event: "attach-receiving",
     identity: [`${A}.attemptRef`, `${A}.readableReturn.receivingRef`], payload: [`${A}.readableReturn.receivingSourceRevision`],
     yields: [{op: "act_select", scene: "continuation"}], roles: {self: "participant agent", goal: "workflowUnitRef", caption: "Return received; whole Run remains owned by Factory"}, native: true},
-  {id: "attempt.run-complete", family: "completion", source: "factory-attempt", event: "native admitted closure and wholeRunState complete over every required current Return",
-    identity: ["runRef"], payload: ["completionVerified", "wholeRunState", "lifecycle", "requiredUnits", "currentReturnedUnits", "attempts[].readableReturn.summary"],
+  {id: "attempt.run-complete", family: "completion", source: "factory-attempt", event: "native canonical Finished admission (completionVerified = true)",
+    identity: ["runRef"], payload: ["contract", "completionVerified", "lifecycle", "archivedFrom", "runRevision", "topologyRevision", "workflowSourceRef", "workflowSourceRevision", "workflowSourceDigest", "sourceCurrent", "attempts[].readableReturn.summary"],
     yields: [{op: "act_select", scene: "completion"}], roles: {participants: "every cast member", resultText: "the last readable Return summary"}, native: true},
   // ── factory-telemetry ──────────────────────────────────────────────────
   {id: "telemetry.correlation", family: "activity", source: "factory-telemetry", event: "execution-correlation",
@@ -294,18 +294,14 @@ export interface LiveReadings {
   window?: {from?: number; to?: number};
 }
 
-/** The Run's time span from its attempt reading: from the first attempt's
- * admission (less a minute) to, only after a native terminal lifecycle, the
- * last recorded return/verification/failure (plus ten minutes). A missing leg
- * or failed attempt does not close the ongoing undertaking's time span. */
+/** The native reading provides the first admission but no lifecycle end
+ * timestamp. Keep native facts open to later owner results. Agent journals
+ * have their own addressed turn boundary, independent of this time window. */
 export function runWindow(attempts: unknown): {from?: number; to?: number} | undefined {
   const reading = attemptReading(attempts);
   if (!reading?.attempts?.length) return undefined;
-  const times = (values: (string | undefined)[]) => values.map(ms).filter((value): value is number => value !== undefined);
-  const starts = times(reading.attempts.map(attempt => attempt.attemptRecordedAt));
-  const ends = times(reading.attempts.flatMap(attempt => [attempt.returnRecordedAt, attempt.failureRecordedAt, ...Object.values(attempt.verificationRecordedAt ?? {})]));
-  const done = ownerRunComplete(reading) || reading.lifecycle === "aborted";
-  return {...(starts.length ? {from: Math.min(...starts) - 60_000} : {}), ...(done && ends.length ? {to: Math.max(...ends) + 600_000} : {})};
+  const starts = reading.attempts.map(attempt => ms(attempt.attemptRecordedAt)).filter((value): value is number => value !== undefined);
+  return starts.length ? {from: Math.min(...starts) - 60_000} : {};
 }
 const within = (window: LiveReadings["window"], at: number | undefined) => at === undefined || !window || ((window.from === undefined || at >= window.from) && (window.to === undefined || at <= window.to));
 /** Journals by agent session ref: encounter journals ({cursor,event}) or
@@ -353,27 +349,26 @@ interface AttemptRecord {
   readableReturn?: {returnRef?: string; summary?: string; artifactRefs?: string[]; evidenceRefs?: string[]; receivingRef?: string | null} | null;
   returnRecordedAt?: string;
 }
-interface AttemptReadingShape {contract?: string; revision?: number; runRef?: string; lifecycle?: string; completionVerified?: boolean; wholeRunState?: "incomplete" | "complete" | "failed"; requiredUnits?: string[]; currentReturnedUnits?: string[]; attempts?: AttemptRecord[]; legs?: Record<string, {status?: string; statusHistory?: string[]; failureReason?: string | null; artifacts?: Obj[]; attempts?: Obj[]}>; independentReviewers?: Record<string, Obj>; syntheses?: Record<string, Obj>}
+interface AttemptReadingShape {contract?: string; revision?: number; runRef?: string; runRevision?: number; topologyRevision?: number; lifecycle?: string; archivedFrom?: string; completionVerified?: boolean; workflowSourceRef?: string; workflowSourceRevision?: string; workflowSourceDigest?: string; sourceCurrent?: boolean; wholeRunState?: "incomplete" | "complete" | "failed"; requiredUnits?: string[]; currentReturnedUnits?: string[]; attempts?: AttemptRecord[]; legs?: Record<string, {status?: string; statusHistory?: string[]; failureReason?: string | null; artifacts?: Obj[]; attempts?: Obj[]}>; independentReviewers?: Record<string, Obj>; syntheses?: Record<string, Obj>}
 
 const attemptReading = (value: unknown): AttemptReadingShape | undefined =>
   obj(value) && Array.isArray((value as AttemptReadingShape).attempts) ? value as AttemptReadingShape : undefined;
 
-/** Whole completion is an owner fact. Legacy/partial/mismatched readings stay
- * incomplete; a view never certifies the set of currently present legs. */
-export function ownerRunComplete(value: unknown): boolean {
+/** Factory owns completion admission; preserve its exact selected Run,
+ * contract and canonical lifecycle instead of repeating its native barriers. */
+export function ownerRunComplete(value: unknown, runRef: string): boolean {
   const reading = attemptReading(value);
-  if (!reading || reading.completionVerified !== true || reading.wholeRunState !== "complete" || !["finished", "archived"].includes(reading.lifecycle ?? "")) return false;
-  const required = reading.requiredUnits;
-  const returned = reading.currentReturnedUnits;
-  if (!Array.isArray(required) || !Array.isArray(returned) || !required.length
-    || !required.every(unit => typeof unit === "string" && unit.length > 0)
-    || !returned.every(unit => typeof unit === "string" && unit.length > 0)) return false;
-  const requiredSet = new Set(required);
-  const returnedSet = new Set(returned);
-  return requiredSet.size === required.length && returnedSet.size === returned.length
-    && requiredSet.size === returnedSet.size && required.every(unit => returnedSet.has(unit));
+  return reading?.contract === "factory.attempt-reading/v1" && reading.runRef === runRef && reading.completionVerified === true
+    && (reading.lifecycle === "finished" || (reading.lifecycle === "archived" && reading.archivedFrom === "finished"));
 }
 
+/** Native terminal identity bounds resident journals separately from the
+ * open native-result time window. An abort never becomes completion. */
+export function ownerRunClosed(value: unknown, runRef: string): boolean {
+  const reading = attemptReading(value);
+  return ownerRunComplete(value, runRef) || (reading?.contract === "factory.attempt-reading/v1" && reading.runRef === runRef
+    && (reading.lifecycle === "aborted" || (reading.lifecycle === "archived" && reading.archivedFrom === "aborted")));
+}
 const readingForRun = (readings: LiveReadings): AttemptReadingShape | undefined => {
   const reading = attemptReading(readings.attempts);
   return reading?.runRef === readings.runRef ? reading : undefined;
@@ -642,11 +637,11 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         }
       }
     }
-    if (ownerRunComplete(reading)) {
+    if (ownerRunComplete(reading, readings.runRef)) {
       const last = [...attempts].reverse().find(attempt => attempt.readableReturn?.summary);
       emit({operation: "act_select", scene: "completion",
         bindings: bindings({...Object.fromEntries(cast.map(member => [member.role, agentBinding(member, "idle")])), lead: agentBinding(lead, "idle"), goal, resultText: last?.readableReturn?.summary ? {kind: "text", text: oneLine(last.readableReturn.summary, 280)} : undefined}),
-        basis: basis("attempt.run-complete", readings.runRef, "run-complete", undefined, {completionVerified: reading.completionVerified, wholeRunState: reading.wholeRunState, lifecycle: reading.lifecycle, requiredUnits: reading.requiredUnits, currentReturnedUnits: reading.currentReturnedUnits, revision: reading.revision ?? 0})});
+        basis: basis("attempt.run-complete", readings.runRef, "run-complete", undefined, {completionVerified: reading.completionVerified, lifecycle: reading.lifecycle, archivedFrom: reading.archivedFrom, revision: reading.revision, runRevision: reading.runRevision, topologyRevision: reading.topologyRevision, workflowSourceRef: reading.workflowSourceRef, workflowSourceRevision: reading.workflowSourceRevision, workflowSourceDigest: reading.workflowSourceDigest, sourceCurrent: reading.sourceCurrent})});
     }
     for (const [executionRef, reviewer] of Object.entries(reading.independentReviewers ?? {})) {
       const attempt = byExecution.get(executionRef);
@@ -742,7 +737,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
       if (run?.kind === "reply" && run.text.trim()) emit({operation: "act_text", role: encounterScope?.replyRole ?? "progressText", text: encounterScope ? materialBody(run.text, encounterScope.replyChars ?? 4096) : oneLine(run.text, 240), bindings: {}, basis: jb("encounter.reply", session, `cursor:${run.first}/text`, run.first, run.at)}, run.at);
       run = undefined;
     };
-    const bounds = journals.bounds?.[session] ?? journalBounds(events, readings.runRef, new Set(cast.map(candidate => candidate.agent_ref)), readings.window?.to !== undefined);
+    const bounds = journals.bounds?.[session] ?? journalBounds(events, readings.runRef, new Set(cast.map(candidate => candidate.agent_ref)), ownerRunClosed(readings.attempts, readings.runRef));
     for (const entry of events) {
       if (entry.cursor <= after) continue;
       if (entry.cursor < bounds.from || entry.cursor > bounds.to) continue; // this session's other work

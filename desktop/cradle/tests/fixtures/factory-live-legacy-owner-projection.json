@@ -1,0 +1,79 @@
+{
+  "contract": "factory.run-reading/v1",
+  "runRef": "run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+  "nativeAttempts": {
+    "contract": "factory.attempt-reading/v1",
+    "revision": 50,
+    "runRef": "run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+    "runRevision": 6,
+    "topologyRevision": 6,
+    "workflowSourceRef": "workflow-source:01M3FMCBKQAPGJ8XQDHPPW9T4D",
+    "workflowSourceRevision": "expression-development-two-voice-v1",
+    "workflowSourceDigest": "fe339649e3cec91c4bc0173e8e77003eaa75c55b3699ec91d124bb9def2dd6be",
+    "sourceCurrent": true,
+    "wholeRunState": "complete",
+    "lifecycle": "seeded",
+    "completionVerified": false,
+    "requiredUnits": [
+      "workflow-unit:35EEXBYNZ9M8Q7G9575445D7Z2",
+      "workflow-unit:4N3MZP4J2FM5VM2ZGYAZD1ZDDG"
+    ],
+    "currentReturnedUnits": [
+      "workflow-unit:35EEXBYNZ9M8Q7G9575445D7Z2",
+      "workflow-unit:4N3MZP4J2FM5VM2ZGYAZD1ZDDG"
+    ],
+    "legs": {
+      "workflow-unit:35EEXBYNZ9M8Q7G9575445D7Z2": {
+        "status": "returned"
+      },
+      "workflow-unit:4N3MZP4J2FM5VM2ZGYAZD1ZDDG": {
+        "status": "returned"
+      }
+    },
+    "attempts": [
+      {
+        "attemptRef": "attempt:factory-expressions-20260926-201904-aletheia-1",
+        "attemptRecordedAt": "2026-09-26T20:21:18.219Z",
+        "returnRecordedAt": "2026-09-26T20:22:12.953Z"
+      },
+      {
+        "attemptRef": "attempt:factory-expressions-20260926-201904-anima-1",
+        "attemptRecordedAt": "2026-09-26T20:19:06.423Z",
+        "returnRecordedAt": "2026-09-26T20:21:18.173Z"
+      }
+    ]
+  },
+  "projection": {
+    "kind": "coordinator-json-pointer-projection/v1",
+    "source_kind": "installed-factory-public-run-reading",
+    "source_sha256": "f459dff2ccd07a0b507ca51e8f3f69c7747c780cb3f190b59376c980088d813e",
+    "source_read_at": "2026-10-03T16:17:05Z",
+    "standing": "Minimal coordinator projection of original native values; not a full native receipt or new owner reading.",
+    "selected_json_pointers": [
+      "/contract",
+      "/runRef",
+      "/nativeAttempts/contract",
+      "/nativeAttempts/revision",
+      "/nativeAttempts/runRef",
+      "/nativeAttempts/runRevision",
+      "/nativeAttempts/topologyRevision",
+      "/nativeAttempts/workflowSourceRef",
+      "/nativeAttempts/workflowSourceRevision",
+      "/nativeAttempts/workflowSourceDigest",
+      "/nativeAttempts/sourceCurrent",
+      "/nativeAttempts/wholeRunState",
+      "/nativeAttempts/lifecycle",
+      "/nativeAttempts/completionVerified",
+      "/nativeAttempts/requiredUnits",
+      "/nativeAttempts/currentReturnedUnits",
+      "/nativeAttempts/legs/workflow-unit:35EEXBYNZ9M8Q7G9575445D7Z2/status",
+      "/nativeAttempts/legs/workflow-unit:4N3MZP4J2FM5VM2ZGYAZD1ZDDG/status",
+      "/nativeAttempts/attempts/0/attemptRef",
+      "/nativeAttempts/attempts/0/attemptRecordedAt",
+      "/nativeAttempts/attempts/0/returnRecordedAt",
+      "/nativeAttempts/attempts/1/attemptRef",
+      "/nativeAttempts/attempts/1/attemptRecordedAt",
+      "/nativeAttempts/attempts/1/returnRecordedAt"
+    ]
+  }
+}

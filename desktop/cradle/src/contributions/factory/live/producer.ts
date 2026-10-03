@@ -43,7 +43,7 @@
  * used by native acceptance.
  */
 import type {JournalEventLike} from "../../../agent/tape/model";
-import {advanceCursor, castOf, decodeBasis, journalBounds, runWindow, emptyCursor, mapEventsWithCursor, occurrenceKey, opKey, wireBasis, type ActOp, type Binding, type CastMember as CastMemberOfRun, type CursorState, type LiveJournals, type LiveReadings} from "./eventMap";
+import {advanceCursor, castOf, decodeBasis, journalBounds, ownerRunClosed, runWindow, emptyCursor, mapEventsWithCursor, occurrenceKey, opKey, wireBasis, type ActOp, type Binding, type CastMember as CastMemberOfRun, type CursorState, type LiveJournals, type LiveReadings} from "./eventMap";
 import {actInspect, actList, materialList, type ActBinding, type ActOutcome, type CastMember, type MaterialListing, type WorldAct, type WorldCall, type WorldRequest} from "../../../expression/world";
 import {materialFor, resolveRepertoire, type Repertoire, type RepertoireContext, type ResolvedMaterial} from "./repertoire";
 import type {TelemetryWatchReading} from "../desk/factoryReads";
@@ -659,15 +659,16 @@ export class LiveProducer {
     // Journals: after each cursor; on first follow only their tails. Each
     // session's Run-bounds come from its whole journal, read once.
     const journals: LiveJournals = {encounter: {}, bounds: {}};
-    const complete = window?.to !== undefined;
+    const closed = ownerRunClosed(this.held.attempts, this.config.runRef);
     for (const session of [...new Set(cast.flatMap(member => member.session_refs))]) {
       const held = this.bounds.get(session);
       if (!held?.settled) {
         const whole = await this.source(`journal:${session}`, () => this.wholeJournal(session));
         if (whole) {
-          const found = journalBounds(whole, this.config.runRef, new Set(cast.map(member => member.agent_ref)), complete);
-          // Settled once the Run is complete (the span can no longer move).
-          this.bounds.set(session, {...found, settled: complete});
+          const found = journalBounds(whole, this.config.runRef, new Set(cast.map(member => member.agent_ref)), closed);
+          // Native terminal identity bounds the addressed journal turn; the
+          // native-result window remains open to later owner facts.
+          this.bounds.set(session, {...found, settled: closed});
         }
       }
       const bound = this.bounds.get(session);

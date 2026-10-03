@@ -10,10 +10,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import {createHash} from "node:crypto";
 const M = await import("../src/contributions/factory/live/eventMap.ts");
 const live = JSON.parse(readFileSync(new URL("./fixtures/factory-live-events.json", import.meta.url), "utf8"));
 const tape = JSON.parse(readFileSync(new URL("./fixtures/tape-journal.json", import.meta.url), "utf8"));
 const usage = JSON.parse(readFileSync(new URL("./fixtures/tape-usage-journal.json", import.meta.url), "utf8"));
+// Minimal unchanged native-value projection; the private owner original stays
+// in Root evidence. No completion or journal fields are manufactured here.
+const legacyBytes = readFileSync(new URL("./fixtures/factory-live-legacy-owner-projection.json", import.meta.url));
+assert.equal(createHash("sha256").update(legacyBytes).digest("hex"), "cc86e1ac50ced6f06b76dbee6ae513f6e3508d25791ddcef865fc9acdd58c074");
+const legacyOwner = JSON.parse(legacyBytes);
+assert.equal(legacyOwner.projection.source_sha256, "f459dff2ccd07a0b507ca51e8f3f69c7747c780cb3f190b59376c980088d813e");
+
 
 const [before, after] = live.attemptReadings;
 const reviewSession = after.attempts.find(a => a.attemptRef === "attempt:specimen-review-1").disposition.body.agentSessionRef;
@@ -99,8 +107,8 @@ test("visible returned legs cannot manufacture whole Run completion", () => {
   for (const leg of Object.values(done.legs)) { leg.status = "returned"; leg.statusHistory = ["active", "returned"]; }
   const ops = M.mapEvents(readingsFor({attempts: done}), {});
   assert.equal(ops.find(op => op.basis.entry === "attempt.run-complete"), undefined);
-  assert.equal(M.ownerRunComplete(done), false);
-  assert.equal(M.ownerRunComplete({...done, lifecycle: "archived", wholeRunState: "complete"}), false,
+  assert.equal(M.ownerRunComplete(done, live.runRef), false);
+  assert.equal(M.ownerRunComplete({...done, lifecycle: "archived", wholeRunState: "complete"}, live.runRef), false,
     "archive and counted legs are not an authenticated closure");
 });
 
@@ -257,4 +265,21 @@ test("a session's other work before and after a completed Run is not the Run's (
   assert.deepEqual(M.journalBounds(events, "run:R", new Set(["agent/anima"]), true), {from: 20, to: 23});
   assert.deepEqual(M.journalBounds(events, "run:R", new Set(["agent/anima"]), false), {from: 20, to: Infinity});
   assert.deepEqual(M.journalBounds(events.filter(e => e.cursor !== 22), "run:R", new Set(), true), {from: -Infinity, to: Infinity}, "a session the Run never addressed is the attempt's own");
+});
+
+test("actual native legacy values preserve unadmitted completion and the later-result window", () => {
+  const reading = legacyOwner.nativeAttempts;
+  assert.equal(reading.contract, "factory.attempt-reading/v1");
+  assert.equal(reading.lifecycle, "seeded");
+  assert.equal(reading.completionVerified, false);
+  assert.equal(reading.wholeRunState, "complete");
+  assert.ok(reading.requiredUnits.every(unit => reading.legs[unit].status === "returned"));
+  const before = JSON.stringify(legacyOwner);
+  assert.equal(M.ownerRunComplete(reading, legacyOwner.runRef), false);
+  assert.equal(M.ownerRunClosed(reading, legacyOwner.runRef), false);
+  assert.ok(!M.mapEvents({runRef: legacyOwner.runRef, attempts: reading}, {}).some(op => op.basis.entry === "attempt.run-complete"));
+  const window = M.runWindow(reading);
+  assert.equal(window.from, Math.min(...reading.attempts.map(attempt => Date.parse(attempt.attemptRecordedAt))) - 60_000);
+  assert.equal(window.to, undefined);
+  assert.equal(JSON.stringify(legacyOwner), before);
 });
