@@ -518,6 +518,33 @@ fn admission<'a>(
         parameter_bindings: bindings,
     }
 }
+// A native feedback cut drains only observer applications. The actual render,
+// immutable source schedule and future queues remain at the SAME sample.
+fn assert_same_render_cut(before: &Value, after: &Value) {
+    assert_eq!(before["session_ref"], after["session_ref"]);
+    assert_eq!(before["transport_epoch"], after["transport_epoch"]);
+    assert_eq!(
+        before["native_pair"]["physical"],
+        after["native_pair"]["physical"]
+    );
+    let mut original_audio = before["native_pair"]["audio"].clone();
+    let mut observed_audio = after["native_pair"]["audio"].clone();
+    assert!(original_audio
+        .as_object_mut()
+        .unwrap()
+        .remove("applications")
+        .is_some());
+    assert!(observed_audio
+        .as_object_mut()
+        .unwrap()
+        .remove("applications")
+        .is_some());
+    assert_eq!(
+        original_audio, observed_audio,
+        "feedback must not change rendering/source/queued time"
+    );
+}
+
 fn managed_order(
     prefix: &str,
     continued: bool,
@@ -542,7 +569,7 @@ fn managed_order(
     let suffix = if continued {
         "continued-checkpoint"
     } else {
-        "checkpoint"
+        "pulse-checkpoint"
     };
     let wire = read(directory.join(format!("{prefix}.{suffix}.json")));
     let sample: Counter =
@@ -572,13 +599,37 @@ fn managed_order(
             .collect::<Vec<_>>(),
         vec!["1", "2", "3"]
     );
-    let mut journal: Vec<InputHistoryEntry> =
+    let journal: Vec<InputHistoryEntry> =
         serde_json::from_value(history["input_history"].clone()).unwrap();
     if !continued {
         applications.truncate(2);
-        let last: Counter =
-            serde_json::from_value(wire["input_history"]["last_ordinal"].clone()).unwrap();
-        journal.retain(|entry| entry.ordinal <= last);
+        let pre_pulse = read(directory.join(format!("{prefix}.checkpoint.json")));
+        assert_same_render_cut(&pre_pulse, &wire);
+        assert_ne!(
+            pre_pulse["input_history"]["last_ordinal"],
+            wire["input_history"]["last_ordinal"]
+        );
+    }
+    let last: Counter =
+        serde_json::from_value(wire["input_history"]["last_ordinal"].clone()).unwrap();
+    assert_eq!(
+        journal.last().unwrap().ordinal,
+        last,
+        "retain the whole genuine post-feedback journal"
+    );
+    for app in applications
+        .iter()
+        .filter(|a| a["kind"] == 0 || a["kind"] == 1)
+    {
+        let sequence: Counter = serde_json::from_value(app["sequence"].clone()).unwrap();
+        assert_eq!(
+            journal
+                .iter()
+                .filter(|e| e.native_sequence == sequence && e.change == 2)
+                .count(),
+            1,
+            "each actual played touch requires its unique original Applied input entry"
+        );
     }
     let source_prefix = format!(
         "sha256:{:x}",

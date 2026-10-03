@@ -1808,7 +1808,7 @@ impl Kernel {
                 // A qualified retained candidate may cross this synchronous
                 // owner operation only with its exact complete prospective
                 // Document. Store CAS is still rechecked before and at commit.
-                let mut prepared_retained: Option<(Act, Box<Document>)> = None;
+                let mut prepared_retained: Option<(Act, Box<expression::Document>)> = None;
                 // The ordinary native pure edit and complete retained-record
                 // preflight must qualify BEFORE count-driven archival. The
                 // existing capacity/store checks repeat after make-room; this

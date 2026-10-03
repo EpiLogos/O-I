@@ -225,6 +225,47 @@ def main() -> None:
                     raise RuntimeError("Management overtaking lost the exact stopped cursor/committed high-water")
             if not isinstance(order.get("input_history"),list):
                 raise RuntimeError("Management overtaking original input journal absent")
+            # SAME native owner post-feedback256 and independent SAME-source
+            # post-feedback128 cuts preserve the old unread originals verbatim.
+            # Native pulses append Applied rows; a pre-pulse CP cannot attest
+            # their later watermark. Never trim those real journal entries.
+            pulse=json.loads((order_dir/(name+".pulse-checkpoint.json")).read_bytes())
+            pending_before=json.loads((order_dir/(name+".pending-checkpoint.json")).read_bytes())
+            pending_pulse=json.loads((order_dir/(name+".pending-pulse-checkpoint.json")).read_bytes())
+            pending_history=json.loads((order_dir/(name+".pending-pulse-history.json")).read_bytes())
+            if (pending_history.get("schema")!="ql.performance-managed-application-history/v1"
+                    or pending_history.get("applications")!=entries[:1]
+                    or not isinstance(pending_history.get("input_history"),list)
+                    or not pending_history["input_history"]
+                    or pending_history["input_history"]!=order["input_history"][:len(pending_history["input_history"])]):
+                raise RuntimeError("native pending128 pulse lost its complete committed attack/original journal prefix")
+            for original,observed,cursor,highwater,journal,apps in [
+                    (before,pulse,"256","2",order["input_history"],entries[:2]),
+                    (pending_before,pending_pulse,"128","1",pending_history["input_history"],entries[:1])]:
+                if (observed.get("schema")!="ql.performance-management-checkpoint/v1"
+                        or observed.get("session_ref")!=original.get("session_ref")
+                        or observed.get("transport_epoch")!=original.get("transport_epoch")
+                        or observed.get("transport_epoch")!="1"
+                        or observed["native_pair"]["physical"]!=original["native_pair"]["physical"]
+                        or observed["native_pair"]["audio"].get("schema")!="ql.performance-checkpoint/v2"
+                        or observed["native_pair"]["audio"].get("cursor")!=cursor
+                        or observed["native_pair"]["audio"].get("applied_application_ordinal")!=highwater):
+                    raise RuntimeError("native feedback checkpoint changed source/body/epoch/cursor")
+                old_audio=dict(original["native_pair"]["audio"])
+                new_audio=dict(observed["native_pair"]["audio"])
+                if "applications" not in old_audio or "applications" not in new_audio:
+                    raise RuntimeError("native feedback checkpoint omitted its observer queue")
+                del old_audio["applications"]
+                del new_audio["applications"]
+                if old_audio!=new_audio:
+                    raise RuntimeError("native feedback checkpoint changed actual rendering/source schedule/future queues")
+                if (not journal or observed["input_history"]["last_ordinal"]!=journal[-1]["ordinal"]
+                        or original["input_history"]["last_ordinal"]==observed["input_history"]["last_ordinal"]
+                        or [e["ordinal"] for e in journal]!=[str(i+1) for i in range(len(journal))]):
+                    raise RuntimeError("native feedback checkpoint/journal watermark is not the genuine coherent cut")
+                for app in apps:
+                    if app["kind"] in (0,1) and sum(e.get("native_sequence")==app["sequence"] and e.get("change")==2 for e in journal)!=1:
+                        raise RuntimeError("native feedback checkpoint lost the unique original touch Applied journal")
         pending = json.loads((management_dir / "baseline.pending.management.json").read_bytes())
         applications = json.loads((management_dir / "baseline.applied-events.json").read_bytes())
         if pending.get("schema") != "ql.performance-management-checkpoint/v1" or applications.get("schema") != "ql.native-applied-event-artifact/v1":

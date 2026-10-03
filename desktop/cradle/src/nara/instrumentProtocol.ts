@@ -72,7 +72,7 @@ export type NaraInstrumentRequest =
   | {operation:'act_inspect';basis:InstrumentBasis;role:'nara';answer_block_id:number}
   | {operation:'act_status';basis:InstrumentBasis;role:'nara'}
   | ({operation:'current_pin';basis:InstrumentBasis;role:'nara'} & import('./identity/types').NativePersonalSkySource)
-  | {operation:'current_read';basis:InstrumentBasis;role:'nara'}
+  | {operation:'current_read'|'current_restore';basis:InstrumentBasis;role:'nara'}
   | {operation:'readiness';basis:InstrumentBasis;role:'nara'}
   | {operation:'m3';basis:InstrumentBasis;role:'nara';request:import('./nativeM3').M3Gesture}
   | {operation:'act_focus';basis:InstrumentBasis;role:'nara';answer_block_id:number;target_ref:string}

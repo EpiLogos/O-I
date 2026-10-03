@@ -208,7 +208,7 @@ export function createEpiWorldProduction(port:EpiProductionPort){
    return{document:inspected.document,record,plan,identity,file};
   }finally{inFlight=false;}
  }
- async function pin(record:EpiWorldRecord):Promise<NativeCurrentReading>{
+ async function pin(record:EpiWorldRecord,intent:'acquire'|'restore'='acquire'):Promise<NativeCurrentReading>{
   // The native profile registry is a host faculty. Reopening a durable world
   // resolves its canonical lineage again instead of relying on session memory.
   const locus=validateCoordinateExpression(await port.nara({operation:'coordinate',request:{coordinate_ref:record.receiving.personal.canonical_locus,face:'bimba'}}));
@@ -224,12 +224,17 @@ export function createEpiWorldProduction(port:EpiProductionPort){
   for(const definition of definitions){if(definition.operation!=='profile_define')throw Error('A saved reusable profile receipt contains another native operation.');if(!object(definition.profile)||typeof definition.profile.profile_ref!=='string')throw Error('A saved profile definition has no native identity.');const ref=definition.profile.profile_ref,bytes=JSON.stringify(definition.profile);if(unique.has(ref)&&unique.get(ref)!==bytes)throw Error('A saved profile has conflicting immutable definitions.');unique.set(ref,bytes);await defineProfile(definition);}
   const selected=await port.nara({operation:'select_identity',source:record.identity_source,input_revision:record.identity_input_revision});
   if(selected.schema!=='oi.nara-instrument-state/v1'||selected.identity?.reading.person_ref!==record.person_ref)throw Error('Reopen the saved person for this particular world.');
-  const current=await port.nara({operation:'current_pin',basis:{expression_ref:record.world.instance_ref,source:record.identity_source},role:'nara',snapshot_purpose:'retained-occasion',sky_snapshot:record.world.sky as unknown as import('../../../src/nara/identity/types').NativeSkySnapshot});
+  const basis={expression_ref:record.world.instance_ref,source:record.identity_source};
+  // Ordinary reopening restores the exact saved private admission. Acquisition
+  // remains an explicit identity Use/correction or first construction act.
+  const current=await port.nara(intent==='restore'
+   ?{operation:'current_restore',basis,role:'nara'}
+   :{operation:'current_pin',basis,role:'nara',snapshot_purpose:'retained-occasion',sky_snapshot:record.world.sky as unknown as import('../../../src/nara/identity/types').NativeSkySnapshot});
   if(current.schema!=='oi.nara-personal-current-context/v1'||current.status!=='available'||current.context?.event_ref!==record.world.event_ref||current.reading?.identity.person_ref!==record.person_ref||current.reading.transit.sky?.snapshot_ref!==record.world.snapshot_ref)throw Error('The personal owner did not receive the exact saved cosmic occasion.');
   requireRetainedSkyAdmission(current.reading?.sky_admission,record.world.sky as unknown as import('../../../src/nara/identity/types').NativeSkySnapshot);
   return current;
  }
- async function rebind(record:EpiWorldRecord,identity:InstrumentIdentity){
+ async function rebind(record:EpiWorldRecord,identity:InstrumentIdentity,intent:'acquire'|'restore'='restore'){
   if(identity.reading.person_ref!==record.person_ref||identity.reading.nara_ref!==record.nara_ref)throw Error('An identity correction must retain this world’s actual person and Nara binding.');
   const inspected=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
   if(!inspected.document)throw Error('The saved native world cannot be read for presentation correction.');
@@ -287,8 +292,9 @@ export function createEpiWorldProduction(port:EpiProductionPort){
    if(!received.document||!acknowledged||!sameSceneData(received.document,expectedDocument)||!sameSceneData(acknowledged,geometryCorrection.record)||!sameSceneData(received.document.scenes.find(scene=>scene.scene_ref===record.receiving.scene_ref)?.presentation,geometryCorrection.changes[0].presentation)||epiCosmicCaptionGeometryCorrection(received.document,acknowledged).changes.length)throw Error('The exact native live/saved caption geometry correction was not acknowledged.');
    record=acknowledged;
   }
+  if(intent==='restore'&&(!sameSceneData(identity.source,record.identity_source)||identity.reading.input_revision!==record.identity_input_revision))throw Error('The saved identity changed. Review it and choose Use to admit its new current.');
   const updated={...record,identity_source:identity.source,identity_input_revision:identity.reading.input_revision};
-  const current=await pin(updated),context=current.context!;
+  const current=await pin(updated,intent),context=current.context!;
   const previous:PersonalInstance={person:record.receiving.personal.person,identity:record.receiving.personal.identity,instance_ref:record.world.instance_ref,nara_ref:record.nara_ref,event_ref:record.world.event_ref,snapshot_ref:record.world.snapshot_ref,...(record.receiving.personal.current?{current:record.receiving.personal.current}:{})};
   const next:PersonalInstance={...previous,person:{ref:record.person_ref,revision:identity.reading.input_revision,availability:'available'},identity:{ref:identity.source.source_ref,revision:identity.source.revision,availability:'available'},current:{ref:context.reading_ref,revision:context.reading_revision,availability:'available'},native_current:current};
   let held=updated;

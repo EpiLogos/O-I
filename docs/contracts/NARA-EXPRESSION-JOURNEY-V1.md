@@ -12,6 +12,17 @@ The native kernel remains the Expression document owner. Central owns the saved 
 
 The frame keeps private identity readings only in live memory. They must not enter the authored Journey, browser draft, HTML export, capture metadata, shared edition or Expression provenance body. Persistent Expression bindings contain qualified references, not copied personal data.
 
+
+### Saved personal-current recovery
+
+Implementation candidate for the commissioned cold-reopening repair; source review and native execution remain separate evidence. Ordinary reopening restores the exact previously admitted private current for the saved person, native Expression and cosmic occasion. First construction and explicit identity Save/use or correction acquire a new current. Missing or changed custody refuses restoration visibly and offers that deliberate admission; it never silently recalculates natal evidence or substitutes a fresh reading.
+
+The native Nara owner retains the complete admitted reading and any actual M3 activity input in owner-private storage, outside authored material, browser persistence, capture metadata and public export. Stored Expression bindings remain qualified references. Restoration checks the actual native source/identity revisions, complete adopted profile lineage, canonical personal participants, exact saved occasion and current reference. The operation accepts no executable, checkpoint path, private payload or invented quaternion from the renderer. Acquisition and activity computation execute the selected qualified QL image; a changed image requires explicit new admission. Reusing custody makes no new astronomical-freshness claim.
+
+Admission follows complete native Document/profile/identity/current fences, locked atomic persistence and exact durable readback before live-memory effects. Duplicate keys, missing canonical fields, tampering, path redirection, conflicting immutable custody and capacity exhaustion refuse without discarding prior admitted readings. Restoring a saved current follows the current reference actually saved in its Document; an unsaved later candidate is not silently adopted. Restoring the operable M3 resident/journal is a separate receiving obligation.
+
+Acceptance uses a real native-produced checkpoint and complete body/context readback across fresh owners, alongside the unchanged complete Document/file/CAS checks. Required negatives include missing custody, altered fields or owner, a foreign person and the same-labelled wrong personal branch. None of those source or transport checks proves personal modal consumption, a fresh Nara/Epii answer, the continuing oracle journey or installed acceptance.
+
 ## The experience
 
 At rest, the actual Expression is the principal body. A compact personal heading identifies the current person, and the existing tool grammar exposes Identity, Composition and Nara. Depth opens and closes without replacing the Expression or its native conversation.

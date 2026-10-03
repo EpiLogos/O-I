@@ -5,6 +5,8 @@ use crate::{flow::CentralClient, nara_dialogue, nara_identity};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
+#[path = "nara_current_store.rs"]
+mod retention;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
@@ -21,11 +23,16 @@ pub enum Request {
     Read {
         binding: nara_dialogue::Request,
     },
+    Restore {
+        binding: nara_dialogue::Request,
+    },
 }
 impl Request {
     pub fn binding(&self) -> &nara_dialogue::Request {
         match self {
-            Self::Pin { binding, .. } | Self::Read { binding } => binding,
+            Self::Pin { binding, .. } | Self::Read { binding } | Self::Restore { binding } => {
+                binding
+            }
         }
     }
 }
@@ -39,6 +46,7 @@ pub struct Prepared {
     existing: Option<Pinned>,
 }
 pub struct Completed {
+    pub project: String,
     pub binding: nara_dialogue::Request,
     pub document: Value,
     pub profile: nara_dialogue::ProfileBasis,
@@ -54,6 +62,8 @@ pub struct Pinned {
     profile: nara_dialogue::ProfileBasis,
     context: Value,
     reading: Value,
+    owner: retention::Owner,
+    activity_input: Option<Value>,
 }
 
 impl Pinned {
@@ -73,7 +83,14 @@ impl Pinned {
     pub(crate) fn reading(&self) -> Value {
         self.reading.clone()
     }
-    pub(crate) fn with_native_activity(&self, reading: Value) -> Result<Self, String> {
+    pub(crate) fn retain(&self, project: &str) -> Result<(), String> {
+        retention::Store::default().retain(project, self)
+    }
+    pub(crate) fn with_native_activity(
+        &self,
+        reading: Value,
+        input: Value,
+    ) -> Result<Self, String> {
         if reading["schema"] != "ql.nara-personal-current/v1"
             || reading["identity"] != self.reading["identity"]
             || reading["transit"] != self.reading["transit"]
@@ -91,9 +108,19 @@ impl Pinned {
         );
         let mut pin = self.clone();
         pin.reading = reading;
+        pin.activity_input = Some(input);
         pin.context["reading_ref"] = json!(format!("personal:nara-current:{digest}"));
         pin.context["reading_revision"] = json!(format!("sha256:{digest}"));
         Ok(pin)
+    }
+    pub(crate) fn run_native_m3(&self, input: &Value) -> Result<Value, String> {
+        self.owner
+            .execute(|path| nara_identity::run_ql_selected(path, "kernel", "m3", input))
+    }
+    pub(crate) fn recompose_native_activity(&self, input: &Value) -> Result<Value, String> {
+        self.owner.execute(|path| {
+            nara_identity::run_ql_selected(path, "nara", "personal-recompose", input)
+        })
     }
     pub(crate) fn expression_ref(&self) -> &str {
         &self.binding.expression_ref
@@ -191,6 +218,88 @@ fn validate_saved_occasion(
     Ok(())
 }
 
+fn saved_record(document: &Value) -> Result<&Value, String> {
+    let scenes = document["scenes"]
+        .as_array()
+        .ok_or("The saved native world has no Scenes")?;
+    let mut records = scenes
+        .iter()
+        .filter_map(|scene| scene.pointer("/presentation/scene/epiWorld"))
+        .filter(|r| r["schema"] == "oi.epi-world-material/v1");
+    let record = records
+        .next()
+        .ok_or("No saved Epi world owns this personal current")?;
+    if records.next().is_some() {
+        return Err("Personal restoration requires one exact stored world".into());
+    }
+    Ok(record)
+}
+fn validate_saved_current_participants(
+    document: &Value,
+    binding: &nara_dialogue::Request,
+    context: &Value,
+) -> Result<(), String> {
+    use std::collections::BTreeSet;
+    let record = saved_record(document)?;
+    let personal = &record["receiving"]["personal"];
+    let expected = serde_json::json!({"ref":context["reading_ref"],"revision":context["reading_revision"],"availability":"available"});
+    if personal["current"] != expected
+        || personal["person"]["ref"] != binding.person_ref
+        || personal["identity"]["ref"] != binding.source_ref
+        || personal["identity"]["revision"] != binding.expected_revision
+        || record["identity_source"]["revision"] != binding.expected_revision
+        || personal["instance_ref"] != binding.expression_ref
+    {
+        return Err("Saved personal current restoration differs from its person, identity or exact reference".into());
+    }
+    let refs = personal["participant_entity_refs"]
+        .as_array()
+        .ok_or("The saved current has no participant bindings")?;
+    let allowed: BTreeSet<String> = [
+        "ql:m-coordinate:bimba:M4.4.4.4".to_owned(),
+        "ql:m-coordinate:bimba:M2-5-0/1-0".to_owned(),
+    ]
+    .into_iter()
+    .chain((1..=7).map(|i| format!("ql:m-coordinate:bimba:M2-5-0/1-{i}")))
+    .chain((0..=5).map(|i| format!("ql:m-coordinate:bimba:M4.{i}")))
+    .collect();
+    if refs.len() != allowed.len() {
+        return Err("The saved current lost a personal participant".into());
+    }
+    let mut seen = BTreeSet::new();
+    let mut subjects = BTreeSet::new();
+    for value in refs {
+        let reference = value
+            .as_str()
+            .ok_or("The saved current participant has no native reference")?;
+        let subject = &document["entities"][reference]["subject"];
+        let canonical = subject["subject_ref"]
+            .as_str()
+            .ok_or("The saved current participant has no subject")?;
+        if !seen.insert(reference)
+            || !subjects.insert(canonical.to_owned())
+            || !allowed.contains(canonical)
+            || subject["native_owner"] != "ql-mef"
+            || !subject["sources"].as_array().is_some_and(|s| {
+                s.iter().any(|r| r == &personal["person"])
+                    && s.iter().any(|r| r == &personal["identity"])
+            })
+            || !subject["readings"].as_array().is_some_and(|r| {
+                r.iter()
+                    .filter(|r| r["ref"] == context["reading_ref"])
+                    .count()
+                    == 1
+                    && r.iter().any(|r| r == &expected)
+            })
+        {
+            return Err(
+                "A saved personal participant differs from the admitted current source".into(),
+            );
+        }
+    }
+    Ok(())
+}
+
 impl Prepared {
     pub fn new(
         client: CentralClient,
@@ -226,6 +335,24 @@ impl Prepared {
         let session = nara_dialogue::Binding::new(&self.project, &binding)?.agent_session;
         let candidate = match self.request {
             Request::Read { .. } => None,
+            Request::Restore { .. } => {
+                let pin = retention::Store::default().restore(
+                    &self.project,
+                    &binding,
+                    &self.profile,
+                    &self.document,
+                )?;
+                let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
+                if source.revision.revision != binding.expected_revision
+                    || !nara_identity::same_input(&pin.reading["identity"]["profile"], &identity)
+                {
+                    return Err(
+                        "The saved identity changed before its protected current was restored"
+                            .into(),
+                    );
+                }
+                Some(pin)
+            }
             Request::Pin {
                 sky_request,
                 sky_snapshot,
@@ -241,16 +368,25 @@ impl Prepared {
                         )?,
                     )?;
                 }
-                let value = nara_identity::apply(
-                    &self.client,
-                    nara_identity::Request::PersonalCurrent {
-                        source_ref: binding.source_ref.clone(),
-                        expected_revision: binding.expected_revision.clone(),
-                        sky_request,
-                        sky_snapshot,
-                        snapshot_purpose,
-                    },
-                )?;
+                let owner = retention::Owner::capture()?;
+                let value = owner.execute(|path| {
+                    nara_identity::apply_selected_personal_current(
+                        &self.client,
+                        nara_identity::Request::PersonalCurrent {
+                            source_ref: binding.source_ref.clone(),
+                            expected_revision: binding.expected_revision.clone(),
+                            sky_request,
+                            sky_snapshot,
+                            snapshot_purpose,
+                        },
+                        path,
+                    )
+                })?;
+                if !owner.same_source(&retention::Owner::capture()?) {
+                    return Err(
+                        "The selected QL owner changed during personal current acquisition".into(),
+                    );
+                }
                 let reading = &value["personal_current"];
                 let event = reading["snapshot_ref"]
                     .as_str()
@@ -276,6 +412,8 @@ impl Prepared {
                     binding: binding.clone(),
                     profile: self.profile.clone(),
                     reading: reading.clone(),
+                    owner,
+                    activity_input: None,
                     context: json!({"reading_ref":format!("personal:nara-current:{digest}"),
                         "reading_revision":format!("sha256:{digest}"),"event_ref":event,
                         "identity_source_ref":binding.source_ref,"identity_revision":binding.expected_revision}),
@@ -292,6 +430,7 @@ impl Prepared {
             "context":active.map(Pinned::context),"reading":active.map(Pinned::reading),
             "private":true,"public_export":false});
         Ok(Completed {
+            project: self.project,
             binding,
             document: self.document,
             profile: self.profile,

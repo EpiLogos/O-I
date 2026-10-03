@@ -4,7 +4,7 @@ import type {PersonalCurrentContext} from './dialogueContext';
 import type {PersonalCurrentReading,NativePersonalSkySource} from './identity/types';
 export type NativeCurrentRequest=
  |({operation:'pin';binding:NativeDialogueRequest}&NativePersonalSkySource)
- |{operation:'read';binding:NativeDialogueRequest};
+ |{operation:'read'|'restore';binding:NativeDialogueRequest};
 export interface NativeCurrentReading {
  schema:'oi.nara-personal-current-context/v1';
  nara_ref:string;expression_ref:string;expression_revision:number;

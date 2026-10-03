@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
     io::{Read, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::mpsc,
     time::{Duration, Instant},
@@ -138,17 +138,34 @@ pub(crate) fn run_ql_nara(operation: &str, input: &Value) -> Result<Value, Strin
     run_ql_owner("nara", operation, input)
 }
 
-pub(crate) fn run_ql_m3(input: &Value) -> Result<Value, String> {
-    run_ql_owner("kernel", "m3", input)
-}
-
 fn run_ql_owner(family: &str, operation: &str, input: &Value) -> Result<Value, String> {
-    let bytes = profile_bytes(input)?;
     let executable = std::env::var_os("OI_BIN")
         .map(PathBuf::from)
         .unwrap_or_else(|| "oi".into());
-    let mut child = Command::new(executable)
-        .args(["ql", family, operation, "-", "--json"])
+    let mut command = Command::new(executable);
+    command.args(["ql", family, operation, "-", "--json"]);
+    run_ql_command(command, input)
+}
+
+/// The native current owner captured this absolute executable. No request,
+/// renderer profile or stored material can choose a command. `oi ql` itself
+/// delegates these same arguments without modifying the inherited environment.
+pub(crate) fn run_ql_selected(
+    executable: &Path,
+    family: &str,
+    operation: &str,
+    input: &Value,
+) -> Result<Value, String> {
+    if !executable.is_absolute() {
+        return Err("Selected QL owner path must be absolute".into());
+    }
+    let mut command = Command::new(executable);
+    command.args([family, operation, "-", "--json"]);
+    run_ql_command(command, input)
+}
+fn run_ql_command(mut command: Command, input: &Value) -> Result<Value, String> {
+    let bytes = profile_bytes(input)?;
+    let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -197,7 +214,7 @@ fn run_ql_owner(family: &str, operation: &str, input: &Value) -> Result<Value, S
 /// QL's typed float fields can serialize an entered JSON integer as `0.0`.
 /// Preserve exact values and object shape while accepting that representation
 /// change. Large integers never pass through a lossy floating conversion.
-fn same_input(left: &Value, right: &Value) -> bool {
+pub(crate) fn same_input(left: &Value, right: &Value) -> bool {
     match (left, right) {
         (Value::Object(a), Value::Object(b)) => {
             a.len() == b.len()
@@ -301,6 +318,27 @@ fn personal_sky_input(
 }
 
 pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> {
+    apply_inner(client, request, None)
+}
+/// Narrow native current acquisition; ordinary identity operations keep their
+/// existing installed-suite route and cannot receive an executable in JSON.
+pub(crate) fn apply_selected_personal_current(
+    client: &CentralClient,
+    request: Request,
+    owner: &Path,
+) -> Result<Value, String> {
+    if !matches!(&request, Request::PersonalCurrent { .. }) {
+        return Err(
+            "Selected QL custody applies only to native personal current acquisition".into(),
+        );
+    }
+    apply_inner(client, request, Some(owner))
+}
+fn apply_inner(
+    client: &CentralClient,
+    request: Request,
+    owner: Option<&Path>,
+) -> Result<Value, String> {
     match request {
         Request::Inspect { profile } => Ok(result(ql("inspect", &profile)?, None)),
         Request::Calculate { profile } => Ok(result(ql("calculate", &profile)?, None)),
@@ -337,7 +375,12 @@ pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> 
             if snapshot_purpose == SnapshotPurpose::RetainedOccasion {
                 input["snapshot_purpose"] = json!(snapshot_purpose);
             }
-            let current = run_ql_nara("personal-current", &input)?;
+            let current = match owner {
+                Some(executable) => {
+                    run_ql_selected(executable, "nara", "personal-current", &input)?
+                }
+                None => run_ql_nara("personal-current", &input)?,
+            };
             if current["schema"] != "ql.nara-personal-current/v1"
                 || !same_input(&current["identity"]["profile"], &profile)
                 || current["identity"]["person_ref"] != profile["person_ref"]

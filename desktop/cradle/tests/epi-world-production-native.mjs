@@ -4,6 +4,7 @@
  * invented domain data, component mount or replacement material producer.
  * This is candidate browser/native evidence, not an installed Mac claim. */
 import assert from 'node:assert/strict';
+import {isDeepStrictEqual} from 'node:util';
 import {createEpiFirstRestReceivingGate} from './epi-first-rest-receiving.mjs';
 import {readFileSync,writeFileSync,mkdirSync,openSync,readSync,closeSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
@@ -444,7 +445,7 @@ function observePage(p){
  p.on('response',response=>{if(!response.url().endsWith('/op'))receipt.boot_network.push({phase,url:response.url(),status:response.status()});});
  p.on('request',request=>{if(request.method()==='POST'&&request.url().endsWith('/op')){const data=request.postDataJSON();receipt.issued_requests.push({phase,...summarizeRequest(data),at:new Date().toISOString()});if(data.op==='native_expression'&&['prepare_world','compose'].includes(data.request?.operation))artifact(`native-world-issued-${receipt.issued_requests.length}.json`,data);if(data.op==='expression'&&data.request?.operation==='edit')artifact(`native-expression-edit-issued-${receipt.issued_requests.length}.json`,data);if(data.op==='expression'&&['save_as','save','open_file','open'].includes(data.request?.operation))artifact(`native-expression-owner-issued-${receipt.issued_requests.length}.json`,data);if(/^(file_|files_)/.test(data.op))artifact(`native-file-issued-${receipt.issued_requests.length}.json`,data);}});
  p.on('requestfailed',request=>{if(request.method()==='POST'&&request.url().endsWith('/op'))receipt.request_failures.push({phase,...summarizeRequest(request.postDataJSON()),failure:request.failure(),at:new Date().toISOString()});});
- p.on('response',async response=>{if(response.request().method()!=='POST'||!response.url().endsWith('/op'))return;const request=response.request().postDataJSON();const row={phase,...summarizeRequest(request),at:new Date().toISOString(),http_status:response.status()};receipt.operations.push(row);const operationIndex=receipt.operations.length;try{let body;if(request.op==='native_expression'){const raw=await response.text(),name=`native-owner-raw-response-${operationIndex}.json`;writeFileSync(resolve(out,name),raw);receipt.artifacts.push(name);row.raw_native_response={artifact:name,bytes:Buffer.byteLength(raw),sha256:sha(raw)};body=JSON.parse(raw);}else body=await response.json();row.ok=body.ok;row.result=body.outcome?.result;if(request.op==='expression'&&['save_as','save','open_file','open'].includes(request.request?.operation)){row.native_state=body.outcome?.data?.state;artifact(`native-expression-owner-response-${operationIndex}.json`,{request,response:body});if(['save_refused','saved_readback_failed','file_revision_conflict'].includes(row.native_state))row.error=body.outcome.data.error??body.outcome.data.failure??row.native_state;}if(/^(file_|files_)/.test(request.op))artifact(`native-file-response-${operationIndex}.json`,{request,response:body});if(request.op==='expression'&&request.request?.operation==='edit')artifact(`native-expression-edit-response-${operationIndex}.json`,{request,response:body});if(request.op==='native_expression'&&request.request?.operation==='prepare_world'){artifact(`native-world-prepared-${operationIndex}.json`,{request,response:body});if(body.ok===true)nativePrepared.push({world:body.outcome.data.source.world,request,response:body});}if(request.op==='native_expression'&&request.request?.operation==='compose'&&body.ok===true){const composed=body.outcome?.data;row.runtime_buffers=Object.fromEntries(['slots_a','slots_b'].map(key=>{const values=composed?.presentation?.[key];assert.ok(Array.isArray(values),'Actual native compose must return complete receiving correspondence');return[key,{count:values.length,sha256:sha(JSON.stringify(values))}];}));nativeComposes.push({source:composed.source,lease:composed.lease,request,presentation:composed.presentation,buffers:row.runtime_buffers});captureNativeFrames(composed,composed.lease,request);artifact(`native-world-recomposed-${operationIndex}.json`,{request,response:body,runtime_buffers:row.runtime_buffers});}if(request.op==='native_expression'&&request.request?.operation==='exchange'&&body.ok===true)captureNativeFrames(body.outcome?.data,request.request.lease,request);if(request.op==='m3_reception'){artifact(`actual-native-m3-${operationIndex}.json`,{request,response:body});if(body.ok===true&&body.outcome?.data?.schema==='oi.m3-reception-context/v1')nativeM3.push({request,response:body,reading:body.outcome.data});}if(body.ok!==true){row.error=body.error;artifact(`native-refusal-${operationIndex}.json`,{request,response:body});}}catch(e){row.error=String(e);}});
+ p.on('response',async response=>{if(response.request().method()!=='POST'||!response.url().endsWith('/op'))return;const request=response.request().postDataJSON();const row={phase,...summarizeRequest(request),at:new Date().toISOString(),http_status:response.status()};receipt.operations.push(row);const operationIndex=receipt.operations.length;try{let body;if(request.op==='native_expression'||request.op==='nara_current'){const raw=await response.text(),name=`native-owner-raw-response-${operationIndex}.json`;writeFileSync(resolve(out,name),raw);receipt.artifacts.push(name);row.raw_native_response={artifact:name,bytes:Buffer.byteLength(raw),sha256:sha(raw)};body=JSON.parse(raw);}else body=await response.json();row.ok=body.ok;row.result=body.outcome?.result;if(request.op==='expression'&&['save_as','save','open_file','open'].includes(request.request?.operation)){row.native_state=body.outcome?.data?.state;artifact(`native-expression-owner-response-${operationIndex}.json`,{request,response:body});if(['save_refused','saved_readback_failed','file_revision_conflict'].includes(row.native_state))row.error=body.outcome.data.error??body.outcome.data.failure??row.native_state;}if(/^(file_|files_)/.test(request.op))artifact(`native-file-response-${operationIndex}.json`,{request,response:body});if(request.op==='expression'&&request.request?.operation==='edit')artifact(`native-expression-edit-response-${operationIndex}.json`,{request,response:body});if(request.op==='native_expression'&&request.request?.operation==='prepare_world'){artifact(`native-world-prepared-${operationIndex}.json`,{request,response:body});if(body.ok===true)nativePrepared.push({world:body.outcome.data.source.world,request,response:body});}if(request.op==='native_expression'&&request.request?.operation==='compose'&&body.ok===true){const composed=body.outcome?.data;row.runtime_buffers=Object.fromEntries(['slots_a','slots_b'].map(key=>{const values=composed?.presentation?.[key];assert.ok(Array.isArray(values),'Actual native compose must return complete receiving correspondence');return[key,{count:values.length,sha256:sha(JSON.stringify(values))}];}));nativeComposes.push({source:composed.source,lease:composed.lease,request,presentation:composed.presentation,buffers:row.runtime_buffers});captureNativeFrames(composed,composed.lease,request);artifact(`native-world-recomposed-${operationIndex}.json`,{request,response:body,runtime_buffers:row.runtime_buffers});}if(request.op==='native_expression'&&request.request?.operation==='exchange'&&body.ok===true)captureNativeFrames(body.outcome?.data,request.request.lease,request);if(request.op==='nara_current'){artifact(`actual-native-personal-current-${operationIndex}.json`,{request,response:body});row.actual_current={context:body.outcome?.data?.context??null,status:body.outcome?.data?.status??null,artifact:`actual-native-personal-current-${operationIndex}.json`};}if(request.op==='m3_reception'){artifact(`actual-native-m3-${operationIndex}.json`,{request,response:body});if(body.ok===true&&body.outcome?.data?.schema==='oi.m3-reception-context/v1')nativeM3.push({request,response:body,reading:body.outcome.data});}if(body.ok!==true){row.error=body.error;artifact(`native-refusal-${operationIndex}.json`,{request,response:body});}}catch(e){row.error=String(e);}});
 }
 async function exposeNativePanel(){
  const toggle=frame.locator('.workspace-cluster>.header-menu-toggle');
@@ -573,6 +574,104 @@ try{
 
  phase='controlled person A ordinary construction';
  if(config.reopen_file){const opened=await frame.evaluate(path=>window.__FIELD_STUDIES__.openNativeFile(path),config.reopen_file);assert.equal(opened,true,'The actual native file open must be acknowledged before the world replay: '+JSON.stringify(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking())));}else if(config.existing_expression_ref){await readyCurrent(identities[0].reading.person_ref);await action('save');}else await frame.evaluate(identity=>window.__FIELD_STUDIES__.enterEpiWorld(identity),identities[0]);
+ if(config.stage==='selected-conversation-setup'){
+  // Imported historical material contains a current reference without its
+  // private native body. Ordinary Restore must first refuse missing custody;
+  // only an explicit ordinary saved-identity Use acquires a reviewed new baseline.
+  phase='historical current missing-custody refusal before explicit identity use';
+  const missing='The saved native personal current has no protected checkpoint; explicitly use this saved identity to admit a new current';
+  await frame.waitForFunction(message=>Array.from(document.querySelectorAll('.epi-world-entrance [data-native-personal-current-refusal] pre')).some(e=>e.textContent===message||e.textContent==='Error: '+message),missing,{timeout:180000});
+  assert.match(await frame.locator('.epi-world-entrance [role="alert"]').innerText(),/Open Your identity.*Use saved identity/,'The native refusal has an executable ordinary recovery route; its exact raw cause remains in Inspect');
+  const before=await snapshot('selection-historical-missing-private-current');
+  assert.equal(before.current,null,'A missing private historical checkpoint cannot be reconstructed or silently recalculated');
+  const oldReference=before.record.receiving.personal.current;
+  const beforeNativeDocument=await nativeDocument(before.working.native_ref);
+  assert.ok(oldReference?.ref?.startsWith('personal:nara-current:'));
+  assert.ok(receipt.operations.some(row=>row.op==='nara_current'&&row.operation==='restore'&&row.ok===false&&row.error?.includes(missing)),'The actual native Restore refusal, not only a UI message, must be retained');
+  check(true,'Historical saved current without protected custody refuses before any implicit acquisition');
+  // Deliberately acquire through the real saved-profile UI. Its native Open
+  // and select_identity receipts retain the actual saved source; no profile
+  // draft is saved or unavailable old private body fabricated.
+  const identityBefore=(await op({op:'nara_identity',request:{operation:'open',source_ref:identities[0].source.source_ref}})).data;
+  assert.deepEqual(identityBefore.source,identities[0].source);
+  const sourceSavesBefore=receipt.issued_requests.filter(row=>row.op==='nara_identity'&&row.operation==='save').length;
+  await frame.locator('[data-epi="identity"]').click();
+  await frame.locator('.nara-personal select[aria-label="Saved profiles"]').selectOption(identities[0].source.source_ref);
+  const useSaved=frame.getByRole('button',{name:'Use saved identity',exact:true});
+  await useSaved.waitFor({state:'visible',timeout:40000});
+  await frame.waitForFunction(()=>Array.from(document.querySelectorAll('.nara-personal button')).some(button=>button.textContent==='Use saved identity'&&!button.disabled),null,{timeout:180000});
+  // Genuine draft interaction cannot select the earlier saved input. No
+  // owner fixture or synthetic reply is substituted for this UI guard.
+  await frame.getByRole('button',{name:/^Birth details/}).click();
+  const nameInput=frame.getByLabel('Your name',{exact:true}),savedName=await nameInput.inputValue();
+  await nameInput.fill(savedName+' · controlled unsaved edit');
+  assert.equal(await useSaved.isDisabled(),true,'An authored draft edit cannot be admitted as the earlier saved identity');
+  const unchangedDraftSource=(await op({op:'nara_identity',request:{operation:'open',source_ref:identities[0].source.source_ref}})).data;
+  assert.deepEqual(unchangedDraftSource.source,identityBefore.source);
+  assert.deepEqual(unchangedDraftSource.reading.profile,identityBefore.reading.profile,'The pending UI draft is not written to the native identity Source');
+  // Explicitly discard this controlled draft via the existing selector and
+  // reopen the exact saved Source before the deliberate Use action.
+  await frame.locator('.nara-personal select[aria-label="Saved profiles"]').selectOption('');
+  await frame.locator('.nara-personal select[aria-label="Saved profiles"]').selectOption(identities[0].source.source_ref);
+  await frame.waitForFunction(()=>Array.from(document.querySelectorAll('.nara-personal button')).some(button=>button.textContent==='Use saved identity'&&!button.disabled),null,{timeout:180000});
+  await useSaved.focus();await useSaved.press('Enter');
+  await readyCurrent(identities[0].reading.person_ref);await noAlert();
+  const identityAfter=(await op({op:'nara_identity',request:{operation:'open',source_ref:identities[0].source.source_ref}})).data;
+  assert.deepEqual(identityAfter.source,identityBefore.source,'Ordinary Use saved identity preserves the native Central source and exact revision');
+  assert.deepEqual(identityAfter.reading.profile,identityBefore.reading.profile,'Ordinary Use saved identity preserves the full actual authored input');
+  assert.equal(receipt.issued_requests.filter(row=>row.op==='nara_identity'&&row.operation==='save').length,sourceSavesBefore,'Ordinary Use saved identity must not send any profile Save');
+  const admitted=await snapshot('selection-explicit-new-private-current-admitted');
+  assert.equal(admitted.record.person_ref,before.record.person_ref);
+  assert.equal(admitted.record.nara_ref,before.record.nara_ref);
+  assert.deepEqual(admitted.record.identity_source,before.record.identity_source);
+  assert.equal(admitted.record.identity_input_revision,before.record.identity_input_revision);
+  assert.deepEqual(admitted.record.world,before.record.world,'Explicit use preserves the complete original dated cosmic occasion and instance');
+  assert.equal(admitted.current.context.event_ref,before.record.world.event_ref);
+  const acceptedPin=receipt.operations.findLast(row=>row.op==='nara_current'&&row.operation==='pin'&&row.ok===true);
+  assert.ok(acceptedPin?.actual_current?.artifact,'Explicit use must consume an actual acknowledged native Pin, not fabricate or retag the unavailable historical body');
+  const pinReceipt=JSON.parse(readFileSync(resolve(out,acceptedPin.actual_current.artifact),'utf8'));
+  assert.deepEqual(pinReceipt.response.outcome.data.context,admitted.current.context);
+  assert.deepEqual(pinReceipt.response.outcome.data.reading,admitted.current.reading,'The full actual newly acquired native body reaches this ordinary personal receiver');
+  check(true,'An explicit production entry using the actual saved native identity admits and retains a genuinely new current at the original person/occasion');
+  const afterNativeDocument=await nativeDocument(admitted.working.native_ref),expectedNativeDocument=structuredClone(beforeNativeDocument);
+  const beforeCarrier=beforeNativeDocument.scenes.find(scene=>scene.presentation?.scene?.epiWorld);
+  const expectedCarrier=expectedNativeDocument.scenes.find(scene=>scene.scene_ref===beforeCarrier.scene_ref);
+  const previousCurrent=beforeCarrier.presentation.scene.epiWorld.receiving.personal.current;
+  const nextCurrent={ref:admitted.current.context.reading_ref,revision:admitted.current.context.reading_revision,availability:'available'};
+  if(previousCurrent.ref!==nextCurrent.ref||previousCurrent.revision!==nextCurrent.revision){
+   expectedNativeDocument.revision++;
+   const personal=expectedCarrier.presentation.scene.epiWorld.receiving.personal;
+   assert.equal(personal.participant_entity_refs.length,15,'Explicit current read retains all15 source-bound personal participants');
+   const priorPersonal={person:structuredClone(personal.person),identity:structuredClone(personal.identity),current:structuredClone(previousCurrent)};
+   const oldRefs=new Set([priorPersonal.person.ref,priorPersonal.identity.ref,priorPersonal.current.ref]);
+   // Independent prediction of the exact subject operation: remove prior
+   // personal bindings then append the unchanged source/person and new current;
+   // redirect only actions targeting those exact prior references.
+   const append=(retained,added)=>[...retained,...added.filter(value=>!retained.some(old=>isDeepStrictEqual(old,value)))].map(value=>structuredClone(value));
+   for(const ref of personal.participant_entity_refs){
+    const entity=expectedNativeDocument.entities[ref],subject=entity.subject;
+    const matches=subject.readings.filter(value=>value.ref===previousCurrent.ref);
+    assert.equal(matches.length,1,'Each actual participant has exactly one original current binding');
+    assert.deepEqual(matches[0],previousCurrent);
+    subject.sources=append(subject.sources.filter(value=>!oldRefs.has(value.ref)),[priorPersonal.person,priorPersonal.identity]);
+    subject.readings=append(subject.readings.filter(value=>!oldRefs.has(value.ref)),[nextCurrent]);
+    subject.actions=subject.actions.map(action=>({...action,...(action.target_ref===priorPersonal.identity.ref?{target_ref:priorPersonal.identity.ref}:action.target_ref===previousCurrent.ref?{target_ref:nextCurrent.ref}:{})}));
+    // expression::Document::edited assigns each changed native member the
+    // single successor Document revision, regardless of its prior revision.
+    assert.notDeepEqual(subject,beforeNativeDocument.entities[ref].subject);
+    entity.revision=expectedNativeDocument.revision;
+   }
+   personal.current=structuredClone(nextCurrent);personal.standing='qualified-native-current';
+   const reset=structuredClone(expectedCarrier.presentation.scene);delete reset.epiWorld;
+   assert.deepEqual(reset,beforeCarrier.presentation.saved,'Current rebinding must preserve the complete authored reset material');
+   expectedCarrier.presentation.saved=reset;expectedCarrier.revision=expectedNativeDocument.revision;
+  }
+  assert.deepEqual(afterNativeDocument,expectedNativeDocument,'Explicit acquisition may change only the exact current reference and lawful native document/scene/participant revisions; all full material/private references/history/layout/source/body values are conserved');
+  artifact('selection-explicit-new-current-admission.json',{operation:'actual ordinary Open saved profile -> Use saved identity -> native select_identity -> existing host.enterWorld -> native Pin; no identity resave',
+   unavailable_historical_reference:oldReference,before_document:beforeNativeDocument,
+   new_current:admitted.current,after_document:afterNativeDocument,
+   standing:'Historical private payload unavailable; explicit new native acquisition, not restored f119 or silently normalized Document'});
+ }
  await noAlert();await readyCurrent(identities[0].reading.person_ref);
  // Separate selection-only cases stop before any original cosmic/tick/whole
  // gate. The acknowledged ordinary producer may first repair its known stale
@@ -640,6 +739,21 @@ try{
    assert.ok(custody.admission_ref,'Each case needs the independently acknowledged preceding setup basis');
    const previous=qualifiedJson(custody.admission_ref,'Prior complete ordinary selection setup');assert.equal(previous.schema,admission.schema);
    assert.deepEqual(admission.document,previous.document,'A fresh isolated owner must admit every same native document value without normalisation');
+   assert.ok(custody.protected_current_custody_ref,'Each isolated owner needs the exact native-admitted private current custody');
+   const checkpointCustody=qualifiedJson(custody.protected_current_custody_ref,'Actual native protected current custody');
+   assert.equal(checkpointCustody.schema,'epi.hosted-native-protected-current-custody/v1');
+   const nativeCurrent=(await op({op:'nara_current',project:'',request:{operation:'read',binding:{operation:'context',role:'nara',
+    source_ref:carrier.identity_source.source_ref,expected_revision:carrier.identity_source.revision,
+    person_ref:carrier.person_ref,nara_ref:carrier.nara_ref,expression_ref:document.expression_ref}}})).data;
+   assert.equal(nativeCurrent.status,'available');assert.equal(nativeCurrent.private,true);assert.equal(nativeCurrent.public_export,false);
+   assert.equal(nativeCurrent.expression_revision,document.revision);assert.equal(nativeCurrent.expression_ref,document.expression_ref);
+   assert.deepEqual(nativeCurrent.context,checkpointCustody.current.context,'Cold native restore preserves the complete current context/digest/source/occasion');
+   assert.deepEqual(nativeCurrent.reading,checkpointCustody.current.reading,'Cold native restore consumes the complete actual previously admitted private body with all original receipts');
+   assert.equal(receipt.issued_requests.filter(row=>row.op==='nara_current'&&row.operation==='pin').length,0,'Cold ordinary admission cannot silently acquire a new current');
+   assert.ok(receipt.operations.some(row=>row.op==='nara_current'&&row.operation==='restore'&&row.ok===true),'Actual cold native Restore acknowledgement is mandatory');
+   artifact('selection-cold-native-current-receiving.json',{native_current:nativeCurrent,source_custody_ref:custody.protected_current_custody_ref,
+    standing:'Actual fresh native owner and ordinary producer Restore consume full previously admitted native body; no new astronomy calculation/provider/model proof'});
+   check(true,'Fresh native owner restores the exact previously admitted full private current while complete saved Document/file/CAS remain unchanged');
    assert.deepEqual(admission.file,previous.file);assert.equal(admission.content_sha256,previous.content_sha256);assert.equal(admission.content_bytes,previous.content_bytes);
   }
   receipt.selection_admission_ref=admissionRef;

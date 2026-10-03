@@ -17,6 +17,7 @@ import re
 import select
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tarfile
@@ -59,6 +60,13 @@ OI_SCOPE = [
     'desktop/cradle/kernel/src/expression_recovery.rs',
     'desktop/cradle/kernel/src/nara_identity.rs',
     'desktop/cradle/kernel/src/nara_current.rs',
+    'desktop/cradle/kernel/src/lib.rs',
+    'desktop/cradle/kernel/src/nara_current_store.rs',
+    'desktop/cradle/kernel/src/m3_reception.rs',
+    'desktop/cradle/kernel/src/nara_dialogue.rs',
+    'desktop/cradle/src/nara/nativeCurrent.ts',
+    'desktop/cradle/src/nara/instrumentProtocol.ts',
+    'desktop/cradle/expressions-app/field-studies-journeys/src/naraInstrument.tsx',
     'desktop/cradle/kernel/src/bin/walk-bridge.rs',
 ]
 
@@ -652,7 +660,7 @@ class Replay:
         save(self.out / 'receipt.json', self.report)
         return receipt
 
-    def selected_custody(self, owner, document, acknowledged, oi_sources, manifest_path, admission_ref=None):
+    def selected_custody(self, owner, document, acknowledged, oi_sources, manifest_path, admission_ref=None, current_custody_ref=None):
         require(self.bridge_process.pid == owner['pid'] and proc_stat(owner['pid'])['starttime'] == owner['starttime'],
                 'Selection custody must name this actual live owned bridge')
         records = [scene['presentation']['scene']['epiWorld'] for scene in document['scenes']
@@ -675,7 +683,157 @@ class Replay:
                  'original_world_ref': self.selection_original_world_ref}
         if admission_ref is not None:
             value['admission_ref'] = admission_ref
+        if current_custody_ref is not None:
+            value['protected_current_custody_ref'] = current_custody_ref
         return value
+
+    def current_request(self, document, operation):
+        records = [scene['presentation']['scene']['epiWorld'] for scene in document['scenes']
+                   if scene.get('presentation', {}).get('scene', {}).get('epiWorld')]
+        require(len(records) == 1, 'One exact actual Epi carrier must own the private current')
+        record = records[0]
+        # This external empty project selector is resolved by the native kernel
+        # through AIKit to its nonempty canonical ProjectRef. It is never used
+        # as the internal protected checkpoint project or inferred from cwd.
+        return {'op': 'nara_current', 'project': '', 'request': {'operation': operation, 'binding': {
+            'operation': 'context', 'role': 'nara', 'source_ref': record['identity_source']['source_ref'],
+            'expected_revision': record['identity_source']['revision'], 'person_ref': record['person_ref'],
+            'nara_ref': record['nara_ref'], 'expression_ref': document['expression_ref']}}}
+
+    def current_read(self, label, document):
+        result = self.op(label, self.current_request(document, 'read'))['data']
+        require(result['schema'] == 'oi.nara-personal-current-context/v1' and result['status'] == 'available'
+                and result['private'] is True and result['public_export'] is False
+                and result['expression_ref'] == document['expression_ref']
+                and result['expression_revision'] == document['revision'], 'Actual native current read lost its complete current document basis')
+        record = next(scene['presentation']['scene']['epiWorld'] for scene in document['scenes']
+                      if scene.get('presentation', {}).get('scene', {}).get('epiWorld'))
+        reference = record['receiving']['personal']['current']
+        require(reference == {'ref': result['context']['reading_ref'], 'revision': result['context']['reading_revision'],
+                              'availability': 'available'}
+                and result['context']['event_ref'] == record['world']['event_ref']
+                and result['reading']['identity']['person_ref'] == record['person_ref'],
+                'The saved current reference must match the actual full native protected reading')
+        return result
+
+    def checkpoint_bytes(self, path):
+        path = Path(path)
+        require(path.is_absolute(), 'An owned checkpoint path must be absolute')
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        try:
+            before = os.fstat(fd)
+            require(stat.S_ISREG(before.st_mode) and before.st_uid == os.geteuid() and before.st_nlink == 1
+                    and stat.S_IMODE(before.st_mode) == 0o600 and before.st_size <= 16 * 1024 * 1024,
+                    'Actual private checkpoint file violates native ownership/mode/link/record bounds')
+            with os.fdopen(os.dup(fd), 'rb') as stream:
+                raw = stream.read(16 * 1024 * 1024 + 1)
+            after = os.fstat(fd)
+            require(len(raw) == before.st_size and (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+                    == (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns),
+                    'Actual native checkpoint changed during bounded custody read')
+            require(path.lstat().st_ino == after.st_ino and not path.is_symlink(), 'Checkpoint pathname changed during read')
+            return raw
+        finally:
+            os.close(fd)
+
+    def qualify_current_checkpoint(self, document, qualified_ql, kernel_env, selection_deadline):
+        current = self.current_read('after-selection-native-current-read', document)
+        directory = Path(self.env['OI_HOME']) / 'desktop/nara-current'
+        require(directory.is_dir() and not directory.is_symlink() and stat.S_IMODE(directory.stat().st_mode) == 0o700 and directory.stat().st_uid == os.geteuid(),
+                'Actual native private checkpoint directory is unavailable or not private')
+        reference = current['context']['reading_ref']
+        suffix = reference.removeprefix('personal:nara-current:')
+        require(re.fullmatch('[0-9a-f]{64}', suffix), 'Actual current has no full native digest reference')
+        candidates, total, records = [], 0, 0
+        for member in directory.iterdir():
+            if member.name == '.lock':
+                continue
+            require(re.fullmatch(r'[0-9a-f]{64}-[0-9a-f]{64}\.json', member.name), 'Foreign private checkpoint member')
+            records += 1
+            require(records <= 256, 'Native checkpoint count exceeded its existing limit')
+            raw = self.checkpoint_bytes(member)
+            total += len(raw)
+            require(total <= 64 * 1024 * 1024, 'Native checkpoint scope exceeds its existing limit')
+            if member.name.endswith('-' + suffix + '.json'):
+                candidates.append((member, raw, parse(raw)))
+        require(len(candidates) == 1, 'Exact actual saved current must name one private native checkpoint')
+        path, raw, stored = candidates[0]
+        require(set(stored) == {'record', 'record_sha256'} and re.fullmatch('[0-9a-f]{64}', stored['record_sha256']),
+                'Actual private checkpoint has another envelope')
+        record = stored['record']
+        require(record['schema'] == 'oi.nara-native-current-checkpoint/v1'
+                and record['project'] and record['context'] == current['context'] and record['reading'] == current['reading']
+                and record['binding'] == self.current_request(document, 'read')['request']['binding']
+                and record['owner']['sha256'] == qualified_ql['sha256'] and record['owner']['bytes'] == qualified_ql['bytes']
+                and Path(record['owner']['path']).resolve(strict=True) == Path(qualified_ql['path']).resolve(strict=True),
+                'Actual checkpoint differs from native full current/person/binding/qualified owner')
+        scope_env = {**self.env, 'CENTRAL_ROOT': str(self.world)}
+        scope_command = self.command('controlled-current-canonical-project', [self.env['OI_BIN'], 'aikit', 'session-space',
+            '-C', self.world, 'agent-session-scope'], self.world, scope_env, timeout=120)
+        scope = read_json(scope_command['stdout_ref']['path'])
+        require(scope['schema'] == 'aikit.direct-agent-scope/v1' and scope['execution_authority_granted'] is False
+                and scope['project_ref'] == record['project'], 'Checkpoint project must be the actual native canonical AIKit root binding')
+        document_path = self.out / 'actual-newly-admitted-current-document.json'
+        save(document_path, document)
+        remaining = selection_deadline - time.monotonic()
+        require(remaining > 0, 'The unchanged selection aggregate envelope expired before private custody counterproofs')
+        test_env = {**self.env, 'CARGO_TARGET_DIR': kernel_env['CARGO_TARGET_DIR'],
+            'OI_ACTUAL_NATIVE_CURRENT_CHECKPOINT': str(path), 'OI_ACTUAL_NATIVE_CURRENT_DOCUMENT': str(document_path),
+            'OI_ACTUAL_NATIVE_CURRENT_TEST_HOME': str(self.out / 'actual-current-native-unit-home')}
+        test = self.command('actual-newly-admitted-current-custody-regression', ['cargo', 'test', '--locked', '--manifest-path',
+            self.repo / 'desktop/cradle/kernel/Cargo.toml', '--lib',
+            'nara_current::retention::actual_checkpoint_tests::actual_admitted_checkpoint_cold_restore_and_refusals',
+            '--', '--exact', '--ignored', '--nocapture'], self.repo, test_env, timeout=min(180, remaining))
+        require(re.search(r'test result: ok\. 1 passed; 0 failed; 0 ignored;', Path(test['stdout_ref']['path']).read_text()),
+                'The explicitly configured actual-checkpoint regression must execute exactly once')
+        require(self.checkpoint_bytes(path) == raw, 'Native counterproofs changed the original admitted current checkpoint')
+        after = self.current_read('after-checkpoint-counterproof-native-current-read', document)
+        require(after == current, 'Native checkpoint counterproofs changed the actual live admitted current')
+        custody_path = self.out / 'selection-native-current-custody.json'
+        save(custody_path, {'schema': 'epi.hosted-native-protected-current-custody/v1',
+            'checkpoint_ref': file_ref(path), 'checkpoint_name': path.name, 'resolved_native_project': record['project'],
+            'actual_project_scope_command': scope_command, 'current': current, 'document_ref': file_ref(document_path),
+            'actual_native_current_read_ref': file_ref(self.out / 'after-selection-native-current-read.json'),
+            'native_counterproof_command': test, 'qualified_ql': qualified_ql,
+            'scope': 'Real native newly admitted full protected checkpoint and actual native guard mutations; only controlled A. No historical f119 recovery or source-math revalidation claimed.'})
+        self.report['protected_current_custody'] = file_ref(custody_path)
+        save(self.out / 'receipt.json', self.report)
+        return file_ref(custody_path)
+
+    def transfer_current_checkpoint(self, custody_ref, destination_home, label):
+        require(file_ref(custody_ref['path']) == custody_ref, 'Frozen actual private current custody changed')
+        custody = read_json(custody_ref['path'])
+        source = custody['checkpoint_ref']
+        raw = self.checkpoint_bytes(source['path'])
+        require(file_ref(source['path']) == source, 'Actual native checkpoint bytes changed before cold transfer')
+        home = Path(destination_home)
+        require(not home.exists(), 'Cold native checkpoint transfer requires a fresh private home')
+        home.mkdir(mode=0o700)
+        desktop = home / 'desktop'; desktop.mkdir(mode=0o700)
+        directory = desktop / 'nara-current'; directory.mkdir(mode=0o700)
+        target = directory / custody['checkpoint_name']
+        fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        try:
+            with os.fdopen(os.dup(fd), 'wb') as stream:
+                stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+        finally:
+            os.close(fd)
+        # Persist the actual member's containing directories as well as its
+        # bytes; later native Restore still verifies its own anchored owner.
+        for parent in (directory, desktop, home, home.parent):
+            directory_fd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        require(self.checkpoint_bytes(target) == raw and self.checkpoint_bytes(source['path']) == raw,
+                'Controlled cold transfer must preserve exact complete actual native checkpoint bytes')
+        receipt_path = self.out / (label + '-actual-current-transfer.json')
+        save(receipt_path, {'schema': 'epi.controlled-native-current-byte-transfer/v1', 'source_custody_ref': custody_ref,
+            'source': source, 'target': file_ref(target), 'resolved_native_project': custody['resolved_native_project'],
+            'scope': 'Declared byte-exact transfer of one actual controlled native admitted immutable checkpoint into a fresh owner; no mutable OI state, private owner input, browser draft, answer, provider or native response copied.'})
+        self.report.setdefault('protected_current_transfers', []).append(file_ref(receipt_path))
+        save(self.out / 'receipt.json', self.report)
 
     def driver(self, phase, config):
         target = self.out / f'{phase}-config.json'
@@ -977,6 +1135,7 @@ class Replay:
             'scope': 'Actual current producer admission, including recorded native migrations; these before/after documents are not claimed equal'})
         self.report['selected_conversation']['ordinary_admission_ref'] = file_ref(self.out / 'selected-ordinary-admission-before-after.json')
         self.report['selected_conversation']['baseline_ref'] = baseline_ref
+        current_custody_ref = self.qualify_current_checkpoint(setup_document, by_role['ql'], kernel_env, selection_deadline)
         self.stop_bridge()
         original_env = dict(self.env)
         try:
@@ -995,6 +1154,7 @@ class Replay:
                 self.env.update({'OI_HOME': str(case_root / 'oi-home'), 'OI_DATA_HOME': str(case_root / 'oi-data'),
                                  'OI_CRADLE_STATE': str(case_root / 'cradle-state.json'),
                                  'OI_EXPRESSION_SOCKET': str(case_root / 'expression.sock')})
+                self.transfer_current_checkpoint(current_custody_ref, self.env['OI_HOME'], name)
                 owner = self.start_bridge(name)
                 require(all(owner['native_generation'] != prior['native_generation']
                             and (owner['pid'], owner['starttime']) != (prior['pid'], prior['starttime'])
@@ -1003,7 +1163,7 @@ class Replay:
                 prior_reading, prior_document = self.file_admission(relative, name + '-before', baseline['file']['revision'])
                 require(prior_reading['content'] == setup_reading['content'] and prior_document == setup_document,
                         'A prior selection case changed the independent durable setup basis')
-                custody = self.selected_custody(owner, setup_document, acknowledged, oi_sources, manifest_path, baseline_ref)
+                custody = self.selected_custody(owner, setup_document, acknowledged, oi_sources, manifest_path, baseline_ref, current_custody_ref)
                 case = self.selected_stage(name, {**common, 'reopen_file': relative, 'stage': 'selected-conversation-case',
                                            'selection_case': selection_case}, custody, selection_deadline)
                 selected_path = case['selected_case_ref']['path']

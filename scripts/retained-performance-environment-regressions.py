@@ -108,6 +108,19 @@ class ActualPublication(unittest.TestCase):
         self.receipt["fixtures"] = [row for row in self.receipt["fixtures"] if str(Path(row["path"]).relative_to(self.run)) != missing]
         self.refused("actual native fixture inventory membership differs")
 
+    def test_missing_actual_postpulse_native_cuts_refuse_publication(self) -> None:
+        original_fixtures = copy.deepcopy(self.receipt["fixtures"])
+        for kind in ("release", "panic"):
+            for suffix in ("pulse-checkpoint", "pending-pulse-checkpoint", "pending-pulse-history"):
+                missing = "native-managed-order/" + kind + "." + suffix + ".json"
+                with self.subTest(actual_native_member=missing):
+                    self.assertEqual(sum(str(Path(row["path"]).relative_to(self.run)) == missing
+                        for row in original_fixtures), 1, "Counterproof requires this actual native-produced cut")
+                    self.receipt["fixtures"] = [row for row in original_fixtures
+                        if str(Path(row["path"]).relative_to(self.run)) != missing]
+                    self.refused("actual native fixture inventory membership differs")
+        self.receipt["fixtures"] = original_fixtures
+
     def test_duplicate_actual_native_body_is_refused(self) -> None:
         self.receipt["fixtures"].append(copy.deepcopy(self.receipt["fixtures"][0]))
         self.refused("actual native fixture inventory membership differs")

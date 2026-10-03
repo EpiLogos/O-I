@@ -1582,6 +1582,7 @@ impl Kernel {
                 return Err("This native host has reached its Nara context bound".into());
             }
             if let Some(current) = completed.current_candidate {
+                current.retain(&completed.project)?;
                 self.nara_voice
                     .invalidate_expression(&binding.expression_ref);
                 self.nara_contexts
@@ -1677,6 +1678,7 @@ impl Kernel {
             if self.nara_contexts.len() >= 64 && !self.nara_contexts.contains_key(&key) {
                 return Err("This native host has reached its Nara context bound".into());
             }
+            pin.retain(&completed.project)?;
             let entry = self.nara_contexts.entry(key).or_default();
             if entry.personal_current.as_ref().map(|old| old.context()) != Some(pin.context()) {
                 self.nara_voice

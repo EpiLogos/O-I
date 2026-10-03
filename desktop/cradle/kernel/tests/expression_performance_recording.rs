@@ -334,6 +334,33 @@ fn public_world_actual_source_refuses_protected_episode_and_shared_loss_of_priva
     );
 }
 
+// A native feedback cut drains only observer applications. The actual render,
+// immutable source schedule and future queues remain at the SAME sample.
+fn assert_same_render_cut(before: &Value, after: &Value) {
+    assert_eq!(before["session_ref"], after["session_ref"]);
+    assert_eq!(before["transport_epoch"], after["transport_epoch"]);
+    assert_eq!(
+        before["native_pair"]["physical"],
+        after["native_pair"]["physical"]
+    );
+    let mut original_audio = before["native_pair"]["audio"].clone();
+    let mut observed_audio = after["native_pair"]["audio"].clone();
+    assert!(original_audio
+        .as_object_mut()
+        .unwrap()
+        .remove("applications")
+        .is_some());
+    assert!(observed_audio
+        .as_object_mut()
+        .unwrap()
+        .remove("applications")
+        .is_some());
+    assert_eq!(
+        original_audio, observed_audio,
+        "feedback must not change rendering/source/queued time"
+    );
+}
+
 fn managed_order(
     prefix: &str,
     continued: bool,
@@ -358,7 +385,7 @@ fn managed_order(
     let suffix = if continued {
         "continued-checkpoint"
     } else {
-        "checkpoint"
+        "pulse-checkpoint"
     };
     let wire = read(directory.join(format!("{prefix}.{suffix}.json")));
     let sample: Counter =
@@ -388,13 +415,37 @@ fn managed_order(
             .collect::<Vec<_>>(),
         vec!["1", "2", "3"]
     );
-    let mut journal: Vec<InputHistoryEntry> =
+    let journal: Vec<InputHistoryEntry> =
         serde_json::from_value(history["input_history"].clone()).unwrap();
     if !continued {
         applications.truncate(2);
-        let last: Counter =
-            serde_json::from_value(wire["input_history"]["last_ordinal"].clone()).unwrap();
-        journal.retain(|entry| entry.ordinal <= last);
+        let pre_pulse = read(directory.join(format!("{prefix}.checkpoint.json")));
+        assert_same_render_cut(&pre_pulse, &wire);
+        assert_ne!(
+            pre_pulse["input_history"]["last_ordinal"],
+            wire["input_history"]["last_ordinal"]
+        );
+    }
+    let last: Counter =
+        serde_json::from_value(wire["input_history"]["last_ordinal"].clone()).unwrap();
+    assert_eq!(
+        journal.last().unwrap().ordinal,
+        last,
+        "retain the whole genuine post-feedback journal"
+    );
+    for app in applications
+        .iter()
+        .filter(|a| a["kind"] == 0 || a["kind"] == 1)
+    {
+        let sequence: Counter = serde_json::from_value(app["sequence"].clone()).unwrap();
+        assert_eq!(
+            journal
+                .iter()
+                .filter(|e| e.native_sequence == sequence && e.change == 2)
+                .count(),
+            1,
+            "each actual played touch requires its unique original Applied input entry"
+        );
     }
     let source_prefix = format!(
         "sha256:{:x}",
@@ -2236,11 +2287,35 @@ fn actual_pre_callback_late_queue(
     Vec<InputHistoryEntry>,
     Value,
 ) {
-    let (performance, _, mut apps, mut journal) = managed_order(prefix, true);
+    let (performance, _, all_apps, all_journal) = managed_order(prefix, true);
     let directory = std::path::PathBuf::from(
         std::env::var("QL_RETAINED_PERFORMANCE_MANAGED_ORDER_DIRECTORY").unwrap(),
     );
-    let wire = read(directory.join(format!("{prefix}.pending-checkpoint.json")));
+    let pre_pulse = read(directory.join(format!("{prefix}.pending-checkpoint.json")));
+    let wire = read(directory.join(format!("{prefix}.pending-pulse-checkpoint.json")));
+    let history = read(directory.join(format!("{prefix}.pending-pulse-history.json")));
+    assert_eq!(
+        history["schema"],
+        "ql.performance-managed-application-history/v1"
+    );
+    let apps = history["applications"].as_array().unwrap().clone();
+    let journal: Vec<InputHistoryEntry> =
+        serde_json::from_value(history["input_history"].clone()).unwrap();
+    assert_same_render_cut(&pre_pulse, &wire);
+    assert_eq!(
+        apps,
+        all_apps[..1],
+        "the independent native cut contains only the committed attack"
+    );
+    assert_eq!(
+        journal,
+        all_journal[..journal.len()],
+        "pending release/future automation are not invented played history"
+    );
+    assert_ne!(
+        pre_pulse["input_history"]["last_ordinal"],
+        wire["input_history"]["last_ordinal"]
+    );
     assert_eq!(wire["native_pair"]["audio"]["cursor"], "128");
     assert_eq!(
         wire["native_pair"]["audio"]["applied_application_ordinal"],
@@ -2271,10 +2346,17 @@ fn actual_pre_callback_late_queue(
     } else {
         assert!(late["input_ref"].is_null());
     }
-    apps.truncate(1);
     let last: Counter =
         serde_json::from_value(wire["input_history"]["last_ordinal"].clone()).unwrap();
-    journal.retain(|entry| entry.ordinal <= last);
+    assert_eq!(journal.last().unwrap().ordinal, last);
+    assert_eq!(
+        journal
+            .iter()
+            .filter(|e| e.native_sequence == Counter(1) && e.change == 2)
+            .count(),
+        1,
+        "the pending128 cut must retain the actual attack Applied journal entry"
+    );
     let source_prefix = format!(
         "sha256:{:x}",
         Sha256::digest(
@@ -2283,7 +2365,7 @@ fn actual_pre_callback_late_queue(
     );
     let checkpoint = CheckpointBinding::from_native_management(
         CheckpointReceipt {
-            checkpoint_ref: format!("native:managed-order/{prefix}/pending-checkpoint"),
+            checkpoint_ref: format!("native:managed-order/{prefix}/pending-pulse-checkpoint"),
             identity: performance.bases[0].identity.clone(),
             sample: Counter(128),
             basis_digest: performance.bases[0].content_digest.clone(),
@@ -2642,5 +2724,51 @@ fn actual_late_request_zero_resolves_128_and_reopens_pending_then_reconciles_ori
                 .unwrap();
         assert_eq!(saved.restore(0).unwrap(), *applied.prospective());
         std::fs::remove_dir_all(home).unwrap();
+    }
+}
+
+#[test]
+fn actual_pre_pulse_checkpoints_refuse_the_later_journal_at_both_real_cuts() {
+    let bindings = [ParameterBinding {
+        native_parameter: 4,
+        performance_parameter: 0,
+    }];
+    let directory = std::path::PathBuf::from(
+        std::env::var("QL_RETAINED_PERFORMANCE_MANAGED_ORDER_DIRECTORY").unwrap(),
+    );
+    for prefix in ["release", "panic"] {
+        let at256 = managed_order(prefix, false);
+        let (at128, cp128, apps128, journal128, _) = actual_pre_callback_late_queue(prefix);
+        for (performance, current, apps, journal, old_name) in [
+            (&at256.0, &at256.1, &at256.2, &at256.3, "checkpoint"),
+            (&at128, &cp128, &apps128, &journal128, "pending-checkpoint"),
+        ] {
+            let original_wire = read(directory.join(format!("{prefix}.{old_name}.json")));
+            let original = CheckpointBinding::from_native_management(
+                CheckpointReceipt {
+                    checkpoint_ref: format!("native:managed-order/{prefix}/{old_name}"),
+                    identity: current.identity.clone(),
+                    sample: current.sample,
+                    basis_digest: current.basis_digest.clone(),
+                    event_prefix_digest: current.event_prefix_digest.clone(),
+                    queued_events: current.queued_events.clone(),
+                    acknowledged_stopped: true,
+                },
+                original_wire,
+            )
+            .unwrap();
+            let state =
+                NativeRecordState::from_checkpoint(&performance.bases[0], &original).unwrap();
+            assert_eq!(
+                prepare_recording(performance, admission(&state, &bindings), apps, journal)
+                    .err()
+                    .unwrap(),
+                "recording lost a native input journal entry",
+                "the genuine pre-pulse cut must not admit later native feedback by retagging its watermark"
+            );
+            let coherent =
+                NativeRecordState::from_checkpoint(&performance.bases[0], current).unwrap();
+            prepare_recording(performance, admission(&coherent, &bindings), apps, journal).unwrap();
+        }
     }
 }

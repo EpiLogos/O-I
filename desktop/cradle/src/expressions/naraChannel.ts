@@ -115,7 +115,7 @@ function request(value: unknown): NaraInstrumentRequest {
       return {operation: 'select_identity', source: source(v.source), input_revision: text(v.input_revision, 'native identity input revision')};
     case 'release_identity': fields(v, ['operation']); return {operation: 'release_identity'};
     case 'read': case 'send': case 'epii_delegate': case 'epii_inspect': case 'epii_accept': case 'reconnect': case 'interrupt':
-    case 'act_inspect': case 'act_focus': case 'act_restore': case 'act_status': case 'current_pin': case 'current_read': case 'readiness': case 'm3':
+    case 'act_inspect': case 'act_focus': case 'act_restore': case 'act_status': case 'current_pin': case 'current_read': case 'current_restore': case 'readiness': case 'm3':
     case 'return_expression':case 'return_expression_list':case 'return_expression_read':
     case 'return_inspect': case 'return_flow_read': case 'return_flow': case 'return_day': case 'voice': {
       const extra = v.operation === 'read' ? ['before'] : (v.operation === 'send' || v.operation === 'epii_delegate') ? ['question']
@@ -135,7 +135,7 @@ function request(value: unknown): NaraInstrumentRequest {
       const basis: InstrumentBasis = {expression_ref: text(b.expression_ref, 'Expression reference'), source: source(b.source)};
       if (v.role !== 'nara' && v.role !== 'epii') throw new Error('Choose the native Nara or Epii dialogue.');
       if(['epii_delegate','epii_inspect','epii_accept'].includes(String(v.operation))&&v.role!=='epii')throw Error('Structured inquiry belongs to the native Epii session.');
-      if(['act_inspect','act_focus','act_restore','act_status','current_pin','current_read','readiness'].includes(String(v.operation))&&v.role!=='nara')throw Error('Personal context belongs to the native Nara session.');
+      if(['act_inspect','act_focus','act_restore','act_status','current_pin','current_read','current_restore','readiness'].includes(String(v.operation))&&v.role!=='nara')throw Error('Personal context belongs to the native Nara session.');
       if(v.operation==='return_expression_list')return {operation:'return_expression_list',basis,role:v.role};
       if(v.operation==='return_expression_read')return {operation:'return_expression_read',basis,role:v.role,answer_ref:text(v.answer_ref,'kept native answer reference')};
       if(v.operation==='return_expression')return {operation:'return_expression',basis,role:v.role,review_ref:text(v.review_ref,'native answer review')};
@@ -163,7 +163,7 @@ function request(value: unknown): NaraInstrumentRequest {
         }else throw Error('Unsupported native M3 operation.');
         return {operation:'m3',basis,role:'nara',request:inner as unknown as import('../nara/nativeM3').M3Gesture};
       }
-      if(v.operation==='current_read')return {operation:'current_read',basis,role:'nara'};
+      if(v.operation==='current_read'||v.operation==='current_restore')return {operation:v.operation,basis,role:'nara'};
       if(v.operation==='current_pin')return {operation:'current_pin',basis,role:'nara',...readNativePersonalSkyInput(v)};
       if(v.operation==='act_inspect')return {operation:'act_inspect',basis,role:'nara',answer_block_id:positiveId(v.answer_block_id)};
       if(v.operation==='act_focus')return {operation:'act_focus',basis,role:'nara',answer_block_id:positiveId(v.answer_block_id),target_ref:text(v.target_ref,'cited native focus')};
@@ -359,13 +359,13 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
       if(value.schema!=='oi.m3-reception-context/v1'||value.expression_ref!==expression.expression_ref||value.expression_revision!==expression.revision||value.person_ref!==identity.reading.person_ref||value.identity_revision!==identity.source.revision)throw Error('M3 returned a different encounter.');
       return value;
     }
-    if(r.operation==='current_pin'||r.operation==='current_read'){
+    if(r.operation==='current_pin'||r.operation==='current_read'||r.operation==='current_restore'){
       const binding:import('../nara/dialogueTypes').NativeDialogueRequest={operation:'context',
         source_ref:identity.source.source_ref,expected_revision:identity.source.revision,
         person_ref:identity.reading.person_ref,nara_ref:identity.reading.nara_ref,
         expression_ref:expression.expression_ref,role:'nara'};
       const request:import('../nara/nativeCurrent').NativeCurrentRequest=r.operation==='current_pin'
-        ?{operation:'pin',binding,...readNativePersonalSkyInput(r)}:{operation:'read',binding};
+        ?{operation:'pin',binding,...readNativePersonalSkyInput(r)}:{operation:r.operation==='current_restore'?'restore':'read',binding};
       requireCurrent();const reply=await kernelOp(transport,{op:'nara_current',project,request});requireCurrent();
       if(reply.error||reply.outcome?.result!=='nara_current')throw Error(reply.error??'The native personal current owner did not answer.');
       return reply.outcome.data;

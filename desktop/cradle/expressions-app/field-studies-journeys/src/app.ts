@@ -1405,8 +1405,9 @@ async function enterEpiWorld(identity:InstrumentIdentity,retainedOpening?:import
  if(epiReceiving||epiConstructing)throw Error('The saved personal world is still receiving its native basis.');
  if(retainedOpening&&epiWorld)throw Error('A loaded personal world already has its admitted occasion. Return to an empty world before selecting another retained opening.');
  if(epiWorld?.person_ref===identity.reading.person_ref){
+  const acknowledgeAdmission=epiEncounter?.personalAdmissionAcknowledgement();
   epiReceiving=true;epiPersonalAdmissionIntent=epiPersonalIntentGeneration;
-  try{await leaveEpiNativeScene();const rebound=await epiProducer.rebind(epiWorld,identity);epiIdentity=identity;epiWorld=rebound.record;epiCurrent=rebound.current;epiPersonalKey=[epiWorld.world.instance_ref,epiWorld.person_ref,epiWorld.identity_source.revision,epiWorld.world.snapshot_ref].join('|');admitEpiPersonalBasis();await receiveEpiPersonal();epiEncounter?.refresh();}
+  try{await leaveEpiNativeScene();const rebound=await epiProducer.rebind(epiWorld,identity,'acquire');epiIdentity=identity;epiWorld=rebound.record;epiCurrent=rebound.current;epiPersonalKey=[epiWorld.world.instance_ref,epiWorld.person_ref,epiWorld.identity_source.revision,epiWorld.world.snapshot_ref].join('|');admitEpiPersonalBasis();await receiveEpiPersonal();requireEpiPersonalAdmission();acknowledgeAdmission?.();epiEncounter?.refresh();}
   finally{epiReceiving=false;epiPersonalAdmissionIntent=null;naraInstrument.refresh();}return;
  }
  const sky=retainedOpening??epiWorld?.world.sky as unknown as import('./native-field/controller').NativeSkySnapshot|undefined;

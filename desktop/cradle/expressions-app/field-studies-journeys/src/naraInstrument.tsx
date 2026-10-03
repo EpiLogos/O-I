@@ -106,6 +106,10 @@ function NaraInstrument({host,close,visible,requestedView,viewRevision,hostRevis
  // The initial editor is open but untouched. Only an explicit identity action
  // makes a draft pending and gives it precedence over saved-world hydration.
  const draftDirty=useRef(false),restoredContext=useRef<string|null>(null),restoredBasis=useRef<string|null>(null),releasedBasis=useRef<string|null>(null);
+ // This basis comes only from a completed native Open + calculation. Its
+ // draft string detects edits locally; it is never saved or used as input to
+ // the native owner. Source revision and input authority remain native.
+ const savedProfileInput=useRef<{source:IdentitySource;input_revision:string;person_ref:string;nara_ref:string;draft:string}|null>(null);
  const admittedCurrent=useRef<string>(personalCurrentKey(null));
  const voiceTools=useRef<NaraVoiceHandle>(null),stopPending=useRef(false);
  const expressiveActTools=useRef<NaraActHandle>(null);
@@ -244,14 +248,18 @@ function NaraInstrument({host,close,visible,requestedView,viewRevision,hostRevis
  const openProfile=(ref:string)=>void act('Opening your profile',async()=>{
   draftDirty.current=true;clearPersonalPresentation(true);
   const at=++epoch.current,current=()=>mounted.current&&epoch.current===at;
+  savedProfileInput.current=null;
   setSelected(null);setState(null);setBefore(undefined);setQuestion('');setSource(null);setReading(null);
   await naraInstrumentRequest({operation:'release_identity'});if(!current())return;
   if(!ref){setDraft(newDraft());setEditing(true);return;}
   const r=await identity({operation:'identity',request:{operation:'open',source_ref:ref}});if(!current())return;
   if(!r.reading||!r.source)throw Error('The saved profile was not returned.');
-  setDraft(draftFromProfile(r.reading.profile));setReading(r.reading);setSource(r.source);setEditing(false);
+  const openedDraft=draftFromProfile(r.reading.profile);
+  setDraft(openedDraft);setReading(r.reading);setSource(r.source);setEditing(false);
   const calculated=await identity({operation:'identity',request:{operation:'calculate',profile:r.reading.profile}});if(!current())return;
   if(!calculated.reading)throw Error('The saved profile opened, but its calculation returned no reading.');
+  if(calculated.reading.input_revision!==r.reading.input_revision||calculated.reading.person_ref!==r.reading.person_ref||calculated.reading.nara_ref!==r.reading.nara_ref)throw Error('The calculated reading belongs to another saved identity input. Reopen the profile.');
+  savedProfileInput.current={source:{...r.source},input_revision:r.reading.input_revision,person_ref:r.reading.person_ref,nara_ref:r.reading.nara_ref,draft:JSON.stringify(openedDraft)};
   setReading(calculated.reading);
  });
  const calculate=()=>void act('Calculating your natal chart',async()=>{
@@ -271,6 +279,27 @@ function NaraInstrument({host,close,visible,requestedView,viewRevision,hostRevis
   const result=await naraInstrumentRequest({operation:'select_identity',source:r.source,input_revision:reading.input_revision});if(!current())return;
   if(result.schema!=='oi.nara-instrument-state/v1'||!result.identity)throw Error('The saved identity was not selected.');
   releasedBasis.current=null;setSelected(result.identity);setReading(result.identity.reading);setState(result);setNotice('Saved. This identity is selected for the Expression.');await refreshProfiles();await host.enterWorld?.(result.identity);if(current()){draftDirty.current=false;restoredContext.current=null;}
+ });
+ const savedInput=savedProfileInput.current;
+ const canUseSavedInput=!!source&&!!reading&&!!savedInput&&savedInput.source.source_ref===source.source_ref&&savedInput.source.revision===source.revision&&savedInput.input_revision===reading.input_revision&&savedInput.person_ref===reading.person_ref&&savedInput.nara_ref===reading.nara_ref&&savedInput.draft===JSON.stringify(draft);
+ const useSavedIdentity=()=>void act('Using your saved identity',async()=>{
+  const captured=savedProfileInput.current;
+  if(!canUseSavedInput||!captured||!host.enterWorld)throw Error('Reopen your saved profile and review it before using it. Save and use identity for your changes.');
+  const at=epoch.current,current=()=>mounted.current&&epoch.current===at&&savedProfileInput.current===captured;
+  const before=host.nativeView(),expressionRef=before?.document.expression_ref??null,expressionRevision=before?.document.revision??null,sceneId=host.sceneId();
+  clearPersonalPresentation(true);
+  // select_identity reopens the actual Central source before and after native
+  // calculation. No profile draft or private reading is submitted for Save.
+  const result=await naraInstrumentRequest({operation:'select_identity',source:captured.source,input_revision:captured.input_revision});
+  if(!current())throw Error('This identity choice changed before the native owner replied. Reopen the saved profile.');
+  if(result.schema!=='oi.nara-instrument-state/v1'||!result.identity||result.identity.source.source_ref!==captured.source.source_ref||result.identity.source.revision!==captured.source.revision||result.identity.reading.input_revision!==captured.input_revision||result.identity.reading.person_ref!==captured.person_ref||result.identity.reading.nara_ref!==captured.nara_ref)throw Error('The native owner did not acknowledge this exact saved identity. Reopen the profile.');
+  const now=host.nativeView();
+  if((now?.document.expression_ref??null)!==expressionRef||(now?.document.revision??null)!==expressionRevision||host.sceneId()!==sceneId)throw Error('The Expression changed while the saved identity was being selected. Return to its current basis and choose again.');
+  releasedBasis.current=null;setSelected(result.identity);setReading(result.identity.reading);setState(result);
+  // Deliberate entry invokes the existing production acquisition path. Cold
+  // reopening remains Restore and Save/use remains the authored-change path.
+  await host.enterWorld(result.identity);
+  if(current()){draftDirty.current=false;restoredContext.current=null;setNotice('Your saved identity is used in this Expression.');}
  });
  const basis=()=>{const expression_ref=host.nativeView()?.document.expression_ref;if(!selected||!expression_ref)throw Error('Select a saved identity and open its native Expression to continue.');return {expression_ref,source:selected.source};};
  const dialogue=async(operation:'read'|'send'|'reconnect',cursor?:number)=>{const at=epoch.current,request={operation:operation==='send'&&role==='epii'?'epii_delegate':operation,basis:basis(),role,...(operation==='send'?{question}:{}),...(cursor===undefined?{}:{before:cursor})} as NaraInstrumentRequest;const r=await naraInstrumentRequest(request);if(r.schema!=='oi.nara-instrument-state/v1')throw Error('The native conversation returned another reading.');if(mounted.current&&epoch.current===at)setState(r);return r;};
@@ -331,7 +360,7 @@ function NaraInstrument({host,close,visible,requestedView,viewRevision,hostRevis
    {view==='identity'&&<div className="nara-identity-layout"><aside className="nara-identity-reading"><div className="nara-personal-heading"><h2>{editing?'Your identity material':'The person behind the reading'}</h2><p>{editing?'Begin with what you know. You can correct it later.':'Six distinct constituents, held together without losing their sources.'}</p></div>
     <div className="nara-constituents" aria-label="Identity constituents"><button aria-pressed={editor==='birth'} onClick={()=>{setEditor('birth');setEditing(true);}}>Birth details<span>{draft.date||'Not entered'}</span></button>{REPORTS.map(r=><button key={r.key} aria-pressed={editor===r.key} onClick={()=>{setEditor(r.key);setEditing(true);}}>{r.title}<span>{draft.reports[r.key].enabled?'Supplied':'Not supplied'}</span></button>)}</div>
     {editing?<fieldset disabled={!!busy||!ready}>{editor==='birth'?<BirthEditor draft={draft} change={change}/>:<ConstituentEditor key={editor} kind={editor} draft={draft} change={change} error={setError}/>}</fieldset>:<div className="nara-birth-summary"><p>{draft.date}</p><p>{draft.precision==='unknown'?'Birth time unknown':`${draft.time}${draft.precision==='approximate'?` ± ${draft.uncertainty} minutes`:''}`}</p><p>{draft.place.label}</p><p>{draft.place.timezone}</p>{reading&&<details className="nara-personal-depth"><summary>Full identity matrix</summary>{reading.matrix.map(row=><div className="nara-matrix-row" key={row.kind}><strong>{OFFICE_NAMES[row.kind]??row.kind}</strong><span>{row.available?row.route.replaceAll('-',' '):'Not supplied'}</span>{row.method&&<p>{row.method}</p>}</div>)}</details>}</div>}
-    <div className="nara-personal-actions"><button className="nara-primary" type="button" disabled={!!busy||!ready} onClick={calculate}>{reading?'Recalculate chart':'Calculate and review'}</button><button type="button" disabled={!!busy||!reading||!ready} onClick={save}>Save and use identity</button></div>
+    <div className="nara-personal-actions"><button className="nara-primary" type="button" disabled={!!busy||!ready} onClick={calculate}>{reading?'Recalculate chart':'Calculate and review'}</button><button type="button" disabled={!!busy||!reading||!ready} onClick={save}>Save and use identity</button><button type="button" disabled={!!busy||stopping||!ready||!canUseSavedInput||!host.enterWorld} onClick={useSavedIdentity}>Use saved identity</button></div>{source&&<p className="nara-personal-muted">Use the saved input without saving it again. Your world receives a new native personal reading. Save and use identity for changes.</p>}
    </aside><div className="nara-identity-sky"><Chart reading={reading}/></div></div>}
    {view==='matrix'&&<IdentityMatrix reading={reading} onShowNatal={()=>setView('identity')}/>}
    {view==='composition'&&<><NaraCurrentSky basis={toolBasis} identity={selected} reading={personalCurrent} onReading={setPersonalCurrent} onNativeReading={receivePersonalCurrent} disabled={!!busy||stopping}/><section aria-label="Natal evidence in the living field"><h2>Experience the natal contributions</h2><label><input type="checkbox" checked={includeEarth} disabled={!!busy||stopping} onChange={event=>setIncludeEarth(event.target.checked)}/> Include Earth grounding</label><button type="button" disabled={!!busy||stopping||!selected} onClick={bindPersonalBody}>Bind my seven centres</button><p>Use the computed share reaching each centre to shape its forces in this Expression. Choose one correspondence route; the original reading and authored field remain available.</p><label>Force presentation<select aria-label="Natal force presentation" value={evidenceChannel??''} disabled={!!busy||stopping||!selected||!host.presentEvidence} onChange={e=>presentEvidence((e.target.value||null) as NatalEvidenceChannel|null)}><option value="">Authored field</option><option value="direct-planetary-resonance">Direct planetary resonance</option><option value="decan-ruler-reception">Decan ruler reception</option></select></label><label><input type="checkbox" checked={evidenceSound} disabled={!evidenceChannel||!!busy||stopping} onChange={e=>presentEvidence(evidenceChannel,e.target.checked)}/> Sound the native planetary frequencies</label><label><input type="checkbox" checked={evidenceWaves} disabled={!evidenceChannel||!nativeCurrent?.reading?.baseline_available||!!busy||stopping} onChange={event=>presentEvidence(evidenceChannel,evidenceSound,event.target.checked)}/> Enter the current standing-wave field</label><p>The retained modal physics gives each centre its native planetary drive. The pinned identity and transit reading orients the wave fields around their fixed centres. When you enable the activity policy in Form and clock, its native composition participates too.</p><details><summary>Presentation rule and limits</summary><p>This selected presentation multiplies evaluated force strength and spin by each centre’s share of the original ten-planet total. Unrouted and unresolved shares remain unassigned. Zero-share emitters are absent. The standing-wave option keeps independent resident modes using the authored medium and this selected drive-share policy. It sums time-averaged vibration forces in the existing particle medium; it does not claim audio-rate phase, chakra activation, inter-oscillator energy transfer, or a canonical personal material law. Activity joins only through an explicitly selected native policy and source-bound successful operations.</p></details>{evidenceChannel&&<button onClick={close}>Return to the living field</button>}</section><IdentityComposition reading={reading} disabled={!!busy||stopping} onUsePolicy={policy=>{change({...draft,encoding_policy:policy});setEditing(true);setView('identity');}} onUseComposition={policy=>{change({...draft,composition_policy:policy});setEditing(true);setView('identity');}}/></>}
