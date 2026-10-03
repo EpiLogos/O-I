@@ -18,6 +18,29 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
     const envelope=JSON.parse(execFileSync(process.env.OI_AIKIT_BIN??'aikit',['--json','-C',p.projectRoot,'knowledge',...args],{encoding:'utf8',env:{...process.env,...p.env}}));
     if(!envelope.ok)throw new Error(JSON.stringify(envelope));return envelope.data;
   };
+  // Observe the real production Worker; no request/reply is replaced or
+  // fulfilled. Keep bounded transient test observations, not a graph store.
+  await page.addInitScript(()=>{
+    const NativeWorker=window.Worker;window.__knowledgeLayouts=[];
+    window.Worker=class extends NativeWorker {
+      constructor(...args){
+        if(window.__knowledgeLayouts.length>=16)throw new Error('Native walk worker observation capacity exceeded');
+        super(...args);this.observation={reading:null,generation:null,points:null,drags:[]};
+        window.__knowledgeLayouts.push(this.observation);
+        this.addEventListener('message',event=>{
+          if(event.data?.kind==='points'&&event.data.generation===this.observation.generation)this.observation.points=event.data.points;
+        });
+      }
+      postMessage(message,options){
+        super.postMessage(message,options);
+        if(message?.kind==='layout'){this.observation.reading=message.reading;this.observation.generation=message.generation;this.observation.points=null;}
+        if(message?.kind==='drag'){
+          if(this.observation.drags.length>=128)throw new Error('Native walk drag observation capacity exceeded');
+          this.observation.drags.push({ref:message.ref,x:message.x,y:message.y});
+        }
+      }
+    };
+  });
   await page.goto(baseUrl);await channel('info');
   const macOS=await page.evaluate(()=>/Mac|iPhone|iPad/.test(navigator.platform));
   const primary=macOS?'Meta':'Control';
@@ -78,6 +101,49 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   check((await channel('read.focus')).data.subject.ref===p.wiki.ref,'A real wiki opens as the same canonical subject in a normal tab');
   check((await channel('read.focus')).data.subject.native_owner==='ai-kit','Kernel retains the native knowledge owner');
   check(await page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`).count()===1,'Graph renders the actual native wiki identity');
+  // EX01: two cumulative moves share the same original pointer/world point.
+  // This must reach the real native layout worker at nonzero zoom; a callback
+  // log alone is insufficient, so await the actual held-point reply too.
+  await page.getByRole('button',{name:'Zoom in',exact:true}).click();
+  const dragCanvas=page.locator('.knowledge-canvas');
+  await page.waitForFunction(ref=>{
+    const record=window.__knowledgeLayouts.find(row=>row.reading?.nodes.some(node=>node.ref===ref)&&row.points);
+    if(!record)return false;const point=record.points[record.reading.nodes.findIndex(node=>node.ref===ref)];
+    const previous=record.stability;const now=performance.now();
+    if(!previous||Math.hypot(point.x-previous.x,point.y-previous.y)>.1)record.stability={x:point.x,y:point.y,since:now};
+    return !!record.stability&&now-record.stability.since>250;
+  },p.wiki.ref,{timeout:15000});
+  const dragStart=await dragCanvas.evaluate((canvas,ref)=>{
+    const record=window.__knowledgeLayouts.find(row=>row.reading?.nodes.some(node=>node.ref===ref)&&row.points);
+    const point=record.points[record.reading.nodes.findIndex(node=>node.ref===ref)];
+    const key=Object.keys(localStorage).find(key=>key.startsWith('oi-cradle.knowledge-view.v1:'));
+    const camera=key?JSON.parse(localStorage.getItem(key)):null;if(!camera)throw new Error('Native graph camera has not been committed');
+    const bounds=canvas.getBoundingClientRect();
+    const x=bounds.width/2+camera.x+(point.x-400)*camera.zoom,y=bounds.height/2+camera.y+(point.y-260)*camera.zoom;
+    return {x:bounds.x+x,y:bounds.y+y,zoom:camera.zoom,dragCount:record.drags.length,inside:x>=8&&y>=8&&x<bounds.width-68&&y<bounds.height-26};
+  },p.wiki.ref);
+  check(dragStart.inside,'Actual selected native worker point and final drag displacement fit the canvas viewport',dragStart);
+  check(Math.abs(dragStart.zoom-1.2)<1e-6,'Cumulative native drag runs at actual nonzero graph zoom',dragStart);
+  await page.mouse.move(dragStart.x,dragStart.y);await page.mouse.down();
+  try{
+    await page.mouse.move(dragStart.x+40,dragStart.y+12);
+    await page.mouse.move(dragStart.x+60,dragStart.y+18);
+    await page.waitForFunction(({ref,count})=>{
+      const record=window.__knowledgeLayouts.find(row=>row.reading?.nodes.some(node=>node.ref===ref)&&row.points);
+      const requests=record.drags.slice(count).filter(row=>row.ref===ref);if(requests.length<2)return false;
+      const last=requests[requests.length-1],point=record.points[record.reading.nodes.findIndex(node=>node.ref===ref)];
+      return Math.hypot(point.x-last.x,point.y-last.y)<.1;
+    },{ref:p.wiki.ref,count:dragStart.dragCount},{timeout:15000});
+    const actual=await page.evaluate(({ref,count})=>{
+      const record=window.__knowledgeLayouts.find(row=>row.reading?.nodes.some(node=>node.ref===ref)&&row.points);
+      return {requests:record.drags.slice(count).filter(row=>row.ref===ref),point:record.points[record.reading.nodes.findIndex(node=>node.ref===ref)]};
+    },{ref:p.wiki.ref,count:dragStart.dragCount});
+    const first=actual.requests[0],last=actual.requests[actual.requests.length-1];
+    check(Math.abs((last.x-first.x)-20/dragStart.zoom)<.1&&Math.abs((last.y-first.y)-6/dragStart.zoom)<.1,'Split cumulative pointer moves deliver the final displacement rather than adding previous displacement',{actual,zoom:dragStart.zoom});
+    check(Math.hypot(actual.point.x-last.x,actual.point.y-last.y)<.1,'Actual production layout worker holds the exact final native-ref point',actual);
+  }finally{await page.mouse.up();}
+  check(native('history').length===historyBefore&&(await channel('read.focus')).data.subject.ref===p.wiki.ref,'Disposable geometry movement does not mutate native identity or record a route use');
+  await page.getByRole('button',{name:'Zoom out',exact:true}).click();
   await page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`).click();
   await page.getByRole('button',{name:'Express local whole',exact:true}).waitFor();
   await page.getByRole('button',{name:'Pin subject',exact:true}).click();

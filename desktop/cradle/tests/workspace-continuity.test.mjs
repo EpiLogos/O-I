@@ -162,3 +162,13 @@ test('the hosted engine checkpoint rides the hosted centre kinds, typed, and nev
   const foreign = validBinding({ id: 'ws:src', kind: 'source', title: 'x', ref: 'central:source:x', engine: { expressionRef: 'expression-9' } });
   assert.equal(foreign.engine, undefined, 'a source tab carries no engine checkpoint');
 });
+
+test('pinned projected knowledge restores compact geometry in the same Workspace binding',()=>{
+  const view={schema:'oi.cradle.knowledge-encounter-view/v1',world:'world:codec:a',focus:'wiki:codec:a',locus:'wiki:codec:held',mode:'page',camera:{x:25,y:-12,zoom:1.5},picked:'wiki:codec:neighbour'};
+  const binding={id:'surface:codec:pinned',kind:'presentation',ref:view.focus,title:'Pinned',presentation:{world_ref:view.world},view:{knowledgeEncounter:view}};
+  assert.deepEqual(validBinding(JSON.parse(JSON.stringify(binding))).view.knowledgeEncounter,view);
+  for(const knowledgeEncounter of [{...view,world:'world:foreign'}, {...view,focus:'wiki:foreign'}, {...view,camera:{x:NaN,y:0,zoom:1}}]){
+    const restored=validBinding({...binding,view:{knowledgeEncounter}});assert.equal(restored.ref,binding.ref);assert.equal(restored.view,undefined);
+  }
+  assert.equal(validBinding({...sourceTab(),view:{knowledgeEncounter:view}}).view,undefined);
+});

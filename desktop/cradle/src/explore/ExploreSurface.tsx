@@ -50,14 +50,14 @@ type Hit={kind:"entry"|"being"|"field";ref:string;label:string;summary?:string;s
 export interface ExploreSurfaceProps {binding:SurfaceBinding;onView?:(id:string,view:NonNullable<SurfaceBinding["view"]>)=>void;onOpenSubjectSidebar?:(ref:string,title:string,meta:PresentationMeta)=>Promise<void>;onOpenPresentation?:(ref:string,title:string,meta:PresentationMeta)=>Promise<void>;onOpenExplore?:(select:{ref:string;title?:string})=>Promise<void>}
 
 export {navigateExplore,saveTravel,type PresentationMeta} from "./navigate";
-import {loadTravel,saveTravel,TRAVEL_EVENT,type PresentationMeta,type Travel,type Visit} from "./navigate";
+import {loadTravel,saveTravel,TRAVEL_EVENT,type PresentationMeta,type Travel,type Visit,type KnowledgeEncounterView} from "./navigate";
 const KIND_LABEL:Record<string,string>={"central-world":"world","wiki-space":"wiki space","wiki-node":"wiki node","curated-artifact":"artifact","central.document":"document",expression:"expression",contribution:"contribution",participant:"being","shared-field":"field","world-position":"agent position",workcell:"workcell",practice:"practice",activity:"activity"};
 const kindLabel=(kind:string)=>KIND_LABEL[kind]??kind;
 
 export function ExploreSurface({binding,onView,onOpenPresentation,onOpenSubjectSidebar,onOpenExplore}:ExploreSurfaceProps) {
   const {transport}=useKernel();
   const pinned=binding.kind==="presentation";
-  const [travel,setTravel]=useState<Travel>(()=>pinned?{...freshExploreTravel(),visits:[{query:"",selected:binding.ref}]}:loadTravel());
+  const [travel,setTravel]=useState<Travel>(()=>pinned?{...freshExploreTravel(),visits:[{query:"",selected:binding.ref,knowledge:binding.view?.knowledgeEncounter}]}:loadTravel());
   const visit=currentVisit(travel) as Visit;
   const [snapshot,setSnapshot]=useState<Snapshot>();
   const [reading,setReading]=useState<SharedFieldReading>();
@@ -82,6 +82,13 @@ export function ExploreSurface({binding,onView,onOpenPresentation,onOpenSubjectS
     return()=>window.removeEventListener(TRAVEL_EVENT,wake);
   },[pinned]);
   useEffect(()=>{if(pinned)return;const timer=setTimeout(()=>{if(!saveTravel(latest.current))setStorageError("Explore view state could not be saved on this device.");},200);return()=>clearTimeout(timer);},[travel,pinned]);
+
+  useEffect(()=>{
+    if(pinned)return;
+    const flush=()=>{if(!saveTravel(latest.current))setStorageError("Explore view state could not be saved on this device.");};
+    window.addEventListener("pagehide",flush);
+    return()=>{window.removeEventListener("pagehide",flush);saveTravel(latest.current);};
+  },[pinned]);
 
   const selected=visit.selected;
   const isEntry=!!selected&&!selected.startsWith("participant:")&&!selected.startsWith("human:")&&!selected.startsWith("oi:field:")&&!selected.startsWith("relation:");
@@ -149,6 +156,10 @@ export function ExploreSurface({binding,onView,onOpenPresentation,onOpenSubjectS
   const move=(delta:number)=>setTravel(t=>travelBy(t,delta));
   const setDepth=(change:DepthState)=>setTravel(t=>amendVisit(t,{depth:{...(currentVisit(t) as Visit).depth,...change}}));
   const commitQuery=(value:string)=>{setQuery(value);setTravel(t=>amendVisit(t,{query:value}));};
+  const setKnowledgeView=(knowledge:KnowledgeEncounterView)=>{
+    setTravel(current=>amendVisit(current,{knowledge}));
+    if(pinned)onView?.(binding.id,{...binding.view,knowledgeEncounter:knowledge});
+  };
   const depth=visit.depth??{};
 
   const standing=useMemo(()=>watchStanding(reading) as unknown as {available:boolean;watching?:boolean;reason?:string;participant_ref?:string;field_ref?:string;watch?:{watch_ref:string}},[reading]);
@@ -218,7 +229,7 @@ export function ExploreSurface({binding,onView,onOpenPresentation,onOpenSubjectS
         </ol>
       </div>}
     </>}
-    {selected&&isEntry&&(reading?<><PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} entries={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} stages={snapshot&&!isUnavailable(snapshot)?snapshot.stages??[]:[]} activityLiveness={snapshot&&!isUnavailable(snapshot)?((snapshot as unknown as {activity_liveness?:unknown[]}).activity_liveness??[]):[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip} onSelectSubject={selectSubject} onOpenSession={onOpenSubjectSidebar||onOpenPresentation?openSession:undefined} contributions={reading.state==="hosted"?<ContributionPanel key={`${reading.entry.ref}@${(reading.projections.find(projection=>projection.projection_ref===(reading.entry.meta?.projection_ref as string|undefined))??reading.projections[0])?.projection_revision??0}`} transport={transport} reading={reading} subjects={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} onChanged={()=>setGeneration(n=>n+1)}/>:undefined}/></>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
+    {selected&&isEntry&&(reading?<><PresentationBody knowledgeView={visit.knowledge} onKnowledgeView={setKnowledgeView} reading={reading} relations={view.state==="available"?view.relations:[]} entries={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} stages={snapshot&&!isUnavailable(snapshot)?snapshot.stages??[]:[]} activityLiveness={snapshot&&!isUnavailable(snapshot)?((snapshot as unknown as {activity_liveness?:unknown[]}).activity_liveness??[]):[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip} onSelectSubject={selectSubject} onOpenSession={onOpenSubjectSidebar||onOpenPresentation?openSession:undefined} contributions={reading.state==="hosted"?<ContributionPanel key={`${reading.entry.ref}@${(reading.projections.find(projection=>projection.projection_ref===(reading.entry.meta?.projection_ref as string|undefined))??reading.projections[0])?.projection_revision??0}`} transport={transport} reading={reading} subjects={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} onChanged={()=>setGeneration(n=>n+1)}/>:undefined}/></>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
     {selected&&!isEntry&&<section className="presentation-body" data-presentation-state="local">{strip}{selected.startsWith("oi:field:")?<FieldBody field_ref={selected} view={view} snapshot={snapshot} onOpenRef={select}/>:selected.startsWith("relation:")?<RelationBody ref_={selected} view={view}/>:snapshot&&!isUnavailable(snapshot)?<BeingEncounter participantRef={selected} snapshot={snapshot} onOpenRef={select}/>:<p role="status" className="explore-absent">The projected Being is unavailable.</p>}</section>}
     {selected&&!isEntry&&snapshot&&!isUnavailable(snapshot)&&(()=>{const being=view.state==="available"?view.beings.find(b=>b.ref===selected):undefined;const relation=view.state==="available"?view.relations.find(r=>r.relation_ref===selected):undefined;const field_ref=selected.startsWith("oi:field:")?selected:being?.field_ref??snapshot.relation_fields[selected];return field_ref?<ContextContributionPanel key={selected} transport={transport} snapshot={snapshot} target={{kind:selected.startsWith("oi:field:")?"oi.shared-field":being?"oi.participant":"oi.relation",ref:selected,label:being?.label??(relation?relationLabel(relation.relation):subjectLabel(snapshot.fields.find(field=>field.field_ref===selected),"Shared undertaking")),field_ref}} onChanged={()=>setGeneration(n=>n+1)}/>:null;})()}
   </section>;

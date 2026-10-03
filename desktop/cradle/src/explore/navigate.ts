@@ -7,7 +7,8 @@
 import {EXPLORE_TRAVEL_KEY,currentVisit,decodeExploreTravel,freshExploreTravel,pushVisit} from "./travel.mjs";
 import type {DepthState} from "./PresentationBody";
 
-export type Visit={query:string;selected?:string;depth?:DepthState};
+export type KnowledgeEncounterView={schema:"oi.cradle.knowledge-encounter-view/v1";world:string;focus:string;locus:string;mode:"graph"|"tree"|"list"|"page";camera:{x:number;y:number;zoom:number};picked?:string};
+export type Visit={query:string;selected?:string;depth?:DepthState;knowledge?:KnowledgeEncounterView};
 export type Travel={schema:string;visits:Visit[];index:number};
 
 export interface PresentationMeta {native_session?:{ref:string;project:string;source_world_ref:string};world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number}

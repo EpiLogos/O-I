@@ -69,7 +69,7 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
     const hitNode=(x:number,y:number)=>{let best:GraphNode|undefined,distance=Infinity;for(const item of screen){const d=Math.hypot(x-item.x,y-item.y);if(d<=Math.max(hit*.65,item.r+3)&&d<distance){best=item.node;distance=d;}}return best;};
     const down=(e:PointerEvent)=>{if(e.button!==0&&e.button!==1)return;e.preventDefault();const p=pointer(e);settle();const node=hitNode(p.x,p.y);const at=node?current.current.positions[current.current.nodes.findIndex(n=>n.ref===node.ref)]:undefined;drag={x:p.x,y:p.y,camera:{...view},node,moved:false,mode:node&&at?'node':'camera',nodeWorld:at?{x:at.x,y:at.y}:undefined};el.setPointerCapture(e.pointerId);el.focus({preventScroll:true});};
     const move=(e:PointerEvent)=>{const p=pointer(e);if(drag){const x=p.x-drag.x,y=p.y-drag.y;if(Math.hypot(x,y)>3)drag.moved=true;if(drag.moved){hover=undefined;el.style.cursor='grabbing';
-        if(drag.mode==='node'&&drag.nodeWorld&&drag.node){const world={x:drag.nodeWorld.x+x/view.zoom,y:drag.nodeWorld.y+y/view.zoom};drag.nodeWorld=world;current.current.onDragNode?.(drag.node.ref,world);}
+        if(drag.mode==='node'&&drag.nodeWorld&&drag.node){const world={x:drag.nodeWorld.x+x/drag.camera.zoom,y:drag.nodeWorld.y+y/drag.camera.zoom};current.current.onDragNode?.(drag.node.ref,world);}
         else view={...drag.camera,x:drag.camera.x+x,y:drag.camera.y+y};
         schedule();}}
       else{const next=hitNode(p.x,p.y)?.ref;if(next!==hover){setHover(next);el.style.cursor=hover?'pointer':'grab';schedule();}}};

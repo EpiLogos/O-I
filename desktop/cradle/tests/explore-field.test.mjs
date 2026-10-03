@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decodeExploreTravel, freshExploreTravel, pushVisit, amendVisit, travelBy, canTravel, currentVisit, EXPLORE_TRAVEL_SCHEMA, EXPLORE_TRAVEL_LIMIT } from '../src/explore/travel.mjs';
+import { decodeKnowledgeEncounterView, decodeExploreTravel, freshExploreTravel, pushVisit, amendVisit, travelBy, canTravel, currentVisit, EXPLORE_TRAVEL_SCHEMA, EXPLORE_TRAVEL_LIMIT } from '../src/explore/travel.mjs';
 import { fieldReading, searchField, primaryProjection, constellation, relationsOf, watchStanding, watchTargetKind } from '../src/explore/field.mjs';
 import { createExploreEntry } from '../../../shared-field/explore.mjs';
 import { createProjection } from '../../../shared-field/index.mjs';
@@ -212,4 +212,24 @@ test('watch standing follows the caller\'s own authority and watch rows', () => 
   assert.equal(watchTargetKind('central-world'), 'world');
   assert.equal(watchTargetKind('wiki-node'), 'wiki-node');
   assert.equal(watchTargetKind('expression'), 'object');
+});
+
+// These are codec tests, not owner admission or native browser acceptance.
+const encounterView=()=>({schema:'oi.cradle.knowledge-encounter-view/v1',world:'world:codec:a',focus:'wiki:codec:focus',locus:'wiki:codec:held',mode:'list',camera:{x:42,y:-18,zoom:1.6},picked:'wiki:codec:neighbour'});
+test('Explore travel roundtrips qualified geometry through its existing bounded history',()=>{
+  let travel=pushVisit(freshExploreTravel(),{query:'same',selected:'wiki:codec:focus',knowledge:encounterView()});
+  travel=pushVisit(travel,{query:'next',selected:'wiki:codec:next'});
+  const restored=decodeExploreTravel(JSON.parse(JSON.stringify(travel)));
+  assert.deepEqual(currentVisit(travelBy(restored,-1)).knowledge,encounterView());
+  assert.equal(currentVisit(restored).knowledge,undefined);
+});
+test('malformed or mismatched optional geometry preserves the original subject and history',()=>{
+  for(const knowledge of [{...encounterView(),focus:'wiki:foreign'}, {...encounterView(),camera:{x:0,y:0,zoom:Infinity}}, {...encounterView(),schema:'foreign'}, {...encounterView(),picked:'x'.repeat(1025)}]){
+    const travel=decodeExploreTravel({schema:EXPLORE_TRAVEL_SCHEMA,visits:[{query:'same',selected:'wiki:codec:focus',knowledge}],index:0});
+    assert.equal(currentVisit(travel).selected,'wiki:codec:focus');assert.equal(currentVisit(travel).knowledge,undefined);
+  }
+});
+test('view decoding is bounded geometry only and cannot retain copied body or simulation positions',()=>{
+  assert.deepEqual(decodeKnowledgeEncounterView({...encounterView(),body:'not view state',positions:[{x:1,y:2}]}),encounterView());
+  for(const camera of [{x:1000001,y:0,zoom:1},{x:0,y:0,zoom:.39},{x:0,y:0,zoom:3.01}])assert.equal(decodeKnowledgeEncounterView({...encounterView(),camera}),undefined);
 });

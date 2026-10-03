@@ -11,6 +11,7 @@ import type {ReactNode} from "react";
 import type {HostedProjection,HostedRelation,HostedStage,SharedFieldReading} from "../knowledge/shared-field";
 import {WorldPresentationView,type WorldPresentation,type ExpressionHosting} from "./presentation";
 import {KnowledgeEncounter} from "./KnowledgeEncounter";
+import type {KnowledgeEncounterView} from "./navigate";
 import {ConstituentEncounter,constituentOf,type Reading as ConstituentReading} from "./ConstituentEncounter";
 import type {HostedEntry} from "../knowledge/shared-field";
 // @ts-ignore -- language-neutral desktop reading over the field client's contracts.
@@ -41,7 +42,7 @@ function RepresentationFallback({projection,label}:{projection:HostedProjection;
   </article>;
 }
 
-export function PresentationBody({reading,relations,entries=[],stages=[],activityLiveness=[],onOpenRef,depth,onDepth,watch,strip,contributions,onSelectSubject,onOpenSession,hosting="stage"}:{reading:SharedFieldReading;relations:HostedRelation[];entries?:HostedEntry[];stages?:HostedStage[];activityLiveness?:unknown[];onOpenRef:(ref:string)=>void;depth:DepthState;onDepth:(change:DepthState)=>void;watch?:WatchControl;strip?:ReactNode;contributions?:ReactNode;onSelectSubject?:(ref:string)=>void;onOpenSession?:(reading:ConstituentReading)=>Promise<void>;hosting?:ExpressionHosting}) {
+export function PresentationBody({reading,relations,entries=[],stages=[],activityLiveness=[],onOpenRef,depth,onDepth,watch,strip,contributions,onSelectSubject,onOpenSession,knowledgeView,onKnowledgeView,hosting="stage"}:{knowledgeView?:KnowledgeEncounterView;onKnowledgeView?:(view:KnowledgeEncounterView)=>void;reading:SharedFieldReading;relations:HostedRelation[];entries?:HostedEntry[];stages?:HostedStage[];activityLiveness?:unknown[];onOpenRef:(ref:string)=>void;depth:DepthState;onDepth:(change:DepthState)=>void;watch?:WatchControl;strip?:ReactNode;contributions?:ReactNode;onSelectSubject?:(ref:string)=>void;onOpenSession?:(reading:ConstituentReading)=>Promise<void>;hosting?:ExpressionHosting}) {
   if(reading.state==="unavailable")return <section className="presentation-body" data-presentation-state="unavailable">{strip}<p role="status" className="explore-unavailable">This shared reading is unavailable. Try refreshing the field.</p><details><summary>Connection details</summary><p>{reading.owner_operation}: {reading.detail}</p></details></section>;
   if(reading.state==="absent")return <section className="presentation-body" data-presentation-state="absent">{strip}<p role="status" className="explore-absent">This subject is not available in the current shared field.</p><details><summary>Source details</summary><p>{reading.target.uri}/{reading.target.database} · <code>{reading.ref}</code></p></details></section>;
   const projection=primaryProjection(reading) as HostedProjection|null;
@@ -79,7 +80,7 @@ export function PresentationBody({reading,relations,entries=[],stages=[],activit
         {neighbourhood?.relations?.nodes?.length?<details><summary>Nearby subjects · {neighbourhood.relations.nodes.length}</summary><ul className="presentation-relations">{neighbourhood.relations.nodes.filter(node=>node.ref!==reading.entry.ref).map((node,index)=><li key={node.ref}><button type="button" data-subject-ref={node.ref} onClick={()=>onOpenRef(node.ref)}>{subjectLabel(node,`Unnamed related subject ${index+1}`)}</button><small>{subjectKind(node.kind)}</small></li>)}</ul></details>:neighbourhood?.error?<p className="explore-muted">Nearby subjects are unavailable.</p>:null}
       </aside>}
       <div className="presentation-main">
-        {knowledge&&neighbourhood?<KnowledgeEncounter hosting={hosting} opened={{resource:neighbourhood.resource??reading.entry,relations:neighbourhood.relations??(neighbourhood.error?{error:neighbourhood.error}:undefined),actions:neighbourhood.actions??[],sources:{ref:reading.entry.ref,revision:reading.entry.revision,provenance:reading.entry.provenance}}} page={primary} onOpenRef={onOpenRef}/>:primary}
+        {knowledge&&neighbourhood?<KnowledgeEncounter view={knowledgeView} onView={onKnowledgeView} hosting={hosting} opened={{resource:neighbourhood.resource??reading.entry,relations:neighbourhood.relations??(neighbourhood.error?{error:neighbourhood.error}:undefined),actions:neighbourhood.actions??[],sources:{ref:reading.entry.ref,revision:reading.entry.revision,provenance:reading.entry.provenance}}} page={primary} onOpenRef={onOpenRef}/>:primary}
       </div>
       {depth.source&&<aside className="presentation-depth presentation-depth--source" aria-label="Source and provenance of this subject">
         <header><span>Source &amp; provenance</span><button type="button" aria-label="Dismiss source and provenance" onClick={()=>onDepth({source:false})}>×</button></header>

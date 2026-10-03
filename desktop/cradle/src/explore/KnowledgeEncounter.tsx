@@ -5,6 +5,10 @@ import {expressionConfig} from "../expression/engineProjection";
 import {sharedField, type SharedFieldReading} from "../knowledge/shared-field";
 import {KNOWLEDGE_EXPRESSION_LIMIT, projectProvidedLocalWhole, validateParticipation, type LocalMember, type LocalWhole, type OwnerParticipation, type ProjectionOutcome} from "../knowledge/expressionProjection";
 import type {ReadingRef} from "../expression/types";
+import {EncounterGraph} from "./EncounterGraph";
+import type {KnowledgeEncounterView} from "./navigate";
+// @ts-ignore -- same compact view codec as Explore travel and Workspace.
+import {decodeKnowledgeEncounterView} from "./travel.mjs";
 // @ts-ignore -- renderer-neutral contract, tested under shared-field.
 import {createKnowledgeEncounter} from "../../../../shared-field/knowledge-encounter.mjs";
 // @ts-ignore -- display labels use the owner reading, never semantic addresses.
@@ -22,7 +26,7 @@ function remember(name:string,value:unknown){try{localStorage.setItem(name,JSON.
 function initialPins(world:string){const value=stored<unknown>(key(world,"pins"),[]);return Array.isArray(value)?[...new Set(value.filter((ref):ref is string=>typeof ref==="string"&&ref.length>0))].slice(-MAX_PINS):[];}
 const readingRef = (row:Provenance):ReadingRef => ({ref:row.ref,revision:row.revision??"revision-unavailable",availability:row.revision?"available":"unavailable"});
 
-export function KnowledgeEncounter({opened,page,onOpenRef,hosting="stage"}:{opened:unknown;page:ReactNode;onOpenRef:(ref:string)=>void;hosting?:"stage"|"preview"}) {
+export function KnowledgeEncounter({opened,page,onOpenRef,view,onView,hosting="stage"}:{opened:unknown;page:ReactNode;onOpenRef:(ref:string)=>void;view?:KnowledgeEncounterView;onView?:(view:KnowledgeEncounterView)=>void;hosting?:"stage"|"preview"}) {
   const {transport}=useKernel();
   const stage=useExpressionStage();
   // A new object can represent the same reading after opening source depth.
@@ -30,10 +34,20 @@ export function KnowledgeEncounter({opened,page,onOpenRef,hosting="stage"}:{open
   const readingKey=JSON.stringify(opened);
   const encounter=useMemo(()=>createKnowledgeEncounter(JSON.parse(readingKey)) as Encounter,[readingKey]);
   const world=encounter.resource.world_ref;
-  const [mode,setMode]=useState<Mode>(encounter.state==="available"?"graph":"page");
+  const restored = decodeKnowledgeEncounterView(view) as KnowledgeEncounterView | undefined;
+  const qualified = restored?.world===world && restored.focus===encounter.focus ? restored : undefined;
+  const [graphView,setGraphView]=useState<KnowledgeEncounterView|undefined>(()=>qualified);
+  const graphViewRef=useRef(graphView);graphViewRef.current=graphView;
+  const [mode,setMode]=useState<Mode>(qualified?.mode??(encounter.state==="available"?"graph":"page"));
   const [pins,setPins]=useState<string[]>(()=>initialPins(world));
   const [heldLocus,setHeldLocus]=useState<string|null>(()=>stored(key(world,"held"),null));
   const follow=heldLocus===null;
+  const scope=useRef({world,focus:encounter.focus});
+  useEffect(()=>{
+    if(scope.current.world===world&&scope.current.focus===encounter.focus)return;
+    if(scope.current.world!==world){setPins(initialPins(world));setHeldLocus(stored(key(world,"held"),null));}
+    scope.current={world,focus:encounter.focus};setGraphView(qualified);setMode(qualified?.mode??(encounter.state==="available"?"graph":"page"));
+  },[world,encounter.focus]);
   const [retained,setRetained]=useState<Node[]>([]);
   const [expressionOutcome,setExpressionOutcome]=useState<ProjectionOutcome>();
   const [expressionBusy,setExpressionBusy]=useState(false);
@@ -57,7 +71,16 @@ export function KnowledgeEncounter({opened,page,onOpenRef,hosting="stage"}:{open
   },[readingKey,retainedRefs,transport,world]);
   const display=useMemo<Encounter>(()=>({...encounter,nodes:[...encounter.nodes,...retained.filter(node=>!encounter.nodes.some(item=>item.ref===node.ref))]}),[encounter,retained]);
   const selectedMode=encounter.presentations.includes(mode)&&(hosting==="stage"||mode!=="expression")?mode:"page";
-  const visualLocus=heldLocus&&display.nodes.some(node=>node.ref===heldLocus)?heldLocus:encounter.focus;
+  const admitted=(ref:string)=>display.nodes.some(node=>node.ref===ref&&node.world_ref===world&&node.availability!=="unavailable");
+  const visualLocus=heldLocus&&admitted(heldLocus)?heldLocus:encounter.focus;
+  const camera=graphView?.world===world&&graphView.focus===encounter.focus&&graphView.locus===visualLocus?graphView.camera:{x:0,y:0,zoom:1};
+  const picked=graphView?.world===world&&graphView.focus===encounter.focus&&graphView.picked&&admitted(graphView.picked)?graphView.picked:undefined;
+  const commitView=(change:Partial<Pick<KnowledgeEncounterView,"camera"|"picked"|"mode">>,locus=visualLocus)=>{
+    const current=graphViewRef.current;
+    const same=current?.world===world&&current.focus===encounter.focus&&current.locus===locus;
+    const next:KnowledgeEncounterView={schema:"oi.cradle.knowledge-encounter-view/v1",world,focus:encounter.focus,locus,mode:selectedMode==="expression"?"graph":selectedMode,camera:same?current.camera:camera,picked:same&&current.picked&&admitted(current.picked)?current.picked:picked,...change};
+    graphViewRef.current=next;setGraphView(next);onView?.(next);
+  };
   const open=(ref:string)=>{const node=display.nodes.find(item=>item.ref===ref);if(node&&node.availability!=="unavailable")onOpenRef(ref);};
   const neighbours=encounter.edges.filter(edge=>edge.from===encounter.focus||edge.to===encounter.focus).map(edge=>({edge,ref:edge.from===encounter.focus?edge.to:edge.from}));
   const whole=useMemo<LocalWhole>(()=>{
@@ -98,7 +121,7 @@ export function KnowledgeEncounter({opened,page,onOpenRef,hosting="stage"}:{open
     }
     return()=>active?.release();
   },[hosting,selectedMode,expressionOutcome,stage,mountId]);
-  const changeMode=(next:Mode)=>{epoch.current++;activeProjection.current?.abort();setExpressionBusy(false);setMode(next);};
+  const changeMode=(next:Mode)=>{epoch.current++;activeProjection.current?.abort();setExpressionBusy(false);setMode(next);if(next!=="expression")commitView({mode:next});};
   const express=async()=>{
     if(hosting!=="stage")return;
     activeProjection.current?.abort();
@@ -115,11 +138,11 @@ export function KnowledgeEncounter({opened,page,onOpenRef,hosting="stage"}:{open
   };
   const togglePin=()=>setPins(current=>{const next=current.includes(encounter.focus)?current.filter(ref=>ref!==encounter.focus):[...current,encounter.focus].slice(-MAX_PINS);remember(key(world,"pins"),next);return next;});
   return <section className="knowledge-encounter" aria-label="Projected knowledge local whole" data-knowledge-state={encounter.state} data-focus-ref={encounter.focus} data-node-count={encounter.nodes.length} data-relation-count={encounter.edges.length}>
-    <header className="knowledge-encounter__header"><div><span>Knowledge</span><h1>{subjectLabel(focus,"Unnamed knowledge page")}</h1></div><div className="knowledge-encounter__travel" role="group" aria-label="Knowledge travel"><button type="button" aria-pressed={pins.includes(encounter.focus)} onClick={togglePin}>{pins.includes(encounter.focus)?"Pinned":"Pin"}</button><button type="button" aria-pressed={follow} onClick={()=>{const next=follow?encounter.focus:null;remember(key(world,"held"),next);setHeldLocus(next);}}>{follow?"Following locus":"Follow locus"}</button></div></header>
+    <header className="knowledge-encounter__header"><div><span>Knowledge</span><h1>{subjectLabel(focus,"Unnamed knowledge page")}</h1></div><div className="knowledge-encounter__travel" role="group" aria-label="Knowledge travel"><button type="button" aria-pressed={pins.includes(encounter.focus)} onClick={togglePin}>{pins.includes(encounter.focus)?"Pinned":"Pin"}</button><button type="button" aria-pressed={follow} onClick={()=>{const next=follow?encounter.focus:null;remember(key(world,"held"),next);setHeldLocus(next);commitView({camera:{...camera,x:0,y:0}},next??encounter.focus);}}>{follow?"Following locus":"Follow locus"}</button></div></header>
     {encounter.state==="degraded"&&<div className="knowledge-encounter__degraded" role="status"><strong>Relations unavailable</strong><p>{encounter.detail}</p><p>The projected page and exact source identity remain available.</p></div>}
     <nav className="knowledge-encounter__modes" aria-label="Knowledge presentation">{(["graph","tree","list","page"] as Mode[]).map(candidate=><button key={candidate} type="button" aria-pressed={selectedMode===candidate} disabled={!encounter.presentations.includes(candidate)} onClick={()=>changeMode(candidate)}>{candidate}</button>)}<button type="button" aria-pressed={selectedMode==="expression"} disabled={hosting!=="stage"||encounter.state!=="available"||expressionBusy} onClick={()=>void express()}>{expressionBusy?"Expressing…":"Expression"}</button></nav>
     {pins.length>0&&<div className="knowledge-encounter__pins" aria-label="Pinned knowledge subjects">{pins.map(ref=><button key={ref} type="button" disabled={!display.nodes.some(node=>node.ref===ref&&node.availability!=="unavailable")} data-subject-ref={ref} title={display.nodes.some(node=>node.ref===ref)?subjectLabel(display.nodes.find(node=>node.ref===ref)):"Pinned subject is unavailable in the current owner reading"} onClick={()=>open(ref)}>{subjectLabel(display.nodes.find(node=>node.ref===ref),`Unavailable pin ${pins.indexOf(ref)+1}`)}</button>)}</div>}
-    {selectedMode==="graph"&&<Graph encounter={display} visualLocus={visualLocus} onOpen={open}/>}
+    {selectedMode==="graph"&&<EncounterGraph nodes={display.nodes.map(node=>({...node,label:subjectLabel(node)}))} edges={display.edges} focus={encounter.focus} visualLocus={visualLocus} camera={camera} picked={picked} onCamera={next=>commitView({camera:next})} onPick={ref=>commitView({picked:ref})} onOpen={open}/>}
     {selectedMode==="tree"&&<div className="knowledge-encounter__tree"><article><span>Focus</span><strong>{subjectLabel(focus)}</strong></article><ol>{neighbours.map(({edge,ref},index)=>{const node=encounter.nodes.find(item=>item.ref===ref)!;return <li key={`${edge.from}:${edge.relation}:${edge.to}:${index}`}><button type="button" disabled={node.availability==="unavailable"} onClick={()=>open(ref)}><small>{relationLabel(edge.relation)}</small><strong>{subjectLabel(node)}</strong></button></li>;})}</ol></div>}
     {selectedMode==="list"&&<ol className="knowledge-encounter__list">{display.nodes.map(node=><li key={node.ref}><button type="button" disabled={node.availability==="unavailable"} aria-current={node.ref===encounter.focus?"true":undefined} data-subject-ref={node.ref} onClick={()=>open(node.ref)}><span>{subjectKind(node.kind)}</span><strong>{subjectLabel(node)}</strong>{node.summary&&<span>{node.summary}</span>}</button></li>)}</ol>}
     {selectedMode==="page"&&<div className="knowledge-encounter__page" data-knowledge-presentation="page">{page}</div>}
@@ -129,10 +152,4 @@ export function KnowledgeEncounter({opened,page,onOpenRef,hosting="stage"}:{open
     {expressionError&&<p role="alert">{expressionError}</p>}
     <footer><span>{encounter.nodes.length} subjects · {encounter.edges.length} typed relations{encounter.truncated?" · bounded at owner budget":""}</span><details><summary>Source details</summary><pre>{JSON.stringify({focus:encounter.focus,nodes:display.nodes,edges:encounter.edges,actions:encounter.actions},null,2)}</pre></details></footer>
   </section>;
-}
-
-function Graph({encounter,visualLocus,onOpen}:{encounter:Encounter;visualLocus:string;onOpen:(ref:string)=>void}) {
-  const positioned=encounter.nodes.map(node=>{if(node.ref===visualLocus)return {...node,x:400,y:215};const others=Math.max(1,encounter.nodes.length-1),slot=encounter.nodes.filter(item=>item.ref!==visualLocus).findIndex(item=>item.ref===node.ref),angle=(Math.PI*2*slot)/others-Math.PI/2;return {...node,x:400+Math.cos(angle)*260,y:215+Math.sin(angle)*145};});
-  const byRef=new Map(positioned.map(node=>[node.ref,node]));
-  return <svg className="knowledge-encounter__graph" viewBox="0 0 800 430" role="img" aria-label="Bounded typed knowledge constellation" data-visual-locus={visualLocus}>{encounter.edges.map((edge,index)=>{const from=byRef.get(edge.from),to=byRef.get(edge.to);return from&&to?<g key={`${edge.from}:${edge.relation}:${edge.to}:${index}`}><line x1={from.x} y1={from.y} x2={to.x} y2={to.y}/><text x={(from.x+to.x)/2} y={(from.y+to.y)/2-6}>{relationLabel(edge.relation)}</text><title>{subjectLabel(from)} — {relationLabel(edge.relation)} — {subjectLabel(to)}</title></g>:null;})}{positioned.map(node=><g key={node.ref} className={`${node.ref===encounter.focus?"is-focus":""}${node.availability==="unavailable"?" is-unavailable":""}`} data-knowledge-ref={node.ref} transform={`translate(${node.x},${node.y})`} role="button" aria-label={subjectLabel(node)} aria-disabled={node.availability==="unavailable"} tabIndex={node.availability==="unavailable"?-1:0} onClick={()=>onOpen(node.ref)} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();onOpen(node.ref);}}}><circle r={node.ref===encounter.focus?34:22}/><text y={node.ref===encounter.focus?52:39}>{subjectLabel(node)}</text><title>{subjectLabel(node)}{node.availability==="unavailable"?" · unavailable":""}</title></g>)}</svg>;
 }

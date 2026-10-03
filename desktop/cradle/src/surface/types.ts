@@ -65,7 +65,7 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * the session runs instead of the login shell. */
   terminal?: {cwd?:string;command?:string[]};
   flow?: {flowRef:string;path:string};
-  view?: {constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {knowledgeEncounter?:import("../explore/navigate").KnowledgeEncounterView;constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   /** The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):
    * where the hosted application stands, written by its stage slot from the
    * application's own hosted-state announcements, debounced, on change

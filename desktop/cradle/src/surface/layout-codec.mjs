@@ -17,6 +17,7 @@
 // Hosted kinds come from the same reviewed source generation as the mounts.
 // Their state stays with their owners, never copied into the arrangement.
 import {hostedSurfaceDescriptors} from '../contributions/registered-kinds.mjs';
+import {decodeKnowledgeEncounterView} from '../explore/travel.mjs';
 const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'agency', 'object', ...hostedSurfaceDescriptors.map(descriptor => descriptor.kind)];
 const ENCOUNTER_PLANES = ['Conversation', 'Activity', 'Context', 'Inspect'];
 const KNOWLEDGE_PLANES = ['graph', 'page'];
@@ -91,6 +92,10 @@ export function validBinding(raw) {
   if (o.kind === 'knowledge' && KNOWLEDGE_PLANES.includes(viewRaw.knowledgePlane)) {
     view.knowledgePlane = viewRaw.knowledgePlane;
     if (typeof viewRaw.graphOrigin === 'string' && viewRaw.graphOrigin.trim()) view.graphOrigin = viewRaw.graphOrigin;
+  }
+  if (o.kind === 'presentation' && !nativeSession) {
+    const knowledge = decodeKnowledgeEncounterView(viewRaw.knowledgeEncounter);
+    if (knowledge && knowledge.focus === o.ref && knowledge.world === presentation.world_ref) view.knowledgeEncounter = knowledge;
   }
   const terminal = o.kind === 'terminal' ? { cwd: typeof o.terminal?.cwd === 'string' ? o.terminal.cwd : undefined } : undefined;
   const browser = o.kind === 'browser' ? { url: typeof o.browser?.url === 'string' ? o.browser.url : '' } : undefined;
