@@ -54,6 +54,108 @@ fn state(reply: &Value) -> Value {
     value
 }
 
+// QL's original.input is a typed CoupledInput, not the original JSON token
+// stream. Its opaque source_receipts are parsed by the native QL owner and may
+// serialize an equivalent finite decimal spelling. Retain full receipt shape,
+// exact decimal value AND IEEE bits here; raw input bytes remain separately
+// attributed by input_sha256. This does not change global Value equality or
+// reinterpret any product source, body, permission or field input.
+fn receipt_number_basis(number: &serde_json::Number) -> Option<(bool, String, i64, u64)> {
+    let finite = number.as_f64()?;
+    if !finite.is_finite() {
+        return None;
+    }
+    let token = number.to_string();
+    let negative = token.starts_with('-');
+    let unsigned = token.strip_prefix('-').unwrap_or(&token);
+    let (mantissa, exponent) = match unsigned.split_once(|ch| ch == 'e' || ch == 'E') {
+        Some((mantissa, exponent)) => (mantissa, exponent.parse::<i64>().ok()?),
+        None => (unsigned, 0),
+    };
+    let (integer, fraction) = mantissa.split_once('.').unwrap_or((mantissa, ""));
+    let digits = format!("{integer}{fraction}");
+    if digits.is_empty() || !digits.bytes().all(|digit| digit.is_ascii_digit()) {
+        return None;
+    }
+    let digits = digits.trim_start_matches('0');
+    if digits.is_empty() {
+        return Some((negative, "0".into(), 0, finite.to_bits()));
+    }
+    let significant = digits.trim_end_matches('0');
+    let removed = i64::try_from(digits.len() - significant.len()).ok()?;
+    let fraction_len = i64::try_from(fraction.len()).ok()?;
+    let scale = exponent.checked_sub(fraction_len)?.checked_add(removed)?;
+    Some((negative, significant.into(), scale, finite.to_bits()))
+}
+fn same_typed_source_receipt(actual: &Value, expected: &Value) -> bool {
+    match (actual, expected) {
+        (Value::Number(actual), Value::Number(expected)) => {
+            match (receipt_number_basis(actual), receipt_number_basis(expected)) {
+                (Some(actual), Some(expected)) => actual == expected,
+                _ => false,
+            }
+        }
+        (Value::Array(actual), Value::Array(expected)) => {
+            actual.len() == expected.len()
+                && actual.iter().zip(expected).all(|(actual, expected)| {
+                    same_typed_source_receipt(actual, expected)
+                })
+        }
+        (Value::Object(actual), Value::Object(expected)) => {
+            actual.len() == expected.len()
+                && actual.iter().all(|(key, actual)| {
+                    expected.get(key).is_some_and(|expected| {
+                        same_typed_source_receipt(actual, expected)
+                    })
+                })
+        }
+        _ => actual == expected,
+    }
+}
+fn same_original_input_basis(actual: &Value, expected: &Value) -> bool {
+    let (Some(actual), Some(expected)) = (actual.as_object(), expected.as_object()) else {
+        return false;
+    };
+    actual.len() == expected.len()
+        && actual.iter().all(|(key, actual)| {
+            expected.get(key).is_some_and(|expected| {
+                if key == "source_receipts" {
+                    same_typed_source_receipt(actual, expected)
+                } else {
+                    actual == expected
+                }
+            })
+        })
+}
+
+// Comparator conformance only, using the three original 3f1 native Inspect
+// operand pairs. This test supplies no native input or numerical acceptance.
+#[test]
+fn typed_receipt_comparison_keeps_exact_value_bits_shape_and_raw_basis() {
+    let value = |token: &str| serde_json::from_str::<Value>(token).unwrap();
+    for (actual, original) in [
+        ("-0.000011802825996413943", "-1.1802825996413943e-05"),
+        ("0.000026595910808642593", "2.6595910808642593e-05"),
+        ("0.000011881545124631414", "1.1881545124631414e-05"),
+    ] {
+        assert!(same_typed_source_receipt(&value(actual), &value(original)));
+    }
+    let original = value("0.000011881545124631414");
+    let changed = value("0.0000118815451246314141");
+    assert_eq!(original.as_f64().unwrap().to_bits(), changed.as_f64().unwrap().to_bits());
+    assert!(!same_typed_source_receipt(&original, &changed), "same IEEE bits must not hide a changed decimal value");
+    assert!(!same_typed_source_receipt(&value("-0.0"), &value("0.0")), "signed zero must retain its bits");
+    assert!(!same_typed_source_receipt(&value("1.0"), &value("1.0000000000000002")), "changed finite IEEE value must refuse");
+    assert!(!same_typed_source_receipt(&json!([1, 2]), &json!([2, 1])), "receipt array order must stay exact");
+    assert!(!same_typed_source_receipt(&json!({"body":"Moon"}), &json!({"body":"Sun"})), "receipt text must stay exact");
+    assert!(!same_typed_source_receipt(&json!({"body":"Moon"}), &json!({"body":"Moon", "extra":null})), "receipt members must stay exact");
+    let actual = value(r#"{"m1":{"drive":1e-5},"source_receipts":[{"rate":1e-5}]}"#);
+    let receipts_only = value(r#"{"m1":{"drive":1e-5},"source_receipts":[{"rate":0.00001}]}"#);
+    let non_receipt = value(r#"{"m1":{"drive":0.00001},"source_receipts":[{"rate":0.00001}]}"#);
+    assert!(same_original_input_basis(&actual, &receipts_only));
+    assert!(!same_original_input_basis(&actual, &non_receipt), "outside opaque typed receipts Number tokens remain exact");
+}
+
 #[test]
 #[ignore = "requires explicitly built OI_QL_FIELD_HOST_BIN, OI_QL_FIELD_WORKER_BIN and NATIVE_EXPRESSION_INPUT"]
 fn real_native_owner_admission_effects_refusals_restart_and_release() {
@@ -139,7 +241,11 @@ print(json.dumps({'ok':True,'data':data}))
         json!({"operation":"inspect"}),
     );
     assert_eq!(state(&inspected), original);
-    assert_eq!(inspected["sources"]["original"]["input"], input["basis"]);
+    assert!(
+        same_original_input_basis(&inspected["sources"]["original"]["input"], &input["basis"]),
+        "complete native original input differs from its independently consumed basis: actual={:?}, expected={:?}",
+        inspected["sources"]["original"]["input"], input["basis"]
+    );
     for domain in ["m1", "m2", "m3"] {
         assert!(
             inspected["sources"]["current"][domain].is_object(),

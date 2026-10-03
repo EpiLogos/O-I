@@ -72,6 +72,10 @@ OI_SCOPE = [
 ]
 
 
+class SelectionChildFailure(AssertionError):
+    """Only a qualified isolated child exit/timeout after first owned cleanup."""
+
+
 def require(condition, message):
     if not condition:
         raise AssertionError(message)
@@ -648,8 +652,90 @@ class Replay:
         save(target, {**config, 'bridge': self.url, 'output': str(self.out / name),
                       'selection_custody_file': str(custody_path),
                       'selection_custody_sha256': file_ref(custody_path)['sha256']})
-        self.command(name, ['node', self.repo / 'desktop/cradle/tests/epi-world-production-native.mjs', target],
-                     self.repo / 'desktop/cradle', timeout=min(300, remaining))
+        try:
+            self.command(name, ['node', self.repo / 'desktop/cradle/tests/epi-world-production-native.mjs', target],
+                         self.repo / 'desktop/cradle', timeout=min(300, remaining))
+        except (AssertionError, subprocess.TimeoutExpired) as error:
+            # Only command exit/timeout may be classified. Configuration,
+            # source, receipt/schema/hash and OS errors remain ordinary fatal
+            # exceptions; the successful-receipt checks below are outside this.
+            require(config.get('stage') == 'selected-conversation-case', 'Setup cannot be continued after a failed admission')
+            command = self.report['commands'][-1]
+            require(command['name'] == name and command['argv'] == [
+                    'node', str(self.repo / 'desktop/cradle/tests/epi-world-production-native.mjs'), str(target)]
+                    and command['cwd'] == str(self.repo / 'desktop/cradle'), 'Failed child command custody differs')
+            timed_out = isinstance(error, subprocess.TimeoutExpired)
+            require((timed_out and command.get('timed_out') is True)
+                    or (type(error) is AssertionError and str(error) == name + ': actual command failed, see retained stdout/stderr'
+                        and type(command['exit']) is int and command['exit'] != 0),
+                    'Only the actual isolated command nonzero exit/timeout can continue')
+            if timed_out:
+                require(command.get('cleanup_attempted') is True and command.get('cleanup_error') is None
+                        and command.get('cleanup_receipt') is not None,
+                        'First timeout cleanup must have succeeded; a retry cannot qualify it')
+            else:
+                with self.owned.lock:
+                    children = [row['process'] for row in self.owned.roots.values() if row['label'] == name]
+                require(len(children) == 1, 'Selection child needs exact identity-owned cleanup custody')
+                command['selection_cleanup_attempted'] = True
+                try:
+                    command['selection_cleanup_receipt'] = self.owned.stop(children[0])
+                except BaseException as cleanup_error:
+                    command['selection_cleanup_error'] = repr(cleanup_error)
+                    save(self.out / 'receipt.json', self.report)
+                    raise
+            # These are the actual retained records, not inferred from an
+            # issued request. Missing/invalid/changed records refuse continuation.
+            stage = read_json(self.out / name / 'receipt.json')
+            child = read_json(self.out / name / 'actual-case/receipt.json', 2 * 1024 * 1024)
+            require(stage['schema'] == 'oi.epi-selected-conversation-hosted-stage/v1'
+                    and stage['selection_case'] == config['selection_case'] and stage['passed'] is False
+                    and not stage['entry']['changed_on_disk'] and 'custody_after_failure' not in stage
+                    and stage.get('portable_custody_after') is not None,
+                    'Failed selection stage must retain actual current source/entry qualification')
+            owner_ref = {**file_ref(custody_path)}
+            require(stage['selection_owner_custody'] == owner_ref, 'Failed child owner-custody record changed')
+            selected_child = stage['selected_child']
+            require(type(selected_child['pid']) is int and selected_child['pid'] > 0
+                    and selected_child['argv'][1:] == [str(self.repo / 'desktop/cradle/tests/epi-selected-conversation-native.mjs'),
+                                                       str(self.out / name / 'selected-case-config.json')]
+                    and selected_child['cwd'] == str(self.repo / 'desktop/cradle')
+                    and (timed_out or (type(selected_child['exit']['code']) is int
+                                      and selected_child['exit']['code'] != 0 and selected_child['exit']['signal'] is None)),
+                    'Only the actual isolated selected child failure can continue')
+            qref = selected_child['qualification']
+            require(qref['path'] == str(self.out / name / 'selection-current-qualification.json')
+                    and file_ref(qref['path']) == qref, 'Failed child qualification bytes changed')
+            q = read_json(qref['path'], 2 * 1024 * 1024)
+            require(q['schema'] == 'oi.epi-selected-conversation-source-built-hosted/v1'
+                    and q['native_process'] == custody['native_process'] and q['source_cuts'] == custody['source_cuts']
+                    and q['oi_sources'] == custody['oi_sources'] and q['admission_ref'] == custody['admission_ref']
+                    and q['protected_current_custody_ref'] == custody['protected_current_custody_ref'],
+                    'Failed child source/admission/current custody differs')
+            native = custody['native_process']
+            qualified = child['hosted_owner_qualification']
+            require(child['schema'] == 'oi.epi-selected-conversation-native-gate/v1'
+                    and child['selection_case'] == config['selection_case'] and child['passed'] is False
+                    and isinstance(child.get('failure'), str)
+                    and child['failure'].startswith(('AssertionError [ERR_ASSERTION]', 'TimeoutError:'))
+                    and qualified['pid'] == native['pid'] and qualified['starttime'] == native['starttime']
+                    and qualified['native_generation'] == native['native_generation']
+                    and qualified['loaded_image'] == {'path': native['bridge']['path'], 'sha256': native['bridge']['sha256']}
+                    and qualified['source_cuts'] == custody['source_cuts'],
+                    'Only an actually source-qualified assertion/timeout child may continue')
+            # Recheck determining physical bytes after failure. A source/hash
+            # failure inside the child cannot be downgraded to an ordinary case.
+            for row in q['oi_sources']:
+                actual = file_ref(row['physical_path'])
+                require(actual['sha256'] == row['sha256'] and actual['bytes'] == row['bytes'], 'Failed child source changed')
+            for ref in [*q['host_owners'].values(), q['native_source_expectation_ref'], q['original_world_ref'],
+                        q['identity_ref'], q['admission_ref'], q['protected_current_custody_ref'], q['all_five'],
+                        q['frontend']['host'], q['frontend']['application']]:
+                actual = file_ref(ref['path'])
+                require(actual['sha256'] == ref['sha256'] and actual['bytes'] == ref['bytes'], 'Failed child qualified bytes changed')
+            for source, digest in q['frontend']['host']['inputs'].items():
+                require(file_ref(source)['sha256'] == digest, 'Failed child receiver source changed')
+            raise SelectionChildFailure(str(error)) from error
         path = self.out / name / 'receipt.json'
         receipt = read_json(path)
         require(receipt['schema'] == 'oi.epi-selected-conversation-hosted-stage/v1'
@@ -1139,12 +1225,26 @@ class Replay:
         current_custody_ref = self.qualify_current_checkpoint(setup_document, by_role['ql'], kernel_env, selection_deadline)
         self.stop_bridge()
         original_env = dict(self.env)
-        try:
-            for selection_case in ('positive', 'native-refusal', 'native-changed', 'local-changed',
-                                   'navigation-choose-positive', 'navigation-return-positive',
-                                   'navigation-native-refusal', 'navigation-local-changed',
-                                   'required-cosmic-body-disabled'):
-                name = 'selected-conversation-' + selection_case
+        selection_cases = ('positive', 'native-refusal', 'native-changed', 'local-changed',
+                           'navigation-choose-positive', 'navigation-return-positive',
+                           'navigation-native-refusal', 'navigation-local-changed',
+                           'required-cosmic-body-disabled')
+        selection_report = self.report['selected_conversation']
+        selection_report['expected_cases'] = list(selection_cases)
+        selection_report['cases'] = []
+        for selection_case in selection_cases:
+            name = 'selected-conversation-' + selection_case
+            attempt = {'selection_case': selection_case, 'name': name, 'passed': False,
+                       'state': 'not_started', 'command_start_index': len(self.report['commands'])}
+            selection_report['cases'].append(attempt)
+            if time.monotonic() >= selection_deadline:
+                # Preserve the original aggregate deadline. A case not reached
+                # remains a mandatory failed gate, never a skipped acceptance.
+                attempt['state'] = 'not_started_aggregate_expired'
+                attempt['failure'] = 'Selection-only aggregate engineering envelope expired'
+                save(self.out / 'receipt.json', self.report)
+                continue
+            try:
                 case_root = self.out / (name + '-owner')
                 require(not case_root.exists(), 'Each selection case needs a fresh owned owner location')
                 case_root.mkdir()
@@ -1165,33 +1265,82 @@ class Replay:
                 require(prior_reading['content'] == setup_reading['content'] and prior_document == setup_document,
                         'A prior selection case changed the independent durable setup basis')
                 custody = self.selected_custody(owner, setup_document, acknowledged, oi_sources, manifest_path, baseline_ref, current_custody_ref)
-                case = self.selected_stage(name, {**common, 'reopen_file': relative, 'stage': 'selected-conversation-case',
-                                           'selection_case': selection_case}, custody, selection_deadline)
-                selected_path = case['selected_case_ref']['path']
-                require(file_ref(selected_path) == case['selected_case_ref'], 'Exact actual selected-case receipt changed')
-                selected = read_json(selected_path, 2 * 1024 * 1024)
-                require(selected['schema'] == 'oi.epi-selected-conversation-native-gate/v1'
-                        and selected['selection_case'] == selection_case and selected['passed'] is True
-                        and 'failure' not in selected and len(selected['durable_conservation']) == 2,
-                        'Every original selection case must execute with before/after complete durable conservation')
+                attempt['state'] = 'started'
+                try:
+                    case = self.selected_stage(name, {**common, 'reopen_file': relative, 'stage': 'selected-conversation-case',
+                                               'selection_case': selection_case}, custody, selection_deadline)
+                    selected_path = case['selected_case_ref']['path']
+                    require(file_ref(selected_path) == case['selected_case_ref'], 'Exact actual selected-case receipt changed')
+                    selected = read_json(selected_path, 2 * 1024 * 1024)
+                    require(selected['schema'] == 'oi.epi-selected-conversation-native-gate/v1'
+                            and selected['selection_case'] == selection_case and selected['passed'] is True
+                            and 'failure' not in selected and len(selected['durable_conservation']) == 2,
+                            'Every original selection case must execute with before/after complete durable conservation')
+                except SelectionChildFailure as error:
+                    attempt['failure'] = repr(error.__cause__)
+                    attempt['failure_type'] = type(error.__cause__).__name__
+                finally:
+                    attempt['command_end_index'] = len(self.report['commands'])
+                    # Retire the actual Node/browser family even if it exited
+                    # nonzero. command() already does this on a timeout; the
+                    # same identity-owned stop is safely rechecked here.
+                    commands = self.report['commands'][attempt['command_start_index']:attempt['command_end_index']]
+                    if any(row['name'] == name for row in commands):
+                        with self.owned.lock:
+                            children = [row['process'] for row in self.owned.roots.values() if row['label'] == name]
+                        require(len(children) == 1, 'Selection child needs exact identity-owned cleanup custody')
+                        command = next(row for row in commands if row['name'] == name)
+                        if command.get('selection_cleanup_attempted'):
+                            require(command.get('selection_cleanup_error') is None and command.get('selection_cleanup_receipt') is not None,
+                                    'First child cleanup failed; retry cannot permit continuation')
+                            attempt['child_cleanup'] = command['selection_cleanup_receipt']
+                        elif command.get('cleanup_attempted'):
+                            require(command.get('cleanup_error') is None and command.get('cleanup_receipt') is not None,
+                                    'First timeout cleanup failed; retry cannot permit continuation')
+                            attempt['child_cleanup'] = command['cleanup_receipt']
+                        else:
+                            attempt['child_cleanup'] = self.owned.stop(children[0])
+                    for key, receipt_path in (
+                            ('stage_receipt_ref', self.out / name / 'receipt.json'),
+                            ('selected_case_receipt_ref', self.out / name / 'actual-case/receipt.json')):
+                        if receipt_path.exists():
+                            attempt[key] = file_ref(receipt_path)
                 after_reading, after_document = self.file_admission(relative, name + '-after', baseline['file']['revision'])
                 require(after_reading['content'] == setup_reading['content'] and after_document == setup_document,
                         'An actual refused/pending selection altered the complete native saved world')
+                attempt['durable_basis_unchanged'] = True
                 observed = self.owned.evidence()
                 require(not observed['errors'] and any(row.get('loaded_native_role') == 'walk-bridge'
                         and row['root_pid'] == owner['pid'] and row['root_starttime'] == owner['starttime']
                         and row['actual_image']['sha256'] == owner['bridge']['sha256'] for row in observed['records']),
                         'Each case requires independently observed actual owned bridge image custody')
-                self.stop_bridge()
-        finally:
-            # Leave refused/pending state in its terminated private owner;
-            # never rollback or clean it into the original whole lifetime.
-            self.stop_bridge()
-            self.env = original_env
-        require(len(self.report['selected_conversation']['stages']) == 10,
-                'Setup, all four original Ask cases, four ordinary navigation cases and actual required-body counterproof are mandatory')
-        self.report['selected_conversation']['passed'] = True
-        self.report['selected_conversation']['elapsed_seconds'] = 1500 - (selection_deadline - time.monotonic())
+                attempt['owned_bridge_image_qualified'] = True
+            except BaseException as error:
+                attempt['continuation_boundary_failure'] = repr(error)
+                raise
+            finally:
+                # Leave refused/pending state in its terminated private owner;
+                # never rollback or clean it into the original whole lifetime.
+                try:
+                    self.stop_bridge()
+                except BaseException as error:
+                    attempt['cleanup_failure'] = repr(error)
+                    raise
+                finally:
+                    self.env = dict(original_env)
+                    save(self.out / 'receipt.json', self.report)
+            attempt['passed'] = 'failure' not in attempt
+            attempt['state'] = 'passed' if attempt['passed'] else 'failed'
+            save(self.out / 'receipt.json', self.report)
+        selection_report['passed'] = (len(selection_report['stages']) == 10
+                                      and len(selection_report['cases']) == len(selection_cases)
+                                      and all(row['passed'] for row in selection_report['cases']))
+        selection_report['elapsed_seconds'] = 1500 - (selection_deadline - time.monotonic())
+        selection_report['failed_cases'] = [row['selection_case'] for row in selection_report['cases'] if not row['passed']]
+        # A failed isolated child remains red. Run the unchanged independent
+        # whole only after actual cleanup and the complete fresh-owner basis
+        # admission below; final aggregate acceptance still requires every case.
+        save(self.out / 'receipt.json', self.report)
         first = self.start_bridge('whole')
         require(all(first['native_generation'] != phase['native_generation']
                 and (first['pid'], first['starttime']) != (phase['pid'], phase['starttime'])
@@ -1273,6 +1422,16 @@ class Replay:
             'ql_source_unchanged': self.source_rows(self.ql, self.args.expected_ql_head, [row['path'] for row in ql_rows]) == ql_rows,
             'ql_succession_consumers_unchanged': self.source_rows(self.ql, self.args.expected_ql_head, consumer_paths) == consumer_rows}
         require(self.report['source_recheck']['oi_source_unchanged'] and self.report['source_recheck']['ql_source_unchanged'] and self.report['source_recheck']['ql_succession_consumers_unchanged'] and self.report['source_recheck']['aikit_image_unchanged'], 'Qualified source changed during native receiving')
+        self.report['independent_whole_and_restart'] = {
+            'passed': True, 'whole_ref': self.report['whole-production'],
+            'restart_ref': self.report['fresh-process-entry'],
+            'scope': 'Original complete whole and separate owned-kernel/fresh-browser entry; isolated selection failures do not become acceptance'}
+        self.report['standing'] = 'Executed original whole and separate fresh-owner restart; aggregate acceptance still requires every isolated case; managed installed Mac/H remain separate'
+        save(self.out / 'receipt.json', self.report)
+        require(len(self.report['selected_conversation']['stages']) == 10,
+                'Setup, all four original Ask cases, four ordinary navigation cases and actual required-body counterproof are mandatory')
+        require(selection_report['passed'] is True,
+                'One or more mandatory isolated selection gates failed; original independent whole/restart evidence is retained separately')
         self.report['passed'] = True
         self.report['standing'] = 'Executed strict whole production and separate owned-kernel/fresh-browser entry in one source-built hosted Linux environment; managed installed Mac/H remain separate'
 

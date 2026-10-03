@@ -4,14 +4,10 @@
 //! API/export Documents remain full. Decode expands before their ordinary
 //! native validation and before a file can replace any working document.
 use crate::expression::{Document, DOCUMENT_BYTES};
-use serde::{
-    de::{MapAccess, SeqAccess, Visitor},
-    Deserialize, Deserializer, Serialize,
-};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
 
 pub const SCHEMA: &str = "oi.expression-storage/v1";
 pub const IMAGE_REF_SCHEMA: &str = "oi.expression-image-ref/v1";
@@ -43,81 +39,95 @@ struct ImageRef {
     r#ref: String,
 }
 // Preserve typed duplicate-field admission through the envelope's Value
-// carrier too, including rich material objects. Raw child views preserve the
-// producer's complete numeric JSON tokens without cloning nested raw bodies.
+// carrier too, including rich material objects. Borrowed raw shape admission
+// preserves complete numeric JSON tokens without repeated subtree parsing.
 pub(crate) struct UniqueValue(pub(crate) Value);
 impl<'de> Deserialize<'de> for UniqueValue {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let raw = Box::<serde_json::value::RawValue>::deserialize(deserializer)?;
-        unique_raw_value(&raw, 0)
+        unique_raw_value(&raw)
             .map(UniqueValue)
             .map_err(serde::de::Error::custom)
     }
 }
 
-fn unique_raw_value(raw: &serde_json::value::RawValue, depth: usize) -> Result<Value, serde_json::Error> {
-    // serde_json's ordinary 128-level parser refuses the 128th container.
-    // Parsing borrowed child RawValues must not reset that admission boundary.
+// The RawValue above has already qualified actual JSON grammar. Traverse its
+// borrowed bytes once to qualify real object-key identities and global depth
+// before Value decoding can expose Serde's private Number transport. No child
+// RawValue decoder may rescan the same nested source body.
+fn qualify_raw_shape(raw: &str) -> Result<(), serde_json::Error> {
     const MAX_CONTAINER_DEPTH: usize = 127;
-    struct ObjectVisitor {
-        depth: usize,
-    }
-    impl<'de> Visitor<'de> for ObjectVisitor {
-        type Value = Value;
-        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("JSON object without duplicate or reserved decoder keys")
-        }
-        fn visit_map<A: MapAccess<'de>>(self, mut entries: A) -> Result<Value, A::Error> {
-            let mut values = serde_json::Map::new();
-            while let Some(key) = entries.next_key::<String>()? {
-                // These are internal serde_json number/raw transports, never
-                // authored object keys. Parse actual object keys before Value
-                // decoding so an object cannot impersonate a numeric token.
-                if matches!(key.as_str(), "$serde_json::private::Number" | "$serde_json::private::RawValue") {
-                    return Err(serde::de::Error::custom("Reserved JSON decoder key"));
+    let error = |reason| <serde_json::Error as serde::de::Error>::custom(reason);
+    let bytes = raw.as_bytes();
+    let mut containers: Vec<Option<BTreeSet<String>>> = Vec::new();
+    let mut offset = 0;
+    while offset < bytes.len() {
+        match bytes[offset] {
+            b'{' | b'[' => {
+                if containers.len() >= MAX_CONTAINER_DEPTH {
+                    return Err(error("recursion limit exceeded"));
                 }
-                if values.contains_key(&key) {
-                    return Err(serde::de::Error::custom("Duplicate Expression file key"));
+                containers.push((bytes[offset] == b'{').then(BTreeSet::new));
+                offset += 1;
+            }
+            b'}' | b']' => {
+                containers.pop();
+                offset += 1;
+            }
+            b'"' => {
+                let begin = offset;
+                offset += 1;
+                while offset < bytes.len() {
+                    match bytes[offset] {
+                        b'\\' => offset += 2,
+                        b'"' => break,
+                        _ => offset += 1,
+                    }
                 }
-                let child = entries.next_value::<&'de serde_json::value::RawValue>()?;
-                let value = unique_raw_value(child, self.depth + 1)
-                    .map_err(serde::de::Error::custom)?;
-                values.insert(key, value);
+                if offset >= bytes.len() {
+                    return Err(error("unterminated JSON string"));
+                }
+                offset += 1;
+                let mut next = offset;
+                while next < bytes.len() && bytes[next].is_ascii_whitespace() {
+                    next += 1;
+                }
+                // In already-valid JSON, a quoted token followed by ':' is
+                // exactly an object key, never text inside a string value.
+                if bytes.get(next) == Some(&b':') {
+                    let key: String = serde_json::from_str(&raw[begin..offset])?;
+                    if matches!(key.as_str(), "$serde_json::private::Number" | "$serde_json::private::RawValue") {
+                        return Err(error("Reserved JSON decoder key"));
+                    }
+                    let Some(Some(keys)) = containers.last_mut() else {
+                        return Err(error("JSON key outside object"));
+                    };
+                    if !keys.insert(key) {
+                        return Err(error("Duplicate Expression file key"));
+                    }
+                }
             }
-            Ok(Value::Object(values))
+            _ => offset += 1,
         }
     }
-    struct ArrayVisitor {
-        depth: usize,
-    }
-    impl<'de> Visitor<'de> for ArrayVisitor {
-        type Value = Value;
-        fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write_str("JSON array with qualified child values")
+    Ok(())
+}
+fn qualify_native_numbers(value: &Value) -> Result<(), serde_json::Error> {
+    match value {
+        Value::Number(number) if number.as_f64().is_none() => {
+            Err(<serde_json::Error as serde::de::Error>::custom("Invalid JSON number"))
         }
-        fn visit_seq<A: SeqAccess<'de>>(self, mut sequence: A) -> Result<Value, A::Error> {
-            let mut values = Vec::new();
-            while let Some(child) = sequence.next_element::<&'de serde_json::value::RawValue>()? {
-                values.push(unique_raw_value(child, self.depth + 1)
-                    .map_err(serde::de::Error::custom)?);
-            }
-            Ok(Value::Array(values))
-        }
+        Value::Array(values) => values.iter().try_for_each(qualify_native_numbers),
+        Value::Object(values) => values.values().try_for_each(qualify_native_numbers),
+        _ => Ok(()),
     }
-    let first = raw.get().trim_start().as_bytes().first().copied();
-    if matches!(first, Some(b'{') | Some(b'[')) && depth >= MAX_CONTAINER_DEPTH {
-        return Err(<serde_json::Error as serde::de::Error>::custom("recursion limit exceeded"));
-    }
-    let mut decoder = serde_json::Deserializer::from_str(raw.get());
-    let value = match first {
-        Some(b'{') => decoder.deserialize_map(ObjectVisitor { depth })?,
-        Some(b'[') => decoder.deserialize_seq(ArrayVisitor { depth })?,
-        _ => Value::deserialize(&mut decoder)?,
-    };
-    decoder.end()?;
-    if matches!(&value, Value::Number(number) if number.as_f64().is_none()) {
-        return Err(<serde_json::Error as serde::de::Error>::custom("Invalid JSON number"));
-    }
+}
+fn unique_raw_value(raw: &serde_json::value::RawValue) -> Result<Value, serde_json::Error> {
+    qualify_raw_shape(raw.get())?;
+    // Existing arbitrary_precision Value decoding preserves each complete raw
+    // number token. Typing happens only after the complete shape/number guards.
+    let value = serde_json::from_str(raw.get())?;
+    qualify_native_numbers(&value)?;
     Ok(value)
 }
 /// Raw native JSON admission. Capture the actual object shape before Serde's
@@ -507,5 +517,43 @@ mod native_json_admission_tests {
             assert!(crate::expression_scene::data(&object, 0).is_err());
             assert!(crate::expression_performance::safe(&object, 0).is_err());
         }
+    }
+}
+
+#[cfg(test)]
+mod linear_raw_admission_tests {
+    use super::*;
+    #[test]
+    fn actual_raw_number_spellings_and_distinct_object_scopes_remain_lossless() {
+        // These three number spellings are the original 3f1 input operand,
+        // not a newly synthesized numerical expectation or native fixture.
+        let raw = r#"[{"rate":-1.1802825996413943e-05},{"rate":2.6595910808642593e-05},{"rate":1.1881545124631414e-05}]"#;
+        let UniqueValue(value) = serde_json::from_str(raw).unwrap();
+        assert_eq!(serde_json::to_string(&value).unwrap(), raw);
+        let raw = r#"{"data":"\\\" : { [ ] }","nested":[{"key\"\\":1e-05}]}"#;
+        let UniqueValue(value) = serde_json::from_str(raw).unwrap();
+        assert_eq!(value["data"], "\\\" : { [ ] }");
+        assert_eq!(serde_json::to_string(&value["nested"][0]["key\"\\"]).unwrap(), "1e-05");
+        let raw = r#"{"text":"{\"$serde_json::private::Number\":1}"}"#;
+        let UniqueValue(value) = serde_json::from_str(raw).unwrap();
+        assert_eq!(value["text"], "{\"$serde_json::private::Number\":1}");
+    }
+    #[test]
+    fn borrowed_shape_checks_do_not_relax_escaped_keys_depth_or_bad_json() {
+        for raw in [
+            r#"[{"rate":1e-05,"\u0072ate":1e-5}]"#,
+            r#"{"x":[{"\u0024serde_json::private::Number":"1e-05"}]}"#,
+            r#"{"x":[{"$serde_json::private::RawValue":"1e-05"}]}"#,
+            r#"{"x":[{"rate":1e400}]}"#,
+            r#"{"x":1} {"x":2}"#,
+            r#"{"x":[1,]}"#,
+            r#"{"x":"unterminated}"#,
+        ] {
+            assert!(serde_json::from_str::<UniqueValue>(raw).is_err(), "{raw}");
+        }
+        let allowed = format!("{}1e-05{}", "[".repeat(127), "]".repeat(127));
+        let refused = format!("{}1e-05{}", "[".repeat(128), "]".repeat(128));
+        assert!(serde_json::from_str::<UniqueValue>(&allowed).is_ok());
+        assert!(serde_json::from_str::<UniqueValue>(&refused).is_err());
     }
 }
