@@ -52,6 +52,8 @@ def required_fixture_paths() -> set[str]:
         "original-score-admission.json", "pending-checkpoint.json", "score-admissions.json", "checkpoint.json",
         "history.json", "basis.json", "continued-checkpoint.json", "pulse-checkpoint.json",
         "pending-pulse-checkpoint.json", "pending-pulse-history.json"))
+    paths.update("native-managed-order/journal-tail." + name for name in (
+        "origin-checkpoint.json", "complete.json", "empty.json", "checkpoint.json"))
     paths.update("native-score-reservations/" + name for name in (
         "cancel.before.json", "cancel.after.json", "cancel.ack.json", "lost.before.json", "lost.after.json", "basis.json"))
     for family in ("native-retained-workload", "native-retained-source-workload"):

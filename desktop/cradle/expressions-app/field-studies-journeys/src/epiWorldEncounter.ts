@@ -9,13 +9,16 @@ import type {BimbaSourceContent} from '../../../src/nara/coordinateExpression.js
 import type {EpiWorldRecord} from './epiWorldProduction.js';
 import type {RegisterRole} from './epiWorldMaterial.js';
 import './epiWorldEncounter.css';
+import type {EpiReceivingInspection} from './epiReceivingInspection.js';
 
 export interface EpiEncounterHost {
+ inspectReceiving?:()=>Promise<EpiReceivingInspection>;
+ recoveryFailure?:()=>string|null;
  active:()=>boolean;document:()=>ExpressionDocument|null;record:()=>EpiWorldRecord|null;
  participant?:()=>{name:string;occasion_utc:string;observer_standing:'geocentric-location-independent';occasion_standing?:'saved-occasion';natal_place_label?:string}|null;
  scene:()=>string;selected:()=>string|null;identity:()=>void;ask:()=>Promise<void>;
  navigate:(sceneRef:string,entityRef?:string)=>Promise<void>;
- step:()=>Promise<void>;sound:(enabled:boolean)=>void;quiet:(enabled:boolean)=>void;
+ step:()=>Promise<void>;sound:(enabled:boolean)=>void;quiet:(enabled:boolean)=>void;quietState?:()=>boolean;
  save:()=>Promise<void>;reset:()=>Promise<void>;
  axes?:()=>NativeSceneAxes|null;setAxis?:(axis:0|1,phase:NativeAxisPhase)=>Promise<void>;form?:()=>void;
  damping:()=>number;setDamping:(perSecond:number)=>Promise<void>;
@@ -24,6 +27,8 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
  const bar=document.createElement('nav');bar.className='epi-world-entrance';bar.setAttribute('aria-label','Epi world');document.body.append(bar);
  const disclosure=document.createElement('dialog');disclosure.className='epi-source-dialog';disclosure.setAttribute('aria-label','Bimba source');document.body.append(disclosure);
  let busy=false,notice='',failure='',failureGeneration=0,sound=false,quiet=matchMedia('(prefers-reduced-motion: reduce)').matches,generation=0,operationGeneration=0;
+ let receiving:EpiReceivingInspection|null=null,receivingError='',receivingBusy=false,receivingGeneration=0;
+ const clearReceiving=()=>{receivingGeneration++;receiving=null;receivingError='';receivingBusy=false;};
  let shown:BimbaSourceContent|null=null,returnTo:{scene:string;entity:string|null}|null=null,query='';
  let register:{role:RegisterRole;entity_ref:string;title:string;index:number|null}|null=null;
  let skyBody:EpiWorldRecord['world']['scene']['bodies'][number]|null=null;
@@ -38,6 +43,7 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
   return{entity:e,ref:exact??e.subject?.subject_ref??r?.receiving.personal.canonical_locus};
  }
  async function read(ref:string){
+  clearReceiving();
   const at=++generation;
   const r=await naraInstrumentRequest({operation:'source',coordinate_ref:ref});
   if(at!==generation)return;
@@ -46,7 +52,16 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
   if(content.source_revision!==host.record()?.inventory[0]?.source_revision)throw Error('Bimba changed since this world was constructed. Rebuild its current material before using that source.');
   shown=content;renderSource();
  }
+async function inspectReceiving(){
+ if(!host.inspectReceiving||receivingBusy)return;
+ const at=++receivingGeneration;receiving=null;receivingError='';receivingBusy=true;renderSource();
+ try{const observed=await host.inspectReceiving();if(at===receivingGeneration)receiving=observed;}
+ catch(error){if(at===receivingGeneration)receivingError=error instanceof Error?error.message:String(error);}
+ finally{if(at===receivingGeneration){receivingBusy=false;renderSource();}}
+}
  function renderSource(){
+  const receivingOpen=disclosure.querySelector<HTMLDetailsElement>('[data-epi-receiving-depth]')?.open??false;
+  const saveFailure=recoverySaveFailure();
   const r=host.record(),i=shown?.identity;
   const members=register?r?.register_members[register.role]:null,member=members&&register?.index!==null?members[register!.index!]:null;
   // Native # aliases resolve through the admitted M tree before raw graph
@@ -56,16 +71,19 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
   const memberSources=member?[...(member.coordinate_ref?[{ref:member.coordinate_ref,revision:member.reading.revision,availability:member.reading.availability}]:[]),member.reading,...member.source_refs]:[];
   const matches=(r?.inventory??[]).filter(x=>!query||[x.coordinate,x.identity,...(Array.isArray(x.aliases)?x.aliases.map(String):[])].some(v=>v.toLocaleLowerCase().includes(query.toLocaleLowerCase()))).slice(0,64);
   disclosure.innerHTML=`<header><div><small>Bimba · complete source</small><h2>${esc(register?register.title:i?.title??skyBody?.body??'Find a subject')}</h2></div><button type="button" data-epi-source="return">Return to the same field</button></header>
+   ${host.inspectReceiving?`<details data-epi-receiving-depth ${receivingOpen?'open':''}><summary>Inspect this running world</summary><p>Read-only native Document and pinned current, with this receiver’s actual GPU/modal scalar state. Private bodies are not displayed.</p><button type="button" data-epi-receiving-read ${receivingBusy?'disabled':''}>${receivingBusy?'Reading the original owners…':'Read receiving basis'}</button>${receivingError?`<p role="alert" data-epi-receiving-error>${esc(receivingError)}</p>`:''}${receiving?`<pre data-epi-receiving-reading>${esc(JSON.stringify(receiving,null,2))}</pre>`:''}</details>`:''}
+   ${saveFailure?`<section data-epi-save-refusal><p role="alert">${esc(recoveryFailureMessage(saveFailure,true))}</p>${recoveryFailureInspectHTML(saveFailure,esc)}</section>`:''}
    ${skyBody?`<section class="epi-register-disclosure"><h3>${esc(skyBody.body)} · actual sky occurrence</h3><p>${esc(r!.world.scene.epoch_utc)} · ${skyBody.longitude_deg}° geocentric longitude${skyBody.retrograde?' · retrograde':''}</p><p>${skyBody.planet_ref?'Its canonical planetary subject is below.':'This admitted sky occurrence has no dedicated planetary Bimba coordinate.'} ${skyBody.voice?'Its voice is qualified by the native scene.':'No voice is allocated to this body in the native scene.'}</p><p>${esc(r!.world.snapshot_ref)}</p><details><summary>Exact native body and sky-source basis</summary><pre>${esc(JSON.stringify({body:skyBody,snapshot_ref:r!.world.snapshot_ref,request:r!.world.sky.request,provider:r!.world.sky.provider,source:r!.source_basis.scene},null,2))}</pre></details></section>`:''}
    ${members?`<section class="epi-register-disclosure"><p>${members.length} actual source members. Choose a mark to disclose its reading and source. The containing ring keeps its own subject.</p><div class="epi-register-members" aria-label="${esc(register!.role)} register members">${members.map((row,index)=>`<button type="button" data-epi-member="${index}" aria-pressed="${register!.index===index}"><strong>${esc(row.title)}</strong>${row.ground?`<small>${esc(row.ground.role==='fibonacci'?'Fibonacci ground':'Void ring')}</small>`:''}</button>`).join('')}</div>${member?`<article class="epi-register-reading"><h3>${esc(member.title)}</h3><p>${esc(member.standing.replaceAll('-',' '))}${member.display?` · displayed at ${member.display.angle_degrees}° (${esc(member.display.standing.replaceAll('-',' '))})`:''}</p><p>${esc(member.reading.ref)}</p><ul>${memberSources.map(reading=>{const route=sourceRoute(reading.ref);return`<li>${route?`<button type="button" data-epi-ref="${esc(String(route.canonical_ref??route.full_source_ref))}">${esc(route.identity)} · ${esc(route.coordinate)}</button>`:`<span>${esc(reading.ref)}</span>`}<small>${esc(reading.revision??'')} · ${esc(reading.availability)}</small></li>`;}).join('')}</ul><details><summary>Exact admitted register row</summary><pre>${esc(JSON.stringify(member,null,2))}</pre></details></article>`:''}</section>`:''}
    <label>Find a coordinate or subject<input type="search" value="${esc(query)}" data-epi-search aria-label="Find a Bimba subject"></label>
    <div class="epi-source-results">${matches.map(x=>`<button type="button" data-epi-ref="${esc(String(x.canonical_ref))}"><strong>${esc(x.identity)}</strong><small>${esc(x.coordinate)}</small></button>`).join('')}</div>
-   ${shown?`<p>${esc(i!.coordinate)} · ${esc(i!.uuid??'source identity')}</p><details open><summary>Original properties and supporting text</summary><dl>${Object.entries(i!.properties??{}).map(([k,v])=>`<dt>${esc(k.replaceAll('_',' '))}</dt><dd>${esc(typeof v==='string'?v:JSON.stringify(v,null,2))}</dd>`).join('')}</dl></details>
-   <details open><summary>Typed relations · ${shown.relations.length}</summary><ul>${shown.relations.map(e=>`<li><button type="button" data-epi-ref="${esc(e.from_coordinate===i!.coordinate?e.to_ref:e.from_ref)}">${esc(e.from_coordinate)} → ${esc(e.kind)} → ${esc(e.to_coordinate)}</button><details><summary>Qualification and direction</summary><pre>${esc(JSON.stringify(e.properties,null,2))}</pre><small>${esc(e.relation_ref)}</small></details></li>`).join('')}</ul></details>
+   ${shown?`<p>${esc(i!.coordinate)} · ${esc(i!.uuid??'source identity')}</p><details><summary>Original properties and supporting text</summary><dl>${Object.entries(i!.properties??{}).map(([k,v])=>`<dt>${esc(k.replaceAll('_',' '))}</dt><dd>${esc(typeof v==='string'?v:JSON.stringify(v,null,2))}</dd>`).join('')}</dl></details>
+   <details><summary>Typed relations · ${shown.relations.length}</summary><ul>${shown.relations.map(e=>`<li><button type="button" data-epi-ref="${esc(e.from_coordinate===i!.coordinate?e.to_ref:e.from_ref)}">${esc(e.from_coordinate)} → ${esc(e.kind)} → ${esc(e.to_coordinate)}</button><details><summary>Qualification and direction</summary><pre>${esc(JSON.stringify(e.properties,null,2))}</pre><small>${esc(e.relation_ref)}</small></details></li>`).join('')}</ul></details>
    <details><summary>Exact source revision</summary><p>${esc(shown.source_revision)}</p><p>${esc(i!.full_source_ref)}</p><p>${esc(i!.full_properties_ref)}</p></details>`:''}`;
  }
  async function source(ref?:string){
   const record=host.record();if(!record)return;
+  clearReceiving();
   returnTo??={scene:host.scene(),entity:host.selected()};shown=null;query='';renderSource();
   const selected=selectedContent(),role=registerRoles.find(role=>host.selected()===`${record.world.instance_ref}:entity:world-register-${role}`);
   skyBody=record.world.scene.bodies.find(body=>host.selected()===`${record.world.instance_ref}:entity:world-planet-${body.body.toLowerCase()}`)??null;
@@ -74,7 +92,10 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
   if(skyBody&&!skyBody.planet_ref&&!ref){if(selected?.entity.subject?.subject_ref!==record.world.snapshot_ref)throw Error('The sky occurrence lost its exact native snapshot subject.');return;}
   if(ref??selectedContent()?.ref)await read((ref??selectedContent()!.ref)!);
  }
+ function recoverySaveFailure(){const raw=host.recoveryFailure?.();return raw&&raw!==failure&&`Error: ${raw}`!==failure?raw:null;}
  function render(){
+  quiet=host.quietState?.()??quiet;
+  const saveFailure=recoverySaveFailure();
   const r=host.record(),d=host.document(),selected=selectedContent(),participant=host.participant?.(),axes=host.axes?.()??null;bar.hidden=!host.active()&&!r;
   const scenes=d?.scenes??[];
   const bodies=scenes.find(s=>s.scene_ref===host.scene())?.entity_refs.map(ref=>d!.entities[ref]).filter(Boolean)??[];
@@ -89,7 +110,8 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
    ${r?`<div class="epi-world-scenes">${scenes.map(s=>`<button type="button" data-epi-scene="${esc(s.scene_ref)}" ${busy?'disabled':''} aria-current="${host.scene()===s.scene_ref?'page':'false'}">${esc(s.title)}</button>`).join('')}</div><time class="epi-world-occasion" datetime="${esc(occasion)}">${participant?.occasion_standing==='saved-occasion'?'Saved occasion · ':''}${esc(occasion.replace('T',' · ').replace('Z',' UTC'))}</time>`:`<button type="button" data-epi="identity" ${busy?'disabled':''}>Enter your world</button>`}</div>
    ${r?`<div class="epi-world-row epi-world-tools"><label class="epi-body-choice"><span>Choose a body</span><select data-epi-body aria-label="Choose a native body in this scene" ${busy?'disabled':''}><option value="">Choose a body…</option>${bodies.map(body=>`<option value="${esc(body.entity_ref)}" ${host.selected()===body.entity_ref?'selected':''}>${esc(body.title)}</option>`).join('')}</select></label><button type="button" data-epi="identity" ${busy?'disabled':''} title="${esc(identityTitle)}">Your identity</button><button type="button" data-epi="source" ${busy?'disabled':''} title="${esc(selected?'Open the full Bimba source of '+selected.entity.title:'Explore the complete Bimba source')}">${selected?'Source · '+esc(selected.entity.title):'Explore Bimba'}</button><button type="button" data-epi="ask" ${!selected||busy?'disabled':''}>With Nara / Epii</button>
    <details class="epi-play" ${playOpen?'open':''}><summary>Shape & play</summary><div><p>Advance one tick moves the M1/M3 source clocks by 30° and aligns Clock A with their new position. Its form may change or remain invariant. Clock B and the selected lens reading are retained.</p><label>Damping · decay (s⁻¹) <input type="number" min="0" max="1000000" step="any" data-epi-damping value="${esc(host.damping())}" ${busy?'disabled':''}></label><button type="button" data-epi="set-damping" ${busy?'disabled':''}>Apply damping</button><small>Declared material policy. Continues the resident voices without a strike or clock change.</small><fieldset data-epi-axis-controls ${busy||!axes||!host.setAxis?'disabled':''}><legend>Inscription & lensing</legend><p>Two continuous circles. Adjusting one keeps the other circle, person, sky, codon and static aperture. Use “Advance one tick” for the joined M1/M3 source clocks. These phases show the retained reading at rest and the presented native cursor during play.</p>${([['0','Clock A · inscription'],['1','Clock B · lensing']] as const).map(([axis,label])=>{const phase=axes?.[axis==='0'?'inscription':'lensing'];return `<label>${label} · whole turns <input type="text" spellcheck="false" inputmode="numeric" data-epi-axis-turns="${axis}" value="${esc(phase?.turns??'')}" aria-label="${label} whole turns"></label><label>Half-degrees (0–719) <input type="number" min="0" max="719" step="1" data-epi-axis-half="${axis}" value="${phase?phase.half_degrees:''}" aria-label="${label} half-degrees"></label><button type="button" data-epi="set-axis" data-epi-axis="${axis}">Apply ${axis==='0'?'inscription':'lensing'}</button>`;}).join('')}</fieldset><button type="button" data-epi="form" ${busy||!host.form?'disabled':''}>Personal form & static aperture</button><button type="button" data-epi="step" ${busy?'disabled':''}>Advance one tick</button><button type="button" data-epi="sound" ${busy?'disabled':''} aria-pressed="${sound}">${sound?'Mute':'Hear the field'}</button><button type="button" data-epi="quiet" aria-pressed="${quiet}">${quiet?'Resume motion':'Quiet reading'}</button><button type="button" data-epi="reset" ${busy?'disabled':''}>Return to opening</button><button type="button" data-epi="save" ${busy?'disabled':''}>Save this world</button></div></details>
-   ${busy||notice?`<span role="status">${esc(busy?'Receiving the native operation…':notice)}</span>`:''}</div>`:''}${failure?`<span role="alert">${esc(failureMessage)}</span>${failureInspect}`:''}`;
+   ${busy||notice?`<span role="status">${esc(busy?'Receiving the native operation…':notice)}</span>`:''}</div>`:''}${failure?`<span role="alert">${esc(failureMessage)}</span>${failureInspect}`:''}${r&&saveFailure?`<section data-epi-save-refusal><p role="alert">${esc(recoveryFailureMessage(saveFailure,true))}</p>${recoveryFailureInspectHTML(saveFailure,esc)}</section>`:''}`;
+  if(disclosure.open)renderSource();
  }
  bar.addEventListener('click',e=>{
   const target=(e.target as HTMLElement).closest<HTMLElement>('[data-epi],[data-epi-scene]');if(!target||busy)return;
@@ -112,13 +134,13 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
   }
  });
  bar.addEventListener('change',e=>{const select=e.target as HTMLSelectElement;if(!select.matches('[data-epi-body]')||!select.value||busy)return;const current=host.document()?.scenes.find(s=>s.scene_ref===host.scene());if(!current?.entity_refs.includes(select.value))return;void run(()=>host.navigate(host.scene(),select.value));});
- const returned=async()=>{generation++;disclosure.close();register=null;skyBody=null;const saved=returnTo;returnTo=null;if(saved)await host.navigate(saved.scene,saved.entity??undefined);};
+ const returned=async()=>{clearReceiving();generation++;disclosure.close();register=null;skyBody=null;const saved=returnTo;returnTo=null;if(saved)await host.navigate(saved.scene,saved.entity??undefined);};
  // A new source choice or Return supersedes a reversible disclosure read.
  // Available marks must respond immediately while their full source loads;
  // a late read or its finally block cannot overwrite the newer choice.
  const replaceDisclosureOperation=(operation:()=>Promise<void>)=>{generation++;operationGeneration++;busy=false;return run(operation);};
  const returnFromSource=()=>replaceDisclosureOperation(returned);
- disclosure.addEventListener('click',e=>{const t=(e.target as HTMLElement).closest<HTMLElement>('[data-epi-ref],[data-epi-source],[data-epi-member]');if(t?.dataset.epiRef)void replaceDisclosureOperation(()=>read(t.dataset.epiRef!));else if(t?.dataset.epiMember!==undefined&&register)void replaceDisclosureOperation(async()=>{const index=Number(t.dataset.epiMember),member=host.record()?.register_members[register!.role][index];if(!Number.isSafeInteger(index)||!member)throw Error('The selected register member is absent from this native world.');register!.index=index;shown=null;renderSource();if(member.coordinate_ref)await read(member.coordinate_ref);});else if(t?.dataset.epiSource==='return')void returnFromSource();});
+ disclosure.addEventListener('click',e=>{if((e.target as HTMLElement).closest('[data-epi-receiving-read]')){void inspectReceiving();return;}const t=(e.target as HTMLElement).closest<HTMLElement>('[data-epi-ref],[data-epi-source],[data-epi-member]');if(t?.dataset.epiRef)void replaceDisclosureOperation(()=>read(t.dataset.epiRef!));else if(t?.dataset.epiMember!==undefined&&register)void replaceDisclosureOperation(async()=>{const index=Number(t.dataset.epiMember),member=host.record()?.register_members[register!.role][index];if(!Number.isSafeInteger(index)||!member)throw Error('The selected register member is absent from this native world.');register!.index=index;shown=null;renderSource();if(member.coordinate_ref)await read(member.coordinate_ref);});else if(t?.dataset.epiSource==='return')void returnFromSource();});
  disclosure.addEventListener('input',e=>{const t=e.target as HTMLInputElement;if(!t.matches('[data-epi-search]'))return;query=t.value;const position=t.selectionStart;renderSource();const input=disclosure.querySelector<HTMLInputElement>('[data-epi-search]');input?.focus();if(input?.type!=='search'&&position!==null)input?.setSelectionRange(position,position);});
  disclosure.addEventListener('cancel',e=>{e.preventDefault();void returnFromSource();});
  bar.addEventListener('input',event=>{const input=event.target as HTMLInputElement;if(input.matches('[data-epi-axis-turns],[data-epi-axis-half]')){const axis=input.dataset.epiAxisTurns??input.dataset.epiAxisHalf;for(const field of bar.querySelectorAll<HTMLInputElement>(`[data-epi-axis-turns="${axis}"],[data-epi-axis-half="${axis}"]`))field.dataset.edited='true';}});
@@ -128,5 +150,5 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
   // native personal rebind/save and consumer admission. A later operation,
   // refusal or destruction invalidates this acknowledgement.
   personalAdmissionAcknowledgement(){const at=failureGeneration,operation=operationGeneration;return()=>{if(!busy&&at===failureGeneration&&operation===operationGeneration){failure='';failureGeneration++;render();}};},
-  fail(text:string){notice='';failure=text;failureGeneration++;render();},destroy(){generation++;failureGeneration++;clearInterval(phaseTimer);bar.remove();disclosure.remove();}};
+  fail(text:string){notice='';failure=text;failureGeneration++;render();},destroy(){clearReceiving();generation++;failureGeneration++;clearInterval(phaseTimer);bar.remove();disclosure.remove();}};
 }

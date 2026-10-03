@@ -1199,7 +1199,11 @@ class Replay:
         reading, document = self.file_admission(relative, 'before-original-whole-after-selection', baseline['file']['revision'])
         require(reading['content'] == setup_reading['content'] and document == setup_document,
                 'The original whole must receive the exact complete independently acknowledged setup basis')
-        whole = self.driver('whole-production', {**common, 'reopen_file': relative})
+        whole = self.driver('whole-production', {**common, 'reopen_file': relative,
+                                               'cold_opening_no_motion_preference': True,
+                                               'controlled_recovery_home': self.env['OI_HOME']})
+        require(whole.get('recovery_save', {}).get('passed') is True,
+                'Original ordinary Save must prove actual full-value rescue custody before file/reopen/restart')
         for name in ('personal_modal', 'personal_release', 'personal_cold_draft'):
             require(whole.get(name, {}).get('passed') is True, 'Full production driver omitted required personal gate: ' + name)
         require(whole.get('consumer_replays') is not None, 'Actual receiving discrimination cannot be skipped')

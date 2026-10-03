@@ -59,14 +59,15 @@ import {installPalaceInstrument} from './palaceInstrument.js';
 import {installNaraInstrument} from './naraInstrument.js';
 import {epiMaterialContinuation,epiOpeningMaterial,createEpiWorldProduction,readEpiWorldRecord,requireEpiNativeReadback,epiTorusTargetMap,epiSceneReception,epiStationaryReception,epiAuthoredSceneSnapshot,type EpiWorldRecord} from './epiWorldProduction.js';
 import {installEpiWorldEncounter} from './epiWorldEncounter.js';
-import {recoveryFailureMessage,recoveryFailureInspectHTML} from './recoverySizeDiagnostic.js';
+import {inspectReceivingScalars,receivingEnvironment,receivingWitness,type EpiReceivingInspection} from './epiReceivingInspection.js';
+import {recoveryFailureMessage,recoveryFailureInspectHTML,readRecoverySizeDiagnostic} from './recoverySizeDiagnostic.js';
 import {naraInstrumentRequest} from './kernelExpressions.js';
 import type {InstrumentIdentity} from '../../../src/nara/instrumentProtocol';
 import type {ExpressionDocument,ExpressionResult} from '../../../src/expression/types';
 import type {NativeCurrentReading} from '../../../src/nara/nativeCurrent';
 import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
-import {createEvidenceField,qualifyPersonalContext,personalContextKey,type PersonalCurrentAdmission,type EvidencePresentation,type PrivateEvidenceField} from './naraEvidenceField.js';
+import {createEvidenceField,qualifyPersonalContext,personalContextKey,personalCurrentKey,type PersonalCurrentAdmission,type EvidencePresentation,type PrivateEvidenceField} from './naraEvidenceField.js';
 import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
 import {applyResearchMaterial,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
@@ -137,7 +138,7 @@ const store=new DocumentStore(initialiseSceneSaves(initialiseBelts(initial)));le
 try{engine=window.OI_ENGINE_FACTORY?window.OI_ENGINE_FACTORY($<HTMLCanvasElement>('field-canvas')):new ProductionAdapter($<HTMLCanvasElement>('field-canvas'));(window as any).OI_DEBUG_ENGINE=engine;}catch(err){$('stage').innerHTML='<p style="padding:110px 40px">The native WebGL field could not start. '+esc(err instanceof Error?err.message:err)+'</p>';throw err;}
 let sceneIndex=0;let selected:string[]=[];let textId:string|null=null;let tab:InspectorContext['tab']='field';let motionTab:InspectorContext['motionTab']='sequence';let stepIndex=0;let search='';let editing=false,inspectorOpen=false,timelineOpen=false,presenting=false,shapePickerOpen=false,tool:Tool='interact';let shapeChoice:Shape='text',glyphChoice='O';let camera=defaultCamera();let placementStep=false,keepPlacing=false,pinRepeat=false;
 let propertyTake:null|{sceneId:string;armed:number;start:number;elapsed:number;tracks:PropertyTrack[];lastSample:number;limit?:number}=null;let appendTake=false,trackPreview=false;const takeWindows=new Map<string,{start:number;end:number}>();
-let width=innerWidth,height=innerHeight;let simTime=0,sceneElapsed=0;let fieldPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,scenePlaying=false,journeyPlaying=false;let lastTime=performance.now(),lastUI=0;let toastTimeout=0,saveTimeout=0,lastLibraryWrite=0;let transitionStart=0,transitionDuration=0;let transitionBackground='#f4f2eb',transitionSceneId='';let transitionEasing:ChainEasing='linear';let autosaveErrorShown=false;let captureSettings=defaultCapture();let recordPerformanceWarned=false;let currentVideo:{blob:Blob;mime:string;url:string;source:DesktopScene;settings:CaptureSettings}|null=null;let recordingSource:DesktopScene|null=null;let recordingSettings:CaptureSettings|null=null;const recorder=new LiveRecorder();
+let width=innerWidth,height=innerHeight;let simTime=0,sceneElapsed=0;let fieldPaused=startsInEpi||matchMedia('(prefers-reduced-motion: reduce)').matches,scenePlaying=false,journeyPlaying=false;let lastTime=performance.now(),lastUI=0;let toastTimeout=0,saveTimeout=0,lastLibraryWrite=0;let transitionStart=0,transitionDuration=0;let transitionBackground='#f4f2eb',transitionSceneId='';let transitionEasing:ChainEasing='linear';let autosaveErrorShown=false;let captureSettings=defaultCapture();let recordPerformanceWarned=false;let currentVideo:{blob:Blob;mime:string;url:string;source:DesktopScene;settings:CaptureSettings}|null=null;let recordingSource:DesktopScene|null=null;let recordingSettings:CaptureSettings|null=null;const recorder=new LiveRecorder();
 let pointer={active:false,world:{x:0,y:0,z:0}};let drag:null|{kind:'entity'|'radius'|'camera'|'text';id:string;startX:number;startY:number;startWorld:Vec3;positions:Map<string,Vec3>;initialRadius:number;cam:Camera;layer:TextLayer|null;pan:boolean}=null;
 let guidesVisible=true;let sourceUploadEntityId:{sceneId:string;entityId:string;stepId?:string;layerId?:string;append?:boolean}|null=null;let overlayDirty=true,needsFrame=true;const detailState=new Map<string,boolean>();
 // The studio remembers where you were: content scroll survives close/reopen, and
@@ -1134,7 +1135,20 @@ function applyNativeView(view:KernelConversion,preservePosition=false){
   if(nativeWorkspace?.nativeView()?.document===view.document){nativeKeptReadings=readings;renderText();}
  }).catch(failure=>{if(nativeWorkspace?.nativeView()?.document===view.document)toast('Attributed answer material could not be qualified: '+String(failure),7000);});
  awaitingNativeBoot=false;startupRecoveryPending=false;
+ const previousEpiInstance=epiWorld?.world.instance_ref;
  epiWorld=readEpiWorldRecord(view.document as unknown as ExpressionDocument);
+ if(epiWorld&&previousEpiInstance!==epiWorld.world.instance_ref){
+  // A cold Epi entry is held before reception awaits. A resumed, already
+  // played field keeps its actual clock and the strict correction refusal.
+  const actual=engine.inspect?.() as {simTime?:number;steps?:number}|undefined;
+  if(simTime===0&&(!actual||(actual.simTime===0&&actual.steps===0))&&nativeField?.controller.reading.status==='manual'){
+   fieldPaused=true;scenePlaying=false;journeyPlaying=false;pointer.active=false;
+  }
+  // New-world rest presents the subject first, including a refused private
+  // restoration. Same-world edit/hydration does not close a chosen depth.
+  sequenceOpen=false;beltOpen=false;beltWasOpen=false;contextKind='';
+  inspectorOpen=false;studioOpen=false;timelineOpen=false;beltPickerOpen=false;
+ }
  // An opened native Expression is what the frame stands on: the entry gate
  // closes and (unless the caller keeps its position) the engine presents the
  // document's current Scene.
@@ -1496,7 +1510,84 @@ async function playEpiWorld(){
  }
  return controller;
 }
+/** Read the original owners on this iframe's current basis; never admit or
+ * restore a reading as a side effect of inspection. */
+async function inspectEpiReceiving():Promise<EpiReceivingInspection>{
+ const workspace=nativeWorkspace,view=workspace?.nativeView(),record=epiWorld;
+ if(!workspace||!view||!record||record.world.instance_ref!==view.document.expression_ref||!kernelExpressionsAvailable())throw Error('Open this native Epi world before inspecting its receiving basis.');
+ const document=view.document,sceneId=scene().id,sceneRef=view.bindings[sceneId]?.scene_ref,navigation=sceneNavigationEpoch,version=store.revision;
+ const intent=epiPersonalIntentGeneration,admission=epiPersonalCurrentAdmission,identity=epiIdentity,currentKey=personalCurrentKey(admission?.current??null);
+ const selectedBasis=JSON.stringify([selected,nativeSelectedRelation,document.selection]);
+ const requireCurrent=()=>{
+  const current=workspace.nativeView(),working=workspace.inspect();
+  if(nativeWorkspace!==workspace||current!==view||current.document!==document||store.revision!==version||scene().id!==sceneId||sceneNavigationEpoch!==navigation
+   ||epiWorld!==record||epiPersonalIntentGeneration!==intent||epiPersonalCurrentAdmission!==admission||epiIdentity!==identity||personalCurrentKey(admission?.current??null)!==currentKey
+   ||JSON.stringify([selected,nativeSelectedRelation,document.selection])!==selectedBasis||working.pending||working.busy||epiReceiving||epiConstructing)
+   throw Error('The Expression, selected body, private admission or occasion changed during Inspect. Read this running world again.');
+ };
+ requireCurrent();
+ const inspected=await readKernelExpression(document.expression_ref) as ExpressionDocument;requireCurrent();
+ if(!sameAnswerValue(inspected,document))throw Error('The native owner Document differs from this loaded Expression. Inspect does not adopt or overwrite it.');
+ const nativeRecord=readEpiWorldRecord(inspected);
+ const nativeScene=inspected.scenes.find(s=>s.scene_ref===sceneRef);
+ const presentedSelection=selected.map(id=>view.bindings[sceneId]?.occurrences.find(o=>o.view_entity_id===id)?.entity_ref??null);
+ if(!nativeRecord||nativeRecord.world.instance_ref!==record.world.instance_ref||!sceneRef||!inspected.scenes.some(s=>s.scene_ref===sceneRef))throw Error('The inspected native world or Scene differs from this receiver.');
+ let ownerCurrent:Record<string,unknown>,fresh:NativeCurrentReading|null=null;
+ try{
+  const reply=await naraInstrumentRequest({operation:'current_read',basis:{expression_ref:document.expression_ref,source:record.identity_source},role:'nara'});requireCurrent();
+  const current=reply as unknown as NativeCurrentReading;
+  if(current.schema!=='oi.nara-personal-current-context/v1'||current.expression_ref!==document.expression_ref||current.expression_revision!==document.revision
+    ||current.nara_ref!==record.nara_ref||current.private!==true||current.public_export!==false)throw Error('The native current read returned another Expression/privacy basis.');
+  if(current.status==='absent'){
+   if(current.context!==null||current.reading!==null)throw Error('The native current claims absence while carrying a private body.');
+   ownerCurrent={status:'absent',operation:'current_read',reading_ref:null,reading_revision:null,standing:'Actual owner reports no pinned current; Inspect performs no acquisition or restore'};
+  }else{
+   const context=current.context,body=current.reading,expected=admission?.current.context;
+   if(current.status!=='available'||!context||!body||context.event_ref!==record.world.event_ref||context.identity_source_ref!==record.identity_source.source_ref
+    ||context.identity_revision!==record.identity_source.revision||body.identity.person_ref!==record.person_ref||body.identity.nara_ref!==record.nara_ref
+    ||body.identity.input_revision!==record.identity_input_revision||body.transit.sky?.snapshot_ref!==record.world.snapshot_ref||body.sky_admission?.snapshot_ref!==record.world.snapshot_ref
+    ||context.reading_ref!==(expected?.reading_ref??record.receiving.personal.current?.ref)||context.reading_revision!==(expected?.reading_revision??record.receiving.personal.current?.revision))
+    throw Error('The native pinned current differs from this saved/admitted person, source or occasion. Inspect leaves both unchanged.');
+   if(admission&&(!sameAnswerValue(current.reading,admission.current.reading)||!sameAnswerValue(current.context,admission.current.context)))throw Error('The native complete private current differs from the live admitted body. Inspect does not replace it.');
+   fresh=current;
+   ownerCurrent={status:'available',operation:'current_read',...context,private:true,public_export:false,
+    sky_admission:{purpose:body.sky_admission!.purpose,epoch_utc:body.sky_admission!.epoch_utc,fresh_current_attested:body.sky_admission!.fresh_current_attested},
+    standing:'Fresh read of the already-pinned private current; not new astronomy or a new admission; complete private body retained only in this live call'};
+  }
+ }catch(error){requireCurrent();const message=error instanceof Error?error.message:String(error);if(message.length>8192)throw Error('Native Inspect refusal exceeds the bounded disclosure');ownerCurrent={status:'unavailable',operation:'current_read',error:message,standing:'Actual read refusal or mismatched basis; not absence, readiness or current admission'};}
+ requireCurrent();
+ const personal=!!fresh&&!!identity&&!!admission&&!!qualifyPersonalContext(record,identity,fresh,privateEvidencePresentation,privateEvidenceField,view,sceneId,admission);
+ const actual=engine.inspect?.(true);if(!actual)throw Error('This running engine has no initialized receiving readback.');
+ const telemetry=engine.telemetry?.(),required=(nativeScene?.entity_refs??[]).map(ref=>{const occurrence=view.bindings[sceneId]?.occurrences.find(o=>o.entity_ref===ref);if(!occurrence)throw Error('A native Scene body has no loaded receiving occurrence.');return occurrence.view_entity_id;});
+ const receiving=inspectReceivingScalars(actual,required,personal?privateEvidenceField?.resonance??null:null,telemetry?.config?.cymatics?.driveStrength??1);
+ const after=engine.inspect?.() as {simTime?:number;steps?:number;seeds?:number;bakes?:number}|undefined;
+ if(!after||['simTime','steps','seeds','bakes'].some(key=>after[key as keyof typeof after]!==receiving[key as keyof typeof receiving]))throw Error('The engine changed while its synchronous receiving state was read.');
+ requireCurrent();
+ const native=nativeField?.controller.reading,ownerWorld=(native?.source as {world?:{instance_ref?:string}}|null|undefined)?.world;
+ const joined=ownerWorld?.instance_ref===record.world.instance_ref&&native?.native?.event_ref===record.world.event_ref&&native.native.subject_ref===record.person_ref;
+ return receivingWitness({schema:'oi.epi-receiving-inspection/v1',observed_at_utc:new Date().toISOString(),
+  native_document:{operation:'inspect',expression_ref:document.expression_ref,revision:document.revision,complete_loaded_document_equal:true,
+   instance_ref:record.world.instance_ref,scene_ref:sceneRef,selection:document.selection,
+   presented_selection:{entity_refs:presentedSelection,relation_ref:nativeSelectedRelation},
+   selection_matches_presented:inspected.selection.scene_ref===sceneRef&&inspected.selection.entity_ref===(presentedSelection[0]??null)&&(inspected.selection.relation_ref??null)===nativeSelectedRelation,
+   scene_body:nativeScene?.body?{carrier:nativeScene.body.carrier,subject_ref:nativeScene.body.subject_ref,native_owner:nativeScene.body.native_owner,reading:nativeScene.body.reading}:null,
+   scene_entity_count:nativeScene?.entity_refs.length??null,person_ref:record.person_ref,nara_ref:record.nara_ref,
+   identity_source:record.identity_source,event_ref:record.world.event_ref,snapshot_ref:record.world.snapshot_ref,
+   profiles:inspected.profiles?.map(profile=>({profile_ref:profile.profile_ref,revision:profile.revision,source_basis:profile.source_basis??null}))??[],saved_current:record.receiving.personal.current},
+  retained_constructor_custody:{ql_revision:record.native_source.ql_revision,ql_executable_sha256:record.native_source.ql_executable_sha256,source_basis:record.source_basis,
+   standing:'Saved native constructor provenance; not the currently running image or a fresh native construction'},
+  native_current:ownerCurrent,host_personal_admission:{matches_native_read:personal,generation:admission?.generation??null},
+  receiver:receiving,engine:{name:engine.capabilities.name,kind:engine.capabilities.kind},
+  native_last_ack:native?{standing:'Last validated controller acknowledgement; Inspect does not send a field-host command',joined_to_world:joined,status:native.status,
+   lease:native.lease,lifetime:native.lifetime,source_currentness:native.source_currentness,acknowledged:native.native?.acknowledged??null,
+   presented:native.native?.presented??null,presented_clock:native.presented_clock}:null,
+  environment:{...receivingEnvironment(engine.canvas),kernel_channel_available:kernelExpressionsAvailable(),native_document_read_acknowledged:true,native_kernel_image:'Not disclosed by these read operations; bind separately to the actual installed process/image receipt'},
+  exclusions:['No Pin, Restore, identity selection, native-source recovery, Hold, determinant, step, render, seed, private write or answer operation',
+   'No fresh-answer, audible-output, causal positive/live-zero, visible-shape, H or installed source/binary qualification from this scalar snapshot']});
+}
 epiEncounter=installEpiWorldEncounter({
+ inspectReceiving:inspectEpiReceiving,
+ recoveryFailure:()=>{const view=nativeWorkspace?.nativeView(),work=nativeWorkspace?.inspect();return nativeState?.failed&&work?.failed&&nativeState.text===work.notice&&nativeState.identity?.ref===view?.document.expression_ref&&nativeState.identity?.revision===view?.document.revision&&epiWorld?.world.instance_ref===view?.document.expression_ref&&readRecoverySizeDiagnostic(nativeState.text)?nativeState.text:null;},
  active:()=>worldLens==='epi-logos',document:()=>nativeWorkspace?.nativeView()?.document as unknown as ExpressionDocument??null,record:()=>epiWorld,
  participant:()=>{
   if(!epiWorld||!epiIdentity||epiIdentity.reading.person_ref!==epiWorld.person_ref||epiIdentity.source.revision!==epiWorld.identity_source.revision)return null;
@@ -1610,7 +1701,7 @@ epiEncounter=installEpiWorldEncounter({
  // through the existing acknowledged continuation path, never an auto strike.
  setDamping:async(perSecond)=>{if(!Number.isFinite(perSecond)||perSecond<0||perSecond>1e6)throw Error('Damping must be finite and in 0..1000000 per second');await (await playEpiWorld()).setDamping(perSecond);epiEncounter?.refresh();},
  sound:enabled=>{if(!nativeField||nativeField.controller.reading.status!=='following')throw Error('Advance the field once to open its native voices.');nativeField.controller.setMuted(!enabled);},
- quiet:enabled=>{fieldPaused=enabled;needsFrame=true;renderAll();},
+ quiet:enabled=>{fieldPaused=enabled;needsFrame=true;renderAll();},quietState:()=>fieldPaused,
  save:async()=>{const basis=epiSceneAuthoringBasis();if(epiDurationCommit)await epiDurationCommit;await prepareEpiSceneAuthoring(basis);await nativeWorkspace!.idle();requireEpiSceneAuthoring(basis);if(propertyTake)finishPropertyTake();const saved=await nativeWorkspace!.saveFile('Work/O-I/desktop/cradle/material/expressive-material/expression',`epi-world-${epiWorld!.world.instance_ref.slice('expression:epi-'.length)}.expression.json`);const state=nativeWorkspace!.inspect();if(!saved||!state.file)throw Error(state.notice||'The native material file was not acknowledged.');epiEncounter?.status('Saved and read back through the native material owner.');},
  reset:async()=>{
   const record=epiWorld!;
@@ -1703,7 +1794,9 @@ function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){
  const recoveryInspect=state.failed?recoveryFailureInspectHTML(state.text,esc):'';
  const failureText=recoveryFailureMessage(state.text,!!recoveryInspect);
  const save=document.getElementById('native-save');
- if(save){const label=state.busy?'Saving…':failed?`Not saved — ${failureText}`:state.identity?`Save (⌘S) · ${state.identity.title} · revision ${state.identity.revision}`:'Save (⌘S)';save.title=label;save.setAttribute('aria-label',label);save.classList.toggle('attention',failed||!!state.pending);save.toggleAttribute('disabled',state.busy);}
+ if(save){const label=state.busy?'Saving…':failed?`Not saved — ${recoveryFailureMessage(state.text)}`:state.identity?`Save (⌘S) · ${state.identity.title} · revision ${state.identity.revision}`:'Save (⌘S)';save.title=label;save.setAttribute('aria-label',label);save.classList.toggle('attention',failed||!!state.pending);save.toggleAttribute('disabled',state.busy);}
+ // The same native Save refusal is also reachable in the Epi source/failure depth.
+ epiEncounter?.refresh();
  const line=document.getElementById('native-status');if(!line)return;
  const actions=[state.pending?`<button type="button" class="link-button" data-action="native-resolve">Resolve interrupted save</button>`:'',state.pending==='file'?`<button type="button" class="link-button" data-action="native-retry-file">Retry file save</button>`:'',state.retryOpen&&state.failed?`<button type="button" class="link-button" data-action="native-retry-open">Retry opening</button>`:'',state.page&&state.page.count>1?`<span class="native-page">Members ${state.page.page+1}/${state.page.count}</span><button type="button" class="link-button" data-action="native-page" data-delta="-1" ${state.page.page<=0?'disabled':''}>Previous</button><button type="button" class="link-button" data-action="native-page" data-delta="1" ${state.page.page>=state.page.count-1?'disabled':''}>Next</button>`:''].join('');
  const text=failed||recoveryInspect?failureText:state.identity?`${state.identity.title} · revision ${state.identity.revision}`:'';
@@ -1766,7 +1859,7 @@ async function startWorkspace(){
  resize();renderAll();if(location.hash.startsWith('#library'))openLibrary(location.hash.includes('about')?'about':'collection',false);rafId=requestAnimationFrame(tick);
  if(startupError)toast(startupError,7000);else if(workspaceStorageError)toast('Saved toolbelt could not be read. Starter controls are available for this session.',7000);
  if(current()){
-  if(fieldPaused&&!recovered&&!qs.has('still'))toast('A still field, following your reduced-motion preference. Play a scene, or lift “Pause physics” in the studio, to set it in motion.',6000);
+  if(fieldPaused&&!recovered&&!qs.has('still'))toast(startsInEpi?'Your world opened at rest. Resume motion in Shape & play when you are ready.':'A still field, following your reduced-motion preference. Play a scene, or lift “Pause physics” in the studio, to set it in motion.',6000);
   if(qs.has('edit'))edit(true,(['scene','objects','field','motion'].includes(qs.get('edit')!)?qs.get('edit'):'scene')as InspectorContext['tab']);
   if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies.last'),store.document.name);
   if(qsExpression?.startsWith('expression:')){const open=()=>{if(current())void nativeWorkspace?.follow(qsExpression);};if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}

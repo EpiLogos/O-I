@@ -142,6 +142,47 @@ try{
  check(await currentCanvas.evaluate(el=>el.isConnected),'Relation selection keeps the same physical renderer');
  check(await frame.evaluate(before=>{const now=window.__FIELD_STUDIES__.getState();return now.simTime===before.simTime&&JSON.stringify(now.camera)===JSON.stringify(before.camera);},priorPosition),'Relation selection does not reset the paused clock or camera');
  await page.screenshot({path:resolve(out,'native-relations.png')});
+ // The real React parent must supply its synchronous workspace world even
+ // when the global lens projection disagrees at the first render. These fresh
+ // contexts use the SAME native kernel and actual application material owner;
+ // they do not supply a saved Epi Document, identity, current or model answer.
+ receipt.epi_parent_startup={passed:false,scope:'Actual React SituationProvider → PointCloudHost → native asset → imported app startup only; no saved-world/private-current, full-world, installed or H claim',cases:[]};
+ for(const startupWorld of ['epi-logos','central']){
+  const parentContext=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'no-preference'});
+  try{
+   const parentPage=await parentContext.newPage();parentPage.setDefaultTimeout(25000);
+   parentPage.on('pageerror',e=>errors.push(String(e)));
+   parentPage.on('request',r=>{if(r.method()==='POST'&&r.url().endsWith('/op'))requests.push(r.postDataJSON());});
+   await parentPage.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/techne-native-application.html?bridge=${encodeURIComponent(bridgeUrl)}&startupWorld=${startupWorld}`);
+   await parentPage.locator('.pcd-host-frame').waitFor();
+   const hostNode=await parentPage.locator('.pcd-host-frame').elementHandle(),hostSrc=await hostNode.getAttribute('src');
+   const parentFrame=await hostNode.contentFrame();
+   await parentFrame.waitForFunction(()=>window.__FIELD_STUDIES__&&window.__OI_KERNEL_EXPRESSIONS__?.kernelExpressionsAvailable());
+   await parentFrame.evaluate(()=>window.__FIELD_STUDIES__.whenWorkspaceStarted());
+   const basis=await parentFrame.evaluate(()=>({url:location.href,world:new URL(location.href).searchParams.get('world'),still:new URL(location.href).searchParams.has('still'),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,state:window.__FIELD_STUDIES__.getState(),rendered:window.__FIELD_STUDIES__.inspect()}));
+   const initialLens=await parentPage.evaluate(()=>window.__TECHNE_HOST_PROOF__.readLens());
+   assert.equal(initialLens,startupWorld!=='epi-logos','The actual global publication deliberately disagrees with this controlled Situation at mount');
+   assert.equal(basis.world,startupWorld==='epi-logos'?'epi-logos':null,'The native asset URL must use the actual synchronous Situation, never the stale global lens');
+   assert.equal(basis.still,false);assert.equal(basis.reduced,false);
+   if(startupWorld==='epi-logos'){
+    assert.equal(basis.state.fieldPaused,true);assert.equal(basis.state.simTime,0);assert.equal(basis.rendered.simTime,0);assert.equal(basis.rendered.steps,0);
+    const fieldNode=await parentFrame.locator('#field-canvas').elementHandle();
+    for(const on of [true,false]){
+     await parentPage.locator('[data-parent-lens="'+(on?'on':'off')+'"]').click();
+     await parentPage.waitForFunction(on=>window.__TECHNE_HOST_PROOF__.readLens()===on,on);
+     await parentFrame.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+     assert.equal(await hostNode.getAttribute('src'),hostSrc,'Updating the global projection cannot renavigate this mounted Situation-owned host');
+     assert.equal(await hostNode.evaluate(el=>el.isConnected),true);assert.equal(await fieldNode.evaluate(el=>el.isConnected),true);
+     const held=await parentFrame.evaluate(()=>({state:window.__FIELD_STUDIES__.getState(),rendered:window.__FIELD_STUDIES__.inspect()}));
+     assert.equal(held.state.fieldPaused,true);assert.equal(held.state.simTime,0);assert.equal(held.rendered.simTime,0);assert.equal(held.rendered.steps,0);
+     assert.deepEqual(held.state.camera,basis.state.camera);assert.deepEqual(held.state.selected,basis.state.selected);
+    }
+    check(true,'The actual React parent opens Epi held before reception without reduced motion/still; contradictory global publications preserve the same host, renderer, clock, camera and selection');
+   }else check(true,'A real central Situation excludes the Epi boot query despite an initially on global lens');
+   receipt.epi_parent_startup.cases.push({startup_world:startupWorld,initial_global_lens:initialLens,host_src:hostSrc,basis,passed:true});
+  }finally{await parentContext.close();}
+ }
+ receipt.epi_parent_startup.passed=true;
  check(errors.length===0,`No uncaught application errors (${errors.join('; ')})`);
  receipt.passed=true;receipt.expression_ref=ref;receipt.nativeOperations=requests.filter(v=>v.op==='expression').length;
 }catch(error){receipt.failure=String(error);receipt.errors=errors;receipt.lastRequests=requests.slice(-8);if(frame)receipt.ui=await frame.locator('#native-status').innerText().catch(()=>null);if(page)await page.screenshot({path:resolve(out,'failure.png')}).catch(()=>{});console.error(JSON.stringify(receipt));throw error;}

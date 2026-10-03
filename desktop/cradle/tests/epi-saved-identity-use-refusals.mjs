@@ -235,7 +235,24 @@ export async function prepareSavedIdentityUseRefusals({page,frame,bridge,identit
     // With no selected body, Explore Bimba opens its inventory without a
     // native read. Choose the exact admitted hub in that ordinary disclosure;
     // the parent maps this action to nara_coordinate, not operation:'source'.
-    if(after.selection.entity_ref)await selectActualBody(after.selection.entity_ref);
+    if(after.selection.entity_ref){
+     const selectionTool=await frame.evaluate(()=>window.__FIELD_STUDIES__.getState().tool);
+     assert.ok(['interact','select'].includes(selectionTool),'The acknowledged personal basis retains an ordinary Interact or Select tool');
+     await cleanup('newer-consumer-body-selection',null,[
+      ['ordinary Shape & play closure, Select control and unchanged body Stage pointer',async()=>{
+       if(await play.evaluate(e=>e.open))await play.locator('summary').click({timeout:10000});
+       assert.equal(await play.evaluate(e=>e.open),false,"The actual body surface must be free of this fixture's Shape & play popup before its next pointer selection");
+       await frame.locator('[data-action="tool-select"]').first().click({timeout:10000});
+       await frame.waitForFunction(()=>window.__FIELD_STUDIES__.getState().tool==='select',null,{timeout:10000});
+       await selectActualBody(after.selection.entity_ref);
+      }],
+      ['ordinary captured tool restoration without another Stage click',async()=>{
+       if(await frame.evaluate(()=>window.__FIELD_STUDIES__.getState().tool)!==selectionTool)
+        await frame.locator('[data-action="tool-'+selectionTool+'"]').first().click({timeout:10000});
+       await frame.waitForFunction(tool=>window.__FIELD_STUDIES__.getState().tool===tool,selectionTool,{timeout:10000});
+      }],
+     ]);
+    }
     const record=await frame.evaluate(()=>window.__FIELD_STUDIES__.epiWorld());
     const hub=record.inventory.filter(row=>row.canonical_ref===record.receiving.personal.canonical_locus);
     assert.equal(hub.length,1);assert.equal(hub[0].coordinate,'M4.4.4.4');

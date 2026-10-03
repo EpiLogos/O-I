@@ -942,6 +942,479 @@ fn attach_size_request_context(error: String, context: &SizeRequestContext) -> S
     format_size_refusal(message, &diagnostic)
 }
 
+// Private record-local sharing. Full public Recovery values and their four
+// independent native/authoring/intent bases are unchanged. Only try this
+// envelope after the existing PNG-only encoding exceeds the stored limit.
+const SHARED_STORAGE_SCHEMA: &str = "oi.expression-recovery-storage/v2";
+const SHARED_REF_SCHEMA: &str = "oi.expression-recovery-value-ref/v1";
+const MAX_SHARED_PARTS: usize = 4096;
+const MIN_SHARED_BYTES: usize = 16 * 1024;
+const COMPONENT_ROOTS: [&str; 4] = [
+    "/view/document",
+    "/view/journey",
+    "/pending/request",
+    "/pending/submitted/journey",
+];
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SharedPart {
+    r#ref: String,
+    value: Value,
+}
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SharedRecord {
+    schema: String,
+    record: Record,
+    images: Vec<crate::expression_file::StoredImage>,
+    parts: Vec<SharedPart>,
+    expanded_value_sha256: String,
+}
+fn shared_path(path: &str) -> bool {
+    // Keep the complete Document header directly addressable for metadata-only
+    // List/FindCheckpoint. Every shared slot belongs to a bounded basis.
+    path != "/view/document"
+        && !path.starts_with("/view/document/expression_ref")
+        && COMPONENT_ROOTS.iter().any(|root| {
+            path == *root
+                || path
+                    .strip_prefix(root)
+                    .is_some_and(|tail| tail.starts_with('/'))
+        })
+}
+// Only the four fixed basis prefixes and the direct Document ref matter to
+// storage-slot authority. Below them retain depth, not arbitrary/private keys;
+// this prevents a long public key from multiplying path-buffer allocations.
+fn child_path(path: &str, key: &str) -> String {
+    let fixed = match path {
+        "" => matches!(key, "view" | "pending"),
+        "/view" => matches!(key, "document" | "journey"),
+        "/pending" => matches!(key, "request" | "submitted"),
+        "/pending/submitted" => key == "journey",
+        "/view/document" => key == "expression_ref",
+        _ => false,
+    };
+    format!("{path}/{}", if fixed { key } else { "*" })
+}
+fn no_shared_refs(value: &Value) -> Result<(), String> {
+    if value.is_object() && value["schema"] == SHARED_REF_SCHEMA {
+        return Err("Recovery shared reference outside its private value slot".into());
+    }
+    match value {
+        Value::Object(values) => {
+            for v in values.values() {
+                no_shared_refs(v)?;
+            }
+        }
+        Value::Array(values) => {
+            for v in values {
+                no_shared_refs(v)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+/// Borrowed, byte-bounded canonical serialization; no payload Vec or Value
+/// clone. Part fingerprints qualify precisely the stored (PNG-compacted)
+/// literal, and the whole-record digest qualifies the expanded public value.
+fn shared_fingerprint(value: &Value) -> Result<(usize, String), String> {
+    struct Counter {
+        size: usize,
+        hash: Sha256,
+    }
+    impl std::io::Write for Counter {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            let next = self
+                .size
+                .checked_add(bytes.len())
+                .filter(|n| *n <= MAX_RECORD_BYTES + 2048)
+                .ok_or_else(|| {
+                    std::io::Error::other("Recovery literal exceeds stored byte bound")
+                })?;
+            self.hash.update(bytes);
+            self.size = next;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut out = Counter {
+        size: 0,
+        hash: Sha256::new(),
+    };
+    serde_json::to_writer(&mut out, value).map_err(|e| e.to_string())?;
+    Ok((out.size, format!("sha256:{:x}", out.hash.finalize())))
+}
+fn shared_candidates(
+    value: &Value,
+    path: &str,
+    counts: &mut BTreeMap<String, usize>,
+) -> Result<(), String> {
+    if shared_path(path) && (value.is_object() || value.is_array()) {
+        let (bytes, reference) = shared_fingerprint(value)?;
+        if bytes >= MIN_SHARED_BYTES {
+            if !counts.contains_key(&reference) && counts.len() >= MAX_SHARED_PARTS {
+                return Err("Recovery shared candidate count exceeds its bound".into());
+            }
+            *counts.entry(reference).or_default() += 1;
+        }
+    }
+    match value {
+        Value::Object(values) => {
+            for (k, v) in values {
+                shared_candidates(v, &child_path(path, k), counts)?;
+            }
+        }
+        Value::Array(values) => {
+            for (i, v) in values.iter().enumerate() {
+                shared_candidates(v, &child_path(path, &i.to_string()), counts)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+fn shared_intern(
+    value: &mut Value,
+    path: &str,
+    counts: &BTreeMap<String, usize>,
+    parts: &mut BTreeMap<String, Value>,
+    used: &mut BTreeMap<String, usize>,
+) -> Result<(), String> {
+    if shared_path(path) && (value.is_object() || value.is_array()) {
+        let (bytes, reference) = shared_fingerprint(value)?;
+        if bytes >= MIN_SHARED_BYTES && counts.get(&reference).is_some_and(|n| *n > 1) {
+            if let Some(previous) = parts.get(&reference) {
+                if previous != value {
+                    return Err("Recovery literal digest collision".into());
+                }
+                *value = Value::Null; // drop this duplicate before adding its small marker
+            } else {
+                parts.insert(reference.clone(), std::mem::take(value));
+            }
+            *used.entry(reference.clone()).or_default() += 1;
+            *value = json!({"schema": SHARED_REF_SCHEMA, "ref": reference});
+            return Ok(()); // flat parts never contain other shared references
+        }
+    }
+    match value {
+        Value::Object(values) => {
+            for (k, v) in values {
+                shared_intern(v, &child_path(path, k), counts, parts, used)?;
+            }
+        }
+        Value::Array(values) => {
+            for (i, v) in values.iter_mut().enumerate() {
+                shared_intern(v, &child_path(path, &i.to_string()), counts, parts, used)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+// An ancestor may consume one counted occurrence of a smaller candidate.
+// Return singleton literals to their sole slot, by move, before encoding.
+fn shared_singletons(
+    value: &mut Value,
+    used: &BTreeMap<String, usize>,
+    parts: &mut BTreeMap<String, Value>,
+) -> Result<(), String> {
+    if value.is_object() && value["schema"] == SHARED_REF_SCHEMA {
+        let reference = value["ref"]
+            .as_str()
+            .ok_or("Invalid recovery shared reference")?;
+        if used.get(reference) == Some(&1) {
+            *value = parts
+                .remove(reference)
+                .ok_or("Missing recovery singleton literal")?;
+        }
+        return Ok(());
+    }
+    match value {
+        Value::Object(values) => {
+            for v in values.values_mut() {
+                shared_singletons(v, used, parts)?;
+            }
+        }
+        Value::Array(values) => {
+            for v in values {
+                shared_singletons(v, used, parts)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+fn shared_depth(value: &Value) -> usize {
+    match value {
+        Value::Object(values) => values.values().map(shared_depth).max().map_or(0, |n| n + 1),
+        Value::Array(values) => values.iter().map(shared_depth).max().map_or(0, |n| n + 1),
+        _ => 0,
+    }
+}
+fn shared_delta(
+    value: &Value,
+    path: &str,
+    weights: &BTreeMap<String, (usize, usize)>,
+    used: &mut BTreeMap<String, usize>,
+) -> Result<i128, String> {
+    if value.is_object() && value["schema"] == SHARED_REF_SCHEMA {
+        if !shared_path(path) {
+            return Err("Recovery shared reference outside bounded component".into());
+        }
+        let fields = value.as_object().unwrap();
+        let reference = value["ref"]
+            .as_str()
+            .ok_or("Invalid recovery shared reference")?;
+        if fields.len() != 2
+            || !fields.contains_key("schema")
+            || !fields.contains_key("ref")
+            || !crate::expression_file::digest_ref(reference)
+        {
+            return Err("Invalid recovery shared reference fields/digest".into());
+        }
+        let (size, depth) = *weights
+            .get(reference)
+            .ok_or("Missing recovery shared literal")?;
+        if path
+            .bytes()
+            .filter(|c| *c == b'/')
+            .count()
+            .checked_add(depth)
+            .is_none_or(|n| n > 64)
+        {
+            return Err("Recovery shared literal expands beyond nesting bound".into());
+        }
+        *used.entry(reference.to_owned()).or_default() += 1;
+        return Ok(size as i128 - serialized_size(value)? as i128);
+    }
+    let mut delta = 0i128;
+    match value {
+        Value::Object(values) => {
+            for (k, v) in values {
+                delta = delta
+                    .checked_add(shared_delta(v, &child_path(path, k), weights, used)?)
+                    .ok_or("Recovery shared expansion overflow")?;
+            }
+        }
+        Value::Array(values) => {
+            for (i, v) in values.iter().enumerate() {
+                delta = delta
+                    .checked_add(shared_delta(
+                        v,
+                        &child_path(path, &i.to_string()),
+                        weights,
+                        used,
+                    )?)
+                    .ok_or("Recovery shared expansion overflow")?;
+            }
+        }
+        _ => {}
+    }
+    Ok(delta)
+}
+fn qualify_shared(stored: &SharedRecord, images: &BTreeMap<String, String>) -> Result<(), String> {
+    if stored.schema != SHARED_STORAGE_SCHEMA
+        || stored.record.kind != Kind::Checkpoint
+        || !crate::expression_file::digest_ref(&stored.expanded_value_sha256)
+        || stored.parts.is_empty()
+        || stored.parts.len() > MAX_SHARED_PARTS
+    {
+        return Err("Invalid recovery shared schema/dictionary budget".into());
+    }
+    data(&stored.record.value, 0)?;
+    let mut weights = BTreeMap::new();
+    let mut used_images = BTreeSet::new();
+    for part in &stored.parts {
+        data(&part.value, 0)?;
+        no_shared_refs(&part.value)?;
+        let (literal_bytes, digest) = shared_fingerprint(&part.value)?;
+        if !(part.value.is_object() || part.value.is_array())
+            || literal_bytes < MIN_SHARED_BYTES
+            || !crate::expression_file::digest_ref(&part.r#ref)
+            || digest != part.r#ref
+        {
+            return Err("Recovery shared literal digest differs".into());
+        }
+        let size = (serialized_size(&part.value)? as i128)
+            .checked_add(crate::expression_file::expansion_delta(
+                &part.value,
+                None,
+                images,
+                &mut used_images,
+            )?)
+            .ok_or("Recovery shared expansion overflow")?;
+        if !(0..=MAX_RECORD_BYTES as i128).contains(&size) {
+            return Err(COMPONENT_SIZE_MESSAGE.into());
+        }
+        if weights
+            .insert(
+                part.r#ref.clone(),
+                (size as usize, shared_depth(&part.value)),
+            )
+            .is_some()
+        {
+            return Err("Duplicate recovery shared literal".into());
+        }
+    }
+    let mut uses = BTreeMap::new();
+    let image_delta = crate::expression_file::expansion_delta(
+        &stored.record.value,
+        None,
+        images,
+        &mut used_images,
+    )?;
+    let delta = shared_delta(&stored.record.value, "", &weights, &mut uses)?;
+    if used_images.len() != images.len()
+        || uses.len() != weights.len()
+        || uses.values().any(|n| *n < 2)
+    {
+        return Err("Unused or singleton recovery shared literal/image".into());
+    }
+    let total = (serialized_size(&stored.record.value)? as i128)
+        .checked_add(image_delta)
+        .and_then(|n| n.checked_add(delta))
+        .ok_or("Recovery shared expansion overflow")?;
+    let mut removed = 0i128;
+    for path in COMPONENT_ROOTS {
+        if let Some(value) = stored.record.value.pointer(path) {
+            let size = (expanded_size(value, images)? as i128)
+                .checked_add(shared_delta(value, path, &weights, &mut BTreeMap::new())?)
+                .ok_or("Recovery shared expansion overflow")?;
+            if !(0..=MAX_RECORD_BYTES as i128).contains(&size) {
+                return Err(COMPONENT_SIZE_MESSAGE.into());
+            }
+            removed = removed
+                .checked_add(size - 4)
+                .ok_or("Recovery shared expansion overflow")?;
+        }
+    }
+    if !(0..=MAX_RECORD_BYTES as i128).contains(&(total - removed)) {
+        return Err(COMPONENT_SIZE_MESSAGE.into());
+    }
+    Ok(())
+}
+fn shared_expand(value: &mut Value, parts: &BTreeMap<String, Value>) {
+    if value.is_object() && value["schema"] == SHARED_REF_SCHEMA {
+        *value = parts[value["ref"].as_str().unwrap()].clone();
+        return;
+    }
+    match value {
+        Value::Object(values) => {
+            for v in values.values_mut() {
+                shared_expand(v, parts);
+            }
+        }
+        Value::Array(values) => {
+            for v in values {
+                shared_expand(v, parts);
+            }
+        }
+        _ => {}
+    }
+}
+fn encode_shared_record(mut stored: StoredRecord) -> Result<Option<Vec<u8>>, String> {
+    if stored.record.kind != Kind::Checkpoint {
+        return Ok(None);
+    }
+    no_shared_refs(&stored.record.value)?;
+    let mut candidates = BTreeMap::new();
+    shared_candidates(&stored.record.value, "", &mut candidates)?;
+    let mut parts = BTreeMap::new();
+    let mut used = BTreeMap::new();
+    shared_intern(
+        &mut stored.record.value,
+        "",
+        &candidates,
+        &mut parts,
+        &mut used,
+    )?;
+    shared_singletons(&mut stored.record.value, &used, &mut parts)?;
+    if parts.is_empty() {
+        return Ok(None);
+    }
+    let next = SharedRecord {
+        schema: SHARED_STORAGE_SCHEMA.into(),
+        record: stored.record,
+        images: stored.images,
+        parts: parts
+            .into_iter()
+            .map(|(reference, value)| SharedPart {
+                r#ref: reference,
+                value,
+            })
+            .collect(),
+        expanded_value_sha256: stored.expanded_value_sha256,
+    };
+    let images = next
+        .images
+        .iter()
+        .map(|i| (i.r#ref.clone(), i.data_url.clone()))
+        .collect();
+    qualify_shared(&next, &images)?;
+    // Do not materialize an over-bound serialized rescue candidate.
+    let mut counter = SizeCounter::default();
+    serde_json::to_writer(&mut counter, &next).map_err(|e| e.to_string())?;
+    if counter.0 > MAX_RECORD_BYTES + 2048 {
+        return Ok(None);
+    }
+    serde_json::to_vec(&next)
+        .map(Some)
+        .map_err(|e| e.to_string())
+}
+#[derive(Default)]
+struct SizeCounter(usize);
+impl std::io::Write for SizeCounter {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.0 = self
+            .0
+            .checked_add(bytes.len())
+            .ok_or_else(|| std::io::Error::other("Recovery shared size overflow"))?;
+        Ok(bytes.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+fn decode_shared_record(value: Value, validate_body: bool) -> Result<Record, String> {
+    let mut stored: SharedRecord = serde_json::from_value(value)
+        .map_err(|e| format!("Invalid shared recovery envelope: {e}"))?;
+    if stored.images.len() > crate::expression_file::MAX_IMAGES {
+        return Err("Recovery image dictionary budget exceeded".into());
+    }
+    let mut images = BTreeMap::new();
+    for image in &stored.images {
+        if !crate::expression_file::digest_ref(&image.r#ref)
+            || !crate::expression_file::png(&image.data_url)
+            || crate::expression_file::digest(image.data_url.as_bytes()) != image.r#ref
+            || images
+                .insert(image.r#ref.clone(), image.data_url.clone())
+                .is_some()
+        {
+            return Err("Invalid or duplicate shared recovery image".into());
+        }
+    }
+    qualify_shared(&stored, &images)?;
+    if validate_body {
+        let parts = stored
+            .parts
+            .into_iter()
+            .map(|part| (part.r#ref, part.value))
+            .collect();
+        shared_expand(&mut stored.record.value, &parts);
+        crate::expression_file::expand(&mut stored.record.value, &images);
+        if crate::expression_file::digest(
+            &serde_json::to_vec(&stored.record.value).map_err(|e| e.to_string())?,
+        ) != stored.expanded_value_sha256
+        {
+            return Err("Expanded recovery value digest differs".into());
+        }
+    }
+    Ok(stored.record)
+}
+
 fn encode_record(record: &Record) -> Result<Vec<u8>, String> {
     preflight_components(record.kind, &record.value).map_err(|error| {
         if error == COMPONENT_SIZE_MESSAGE {
@@ -977,6 +1450,22 @@ fn encode_record(record: &Record) -> Result<Vec<u8>, String> {
     let raw = serde_json::to_vec(record).map_err(|e| e.to_string())?;
     if refs.is_empty() {
         if full.len() > MAX_RECORD_BYTES {
+            let shared = StoredRecord {
+                schema: STORAGE_SCHEMA.into(),
+                record: Record {
+                    schema: record.schema.clone(),
+                    scope: record.scope,
+                    kind: record.kind,
+                    id: record.id.clone(),
+                    revision: record.revision,
+                    value: record.value.clone(),
+                },
+                images: Vec::new(),
+                expanded_value_sha256: crate::expression_file::digest(&full),
+            };
+            if let Some(encoded) = encode_shared_record(shared)? {
+                return Ok(encoded);
+            }
             return Err(size_refusal(
                 record,
                 "Recovery record exceeds 8 MiB",
@@ -1027,6 +1516,10 @@ fn encode_record(record: &Record) -> Result<Vec<u8>, String> {
         return Ok(raw);
     }
     if encoded.len() > MAX_RECORD_BYTES + 2048 {
+        let dictionary_entries = stored.images.len();
+        if let Some(shared) = encode_shared_record(stored)? {
+            return Ok(shared);
+        }
         return Err(size_refusal(
             record,
             "Recovery record exceeds 8 MiB",
@@ -1035,7 +1528,7 @@ fn encode_record(record: &Record) -> Result<Vec<u8>, String> {
                 public: Some(&full),
                 raw_record: Some(&raw),
                 stored_candidate: Some(&encoded),
-                dictionary_entries: Some(stored.images.len()),
+                dictionary_entries: Some(dictionary_entries),
             },
         ));
     }
@@ -1062,6 +1555,9 @@ fn decode_record(bytes: &[u8], validate_body: bool) -> Result<Record, String> {
             ));
         }
         return Ok(record);
+    }
+    if value["schema"] == SHARED_STORAGE_SCHEMA {
+        return decode_shared_record(value, validate_body);
     }
     if value["schema"] != STORAGE_SCHEMA {
         return Err("Unsupported native recovery storage schema".into());
@@ -2764,5 +3260,376 @@ mod tests {
             assert_eq!(fs::read(&path).unwrap(), bytes);
             assert_eq!(fs::read(home.root().join(".sequence")).unwrap(), sequence);
         }
+    }
+
+    /// Real native Document + two lawful, full local Journey bases. These are
+    /// controlled authoring data, not claimed Bimba/astronomy/private readings.
+    /// All bytes must survive a fresh Store; no native API is mocked.
+    fn repeated_non_image_checkpoint(id: &str) -> Value {
+        let mut value = two_basis_checkpoint(id, 0, false);
+        let body = json!({"text":"x".repeat(512 * 1024)});
+        value["view"]["journey"]["retained_content"] = json!(vec![body; 12]);
+        value["pending"]["submitted"]["journey"] = value["view"]["journey"].clone();
+        // Distinct complete bases remain distinct. The proposed draft changes
+        // its title and one leaf; only the 23 identical untouched bodies share.
+        value["pending"]["submitted"]["journey"]["name"] = json!("Edited recovery test");
+        value["pending"]["submitted"]["journey"]["retained_content"][11]["edited"] = json!(true);
+        value
+    }
+    #[test]
+    fn repeated_complete_non_image_bases_save_cold_read_find_and_preserve_cas() {
+        let home = Home::new();
+        let id = "shared-complete-bases";
+        let first = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        let original = repeated_non_image_checkpoint(id);
+        validate(Kind::Checkpoint, id, &original).unwrap();
+        assert!(serialized_size(&original).unwrap() > MAX_RECORD_BYTES + 2048);
+        let accepted = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&first)),
+                original.clone(),
+            ))
+            .unwrap();
+        assert_eq!(accepted["record"]["value"], original);
+        assert_eq!(revision(&accepted), revision(&first) + 1);
+        let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let bytes = fs::read(&path).unwrap();
+        assert!(bytes.len() <= MAX_RECORD_BYTES + 2048);
+        let stored: Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(stored["schema"], SHARED_STORAGE_SCHEMA);
+        assert_eq!(stored["parts"].as_array().unwrap().len(), 1);
+        assert_eq!(stored["images"], json!([]));
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            accepted["record"]
+        );
+        let found = home
+            .store()
+            .apply(Request::FindCheckpoint {
+                scope: Scope::Expressions,
+                expression_ref: "expression:recovery-test".into(),
+            })
+            .unwrap();
+        assert_eq!(found["record"], accepted["record"]);
+        let listed = home
+            .store()
+            .apply(Request::List {
+                scope: Scope::Expressions,
+                kind: Kind::Checkpoint,
+            })
+            .unwrap();
+        assert_eq!(
+            listed["records"][0]["expression_ref"],
+            "expression:recovery-test"
+        );
+        assert!(listed["records"][0].get("value").is_none());
+        let stale = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&first)),
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        assert_eq!(stale["state"], "revision_conflict");
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        let next = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&accepted)),
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        assert_eq!(revision(&next), revision(&accepted) + 1);
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            next["record"]
+        );
+    }
+    #[test]
+    fn shared_basis_corruption_and_expansion_refuse_without_replacing_last_good() {
+        let home = Home::new();
+        let id = "shared-corruption";
+        let accepted = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                repeated_non_image_checkpoint(id),
+            ))
+            .unwrap();
+        let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let bytes = fs::read(&path).unwrap();
+        let sequence = fs::read(home.root().join(".sequence")).unwrap();
+        let stored: Value = serde_json::from_slice(&bytes).unwrap();
+        let reference = stored["parts"][0]["ref"].clone();
+        let marker = json!({"schema": SHARED_REF_SCHEMA,"ref":reference});
+        let mut missing = stored.clone();
+        missing["parts"] = json!([]);
+        let mut changed = stored.clone();
+        changed["parts"][0]["value"]["retained_text"] = json!("tampered");
+        let mut duplicate = stored.clone();
+        let part = duplicate["parts"][0].clone();
+        duplicate["parts"].as_array_mut().unwrap().push(part);
+        let mut unused = stored.clone();
+        let mut extra = unused["parts"][0]["value"].clone();
+        extra["name"] = json!("unused");
+        unused["parts"].as_array_mut().unwrap().push(json!({"ref":crate::expression_file::digest(&serde_json::to_vec(&extra).unwrap()),"value":extra}));
+        let mut misplaced = stored.clone();
+        misplaced["record"]["value"]["view"]["document"]["expression_ref"] = marker.clone();
+        let mut unknown = stored.clone();
+        unknown["unexpected"] = json!(true);
+        let mut unknown_part = stored.clone();
+        unknown_part["parts"][0]["unexpected"] = json!(true);
+        let mut unknown_ref = stored.clone();
+        unknown_ref["record"]["value"]["view"]["journey"]["retained_content"][0]["unexpected"] =
+            json!(true);
+        let mut future = stored.clone();
+        future["schema"] = json!("oi.expression-recovery-storage/v99");
+        let mut nested = stored.clone();
+        nested["parts"][0]["value"]["nested"] = marker.clone();
+        let mut amplified = stored.clone();
+        amplified["record"]["value"]["view"]["journey"] = json!({"body":vec![marker.clone();17]});
+        let mut whole_digest = stored.clone();
+        whole_digest["expanded_value_sha256"] = json!(format!("sha256:{}", "0".repeat(64)));
+        for damaged in [
+            missing,
+            changed,
+            duplicate,
+            unused,
+            misplaced,
+            unknown,
+            unknown_part,
+            unknown_ref,
+            future,
+            nested,
+            amplified,
+            whole_digest,
+        ] {
+            let damaged_bytes = serde_json::to_vec(&damaged).unwrap();
+            assert!(damaged_bytes.len() <= MAX_RECORD_BYTES + 2048);
+            fs::write(&path, &damaged_bytes).unwrap();
+            assert!(home
+                .store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .is_err());
+            assert!(home
+                .store()
+                .apply(Request::FindCheckpoint {
+                    scope: Scope::Expressions,
+                    expression_ref: "expression:recovery-test".into()
+                })
+                .is_err());
+            assert!(home
+                .store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    Some(revision(&accepted)),
+                    native_checkpoint(id)
+                ))
+                .is_err());
+            assert_eq!(fs::read(&path).unwrap(), damaged_bytes);
+            assert_eq!(fs::read(home.root().join(".sequence")).unwrap(), sequence);
+            fs::write(&path, &bytes).unwrap();
+            assert_eq!(
+                home.store()
+                    .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                    .unwrap()["record"],
+                accepted["record"]
+            );
+        }
+        let text = String::from_utf8(bytes.clone()).unwrap();
+        let duplicate_key = text.replacen("{", "{\"schema\":\"duplicate\",", 1);
+        fs::write(&path, duplicate_key).unwrap();
+        assert!(home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .is_err());
+        fs::write(&path, &bytes).unwrap();
+        let mut over_bound = repeated_non_image_checkpoint(id);
+        over_bound["view"]["journey"]["retained_text"] = json!("x".repeat(MAX_RECORD_BYTES + 1));
+        let refusal = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&accepted)),
+                over_bound,
+            ))
+            .unwrap_err();
+        assert_eq!(
+            refusal_metadata(&refusal, COMPONENT_SIZE_MESSAGE)["failure_branch"],
+            "inbound_component_preflight"
+        );
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        assert_eq!(fs::read(home.root().join(".sequence")).unwrap(), sequence);
+    }
+    /// Supply the retained ORIGINAL real production Save refusal. Neither the
+    /// input nor its expected complete value is generated by this test. A fresh
+    /// private test home is explicit custody relocation, not the installed home.
+    #[test]
+    #[ignore = "supply OI_RECOVERY_REAL_SAVE_FAILURE with actual full public Save refusal"]
+    fn actual_epi_save_refusal_keeps_full_source_body_and_pending_basis_on_cold_reopen() {
+        let path = std::env::var("OI_RECOVERY_REAL_SAVE_FAILURE").unwrap();
+        let failure: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+        assert!(failure["response"]["error"]
+            .as_str()
+            .unwrap()
+            .starts_with("Recovery record exceeds 8 MiB"));
+        let request = &failure["request"]["request"];
+        assert_eq!(request["operation"], "write");
+        assert_eq!(request["kind"], "checkpoint");
+        let id = request["id"].as_str().unwrap();
+        let original = &request["value"];
+        assert_eq!(original["pending"]["kind"], "edit");
+        for pointer in COMPONENT_ROOTS {
+            assert!(original.pointer(pointer).is_some());
+        }
+        validate(Kind::Checkpoint, id, original).unwrap();
+        let home = Home::new();
+        let accepted = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                original.clone(),
+            ))
+            .unwrap();
+        assert_eq!(&accepted["record"]["value"], original);
+        assert!(
+            fs::metadata(home.path(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()
+                .len()
+                <= (MAX_RECORD_BYTES + 2048) as u64
+        );
+        let cold = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .unwrap();
+        assert_eq!(cold["record"], accepted["record"]);
+        assert_eq!(
+            home.store()
+                .apply(Request::FindCheckpoint {
+                    scope: Scope::Expressions,
+                    expression_ref: original["view"]["document"]["expression_ref"]
+                        .as_str()
+                        .unwrap()
+                        .into()
+                })
+                .unwrap()["record"],
+            accepted["record"]
+        );
+        assert_eq!(
+            home.store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    None,
+                    original.clone()
+                ))
+                .unwrap()["state"],
+            "revision_conflict"
+        );
+    }
+    #[test]
+    fn complete_shared_bases_and_genuine_png_dictionary_cold_read_and_find() {
+        use base64::Engine as _;
+        // Existing committed real PNG fixture; this is a codec/functionality
+        // check, not a substitute for a source-derived Epi register image.
+        let png_bytes = include_bytes!("../../src-tauri/icons/32x32.png");
+        assert_eq!(&png_bytes[..8], b"\x89PNG\r\n\x1a\n");
+        assert_eq!(
+            &png_bytes[png_bytes.len() - 12..],
+            b"\0\0\0\0IEND\xaeB`\x82"
+        );
+        let png = format!(
+            "data:image/png;base64,{}",
+            base64::engine::general_purpose::STANDARD.encode(png_bytes)
+        );
+        let home = Home::new();
+        let id = "shared-bases-with-genuine-png";
+        let mut original = repeated_non_image_checkpoint(id);
+        for path in [
+            "/view/journey/retained_content",
+            "/pending/submitted/journey/retained_content",
+        ] {
+            for body in original.pointer_mut(path).unwrap().as_array_mut().unwrap() {
+                body["image"] = json!({"dataUrl": png});
+            }
+        }
+        // Exercise an image outside shared literals as well as inside them.
+        original["pending"]["submitted"]["journey"]["standalone_image"] = json!({"dataUrl": png});
+        validate(Kind::Checkpoint, id, &original).unwrap();
+        let written = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                original.clone(),
+            ))
+            .unwrap();
+        assert_eq!(written["record"]["value"], original);
+        let bytes = fs::read(home.path(Scope::Expressions, Kind::Checkpoint, id)).unwrap();
+        assert!(bytes.len() <= MAX_RECORD_BYTES + 2048);
+        let stored: Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(stored["schema"], SHARED_STORAGE_SCHEMA);
+        assert_eq!(stored["parts"].as_array().unwrap().len(), 1);
+        assert_eq!(stored["images"].as_array().unwrap().len(), 1);
+        assert_eq!(stored["images"][0]["data_url"], png);
+        assert_eq!(
+            stored["parts"][0]["value"]["image"]["dataUrl"]["schema"],
+            crate::expression_file::IMAGE_REF_SCHEMA
+        );
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            written["record"]
+        );
+        assert_eq!(
+            home.store()
+                .apply(Request::FindCheckpoint {
+                    scope: Scope::Expressions,
+                    expression_ref: "expression:recovery-test".into()
+                })
+                .unwrap()["record"],
+            written["record"]
+        );
+        assert_eq!(
+            fs::read(home.path(Scope::Expressions, Kind::Checkpoint, id)).unwrap(),
+            bytes
+        );
     }
 }

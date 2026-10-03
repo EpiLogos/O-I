@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {isDeepStrictEqual} from 'node:util';
 import {createEpiFirstRestReceivingGate} from './epi-first-rest-receiving.mjs';
 import {prepareSavedIdentityUseRefusals} from './epi-saved-identity-use-refusals.mjs';
-import {readFileSync,writeFileSync,mkdirSync,openSync,readSync,closeSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,openSync,readSync,closeSync,constants,fstatSync,lstatSync,realpathSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
@@ -23,6 +23,9 @@ import {qualifyPortableNativeSourceExpectation,qualifyPortableRuntimeExecution,r
 
 assert.ok(process.argv[2],'Supply a JSON configuration with bridge, output and two identity_files');
 const config=JSON.parse(readFileSync(resolve(process.argv[2]),'utf8'));
+if(config.cold_opening_no_motion_preference!==undefined)assert.equal(typeof config.cold_opening_no_motion_preference,'boolean');
+const coldOpening=config.cold_opening_no_motion_preference===true;
+if(coldOpening)assert.ok(config.reopen_file&&!config.existing_expression_ref&&!config.stage,'The no-preference cold gate runs the original whole workload through an actual saved native file');
 const selectionStage=['selected-conversation-setup','selected-conversation-case'].includes(config.stage);
 if(selectionStage){
  assert.ok(config.reopen_file&&config.selection_custody_file&&config.selection_custody_sha256,'Selection qualification requires actual file admission and source-built owner custody');
@@ -85,6 +88,86 @@ const check=(value,label)=>{assert.ok(value,label);receipt.checks.push(label);co
 const artifact=(name,value)=>{json(name,value);receipt.artifacts.push(name);};
 const retainStage=label=>{receipt.current_stage=label;(receipt.stage_events??=[]).push({stage:label,phase,at:new Date().toISOString(),completed_checks:receipt.checks.length,issued_requests:receipt.issued_requests.length,response_arrivals:receipt.operations.length,request_failures:receipt.request_failures.length});json('receipt.json',receipt);console.log('STAGE',label);};
 const summarizeRequest=q=>({op:q?.op,operation:q?.request?.operation,expression_ref:q?.request?.expression_ref,coordinate_ref:q?.request?.coordinate_ref??q?.request?.request?.coordinate_ref});
+// Test custody only: hold the unchanged actual write ACK while qualifying its
+// exact private controlled record. Recovery never dispatches the pending edit.
+// The original Save/file/readback/reopen/restart predicates remain below.
+async function armActualRecoverySaveCustody(expectedExpressionRef){
+ const url=config.bridge+'/op',limit=8*1024*1024+2048;
+ assert.ok(config.controlled_recovery_home,'The original whole must name its actual controlled native OI_HOME');
+ const home=resolve(config.controlled_recovery_home);
+ assert.equal(realpathSync(home),home,'Controlled recovery home must be a canonical existing directory');
+ const owner=process.getuid(),report={schema:'oi.epi-actual-recovery-save-custody/v1',passed:false,home,expression_ref:expectedExpressionRef,observations:[],records:[],errors:[],scope:'Actual source-built controlled native Save checkpoint; full raw request/ACK/native Read retained in this private test artifact. No installed847 or private owner admission.'};
+ const pending=new Set(),deadline=Date.now()+180000;let closed=false;
+ const remaining=()=>{const value=deadline-Date.now();assert.ok(value>0,'Actual Save custody stays within the original 180s action bound');return value;};
+ const privateBytes=path=>{
+  for(const directory of [home,resolve(home,'desktop'),resolve(home,'desktop/expression-recovery'),resolve(home,'desktop/expression-recovery/expressions')]){
+   const stat=lstatSync(directory);assert.ok(stat.isDirectory()&&!stat.isSymbolicLink()&&stat.uid===owner);
+   if(directory!==home&&directory!==resolve(home,'desktop'))assert.equal(stat.mode&0o777,0o700);
+  }
+  const fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW);
+  try{
+   const before=fstatSync(fd);assert.ok(before.isFile()&&before.uid===owner&&before.nlink===1&&(before.mode&0o777)===0o600&&before.size<=limit);
+   const bytes=readFileSync(fd),after=fstatSync(fd);assert.equal(bytes.length,before.size);
+   assert.equal(after.dev,before.dev);assert.equal(after.ino,before.ino);assert.equal(after.size,before.size);assert.equal(after.mtimeMs,before.mtimeMs);assert.equal(after.ctimeMs,before.ctimeMs);
+   return{bytes,physical:{path,bytes:bytes.length,sha256:sha(bytes),uid:before.uid,mode:before.mode&0o777,nlink:before.nlink,device:before.dev,inode:before.ino}};
+  }finally{closeSync(fd);}
+ };
+ const nativeRead=async request=>{
+  const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal:AbortSignal.timeout(remaining())});
+  const raw=await response.text();assert.ok(Buffer.byteLength(raw)<=64*1024*1024);assert.equal(response.status,200);
+  const body=JSON.parse(raw);assert.equal(body.ok,true);assert.equal(body.outcome.result,'expression_recovery');assert.equal(body.outcome.data.state,'ready');
+  return{request,raw,response:body,record:body.outcome.data.record};
+ };
+ const qualify=async route=>{
+  const request=route.request(),raw=request.postData();let sent;
+  try{if(request.method()==='POST'&&raw&&Buffer.byteLength(raw)<=64*1024*1024)sent=JSON.parse(raw);}catch{}
+  if(sent?.op!=='expression_recovery'||sent.request?.operation!=='write'||sent.request?.kind!=='checkpoint'||sent.request?.scope!=='expressions'||sent.request?.value?.pending?.kind!=='edit')return route.continue();
+  if(sent.request.value.view?.document?.expression_ref!==expectedExpressionRef)return route.continue();
+  let actual;
+  try{
+   actual=await route.fetch({timeout:remaining()});const text=await actual.text();assert.ok(Buffer.byteLength(text)<=64*1024*1024);
+   const response=JSON.parse(text),row={at:new Date().toISOString(),request_sha256:sha(raw),request_bytes:Buffer.byteLength(raw),http_status:actual.status(),ok:response.ok,id:sent.request.id};
+   assert.ok(report.observations.length<32,'Finite original Save checkpoint observation count');report.observations.push(row);
+   if(response.ok!==true){artifact('actual-save-recovery-refusal.json',{request:sent,response});return;}
+   assert.equal(response.outcome.result,'expression_recovery');assert.equal(response.outcome.data.state,'written');
+   const ack=response.outcome.data.record;assert.equal(ack.id,sent.request.id);assert.equal(ack.scope,'expressions');assert.equal(ack.kind,'checkpoint');assert.deepEqual(ack.value,sent.request.value);
+   assert.match(ack.id,/^[A-Za-z0-9_.:-]{1,160}$/);assert.equal(ack.value.draft_id,ack.id);assert.equal(ack.value.view.document.expression_ref,expectedExpressionRef);
+   for(const keys of [['view','document'],['view','journey'],['pending','request'],['pending','submitted','journey']])assert.ok(keys.reduce((v,k)=>v?.[k],ack.value),'All four actual bases must remain present');
+   const path=resolve(home,'desktop/expression-recovery/expressions',sha('Checkpoint:'+ack.id)+'.json');
+   const stored=privateBytes(path),envelope=JSON.parse(stored.bytes.toString('utf8'));row.storage_schema=envelope.schema;row.stored_bytes=stored.bytes.length;row.native_revision=ack.revision;
+   // Legacy image-only writes are lawful. Require only an actual rescue record,
+   // never force every Save into v2 or alter its actual complete request.
+   if(envelope.schema!=='oi.expression-recovery-storage/v2'||report.records.length)return;
+   assert.ok(Buffer.byteLength(JSON.stringify(ack.value))>limit,'The actual public checkpoint must require a stored rescue');
+   assert.ok(Array.isArray(envelope.parts)&&envelope.parts.length>0,'An actual non-image literal dictionary must be used');
+   assert.equal(envelope.record.id,ack.id);assert.equal(envelope.record.kind,ack.kind);assert.equal(envelope.record.scope,ack.scope);assert.equal(envelope.record.revision,ack.revision);
+   const read=await nativeRead({op:'expression_recovery',request:{operation:'read',scope:'expressions',kind:'checkpoint',id:ack.id}});
+   const find=await nativeRead({op:'expression_recovery',request:{operation:'find_checkpoint',scope:'expressions',expression_ref:expectedExpressionRef}});
+   assert.deepEqual(read.record,ack);assert.deepEqual(find.record,ack);
+   assert.deepEqual(privateBytes(path).bytes,stored.bytes,'Full native receiving reads must not alter actual pending recovery');
+   const full='actual-save-recovery-full-request-ack-read-find.json';artifact(full,{request:sent,response,read:{request:read.request,response:read.response},find:{request:find.request,response:find.response},original_public_json_sha256:sha(JSON.stringify(sent.request.value)),public_json_convention:'JSON.stringify of actual transport value; native full digest is independently consumed by actual Read/FindCheckpoint'});
+   report.records.push({operation:'write',scope:ack.scope,kind:ack.kind,id:ack.id,native_revision:ack.revision,full_evidence:full,physical:stored.physical,storage_schema:envelope.schema,expanded_value_sha256:envelope.expanded_value_sha256,part_count:envelope.parts.length,image_count:envelope.images.length,public_transport_bytes:Buffer.byteLength(JSON.stringify(ack.value)),request_ack_read_find_full_equality:true,pending_native_edit_unchanged:true});
+  }catch(error){report.errors.push(String(error));}
+  finally{
+   // Diagnostic qualification must never replace the genuine native reply or
+   // leave the application awaiting its actual original Save ACK.
+   if(actual){try{await route.fulfill({response:actual});}catch(error){report.errors.push('original response release: '+String(error));}}
+   else{try{await route.abort('failed');}catch(error){report.errors.push('failed actual transport cleanup: '+String(error));}}
+  }
+ };
+ const handler=route=>{const promise=qualify(route);pending.add(promise);promise.catch(error=>report.errors.push(String(error))).finally(()=>pending.delete(promise));return promise;};
+ await page.route(url,handler);
+ return{async close(){
+  if(closed)return report;closed=true;
+  // Stop admitting new controlled observations; existing actual requests still
+  // own their original replies until the bounded handler finally releases them.
+  try{await page.unroute(url,handler);}catch(error){report.errors.push('owned route cleanup: '+String(error));}
+  const settled=await Promise.allSettled([...pending]);for(const result of settled)if(result.status==='rejected')report.errors.push(String(result.reason));
+  report.passed=report.records.length===1&&report.errors.length===0;
+  artifact('actual-save-recovery-custody.json',report);return report;
+ }};
+}
+
 async function op(request,signal){
  const response=await fetch(config.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal});
  const raw=await response.text(),body=JSON.parse(raw);
@@ -553,13 +636,13 @@ try{
  const hostHtml=`<!doctype html><html><head><title>Actual Epi production entry</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;background:#090b15}iframe{display:block}</style></head><body><iframe id="world"></iframe><script type="module" src="/__epi_host_receiver"></script></body></html>`;
  server=await createServer({root,configFile:false,plugins:[react(),{name:'actual-epi-production-entry',configureServer(s){s.middlewares.use((req,res,next)=>{const path=req.url?.split('?')[0];if(path==='/__epi_host_receiver'){res.setHeader('Content-Type','text/javascript');res.end(receiver);return;}if(path!=='/__epi_parent'&&path!=='/__epi_application')return next();res.setHeader('Content-Type','text/html');res.end(path==='/__epi_parent'?hostHtml:entry);});}}],resolve:{alias:{three:resolve(root,'node_modules/three')}},define:{__CRADLE_WALK__:'false'},server:{host:'127.0.0.1',port:0,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});await server.listen();
  browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- receipt.browser={version:browser.version(),headless:true,reduced_motion:'reduce',requested_angle:'swiftshader'};
- page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'});page.setDefaultTimeout(40000);page.setDefaultNavigationTimeout(60000);
+ receipt.browser={version:browser.version(),headless:true,reduced_motion:coldOpening?'no-preference':'reduce',requested_angle:'swiftshader'};
+ page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:coldOpening?'no-preference':'reduce'});page.setDefaultTimeout(40000);page.setDefaultNavigationTimeout(60000);
  observePage(page);
  // The ordinary PointCloudHost supplies mode. The native recovery owner is
  // selected by this hosted query; omitting it would test browser IndexedDB
  // instead and could not establish a native checkpoint/restart claim.
- const url=`http://127.0.0.1:${server.httpServer.address().port}/__epi_parent?mode=expressions&host=expressions&world=epi-logos&still`+(config.existing_expression_ref?'&expression='+encodeURIComponent(config.existing_expression_ref):'');
+ const url=`http://127.0.0.1:${server.httpServer.address().port}/__epi_parent?mode=expressions&host=expressions&world=epi-logos${coldOpening?'':'&still'}`+(config.existing_expression_ref?'&expression='+encodeURIComponent(config.existing_expression_ref):'');
  phase='actual production host relay launch';await page.goto(url);await page.waitForFunction(()=>document.querySelector('#world')?.getAttribute('src')?.startsWith('/__epi_application'),null,{timeout:90000});frame=await page.locator('#world').elementHandle().then(el=>el.contentFrame());phase='actual production application launch';
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.enterEpiWorld&&window.__OI_KERNEL_EXPRESSIONS__?.kernelExpressionsAvailable(),null,{timeout:90000});
  receipt.browser.actual_gpu=await frame.evaluate(()=>{for(const c of document.querySelectorAll('canvas')){const g=c.getContext('webgl2')??c.getContext('webgl');if(!g)continue;const e=g.getExtension('WEBGL_debug_renderer_info');return{canvas:c.id,version:g.getParameter(g.VERSION),vendor:e?g.getParameter(e.UNMASKED_VENDOR_WEBGL):g.getParameter(g.VENDOR),renderer:e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):g.getParameter(g.RENDERER)};}return{unavailable:true};});
@@ -568,6 +651,14 @@ try{
  check(await frame.locator('[data-epi="identity"]').evaluate(button=>{const r=button.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('[data-epi="identity"]')===button;}),'The ordinary Epi identity entrance is actually reachable above every application gate');
  check(await frame.evaluate(()=>window.__FIELD_STUDIES__.capabilities.kind)==='production','The actual production resident particle engine is loaded');
  await snapshot('00-ordinary-entry-at-rest');
+ if(coldOpening){
+  const cold=await snapshot('00-no-preference-cold-entry',true);
+  const entryIntent=await frame.evaluate(()=>({world:new URL(location.href).searchParams.get('world'),still:new URL(location.href).searchParams.has('still'),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches}));
+  artifact('cold-entry-intent.json',entryIntent);
+  assert.deepEqual(entryIntent,{world:'epi-logos',still:false,reduced:false});
+  assert.equal(cold.state.fieldPaused,true);assert.equal(cold.state.simTime,0);assert.equal(cold.rendered.simTime,0);assert.equal(cold.rendered.steps,0);
+  check(true,'An actual no-preference Epi entry begins held without a still or reduced-motion override');
+ }
  const expressionCapabilities=(await op({op:'expression',request:{operation:'capabilities'}})).data;
  artifact('actual-native-expression-capabilities.json',expressionCapabilities);
  check(expressionCapabilities.schema==='oi.expression-capabilities/v1'&&expressionCapabilities.composition_budget?.render_formations===MAX_FORMATIONS&&expressionCapabilities.composition_budget?.render_pins===MAX_PINS,'Actual native Expression capabilities match the imported production renderer formation/pin limits');
@@ -883,6 +974,22 @@ try{
  assert.deepEqual(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking()),restWorkingBefore,'Closing ordinary controls preserves current native admission');
  assert.deepEqual(await restBasis(),restStateBefore,'Closing ordinary controls preserves current manual scene/selection');
  const a=await snapshot('01-person-a-cosmic-at-rest',true);
+ if(coldOpening){
+  await frame.waitForFunction(()=>!window.__FIELD_STUDIES__.nativeWorking().busy,null,{timeout:180000});
+  const nativeBefore=await nativeDocument(a.working.native_ref);
+  const panes=await frame.evaluate(()=>['live-workspace','toolbelt-panel','context-panel','inspector','belt-picker'].map(id=>{const node=document.getElementById(id);if(!node)throw Error('Missing actual authoring pane '+id);return{id,hidden:node.hidden||getComputedStyle(node).display==='none'};}));
+  artifact('cold-opening-authoring-panes.json',panes);
+  assert.ok(panes.every(p=>p.hidden),'Actual new-world rest does not inherit generic authoring panes');
+  assert.equal(await frame.locator('[data-epi="quiet"]').getAttribute('aria-pressed'),'true');
+  assert.equal((await frame.locator('[data-epi="quiet"]').innerText()).trim(),'Resume motion');
+  await frame.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const cold=await snapshot('01a-no-preference-native-reception',true);
+  assert.equal(cold.state.fieldPaused,true);assert.equal(cold.state.simTime,0);assert.equal(cold.rendered.simTime,0);assert.equal(cold.rendered.steps,0);
+  assert.equal(cold.native.status,'manual');assert.equal(cold.native.lease,null);assert.equal(cold.native.lifetime.admission_pending,false);assert.equal(cold.native.lifetime.close_pending,false);assert.equal(cold.native.lifetime.operation_pending,0);assert.equal(cold.native.lifetime.close_error,null);
+  assert.deepEqual(cold.document,a.document);assert.deepEqual(cold.record,a.record);assert.deepEqual(cold.current,a.current);
+  assert.deepEqual(await nativeDocument(a.working.native_ref),nativeBefore,'Held cold reception preserves the complete actual native Document after its acknowledged correction/current/file operations');
+  check(true,'Actual saved-file reception remains at rest, with truthful quiet controls and no generic panes, before every original native/whole/consumer gate');
+ }
  check(a.record.world.subject_ref===identities[0].reading.person_ref&&a.record.receiving.personal.canonical_locus==='ql:m-coordinate:bimba:M4.4.4.4','The actual person is bound to the Personal Pratibimba locus in one native world instance');
  check(a.record.world.event_ref===a.record.world.snapshot_ref&&a.current.context.event_ref===a.record.world.event_ref,'Cosmic event and protected PersonalCurrent encounter one admitted native sky occasion');
  check(a.record.inventory.length===2141,'Production construction consumes the complete admitted 2,141-subject Bimba inventory');
@@ -1051,7 +1158,7 @@ try{
  artifact('first-original-return-admission.json',{saved:savedPhase.record.native_readback,original:originalBeforeTick,returned:returnedBeforeTick,admitted_saved_lease:admittedSaved.lease,original_recomposition_lease:originalRecomposition.lease,returned_opening_lease:returnedOpening.lease,scope:'Complete clock/source semantics and current receiving; process-local revision/generation counters are not immutable original byte identities'});
 
  phase='native one-tick receiving';
- const opening=await snapshot('05-before-native-play',true);assert.ok(opening.state.fieldPaused&&opening.rendered.steps===0&&opening.rendered.simTime===0,'The ordinary quiet receiving test starts with genuine reduced-motion hold before any simulated or verifier probe step');
+ const opening=await snapshot('05-before-native-play',true);assert.ok(opening.state.fieldPaused&&opening.rendered.steps===0&&opening.rendered.simTime===0,'The ordinary quiet receiving test starts with the disclosed held entry mode before any simulated or verifier probe step');
  await action('step');
  const quietStep=await snapshot('06-after-quiet-native-tick-before-simulation',true),quietNative=nativeReadback(quietStep);
  assert.ok(quietStep.state.fieldPaused&&quietStep.rendered.steps===opening.rendered.steps&&quietStep.rendered.simTime===opening.rendered.simTime,'The quiet control consequence must be visible before any simulation, probeSteps, manual reseed or resumed motion');
@@ -1147,7 +1254,11 @@ try{
  check(true,'Returning from personal and branches recomposes a new complete cosmic receiving lifetime and advances the retained original opening to tick one and Clock A thirty degrees');
  await action('reset');
 
- phase='save and production continuation';await action('save');const saved=await snapshot('08-saved-personal-world');await savedFile(saved.working,'person-a-saved');
+ phase='save and production continuation';
+ const nativeRecoverySave=await armActualRecoverySaveCustody(a.working.native_ref);let saved;
+ try{await action('save');saved=await snapshot('08-saved-personal-world');await savedFile(saved.working,'person-a-saved');}
+ finally{receipt.recovery_save=await nativeRecoverySave.close();}
+ check(receipt.recovery_save.passed,'Ordinary actual Save consumes one lossless native v2 pending checkpoint, with unchanged full request/ACK/Read/FindCheckpoint, bounded exact private bytes and actual native file readback');
  await sceneNavigate(personal.scene_ref);await frame.evaluate(ref=>window.__FIELD_STUDIES__.selectEntity(ref),locus);await action('save');
  const continuation=await snapshot('09-before-browser-reopen');
  retainStage('browser production reopen: before navigation');
