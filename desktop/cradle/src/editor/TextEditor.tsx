@@ -372,7 +372,10 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
         view.current = undefined;
       };
     }, [props.binding.id]);
-    useEffect(() => {
+    // Apply an owner's document replacement during the commit. A passive
+    // effect can carry an older typing echo across the next native input
+    // and replace the newer CodeMirror document with that stale value.
+    useLayoutEffect(() => {
       const v = view.current;
       if (v && v.state.doc.toString() !== props.value) {
         external.current = true;
