@@ -31,6 +31,7 @@ import type {
   KernelReceipt,
   KernelSnapshotState,
   KernelTransportStatus,
+  SourceBufferState,
   SourceListingState,
   SourceRef,
 } from "./types";
@@ -57,6 +58,9 @@ export interface KernelApi {
   /** The first real state read has returned (success or failure). */
   stateSettled: boolean;
   snapshot: KernelSnapshotState;
+  /** The same native read model at the operation boundary, before React
+   * delivers it. Hosted buffers retain their separate qualified owner. */
+  currentSourceBuffer: (sourceRef: SourceRef) => SourceBufferState | undefined;
   /** Qualified from the active native root, never its next-launch selection. */
   draftOwner: DraftOwner | undefined;
   /** Read the current qualification at the operation boundary, including
@@ -109,6 +113,12 @@ export function KernelProvider(props: { children: ReactNode }) {
   // is gone (BOOT-02/03/04 render inside the usable shell, not behind it).
   const [stateSettled, setStateSettled] = useState(transport.kind === "unavailable");
   const [snapshot, setSnapshot] = useState<KernelSnapshotState>(EMPTY_SNAPSHOT);
+  const snapshotRef = useRef(snapshot);
+  const publishSnapshot = useCallback((next: KernelSnapshotState) => {
+    snapshotRef.current = next;
+    setSnapshot(next);
+  }, []);
+  const currentSourceBuffer = useCallback((sourceRef: SourceRef) => snapshotRef.current.buffers[sourceRef], []);
   const activeRoot = snapshot.navigator?.root?.root;
   const [ownerRecognition, setOwnerRecognition] = useState<unknown>();
   const lastRecognizedOwner = useRef<DraftOwner>();
@@ -185,17 +195,17 @@ export function KernelProvider(props: { children: ReactNode }) {
       case "surface_opened":
       case "surface_closed":
       case "surface_focused":
-        setSnapshot(outcome.snapshot);
+        publishSnapshot(outcome.snapshot);
         break;
       case "source_opened":
       case "buffer_edited":
       case "source_saved":
       case "source_save_failed":
       case "source_reread":
-        setSnapshot((held) => ({
-          ...held,
-          buffers: { ...held.buffers, [outcome.buffer.source_ref]: outcome.buffer },
-        }));
+        publishSnapshot({
+          ...snapshotRef.current,
+          buffers: { ...snapshotRef.current.buffers, [outcome.buffer.source_ref]: outcome.buffer },
+        });
         break;
       case "sources_listed":
         setListing(outcome.listing);
@@ -203,7 +213,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       default:
         break;
     }
-  }, [admitReceipts]);
+  }, [admitReceipts, publishSnapshot]);
 
   const apply = useCallback(
     async (op: KernelOp): Promise<KernelOutcome | null> => {
@@ -338,6 +348,8 @@ export function KernelProvider(props: { children: ReactNode }) {
     let alive = true;
     let subscription: { unsubscribe: () => void } | null = null;
     let resync: ReturnType<typeof setTimeout> | null = null;
+    let resyncReading = false;
+    let resyncRequested = false;
     void (async () => {
       const initial = await kernelOp(transport, { op: "state" });
       if (!alive) return;
@@ -386,11 +398,26 @@ export function KernelProvider(props: { children: ReactNode }) {
       // burst of receipts is one trailing `state` read, not one per receipt
       // (every read is a process spawn on the shared kernel seam).
       const requestResync = () => {
-        if (resync) clearTimeout(resync);
+        resyncRequested = true;
+        if (resync || resyncReading) return;
         resync = setTimeout(() => {
           resync = null;
           if (!alive) return;
-          void kernelOp(transport, { op: "state" }).then(call => { if (alive && call.outcome) merge(call.outcome); });
+          resyncReading = true;
+          resyncRequested = false;
+          // A state pull shares the operation queue and stays within this
+          // subscription's lifetime. Keep only one pending read under load.
+          const read = applySerial.current.then(async () => {
+            if (!alive) return;
+            const call = await kernelOp(transport, { op: "state" });
+            if (alive && call.outcome) merge(call.outcome);
+          });
+          applySerial.current = read.then(() => undefined, () => undefined);
+          const settled = () => {
+            resyncReading = false;
+            if (alive && resyncRequested) requestResync();
+          };
+          void read.then(settled, settled);
         }, 200);
       };
       subscription = await subscribeTopic(transport, (receipt) => {
@@ -413,6 +440,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       boot,
       stateSettled,
       snapshot,
+      currentSourceBuffer,
       draftOwner,
       currentDraftOwner,
       receipts,
@@ -438,6 +466,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       boot,
       stateSettled,
       snapshot,
+      currentSourceBuffer,
       draftOwner,
       currentDraftOwner,
       receipts,

@@ -132,6 +132,7 @@ const contextHighlights=StateField.define<DecorationSet>({
 });
 interface Props {
   value: string;
+  readWorkingValue?: () => string;
   onChange: (value: string) => void;
   binding: SurfaceBinding;
   filename?: string;
@@ -299,15 +300,16 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
           host.current?.dispatchEvent(new CustomEvent("oi:editor-status",{bubbles:true}));
         }),
       ];
+      const currentValue = callbacks.current.readWorkingValue?.() ?? callbacks.current.value;
       const prior = editorMemory.get(callbacks.current.binding.id);
       const state =
-        prior?.doc === callbacks.current.value
+        prior?.doc === currentValue
           ? EditorState.fromJSON(
               prior.state,
               { extensions },
               { history: historyField },
             )
-          : EditorState.create({ doc: callbacks.current.value, extensions });
+          : EditorState.create({ doc: currentValue, extensions });
       const v = new EditorView({ parent: host.current!, state });
       view.current = v;
       const showContext=()=>v.dispatch({effects:contextMarks.of(contextCues(callbacks.current.binding.ref,callbacks.current.binding.id))});
@@ -320,7 +322,7 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
         v.state.doc.toString();
       setSelection(!v.state.selection.main.empty);
       const restoreScroll = requestAnimationFrame(() => {
-        if (prior?.doc === callbacks.current.value)
+        if (prior?.doc === currentValue)
           v.scrollDOM.scrollTop = prior.top;
       });
       const storageKey = `oi-editor-view:${callbacks.current.binding.ref ?? callbacks.current.binding.id}`;
@@ -377,10 +379,14 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
     // and replace the newer CodeMirror document with that stale value.
     useLayoutEffect(() => {
       const v = view.current;
-      if (v && v.state.doc.toString() !== props.value) {
+      // A render may have begun before the next input. The source surface
+      // owns its latest working text synchronously; read it at this boundary
+      // rather than giving an older render snapshot replacement authority.
+      const value = callbacks.current.readWorkingValue?.() ?? props.value;
+      if (v && v.state.doc.toString() !== value) {
         external.current = true;
         v.dispatch({
-          changes: { from: 0, to: v.state.doc.length, insert: props.value },
+          changes: { from: 0, to: v.state.doc.length, insert: value },
         });
         external.current = false;
       }

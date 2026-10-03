@@ -121,11 +121,14 @@ export function SourceSurface(props: SourceSurfaceProps) {
   }, [kernel.draftOwner, binding.ref, kernel.editBuffer]);
   useEffect(() => {
     if (!buffer) return;
+    // A captured render can outlive a later accepted edit. Only the buffer
+    // still held by this exact native owner may replace the working text.
+    if (!hasCurrentOwner() || kernel.currentSourceBuffer(binding.ref ?? "") !== buffer) return;
     if (pendingEdits.current > 0 || unadmittedEdit.current) return;
     if (lastSynced.current === buffer.content) return;
     lastSynced.current = buffer.content;
     setText(buffer.content);
-  }, [buffer]);
+  }, [buffer, binding.ref, kernel.draftOwner, kernel.currentSourceBuffer]);
 
   // Focus the editor when its surface becomes the active one.
   useEffect(() => {
@@ -148,12 +151,12 @@ export function SourceSurface(props: SourceSurfaceProps) {
 
   const onEdit = (value: string) => {
     authoredHere.current = true;
+    lastSynced.current = value; // publish the current proposal before a render
     setText(value);
     if (binding.ref && buffer) {
       try { writeDraft(kernel.draftOwner, binding.ref, { content: value, base_revision: buffer.base_revision, saved_content: buffer.saved_content }); setDraftError(null); }
       catch { setDraftError("This draft could not be saved on this device. Keep this window open until the source is saved."); }
     }
-    lastSynced.current = value; // this surface authored it — no mirror-back
     if (!hasCurrentOwner()) {
       // Retain the proposal under its captured owner; never relabel it for a
       // subsequently recognized directory. Admit it only if that same owner
@@ -300,7 +303,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
       {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
       <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown} hidden={dieView||(documentView&&view==="rendered")}>
         <div className="source-editor-body">
-          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave} readOnly={!!dayDocument||!kernel.draftOwner}/>
+          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} readWorkingValue={() => lastSynced.current ?? text} onChange={onEdit} onSelect={updateCaret} onSave={onSave} readOnly={!!dayDocument||!kernel.draftOwner}/>
         </div>
         {conflict ? (
         <div className="source-conflict" role="alert" data-conflict-kind="revision-conflict">
