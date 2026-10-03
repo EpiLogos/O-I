@@ -6066,6 +6066,15 @@ fn a06_a10_a16_distinct_native_peer_cardinality_refuses_before_source_qualificat
     // Five actual global native Entities across the native maximum64 Scenes
     // produce2560 DISTINCT valid scalar coordinates, not duplicate labels.
     let mut document = independent_budget_document(false, 0, 0);
+    let original_entity_count = document.entities.len();
+    // The existing native fixture also has an ordinary, unaddressed Entity.
+    // Keep it in the actual Document; only the five selected peers contribute
+    // the bounded 2560 native control coordinates below.
+    let original_primary_entity = format!("{EXPRESSION}:entity:a");
+    let original_unaddressed = document.entities.iter()
+        .filter(|(reference, _)| reference.as_str() != original_primary_entity.as_str())
+        .map(|(reference, entity)| (reference.clone(), entity.clone()))
+        .collect::<BTreeMap<_, _>>();
     let primary = document.scenes[0].scene_ref.clone();
     let entities = (0..5)
         .map(|index| {
@@ -6193,7 +6202,9 @@ fn a06_a10_a16_distinct_native_peer_cardinality_refuses_before_source_qualificat
     document = document.edited(changes).unwrap();
     document.validate().unwrap();
     assert_eq!(document.scenes.len(), 64);
-    assert_eq!(document.entities.len(), 5);
+    assert_eq!(document.entities.len(), original_entity_count + 4);
+    assert!(original_unaddressed.iter().all(|(reference, entity)| document.entities.get(reference) == Some(entity)));
+    assert!(document.scenes.iter().all(|scene| scene.entity_refs == entities));
     assert!(serde_json::to_vec(&document).unwrap().len() < budget::SOURCE_BYTES);
     let distinct = document
         .scenes
