@@ -368,7 +368,7 @@ mod tests {
             .result
         {
             KernelOpResult::Expression { data } => {
-                assert_eq!(data["state"], "ready");
+                assert_eq!(data["state"], "ready", "{}", data["reason"]);
                 data
             }
             other => panic!("actual Expression result expected: {other:?}"),
@@ -392,7 +392,7 @@ mod tests {
             "expected_revision":created["document"]["revision"],
             "actor":"human:lease-refusal-test","changes":[{"change":"scene_material_set",
             "scene_ref":scene_ref,"presentation":{"schema":"oi.journey-scene/v1","scene":{
-                "id":scene_ref,"name":"Current Scene","character":"Lease refusal",
+                "id":scene_ref,"name":created["document"]["scenes"][0]["title"],"character":"Lease refusal",
                 "duration":42,"transition":3,"view":{"mode":"3d","yaw":0.0,"pitch":0.0,
                     "zoom":1.0,"panX":0.0,"panY":0.0},
                 "field":{"background":"#fafafa","palette":["#111111"],"material":"ink","params":{}},

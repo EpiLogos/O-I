@@ -5773,23 +5773,42 @@ mod tests {
                 "page-target" => {
                     sequence[1]["target_ref"] = json!("expression:changed-page-target")
                 }
-                "page-body" => {
-                    let scene_ref = sequence[1]["edition"]["selection"]["scene_ref"].clone();
-                    let scene = sequence[1]["edition"]["scenes"]
-                        .as_array_mut()
-                        .unwrap()
-                        .iter_mut()
-                        .find(|scene| scene["scene_ref"] == scene_ref)
-                        .unwrap();
-                    let layer = scene["presentation"]["scene"]["text"]
-                        .as_array_mut()
-                        .unwrap()
-                        .iter_mut()
-                        .find(|layer| layer["role"] == TEXT_ROLE)
-                        .unwrap();
-                    layer["body"] = json!("Changed actual retained presentation");
-                }
+                "page-body" => (),
                 _ => unreachable!(),
+            }
+            if fault == "page-body" {
+                // Select the actual native edition's Scene, then damage its
+                // existing storage slot. Private dictionary storage preserves
+                // the complete public edition; it is not an inline Scene.
+                let scene_ref =
+                    fixture.act()["sequence"][1]["edition"]["selection"]["scene_ref"].clone();
+                let scenes = if record["schema"] == crate::expression_act_storage::SCHEMA {
+                    let reference = record["act"]["sequence"][1]["edition"]["fields"]["scenes"]
+                        .as_str()
+                        .expect("Actual stored edition Scene dictionary ref")
+                        .to_owned();
+                    &mut record["parts"]
+                        .as_array_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .find(|part| part["ref"] == reference)
+                        .expect("Actual stored Scene dictionary part")["value"]
+                } else {
+                    &mut record["act"]["sequence"][1]["edition"]["scenes"]
+                };
+                let scene = scenes
+                    .as_array_mut()
+                    .unwrap()
+                    .iter_mut()
+                    .find(|scene| scene["scene_ref"] == scene_ref)
+                    .expect("Actual retained Scene");
+                let layer = scene["presentation"]["scene"]["text"]
+                    .as_array_mut()
+                    .unwrap()
+                    .iter_mut()
+                    .find(|layer| layer["role"] == TEXT_ROLE)
+                    .expect("Actual retained text body");
+                layer["body"] = json!("Changed actual retained presentation");
             }
             // Fault injection changes the actual durable record, never a
             // fabricated owner response. A fresh native body must refuse it.
@@ -6048,13 +6067,39 @@ mod tests {
         let act: Act = serde_json::from_value(fixture.act()).unwrap();
         let original = fixture.stored_bytes();
         let encoded = ActStore::encoded_record(&act).unwrap();
-        assert_eq!(
-            encoded,
-            serde_json::to_vec_pretty(&LegacyRecord {
-                schema: SCHEMA.into(),
-                act: act.clone()
+        let stored = original
+            .values()
+            .find(|bytes| {
+                serde_json::from_slice::<Value>(bytes)
+                    .is_ok_and(|record| record["act"]["act_ref"] == TEXT_ACT)
             })
-            .unwrap()
+            .expect("Actual durable native Act record");
+        assert!(
+            encoded == *stored,
+            "Canonical native encoding differs from the actual saved record"
+        );
+        let decoded =
+            crate::expression_act_storage::decode(&encoded, crate::expression::DOCUMENT_BYTES)
+                .unwrap();
+        assert!(
+            decoded == act,
+            "Native record lost complete source, text or editions"
+        );
+        assert!(
+            ActStore::encoded_record(&decoded).unwrap() == encoded,
+            "Native record retry changed actual bytes"
+        );
+        let legacy = serde_json::to_vec_pretty(&LegacyRecord {
+            schema: SCHEMA.into(),
+            act: act.clone(),
+        })
+        .unwrap();
+        let restored =
+            crate::expression_act_storage::decode(&legacy, crate::expression::DOCUMENT_BYTES)
+                .unwrap();
+        assert!(
+            restored == act,
+            "Supported legacy replay lost complete native editions"
         );
         let store = ActStore::at_home(&fixture.home);
         assert_eq!(store.read(TEXT_ACT).unwrap().unwrap(), act);

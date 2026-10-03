@@ -27,8 +27,12 @@ const TIMEOUT: Duration = Duration::from_secs(20);
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
-    RetainSelectedSceneSource { request: selected_scene::source::Request },
-    RecoverSelectedSceneSource { request: selected_scene::source::Request },
+    RetainSelectedSceneSource {
+        request: selected_scene::source::Request,
+    },
+    RecoverSelectedSceneSource {
+        request: selected_scene::source::Request,
+    },
     OpenSelectedScene {
         request: selected_scene::Request,
     },
@@ -618,7 +622,9 @@ impl Drop for Owner {
 impl Manager {
     pub fn apply(&mut self, client: &CentralClient, request: Request) -> Result<Value, String> {
         match request {
-            Request::RetainSelectedSceneSource { .. } | Request::RecoverSelectedSceneSource { .. } | Request::OpenSelectedScene { .. }
+            Request::RetainSelectedSceneSource { .. }
+            | Request::RecoverSelectedSceneSource { .. }
+            | Request::OpenSelectedScene { .. }
             | Request::RecoverSelectedScene { .. }
             | Request::AbandonSelectedScene { .. } => Err(
                 "Selected-Scene opening/recovery requires its actual native Kernel Document owner"
@@ -2321,7 +2327,14 @@ for line in sys.stdin: time.sleep(60)
             (with("units_per_metre", json!(-1)), "units_per_metre"),
             (with("units_per_metre", json!(1_000_001)), "units_per_metre"),
             (with("units_per_metre", json!("400")), "units_per_metre"),
-            (missing_sky, "sky must be"),
+            (
+                missing_sky,
+                "exactly one sky selector or sky_snapshot is required",
+            ),
+            (
+                with("sky_snapshot", json!({})),
+                "exactly one sky selector or sky_snapshot is required",
+            ),
             (with("sky", json!("later")), "sky must be"),
             (with("sky", json!(null)), "sky must be"),
             (
