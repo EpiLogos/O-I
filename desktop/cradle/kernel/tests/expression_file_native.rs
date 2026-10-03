@@ -141,8 +141,14 @@ fn missing_duplicate_unused_and_modified_real_image_refuse() {
 fn file_reference_schema_cycle_context_and_document_digest_refuse() {
     let original = stored();
     let mut schema = original.clone();
-    schema["schema"] = json!("oi.expression-storage/v2");
+    schema["schema"] = json!("oi.expression-storage/v999");
     refuse(&schema, "Unsupported Expression file storage schema");
+    // v2 now has a real retained-performance owner. An image-only envelope
+    // labelled v2 still refuses its missing required native performance parts.
+    let mut incomplete_performance = original.clone();
+    incomplete_performance["schema"] =
+        json!(oi_cradle_kernel::expression_performance_storage::STORAGE_SCHEMA);
+    refuse(&incomplete_performance, "missing field `performance_parts`");
     let mut marker = original.clone();
     assert!(change_marker(&mut marker["document"], &mut |value| value
         ["schema"] =
@@ -281,7 +287,7 @@ fn retained_actual_world_17_full_roundtrip() {
     altered_image["images"][0]["data_url"] = json!(source_png("menu-32.png"));
     refuse(&altered_image, "Invalid embedded image schema or digest");
     let mut altered_schema = stored.clone();
-    altered_schema["schema"] = json!("oi.expression-storage/v2");
+    altered_schema["schema"] = json!("oi.expression-storage/v999");
     refuse(
         &altered_schema,
         "Unsupported Expression file storage schema",

@@ -59,6 +59,7 @@ import {installPalaceInstrument} from './palaceInstrument.js';
 import {installNaraInstrument} from './naraInstrument.js';
 import {epiMaterialContinuation,epiOpeningMaterial,createEpiWorldProduction,readEpiWorldRecord,requireEpiNativeReadback,epiTorusTargetMap,epiSceneReception,epiStationaryReception,epiAuthoredSceneSnapshot,type EpiWorldRecord} from './epiWorldProduction.js';
 import {installEpiWorldEncounter} from './epiWorldEncounter.js';
+import {recoveryFailureMessage,recoveryFailureInspectHTML} from './recoverySizeDiagnostic.js';
 import {naraInstrumentRequest} from './kernelExpressions.js';
 import type {InstrumentIdentity} from '../../../src/nara/instrumentProtocol';
 import type {ExpressionDocument,ExpressionResult} from '../../../src/expression/types';
@@ -156,7 +157,7 @@ const scene=()=>store.document.scenes[sceneIndex]??store.document.scenes[0];
 const activeScene=()=>effectiveScene(store.document,journeyPlaying?store.document.savedScenes?.[scene().id]??scene():scene());
 const selectedEntity=()=>scene().entities.find(e=>e.id===selected[0]);
 const currentText=()=>scene().text.find(t=>t.id===textId)??scene().text[0];
-function toast(message:string,duration=4200){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimeout);toastTimeout=window.setTimeout(()=>$('toast').hidden=true,duration);}
+function toast(message:string,duration=4200){$('toast').textContent=recoveryFailureMessage(message);$('toast').hidden=false;clearTimeout(toastTimeout);toastTimeout=window.setTimeout(()=>$('toast').hidden=true,duration);}
 /** Fires the scene's chosen pointer click effect at a world position. */
 function firePointerClick(p:Vec3){const s=effectiveScene(store.document,scene()),kind=s.engine.pointerClick??'pulse';if(kind==='off')return;try{engine.command?.({type:'pointer-effect',kind,strength:engine.telemetry?.()?.params?.pointerClickStrength??s.engine.pointerClickStrength??2.2,radius:(engine.telemetry?.()?.params?.pointerClickRadius??s.engine.pointerClickRadius??.45)*WORLD_SCALE,x:p.x*WORLD_SCALE,y:p.y*WORLD_SCALE,z:p.z*WORLD_SCALE});needsFrame=true;}catch(err){error(err);}}
 function error(err:unknown){console.error(err);toast(err instanceof Error?err.message:String(err),6500);}
@@ -1611,12 +1612,15 @@ function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){
  // A background read failing before any native work exists is not a failed
  // save: attention is only for work that has an identity or an open to retry.
  const failed=state.failed&&(!!state.identity||state.retryOpen||!!state.pending);
+ // Presentation only: nativeState and NativeWorking keep the full raw cause.
+ const recoveryInspect=state.failed?recoveryFailureInspectHTML(state.text,esc):'';
+ const failureText=recoveryFailureMessage(state.text,!!recoveryInspect);
  const save=document.getElementById('native-save');
- if(save){const label=state.busy?'Saving…':failed?`Not saved — ${state.text}`:state.identity?`Save (⌘S) · ${state.identity.title} · revision ${state.identity.revision}`:'Save (⌘S)';save.title=label;save.setAttribute('aria-label',label);save.classList.toggle('attention',failed||!!state.pending);save.toggleAttribute('disabled',state.busy);}
+ if(save){const label=state.busy?'Saving…':failed?`Not saved — ${failureText}`:state.identity?`Save (⌘S) · ${state.identity.title} · revision ${state.identity.revision}`:'Save (⌘S)';save.title=label;save.setAttribute('aria-label',label);save.classList.toggle('attention',failed||!!state.pending);save.toggleAttribute('disabled',state.busy);}
  const line=document.getElementById('native-status');if(!line)return;
  const actions=[state.pending?`<button type="button" class="link-button" data-action="native-resolve">Resolve interrupted save</button>`:'',state.pending==='file'?`<button type="button" class="link-button" data-action="native-retry-file">Retry file save</button>`:'',state.retryOpen&&state.failed?`<button type="button" class="link-button" data-action="native-retry-open">Retry opening</button>`:'',state.page&&state.page.count>1?`<span class="native-page">Members ${state.page.page+1}/${state.page.count}</span><button type="button" class="link-button" data-action="native-page" data-delta="-1" ${state.page.page<=0?'disabled':''}>Previous</button><button type="button" class="link-button" data-action="native-page" data-delta="1" ${state.page.page>=state.page.count-1?'disabled':''}>Next</button>`:''].join('');
- const text=failed?state.text:state.identity?`${state.identity.title} · revision ${state.identity.revision}`:'';
- line.innerHTML=`${esc(text)}${actions}`;line.classList.toggle('failed',failed);
+ const text=failed||recoveryInspect?failureText:state.identity?`${state.identity.title} · revision ${state.identity.revision}`:'';
+ line.innerHTML=`${esc(text)}${actions}${recoveryInspect}`;line.classList.toggle('failed',failed);
  if(state.failed&&state.retryOpen)toast(state.text,7000);
 }
 /** Re-enter an exact native Expression file (e.g. after a restart). */

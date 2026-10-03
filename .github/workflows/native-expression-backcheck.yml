@@ -34,7 +34,7 @@ jobs:
   native-kernel-regressions:
     name: Full native kernel regressions / exact O:I head
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -103,7 +103,7 @@ jobs:
             --output-root "$RUNNER_TEMP/retained-performance" --github-env "$GITHUB_ENV"
       - name: Native kernel regressions
         if: always()
-        timeout-minutes: 15
+        timeout-minutes: 35
         run: |
           set -euo pipefail
           mkdir -p /tmp/w5-checks

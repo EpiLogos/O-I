@@ -479,8 +479,487 @@ fn qualify_expansion(
     component_budgets(kind, value, |component| expanded_size(component, images))
 }
 
+/// Private values never enter this receipt. The original refusal stays the
+/// first line; its bounded metadata travels through the existing native String
+/// error channel to the hosted frame and NativeWorking's retained notice.
+const SIZE_DIAGNOSTIC_SCHEMA: &str = "oi.recovery-size-diagnostic/v1";
+const SIZE_DIAGNOSTIC_MARKER: &str = "\n[oi.recovery-size-diagnostic/v1] ";
+const MAX_SIZE_DIAGNOSTIC_BYTES: usize = 16 * 1024;
+const COMPONENT_SIZE_MESSAGE: &str =
+    "Expanded recovery component exceeds 8 MiB before material cloning";
+
+// This is a diagnostic-work ceiling, not an admission budget change. A
+// checkpoint has at most four existing 8 MiB bases plus an 8 MiB remainder.
+const MAX_DIAGNOSTIC_PUBLIC_BYTES: usize = 5 * MAX_RECORD_BYTES;
+const MAX_DIAGNOSTIC_RAW_BYTES: usize = MAX_DIAGNOSTIC_PUBLIC_BYTES + 2048;
+#[derive(Serialize)]
+struct SerializedMeasurement {
+    status: &'static str,
+    serialized_utf8_bytes: Option<usize>,
+    serialized_utf8_bytes_at_least: Option<usize>,
+    measurement_limit_bytes: usize,
+    sha256: Option<String>,
+}
+fn measured_bytes(bytes: &[u8], limit: usize) -> SerializedMeasurement {
+    let complete = bytes.len() <= limit;
+    SerializedMeasurement {
+        status: if complete {
+            "complete"
+        } else {
+            "exact_size_over_bound_hash_not_measured"
+        },
+        serialized_utf8_bytes: Some(bytes.len()),
+        serialized_utf8_bytes_at_least: None,
+        measurement_limit_bytes: limit,
+        sha256: complete.then(|| format!("{:x}", Sha256::digest(bytes))),
+    }
+}
+/// A borrowed bounded serializer/hash sink: no payload Vec, Value or image
+/// clone. A refused write is not hashed, and a prefix is never a full digest.
+fn measure_serialized<T: Serialize + ?Sized>(value: &T, limit: usize) -> SerializedMeasurement {
+    struct Sink {
+        bytes: usize,
+        limit: usize,
+        over_bound: bool,
+        hash: Sha256,
+    }
+    impl std::io::Write for Sink {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            let next = self.bytes.checked_add(bytes.len());
+            if next.is_none_or(|next| next > self.limit) {
+                self.over_bound = true;
+                return Err(std::io::Error::other(
+                    "Recovery diagnostic measurement bound",
+                ));
+            }
+            self.bytes = next.expect("bounded measurement count");
+            self.hash.update(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut sink = Sink {
+        bytes: 0,
+        limit,
+        over_bound: false,
+        hash: Sha256::new(),
+    };
+    let result = serde_json::to_writer(&mut sink, value);
+    let complete = result.is_ok();
+    SerializedMeasurement {
+        status: if complete {
+            "complete"
+        } else if sink.over_bound {
+            "over_bound_partial_not_fully_measured"
+        } else {
+            "serialization_refused_not_fully_measured"
+        },
+        serialized_utf8_bytes: complete.then_some(sink.bytes),
+        serialized_utf8_bytes_at_least: sink.over_bound.then(|| limit.saturating_add(1)),
+        measurement_limit_bytes: limit,
+        sha256: complete.then(|| format!("{:x}", sink.hash.finalize())),
+    }
+}
+#[derive(Serialize)]
+struct SizeRequestContext {
+    operation: &'static str,
+    scope: Scope,
+    kind: Option<Kind>,
+    requested_address_sha256: Option<String>,
+    cas_applicable: bool,
+    expected_revision: Option<u64>,
+}
+fn draft_address_sha256(scope: Scope, kind: Kind, id: &str) -> Option<String> {
+    #[derive(Serialize)]
+    struct Address<'a> {
+        scope: Scope,
+        kind: Kind,
+        id: &'a str,
+    }
+    (id.len() <= 160)
+        .then(|| measure_serialized(&Address { scope, kind, id }, 32 * 1024))
+        .and_then(|m| m.sha256)
+}
+fn size_request_context(request: &Request) -> SizeRequestContext {
+    // These tiny borrowed address objects are hashed, never disclosed. Invalid
+    // unbounded addresses retain their ordinary validation error unchanged.
+    #[derive(Serialize)]
+    struct ExpressionAddress<'a> {
+        scope: Scope,
+        expression_ref: &'a str,
+    }
+    let (operation, scope, kind, address, cas_applicable, expected_revision) = match request {
+        Request::Read { scope, kind, id } => (
+            "read",
+            *scope,
+            Some(*kind),
+            draft_address_sha256(*scope, *kind, id),
+            false,
+            None,
+        ),
+        Request::List { scope, kind } => (
+            "list",
+            *scope,
+            Some(*kind),
+            measure_serialized(&(*scope, *kind), 32 * 1024).sha256,
+            false,
+            None,
+        ),
+        Request::FindCheckpoint {
+            scope,
+            expression_ref,
+        } => (
+            "find_checkpoint",
+            *scope,
+            None,
+            (expression_ref.len() <= 4096)
+                .then(|| {
+                    measure_serialized(
+                        &ExpressionAddress {
+                            scope: *scope,
+                            expression_ref,
+                        },
+                        32 * 1024,
+                    )
+                })
+                .and_then(|m| m.sha256),
+            false,
+            None,
+        ),
+        Request::Write {
+            scope,
+            kind,
+            id,
+            expected_revision,
+            ..
+        } => (
+            "write",
+            *scope,
+            Some(*kind),
+            draft_address_sha256(*scope, *kind, id),
+            true,
+            *expected_revision,
+        ),
+        Request::Remove {
+            scope,
+            kind,
+            id,
+            expected_revision,
+        } => (
+            "remove",
+            *scope,
+            Some(*kind),
+            draft_address_sha256(*scope, *kind, id),
+            true,
+            Some(*expected_revision),
+        ),
+    };
+    SizeRequestContext {
+        operation,
+        scope,
+        kind,
+        requested_address_sha256: address,
+        cas_applicable,
+        expected_revision,
+    }
+}
+/// Serialize the exact existing remainder with component roots replaced by
+/// null. The numeric locations refer to real object keys, never a concatenated
+/// pointer string; a literal key containing '/' cannot masquerade as a root.
+struct RecoveryRemainder<'a> {
+    value: &'a Value,
+    location: u8,
+}
+impl Serialize for RecoveryRemainder<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let Some(object) = self.value.as_object() else {
+            return self.value.serialize(serializer);
+        };
+        let mut map = serializer.serialize_map(Some(object.len()))?;
+        for (key, value) in object {
+            match (self.location, key.as_str()) {
+                (1, "document" | "journey") | (2, "request") | (3, "journey") => {
+                    map.serialize_entry(key, &())?
+                }
+                (0, "view") => {
+                    map.serialize_entry(key, &RecoveryRemainder { value, location: 1 })?
+                }
+                (0, "pending") => {
+                    map.serialize_entry(key, &RecoveryRemainder { value, location: 2 })?
+                }
+                (2, "submitted") => {
+                    map.serialize_entry(key, &RecoveryRemainder { value, location: 3 })?
+                }
+                _ => map.serialize_entry(key, value)?,
+            }
+        }
+        map.end()
+    }
+}
+fn bounded_image_metrics(value: &Value, dictionary_entries: Option<usize>) -> Value {
+    struct Counts<'a> {
+        unique: BTreeMap<&'a str, bool>,
+        unique_overflow: bool,
+        occurrences: Option<usize>,
+        occurrence_bytes: Option<usize>,
+    }
+    fn visit<'a>(value: &'a Value, counts: &mut Counts<'a>) {
+        match value {
+            Value::Object(object) => {
+                for (key, value) in object {
+                    if key == "dataUrl" {
+                        if let Some(url) = value
+                            .as_str()
+                            .filter(|url| crate::expression_file::png(url))
+                        {
+                            counts.occurrences = counts.occurrences.and_then(|n| n.checked_add(1));
+                            counts.occurrence_bytes = counts
+                                .occurrence_bytes
+                                .and_then(|n| n.checked_add(url.len()));
+                            if let Some(repeated) = counts.unique.get_mut(url) {
+                                *repeated = true;
+                            } else if counts.unique.len() < crate::expression_file::MAX_IMAGES {
+                                counts.unique.insert(url, false);
+                            } else {
+                                counts.unique_overflow = true;
+                            }
+                        }
+                    }
+                    visit(value, counts);
+                }
+            }
+            Value::Array(array) => {
+                for value in array {
+                    visit(value, counts);
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut counts = Counts {
+        unique: BTreeMap::new(),
+        unique_overflow: false,
+        occurrences: Some(0),
+        occurrence_bytes: Some(0),
+    };
+    visit(value, &mut counts);
+    let exact = !counts.unique_overflow;
+    let unique_bytes = exact
+        .then(|| {
+            counts
+                .unique
+                .keys()
+                .try_fold(0usize, |n, url| n.checked_add(url.len()))
+        })
+        .flatten();
+    json!({
+        "eligible_occurrences": counts.occurrences,
+        "eligible_data_url_utf8_bytes_with_repetition": counts.occurrence_bytes,
+        "eligible_unique": exact.then_some(counts.unique.len()),
+        "eligible_unique_data_url_utf8_bytes": unique_bytes,
+        "repeated_unique": exact.then(|| counts.unique.values().filter(|repeated| **repeated).count()),
+        "unique_metrics_status": if exact { "complete" } else { "more_than_4096_unique_images_not_retained_in_diagnostic" },
+        "actual_candidate_dictionary_entries": dictionary_entries,
+        "diagnostic_unique_tracking_limit": crate::expression_file::MAX_IMAGES
+    })
+}
+struct SizeEvidence<'a> {
+    public: Option<&'a [u8]>,
+    raw_record: Option<&'a [u8]>,
+    stored_candidate: Option<&'a [u8]>,
+    dictionary_entries: Option<usize>,
+}
+fn format_size_refusal(message: &str, diagnostic: &Value) -> String {
+    match serde_json::to_string(diagnostic) {
+        Ok(body) if body.len() <= MAX_SIZE_DIAGNOSTIC_BYTES =>
+            format!("{message}{SIZE_DIAGNOSTIC_MARKER}{body}"),
+        // A metadata-format failure must never turn a refusal into success,
+        // reveal a value, or lose its original human-facing message.
+        _ => format!("{message}{SIZE_DIAGNOSTIC_MARKER}{{\"schema\":\"{SIZE_DIAGNOSTIC_SCHEMA}\",\"diagnostic_status\":\"metadata_format_refused\"}}"),
+    }
+}
+struct SizeRecordBasis<'a> {
+    scope: Scope,
+    kind: Kind,
+    id: &'a str,
+    revision: Option<u64>,
+    value: &'a Value,
+}
+fn size_refusal(
+    record: &Record,
+    message: &str,
+    branch: &'static str,
+    evidence: SizeEvidence<'_>,
+) -> String {
+    size_refusal_basis(
+        SizeRecordBasis {
+            scope: record.scope,
+            kind: record.kind,
+            id: &record.id,
+            revision: Some(record.revision),
+            value: &record.value,
+        },
+        message,
+        branch,
+        evidence,
+    )
+}
+fn size_refusal_basis(
+    record: SizeRecordBasis<'_>,
+    message: &str,
+    branch: &'static str,
+    evidence: SizeEvidence<'_>,
+) -> String {
+    let components: Vec<_> = if record.kind == Kind::Checkpoint {
+        ["/view/document", "/view/journey", "/pending/request", "/pending/submitted/journey"]
+            .into_iter().map(|path| json!({
+                "path": path,
+                "present": record.value.pointer(path).is_some(),
+                "measurement": record.value.pointer(path).map(|value| measure_serialized(value, MAX_RECORD_BYTES))
+            })).collect()
+    } else {
+        Vec::new()
+    };
+    let remainder = if record.kind == Kind::Checkpoint {
+        measure_serialized(
+            &RecoveryRemainder {
+                value: record.value,
+                location: 0,
+            },
+            MAX_RECORD_BYTES,
+        )
+    } else {
+        measure_serialized(&record.value, MAX_RECORD_BYTES)
+    };
+    let public_limit = if record.kind == Kind::Checkpoint {
+        MAX_DIAGNOSTIC_PUBLIC_BYTES
+    } else {
+        MAX_RECORD_BYTES
+    };
+    let public = evidence
+        .public
+        .map(|bytes| measured_bytes(bytes, public_limit))
+        .unwrap_or_else(|| measure_serialized(&record.value, public_limit));
+    let complete = public.status == "complete"
+        && remainder.status == "complete"
+        && components
+            .iter()
+            .all(|row| row["present"] == false || row["measurement"]["status"] == "complete");
+    let removed = components.iter().try_fold(0i128, |total, row| {
+        if row["present"] == false {
+            return Some(total);
+        }
+        total.checked_add(row["measurement"]["serialized_utf8_bytes"].as_u64()? as i128 - 4)
+    });
+    let remainder_formula_bytes = public
+        .serialized_utf8_bytes
+        .and_then(|full| usize::try_from((full as i128).checked_sub(removed?)?).ok());
+    let remainder_matches_formula = remainder
+        .serialized_utf8_bytes
+        .and_then(|measured| remainder_formula_bytes.map(|formula| formula == measured));
+    // An over-bound refused public Value must not cause another full image walk.
+    let images = if public.status == "complete" {
+        bounded_image_metrics(&record.value, evidence.dictionary_entries)
+    } else {
+        json!({
+            "eligible_occurrences": null,
+            "eligible_data_url_utf8_bytes_with_repetition": null,
+            "eligible_unique": null,
+            "eligible_unique_data_url_utf8_bytes": null,
+            "repeated_unique": null,
+            "unique_metrics_status": "not_walked_public_measurement_incomplete_or_over_bound",
+            "actual_candidate_dictionary_entries": evidence.dictionary_entries,
+            "diagnostic_unique_tracking_limit": crate::expression_file::MAX_IMAGES
+        })
+    };
+    let diagnostic = json!({
+        "schema": SIZE_DIAGNOSTIC_SCHEMA,
+        "diagnostic_status": if complete { "measured_at_native_size_refusal" } else { "partial_measurement_at_native_size_refusal" },
+        "failure_branch": branch,
+        "operation_context": null,
+        "record_address_sha256": draft_address_sha256(record.scope, record.kind, &record.id),
+        "record_scope": record.scope, "record_kind": record.kind,
+        "record_revision": record.revision,
+        "record_revision_role": if branch == "legacy_raw_value_decode" { "stored" } else if branch == "inbound_component_preflight" { "unallocated_inbound" } else { "proposed_not_acknowledged" },
+        "cas_guard": "not_qualified_until_store_request_context",
+        "public_value": public,
+        "components": components, "remainder_with_null_component_roots": remainder,
+        "remainder_formula_bytes": remainder_formula_bytes,
+        "remainder_measurement_matches_formula": remainder_matches_formula,
+        "raw_record": evidence.raw_record.map(|bytes| measured_bytes(bytes, MAX_DIAGNOSTIC_RAW_BYTES)),
+        "stored_candidate": evidence.stored_candidate.map(|bytes| measured_bytes(bytes, MAX_RECORD_BYTES + 2048)),
+        "stored_candidate_admitted_current_operation": false,
+        "stored_candidate_status": if branch == "legacy_raw_value_decode" { "existing_raw_bytes_refused" } else if evidence.stored_candidate.is_some() { "candidate_not_written" } else { "not_materialised" },
+        "images": images,
+        "limits": {"component_and_remainder_bytes": MAX_RECORD_BYTES, "stored_record_bytes": MAX_RECORD_BYTES + 2048, "scope_bytes": MAX_SCOPE_BYTES, "scope_records": MAX_RECORDS,
+            "diagnostic_public_measurement_bytes": public_limit, "diagnostic_raw_measurement_bytes": MAX_DIAGNOSTIC_RAW_BYTES, "diagnostic_metadata_utf8_bytes": MAX_SIZE_DIAGNOSTIC_BYTES},
+        "private_values_disclosed": false
+    });
+    format_size_refusal(message, &diagnostic)
+}
+fn attach_size_request_context(error: String, context: &SizeRequestContext) -> String {
+    let Some((message, body)) = error.split_once(SIZE_DIAGNOSTIC_MARKER) else {
+        return error;
+    };
+    if !matches!(
+        message,
+        "Recovery record exceeds 8 MiB" | COMPONENT_SIZE_MESSAGE
+    ) || body.len() > MAX_SIZE_DIAGNOSTIC_BYTES
+    {
+        return error;
+    }
+    let Ok(mut diagnostic) = serde_json::from_str::<Value>(body) else {
+        return error;
+    };
+    if diagnostic["schema"] != SIZE_DIAGNOSTIC_SCHEMA || !diagnostic.is_object() {
+        return error;
+    }
+    diagnostic["operation_context"] = match serde_json::to_value(context) {
+        Ok(value) => value,
+        Err(_) => return error,
+    };
+    diagnostic["cas_guard"] = json!(
+        match (context.operation, diagnostic["failure_branch"].as_str()) {
+            ("write", Some("inbound_component_preflight")) =>
+                "not_reached_inbound_validation_refused",
+            ("write", Some("legacy_raw_value_decode"))
+            | ("remove", Some("legacy_raw_value_decode")) =>
+                "not_reached_existing_record_decode_refused",
+            (
+                "write",
+                Some(
+                    "component_preflight"
+                    | "write_without_image_dictionary"
+                    | "write_image_dictionary_storage",
+                ),
+            ) => "passed_before_size_refusal",
+            _ => "not_applicable",
+        }
+    );
+    format_size_refusal(message, &diagnostic)
+}
+
 fn encode_record(record: &Record) -> Result<Vec<u8>, String> {
-    preflight_components(record.kind, &record.value)?;
+    preflight_components(record.kind, &record.value).map_err(|error| {
+        if error == COMPONENT_SIZE_MESSAGE {
+            size_refusal(
+                record,
+                &error,
+                "component_preflight",
+                SizeEvidence {
+                    public: None,
+                    raw_record: None,
+                    stored_candidate: None,
+                    dictionary_entries: None,
+                },
+            )
+        } else {
+            error
+        }
+    })?;
     let full = serde_json::to_vec(&record.value).map_err(|e| e.to_string())?;
     let mut counts = BTreeMap::new();
     crate::expression_file::count_images(&record.value, &mut counts);
@@ -498,7 +977,17 @@ fn encode_record(record: &Record) -> Result<Vec<u8>, String> {
     let raw = serde_json::to_vec(record).map_err(|e| e.to_string())?;
     if refs.is_empty() {
         if full.len() > MAX_RECORD_BYTES {
-            return Err("Recovery record exceeds 8 MiB".into());
+            return Err(size_refusal(
+                record,
+                "Recovery record exceeds 8 MiB",
+                "write_without_image_dictionary",
+                SizeEvidence {
+                    public: Some(&full),
+                    raw_record: Some(&raw),
+                    stored_candidate: Some(&raw),
+                    dictionary_entries: Some(0),
+                },
+            ));
         }
         return Ok(raw);
     }
@@ -538,7 +1027,17 @@ fn encode_record(record: &Record) -> Result<Vec<u8>, String> {
         return Ok(raw);
     }
     if encoded.len() > MAX_RECORD_BYTES + 2048 {
-        return Err("Recovery record exceeds 8 MiB".into());
+        return Err(size_refusal(
+            record,
+            "Recovery record exceeds 8 MiB",
+            "write_image_dictionary_storage",
+            SizeEvidence {
+                public: Some(&full),
+                raw_record: Some(&raw),
+                stored_candidate: Some(&encoded),
+                dictionary_entries: Some(stored.images.len()),
+            },
+        ));
     }
     Ok(encoded)
 }
@@ -548,12 +1047,19 @@ fn decode_record(bytes: &[u8], validate_body: bool) -> Result<Record, String> {
         serde_json::from_slice(bytes).map_err(|e| format!("Invalid native recovery entry: {e}"))?;
     if value["schema"] == SCHEMA {
         let record: Record = serde_json::from_value(value).map_err(|e| e.to_string())?;
-        if serde_json::to_vec(&record.value)
-            .map_err(|e| e.to_string())?
-            .len()
-            > MAX_RECORD_BYTES
-        {
-            return Err("Recovery record exceeds 8 MiB".into());
+        let full = serde_json::to_vec(&record.value).map_err(|e| e.to_string())?;
+        if full.len() > MAX_RECORD_BYTES {
+            return Err(size_refusal(
+                &record,
+                "Recovery record exceeds 8 MiB",
+                "legacy_raw_value_decode",
+                SizeEvidence {
+                    public: Some(&full),
+                    raw_record: Some(bytes),
+                    stored_candidate: Some(bytes),
+                    dictionary_entries: Some(0),
+                },
+            ));
         }
         return Ok(record);
     }
@@ -606,15 +1112,15 @@ fn conflict(current: Option<u64>) -> Value {
 
 impl Store {
     pub fn apply(&self, request: Request) -> Result<Value, String> {
+        let context = size_request_context(&request);
         #[cfg(unix)]
-        {
-            self.apply_unix(request)
-        }
+        let result = self.apply_unix(request);
         #[cfg(not(unix))]
-        {
+        let result = {
             let _ = request;
             Err("Native recovery is unavailable on this platform".into())
-        }
+        };
+        result.map_err(|error| attach_size_request_context(error, &context))
     }
     #[cfg(unix)]
     fn apply_unix(&self, request: Request) -> Result<Value, String> {
@@ -734,7 +1240,29 @@ impl Store {
                 value,
                 ..
             } => {
-                validate(kind, &id, &value)?;
+                validate(kind, &id, &value).map_err(|error| {
+                    if error == COMPONENT_SIZE_MESSAGE {
+                        size_refusal_basis(
+                            SizeRecordBasis {
+                                scope,
+                                kind,
+                                id: &id,
+                                revision: None,
+                                value: &value,
+                            },
+                            &error,
+                            "inbound_component_preflight",
+                            SizeEvidence {
+                                public: None,
+                                raw_record: None,
+                                stored_candidate: None,
+                                dictionary_entries: None,
+                            },
+                        )
+                    } else {
+                        error
+                    }
+                })?;
                 let previous = read_record(&dir, scope, &filename(kind, &id), sequence, true)?;
                 if previous.as_ref().map(|r| r.revision) != expected_revision {
                     return Ok(conflict(previous.as_ref().map(|r| r.revision)));
@@ -1978,5 +2506,263 @@ mod tests {
             .unwrap()["record"]
             .is_object());
         assert!(!home.path(Scope::Expressions, Kind::Draft, "extra").exists());
+    }
+    /// Real serde writer qualification, not a native request/installed fixture.
+    #[test]
+    fn refusal_diagnostic_hashes_only_complete_bounded_serialization() {
+        let value = json!({"text":"a\\\"b"});
+        let encoded = serde_json::to_vec(&value).unwrap();
+        let complete = measure_serialized(&value, encoded.len());
+        assert_eq!(complete.status, "complete");
+        assert_eq!(complete.serialized_utf8_bytes, Some(encoded.len()));
+        assert_eq!(
+            complete.sha256,
+            Some(format!("{:x}", Sha256::digest(&encoded)))
+        );
+        let stopped = measure_serialized(&value, encoded.len() - 1);
+        assert_eq!(stopped.status, "over_bound_partial_not_fully_measured");
+        assert_eq!(stopped.serialized_utf8_bytes, None);
+        assert_eq!(stopped.serialized_utf8_bytes_at_least, Some(encoded.len()));
+        assert_eq!(stopped.sha256, None);
+        let known = measured_bytes(&encoded, encoded.len() - 1);
+        assert_eq!(known.status, "exact_size_over_bound_hash_not_measured");
+        assert_eq!(known.serialized_utf8_bytes, Some(encoded.len()));
+        assert_eq!(known.sha256, None);
+    }
+    fn refusal_metadata(error: &str, message: &str) -> Value {
+        let (first, body) = error.split_once(SIZE_DIAGNOSTIC_MARKER).unwrap();
+        assert_eq!(first, message);
+        assert!(body.len() <= MAX_SIZE_DIAGNOSTIC_BYTES);
+        let data: Value = serde_json::from_str(body).unwrap();
+        assert_eq!(data["schema"], SIZE_DIAGNOSTIC_SCHEMA);
+        assert_eq!(data["private_values_disclosed"], false);
+        assert_eq!(data["stored_candidate_admitted_current_operation"], false);
+        data
+    }
+    /// Genuine ordinary owner-created Document plus two explicitly controlled
+    /// local Journey snapshots. This is a budget boundary test, not the absent
+    /// installed533 refusal payload or a source/identity/whole-world fixture.
+    fn two_basis_checkpoint(id: &str, bytes_per_text: usize, repeated_png: bool) -> Value {
+        let mut value = native_checkpoint(id);
+        value["view"]["journey"]["retained_text"] = json!("x".repeat(bytes_per_text));
+        let mut submitted = draft(id);
+        submitted["retained_text"] = json!("y".repeat(bytes_per_text));
+        if repeated_png {
+            value["view"]["journey"]["retained_image"] =
+                json!({"dataUrl":"data:image/png;base64,AAAA"});
+            submitted["retained_image"] = json!({"dataUrl":"data:image/png;base64,AAAA"});
+        }
+        let document = &value["view"]["document"];
+        let pending = json!({"kind":"edit","request":{"operation":"edit","expression_ref":document["expression_ref"],"expected_revision":document["revision"],"actor":"test:recovery","changes":[{"change":"focus","scene_ref":document["scenes"][0]["scene_ref"],"entity_ref":null}]},"submitted":{"journey":submitted}});
+        value["pending"] = pending;
+        value
+    }
+    #[test]
+    fn real_inbound_component_diagnostic_refusal_preserves_last_good_and_unreached_cas() {
+        let home = Home::new();
+        let id = "diagnostic-inbound";
+        let accepted = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        let old_revision = revision(&accepted);
+        let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let old_bytes = fs::read(&path).unwrap();
+        let old_sequence = fs::read(home.root().join(".sequence")).unwrap();
+        let mut incoming = native_checkpoint(id);
+        incoming["view"]["journey"]["retained_text"] = json!("x".repeat(MAX_RECORD_BYTES + 1));
+        let refusal = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(old_revision),
+                incoming,
+            ))
+            .unwrap_err();
+        let data = refusal_metadata(&refusal, COMPONENT_SIZE_MESSAGE);
+        assert_eq!(data["failure_branch"], "inbound_component_preflight");
+        assert_eq!(data["record_revision"], Value::Null);
+        assert_eq!(data["record_revision_role"], "unallocated_inbound");
+        assert_eq!(data["cas_guard"], "not_reached_inbound_validation_refused");
+        assert_eq!(data["operation_context"]["operation"], "write");
+        assert_eq!(data["operation_context"]["expected_revision"], old_revision);
+        assert_eq!(
+            data["components"][1]["measurement"]["status"],
+            "over_bound_partial_not_fully_measured"
+        );
+        assert_eq!(data["components"][1]["measurement"]["sha256"], Value::Null);
+        assert!(!refusal.contains(id));
+        assert!(!refusal.contains(&"x".repeat(256)));
+        assert_eq!(fs::read(&path).unwrap(), old_bytes);
+        assert_eq!(
+            fs::read(home.root().join(".sequence")).unwrap(),
+            old_sequence
+        );
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            accepted["record"]
+        );
+        let stale = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        assert_eq!(stale["state"], "revision_conflict");
+        assert_eq!(fs::read(&path).unwrap(), old_bytes);
+        let next = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(old_revision),
+                native_checkpoint(id),
+            ))
+            .unwrap();
+        assert_eq!(revision(&next), old_revision + 1);
+    }
+    #[test]
+    fn real_public_and_dictionary_storage_refusals_retain_last_good_bytes_and_cas() {
+        for repeated_png in [false, true] {
+            let home = Home::new();
+            let id = "diagnostic-storage";
+            let accepted = home
+                .store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    None,
+                    native_checkpoint(id),
+                ))
+                .unwrap();
+            let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+            let old_bytes = fs::read(&path).unwrap();
+            let old_sequence = fs::read(home.root().join(".sequence")).unwrap();
+            let incoming = two_basis_checkpoint(id, MAX_RECORD_BYTES / 2 + 4096, repeated_png);
+            validate(Kind::Checkpoint, id, &incoming).unwrap();
+            let public_bytes = serde_json::to_vec(&incoming).unwrap();
+            assert!(public_bytes.len() > MAX_RECORD_BYTES + 2048);
+            let refusal = home
+                .store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    Some(revision(&accepted)),
+                    incoming,
+                ))
+                .unwrap_err();
+            let data = refusal_metadata(&refusal, "Recovery record exceeds 8 MiB");
+            assert_eq!(
+                data["failure_branch"],
+                if repeated_png {
+                    "write_image_dictionary_storage"
+                } else {
+                    "write_without_image_dictionary"
+                }
+            );
+            assert_eq!(data["cas_guard"], "passed_before_size_refusal");
+            assert_eq!(
+                data["public_value"]["serialized_utf8_bytes"],
+                public_bytes.len()
+            );
+            assert_eq!(
+                data["public_value"]["sha256"],
+                format!("{:x}", Sha256::digest(&public_bytes))
+            );
+            assert!(
+                data["stored_candidate"]["serialized_utf8_bytes"]
+                    .as_u64()
+                    .unwrap()
+                    > (MAX_RECORD_BYTES + 2048) as u64
+            );
+            assert_eq!(data["stored_candidate"]["sha256"], Value::Null);
+            assert_eq!(
+                data["images"]["actual_candidate_dictionary_entries"],
+                if repeated_png { 1 } else { 0 }
+            );
+            assert_eq!(fs::read(&path).unwrap(), old_bytes);
+            assert_eq!(
+                fs::read(home.root().join(".sequence")).unwrap(),
+                old_sequence
+            );
+            assert_eq!(
+                home.store()
+                    .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                    .unwrap()["record"],
+                accepted["record"]
+            );
+        }
+    }
+    #[test]
+    fn real_legacy_decode_size_refusal_reports_existing_basis_before_write_cas() {
+        let home = Home::new();
+        let id = "diagnostic-legacy";
+        let accepted = home
+            .store()
+            .apply(write(Scope::Expressions, Kind::Draft, id, None, draft(id)))
+            .unwrap();
+        let mut existing = draft(id);
+        existing["retained_text"] = json!("x".repeat(MAX_RECORD_BYTES));
+        let bytes = serde_json::to_vec(&Record {
+            schema: SCHEMA.into(),
+            scope: Scope::Expressions,
+            kind: Kind::Draft,
+            id: id.into(),
+            revision: revision(&accepted),
+            value: existing,
+        })
+        .unwrap();
+        assert!(bytes.len() <= MAX_RECORD_BYTES + 2048);
+        let path = home.path(Scope::Expressions, Kind::Draft, id);
+        fs::write(&path, &bytes).unwrap();
+        let sequence = fs::read(home.root().join(".sequence")).unwrap();
+        for request in [
+            read(Scope::Expressions, Kind::Draft, id),
+            write(
+                Scope::Expressions,
+                Kind::Draft,
+                id,
+                Some(revision(&accepted)),
+                draft(id),
+            ),
+        ] {
+            let refusal = home.store().apply(request).unwrap_err();
+            let data = refusal_metadata(&refusal, "Recovery record exceeds 8 MiB");
+            assert_eq!(data["failure_branch"], "legacy_raw_value_decode");
+            assert_eq!(data["record_revision_role"], "stored");
+            assert_eq!(data["record_revision"], revision(&accepted));
+            assert_eq!(
+                data["cas_guard"],
+                if data["operation_context"]["operation"] == "write" {
+                    "not_reached_existing_record_decode_refused"
+                } else {
+                    "not_applicable"
+                }
+            );
+            assert_eq!(
+                data["images"]["unique_metrics_status"],
+                "not_walked_public_measurement_incomplete_or_over_bound"
+            );
+            assert_eq!(data["public_value"]["sha256"], Value::Null);
+            assert_eq!(fs::read(&path).unwrap(), bytes);
+            assert_eq!(fs::read(home.root().join(".sequence")).unwrap(), sequence);
+        }
     }
 }

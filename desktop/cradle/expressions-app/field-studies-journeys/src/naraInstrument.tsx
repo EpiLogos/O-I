@@ -4,6 +4,7 @@ import type {NativeCurrentReading} from '../../../src/nara/nativeCurrent';
  * Journey, localStorage, export, or a second presentation runtime. */
 import React,{useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
+import {readRecoverySizeDiagnostic,recoveryFailureMessage} from './recoverySizeDiagnostic.js';
 import {kernelExpressionsAvailable,naraInstrumentRequest,nativeExpressionRequest} from './kernelExpressions.js';
 import type {KernelConversion} from './kernelDocumentBridge.js';
 import type {IdentityReading,IdentitySource,NaraIdentityResult,SavedIdentity,ReportKey,PersonalCurrentReading} from '../../../src/nara/identity/types';
@@ -320,10 +321,11 @@ function NaraInstrument({host,close,visible,requestedView,viewRevision,hostRevis
  const latestAnswer=[...completedAnswers].at(-1)??null;
  const nativeSelection=state?.expression?.selection,entity=nativeSelection?.entity_ref?state?.expression?.entities[nativeSelection.entity_ref]:null;
  const send=()=>void act('Sending to '+(role==='nara'?'Nara':'Epii'),async()=>{if(!question.trim())return;const submitted=question,at=epoch.current;await dialogue('send');if(mounted.current&&epoch.current===at){setBefore(undefined);setQuestion(current=>current===submitted?'':current);}});
+ const recoveryFailure=error?readRecoverySizeDiagnostic(error):null;
  return <section className="nara-personal" aria-label="Nara Expression instrument">
   <header className="nara-personal-header"><div><p className="nara-personal-caption">Personal Expression</p><h1>{reading?.profile.name||'Nara'}</h1></div><div className="nara-personal-header-actions"><label><span className="nara-sr-only">Saved profiles</span><select aria-label="Saved profiles" value={source?.source_ref??''} disabled={!!busy||stopping||!ready} onChange={e=>openProfile(e.target.value)}><option value="">New identity</option>{profiles.map(p=><option value={p.source_ref} key={p.source_ref}>{p.name}</option>)}</select></label><button type="button" onClick={close} aria-label="Return to the Expression">Return to field</button></div></header>
   <nav className="nara-personal-nav" aria-label="Nara depth">{(['identity','matrix','composition','form','atlas','conversation'] as const).map(v=><button key={v} type="button" aria-current={view===v?'page':undefined} onClick={()=>setView(v)}>{v==='identity'?'Identity':v==='matrix'?'Identity matrix':v==='composition'?'Composition':v==='form'?'Form and clock':v==='atlas'?'Coordinate Atlas':'With Nara'}</button>)}</nav>
-  {!ready&&<p className="nara-personal-status" role="status">Connecting to the native identity owner…</p>}{busy&&<p className="nara-personal-status" role="status">{busy}…</p>}{error&&<p className="nara-personal-error" role="alert">{error}</p>}{notice&&<p className="nara-personal-status" role="status">{notice}</p>}
+  {!ready&&<p className="nara-personal-status" role="status">Connecting to the native identity owner…</p>}{busy&&<p className="nara-personal-status" role="status">{busy}…</p>}{error&&<><p className="nara-personal-error" role="alert">{recoveryFailureMessage(error,!!recoveryFailure)}</p>{recoveryFailure&&<details className="nara-personal-depth" data-native-recovery-diagnostic><summary>Inspect failure</summary><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere",maxHeight:"16rem",overflow:"auto"}}>{error}</pre></details>}</>}{notice&&<p className="nara-personal-status" role="status">{notice}</p>}
   {profileErrors.length>0&&<details className="nara-personal-depth"><summary role="status">{profileErrors.length} saved {profileErrors.length===1?'profile could':'profiles could'} not be opened</summary>{profileErrors.map(p=><p key={p.source_ref}>{p.error}<br/><small>{p.source_ref}</small></p>)}</details>}
   <div className="nara-personal-content" aria-busy={!!busy}>
    {view==='identity'&&<div className="nara-identity-layout"><aside className="nara-identity-reading"><div className="nara-personal-heading"><h2>{editing?'Your identity material':'The person behind the reading'}</h2><p>{editing?'Begin with what you know. You can correct it later.':'Six distinct constituents, held together without losing their sources.'}</p></div>
