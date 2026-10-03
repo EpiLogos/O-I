@@ -284,22 +284,29 @@ fn parent_allows_missing(client: &CentralClient, location: &Location) -> bool {
     false
 }
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     #[cfg(unix)]
     use std::os::unix::fs::MetadataExt;
     use std::{ffi::OsStr, fs, io, path::Path};
 
-    struct Fixture {
-        root: PathBuf,
+    pub(crate) struct Fixture {
+        pub(crate) root: PathBuf,
+        cleanup_capacity: usize,
         #[cfg(unix)]
         identity: (u64, u64),
     }
     impl Fixture {
-        fn new() -> Self {
+        pub(crate) fn new() -> Self {
             let requested = std::env::var_os("OI_NATIVE_TEST_ROOT");
             Self::from_override(requested.as_deref())
                 .expect("actual native retained fixture placement must be available")
+        }
+        pub(crate) fn with_cleanup_capacity(capacity: usize) -> Self {
+            assert!((256..=1024).contains(&capacity));
+            let mut fixture = Self::new();
+            fixture.cleanup_capacity = capacity;
+            fixture
         }
         fn default_field() -> io::Result<PathBuf> {
             // Cargo's actual package Source coordinate owns test placement;
@@ -362,15 +369,19 @@ mod tests {
             };
             Ok(Self {
                 root,
+                cleanup_capacity: 256,
                 #[cfg(unix)]
                 identity,
             })
         }
         fn check_root(&self) -> io::Result<()> {
-            let metadata = fs::symlink_metadata(&self.root)?;
+            self.check_root_at(&self.root)
+        }
+        pub(crate) fn check_root_at(&self, path: &Path) -> io::Result<()> {
+            let metadata = fs::symlink_metadata(path)?;
             if !metadata.is_dir()
                 || metadata.file_type().is_symlink()
-                || fs::canonicalize(&self.root)? != self.root
+                || fs::canonicalize(path)? != path
             {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
@@ -403,7 +414,7 @@ mod tests {
                 for entry in fs::read_dir(directory)? {
                     let entry = entry?;
                     entries += 1;
-                    if entries > 256 {
+                    if entries > self.cleanup_capacity {
                         return Err(io::Error::new(
                             io::ErrorKind::InvalidData,
                             "owned retained fixture exceeds cleanup entry capacity",

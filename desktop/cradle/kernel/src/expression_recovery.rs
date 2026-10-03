@@ -1217,33 +1217,155 @@ mod tests {
         sync::{Arc, Barrier},
     };
 
-    struct Home(PathBuf);
+    struct Home(crate::retained_files::tests::Fixture);
     impl Home {
         fn new() -> Self {
-            let mut nonce = [0u8; 16];
-            getrandom::fill(&mut nonce).unwrap();
-            let path = std::env::temp_dir().join(format!(
-                "oi-expression-recovery-{:x}",
-                Sha256::digest(nonce)
-            ));
-            fs::create_dir(&path).unwrap();
-            Self(path)
+            Self(crate::retained_files::tests::Fixture::with_cleanup_capacity(
+                2 * MAX_RECORDS + 16,
+            ))
         }
         fn store(&self) -> Store {
             Store {
-                home: Some(self.0.clone()),
+                home: Some(self.0.root.clone()),
             }
         }
         fn root(&self) -> PathBuf {
-            self.0.join("desktop/expression-recovery")
+            self.0.root.join("desktop/expression-recovery")
         }
         fn path(&self, scope: Scope, kind: Kind, id: &str) -> PathBuf {
             self.root().join(scope.name()).join(filename(kind, id))
         }
     }
-    impl Drop for Home {
+    // This test guard borrows the existing Fixture owner and pins its inode.
+    // Name checks do not exclude a concurrent source-name replacement after
+    // the last check. The host exclusive rename never overwrites a destination.
+    struct HeldHome<'a> {
+        fixture: &'a crate::retained_files::tests::Fixture,
+        original: fs::File,
+        held: PathBuf,
+        replacement: PathBuf,
+        replacement_identity: (u64, u64),
+        restored: std::cell::Cell<bool>,
+    }
+    fn rename_absent(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+        use std::{ffi::CString, os::unix::ffi::OsStrExt};
+        let from = CString::new(from.as_os_str().as_bytes())
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidInput, error))?;
+        let to = CString::new(to.as_os_str().as_bytes())
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidInput, error))?;
+        let result = {
+            #[cfg(target_os = "linux")]
+            {
+                unsafe {
+                    libc::renameat2(
+                        libc::AT_FDCWD,
+                        from.as_ptr(),
+                        libc::AT_FDCWD,
+                        to.as_ptr(),
+                        libc::RENAME_NOREPLACE,
+                    )
+                }
+            }
+            #[cfg(target_os = "macos")]
+            {
+                unsafe { libc::renamex_np(from.as_ptr(), to.as_ptr(), libc::RENAME_EXCL) }
+            }
+            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+            {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Unsupported,
+                    "native exclusive fixture restoration is unavailable on this host",
+                ));
+            }
+        };
+        if result == 0 {
+            Ok(())
+        } else {
+            Err(std::io::Error::last_os_error())
+        }
+    }
+    fn directory_identity(metadata: &fs::Metadata) -> (u64, u64) {
+        use std::os::unix::fs::MetadataExt;
+        (metadata.dev(), metadata.ino())
+    }
+    impl<'a> HeldHome<'a> {
+        fn new(
+            fixture: &'a crate::retained_files::tests::Fixture,
+            replacement: &std::path::Path,
+        ) -> Self {
+            use std::os::unix::fs::OpenOptionsExt;
+            fixture.check_root_at(&fixture.root).unwrap();
+            let original = fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+                .open(&fixture.root)
+                .unwrap();
+            fixture.check_root_at(&fixture.root).unwrap();
+            assert_eq!(
+                directory_identity(&original.metadata().unwrap()),
+                directory_identity(&fs::symlink_metadata(&fixture.root).unwrap())
+            );
+            let held = fixture.root.with_extension("held-native-home");
+            rename_absent(&fixture.root, &held).unwrap();
+            fixture.check_root_at(&held).unwrap();
+            symlink(replacement, &fixture.root).unwrap();
+            let replacement_identity =
+                directory_identity(&fs::symlink_metadata(&fixture.root).unwrap());
+            Self {
+                fixture,
+                original,
+                held,
+                replacement: replacement.to_path_buf(),
+                replacement_identity,
+                restored: std::cell::Cell::new(false),
+            }
+        }
+        fn restore(&self) -> std::io::Result<()> {
+            self.restore_after_release(|| {})
+        }
+        fn restore_after_release(&self, after_release: impl FnOnce()) -> std::io::Result<()> {
+            if self.restored.get() {
+                return self.fixture.check_root_at(&self.fixture.root);
+            }
+            self.fixture.check_root_at(&self.held)?;
+            if directory_identity(&self.original.metadata()?)
+                != directory_identity(&fs::symlink_metadata(&self.held)?)
+            {
+                return Err(std::io::Error::other("held Home descriptor affiliation changed"));
+            }
+            match fs::symlink_metadata(&self.fixture.root) {
+                Ok(metadata)
+                    if metadata.file_type().is_symlink()
+                        && directory_identity(&metadata) == self.replacement_identity
+                        && fs::read_link(&self.fixture.root)? == self.replacement =>
+                {
+                    fs::remove_file(&self.fixture.root)?;
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
+                _ => return Err(std::io::Error::other("owned Home replacement affiliation changed")),
+            }
+            after_release();
+            rename_absent(&self.held, &self.fixture.root)?;
+            self.fixture.check_root_at(&self.fixture.root)?;
+            self.restored.set(true);
+            Ok(())
+        }
+    }
+    impl Drop for HeldHome<'_> {
         fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
+            if let Err(error) = self.restore() {
+                if std::thread::panicking() {
+                    eprintln!(
+                        "owned Home restoration failed; held directory retained at {}: {error}",
+                        self.held.display()
+                    );
+                } else {
+                    panic!(
+                        "owned Home restoration failed; held directory retained at {}: {error}",
+                        self.held.display()
+                    );
+                }
+            }
         }
     }
     // These are declared local journal payloads, never claimed as a source
@@ -1568,7 +1690,7 @@ mod tests {
         ] {
             let home = Home::new();
             let outside = Home::new();
-            let sentinel = outside.0.join("sentinel");
+            let sentinel = outside.0.root.join("sentinel");
             fs::write(&sentinel, b"untouched").unwrap();
             let created = home
                 .store()
@@ -1586,12 +1708,20 @@ mod tests {
                 "lock" => home.root().join(".lock"),
                 "scope" => home.root().join("expressions"),
                 "root" => home.root(),
-                "home" => home.0.clone(),
+                "home" => home.0.root.clone(),
                 _ => unreachable!(),
             };
-            if target.is_dir() {
+            let _held_home = if target_kind == "home" {
+                Some(HeldHome::new(&home.0, &outside.0.root))
+            } else {
+                None
+            };
+            if _held_home.is_some() {
+                // The guard installed the exact declared link while retaining
+                // the original owned Home inode for Fixture cleanup.
+            } else if target.is_dir() {
                 fs::remove_dir_all(&target).unwrap();
-                symlink(&outside.0, &target).unwrap();
+                symlink(&outside.0.root, &target).unwrap();
             } else {
                 fs::remove_file(&target).unwrap();
                 if target_kind == "hardlink" {
@@ -1614,6 +1744,76 @@ mod tests {
             );
             assert_eq!(fs::read(&sentinel).unwrap(), b"untouched", "{target_kind}");
         }
+    }
+
+    #[test]
+    fn held_home_replacement_refuses_without_touching_foreign_directory() {
+        let home = Home::new();
+        let outside = Home::new();
+        let foreign = Home::new();
+        let sentinel = foreign.0.root.join("foreign-sentinel");
+        fs::write(&sentinel, b"foreign material").unwrap();
+        let guard = HeldHome::new(&home.0, &outside.0.root);
+        let original = guard.held.with_extension("original-native-home");
+        rename_absent(&guard.held, &original).unwrap();
+        rename_absent(&foreign.0.root, &guard.held).unwrap();
+        assert!(guard.restore().is_err());
+        assert_eq!(fs::read_link(&home.0.root).unwrap(), outside.0.root);
+        assert_eq!(
+            fs::read(guard.held.join("foreign-sentinel")).unwrap(),
+            b"foreign material"
+        );
+        assert_eq!(
+            directory_identity(&guard.original.metadata().unwrap()),
+            directory_identity(&fs::symlink_metadata(&original).unwrap())
+        );
+        rename_absent(&guard.held, &foreign.0.root).unwrap();
+        rename_absent(&original, &guard.held).unwrap();
+        guard.restore().unwrap();
+        assert_eq!(fs::read(&sentinel).unwrap(), b"foreign material");
+    }
+
+    #[test]
+    fn late_home_destination_is_not_overwritten_by_native_restoration() {
+        let home = Home::new();
+        let outside = Home::new();
+        let guard = HeldHome::new(&home.0, &outside.0.root);
+        use std::os::unix::fs::OpenOptionsExt;
+        let mut late_directory = None;
+        let result = guard.restore_after_release(|| {
+            fs::create_dir(&home.0.root).unwrap();
+            late_directory = Some(
+                fs::OpenOptions::new()
+                    .read(true)
+                    .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+                    .open(&home.0.root)
+                    .unwrap(),
+            );
+        });
+        let late_directory = late_directory.unwrap();
+        assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::AlreadyExists);
+        let late_identity = directory_identity(&late_directory.metadata().unwrap());
+        assert_eq!(
+            directory_identity(&fs::symlink_metadata(&home.0.root).unwrap()),
+            late_identity
+        );
+        assert_ne!(
+            late_identity,
+            directory_identity(&guard.original.metadata().unwrap())
+        );
+        assert_eq!(fs::read_dir(&home.0.root).unwrap().count(), 0);
+        home.0.check_root_at(&guard.held).unwrap();
+        assert_eq!(
+            directory_identity(&guard.original.metadata().unwrap()),
+            directory_identity(&fs::symlink_metadata(&guard.held).unwrap())
+        );
+        assert_eq!(
+            directory_identity(&fs::symlink_metadata(&home.0.root).unwrap()),
+            directory_identity(&late_directory.metadata().unwrap())
+        );
+        fs::remove_dir(&home.0.root).unwrap();
+        guard.restore().unwrap();
+        home.0.check_root_at(&home.0.root).unwrap();
     }
 
     #[test]
