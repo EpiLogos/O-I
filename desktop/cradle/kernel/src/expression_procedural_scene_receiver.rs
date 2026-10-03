@@ -3,8 +3,8 @@
 //! Only ordinary open/close and the original successful Edit can issue facts.
 use super::*;
 use std::sync::{
-    Arc,
     atomic::{AtomicBool, AtomicU64, Ordering},
+    Arc,
 };
 
 static NEXT_CONSTRUCTION: AtomicU64 = AtomicU64::new(1);
@@ -53,10 +53,9 @@ mod tests {
             .unwrap();
         assert!(app.procedural_runtime.operations.is_empty());
         assert!(app.procedural_runtime.producers.is_empty());
-        assert!(
-            app.procedural_scene_owner(&document, "absent-native-scene")
-                .is_err()
-        );
+        assert!(app
+            .procedural_scene_owner(&document, "absent-native-scene")
+            .is_err());
         assert!(app.procedural_runtime.operations.is_empty());
     }
 
@@ -95,22 +94,18 @@ mod tests {
             current.construction_generation()
         );
         app.require_procedural_scene_owner(&current, after).unwrap();
-        assert!(
-            owner
-                .closed_constructor_fact(after, &after.scenes[0].scene_ref)
-                .is_err()
-        );
+        assert!(owner
+            .closed_constructor_fact(after, &after.scenes[0].scene_ref)
+            .is_err());
         assert_eq!(
             current
                 .closed_constructor_fact(after, &after.scenes[0].scene_ref)
                 .unwrap(),
             current.constructor_fact()
         );
-        assert!(
-            current
-                .closed_constructor_fact(after, "wrong-native-scene")
-                .is_err()
-        );
+        assert!(current
+            .closed_constructor_fact(after, "wrong-native-scene")
+            .is_err());
         assert!(app.procedural_runtime.operations.is_empty());
     }
 
@@ -136,11 +131,9 @@ mod tests {
             original.construction_generation(),
             copied.construction_generation()
         );
-        assert!(
-            second
-                .require_procedural_scene_owner(&original, &document)
-                .is_err()
-        );
+        assert!(second
+            .require_procedural_scene_owner(&original, &document)
+            .is_err());
         let (receipt, changed) = first
             .apply(
                 &client,

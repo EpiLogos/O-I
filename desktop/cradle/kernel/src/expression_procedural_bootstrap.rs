@@ -1,7 +1,7 @@
 //! Retain a source-issued Scene binding through the original atomic Edit owner.
 //! This private admission is never constructed by the public procedural API.
 use super::*;
-use crate::native_expression::procedural::bootstrap::{Intent, RESPONSE_SCHEMA, fingerprint};
+use crate::native_expression::procedural::bootstrap::{fingerprint, Intent, RESPONSE_SCHEMA};
 
 pub(crate) fn preflight_native_intake(
     before: &Document,

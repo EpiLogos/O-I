@@ -22,10 +22,9 @@ fn a05_a13_actual_journal_revisions_preserve_material_but_real_edits_invalidate_
         .unwrap()
         .clone();
     let material_revision = first.applied_revision.unwrap();
-    assert!(
-        app.procedural_runtime
-            .current_material(app.document(EXPRESSION).unwrap(), &first)
-    );
+    assert!(app
+        .procedural_runtime
+        .current_material(app.document(EXPRESSION).unwrap(), &first));
 
     let d = app.document(EXPRESSION).unwrap().clone();
     let mut next = envelope(&d, Scope::Expression, "b");
@@ -38,10 +37,9 @@ fn a05_a13_actual_journal_revisions_preserve_material_but_real_edits_invalidate_
     )
     .unwrap();
     assert!(app.document(EXPRESSION).unwrap().revision > material_revision);
-    assert!(
-        app.procedural_runtime
-            .current_material(app.document(EXPRESSION).unwrap(), &first)
-    );
+    assert!(app
+        .procedural_runtime
+        .current_material(app.document(EXPRESSION).unwrap(), &first));
     app.procedural(
         &client,
         Request::Cancel {
@@ -49,11 +47,15 @@ fn a05_a13_actual_journal_revisions_preserve_material_but_real_edits_invalidate_
         },
     )
     .unwrap();
-    assert!(
-        app.procedural_runtime
-            .current_material(app.document(EXPRESSION).unwrap(), &first)
+    assert!(app
+        .procedural_runtime
+        .current_material(app.document(EXPRESSION).unwrap(), &first));
+    assert_eq!(
+        app.document(EXPRESSION).unwrap().entities[&format!("{EXPRESSION}:entity:a")].parameters
+            ["scale"]
+            .value,
+        2.0
     );
-    assert_eq!(app.document(EXPRESSION).unwrap().entities[&format!("{EXPRESSION}:entity:a")].parameters["scale"].value, 2.0);
 
     let d = app.document(EXPRESSION).unwrap().clone();
     app.apply(
@@ -70,10 +72,9 @@ fn a05_a13_actual_journal_revisions_preserve_material_but_real_edits_invalidate_
         },
     )
     .unwrap();
-    assert!(
-        !app.procedural_runtime
-            .current_material(app.document(EXPRESSION).unwrap(), &first)
-    );
+    assert!(!app
+        .procedural_runtime
+        .current_material(app.document(EXPRESSION).unwrap(), &first));
     assert_eq!(
         app.procedural_runtime
             .inspect(&op.envelope.operation_ref)
@@ -140,10 +141,9 @@ fn a05_a13_borrowed_journal_classifier_cannot_hide_material_or_source_changes() 
 #[test]
 fn a13_actual_cold_reopen_and_release_do_not_restore_material_runtime_fences() {
     let (mut app, _, document, operation) = warm_native_output();
-    assert!(
-        app.procedural_runtime
-            .current_material(&document, &operation)
-    );
+    assert!(app
+        .procedural_runtime
+        .current_material(&document, &operation));
     let saved = app
         .procedural_runtime
         .checkpoint_document(&document)
@@ -157,18 +157,15 @@ fn a13_actual_cold_reopen_and_release_do_not_restore_material_runtime_fences() {
         .inspect(&operation.envelope.operation_ref)
         .unwrap();
     assert_eq!(historical.status, Status::Applied);
-    assert!(
-        !reopened
-            .procedural_runtime
-            .current_material(&saved, historical)
-    );
+    assert!(!reopened
+        .procedural_runtime
+        .current_material(&saved, historical));
     app.procedural_runtime.release_expression(EXPRESSION);
     assert!(app.procedural_runtime.material_fences.is_empty());
-    assert!(
-        app.procedural_runtime
-            .inspect(&operation.envelope.operation_ref)
-            .is_err()
-    );
+    assert!(app
+        .procedural_runtime
+        .inspect(&operation.envelope.operation_ref)
+        .is_err());
 }
 
 #[test]
@@ -416,11 +413,9 @@ fn a05_a14_caller_source_tokens_and_copied_actual_journal_hash_cannot_admit_a_pr
             result.is_err(),
             "an unissued or copied token created native producer authority"
         );
-        assert!(
-            result
-                .unwrap_err()
-                .contains("actual native producer admission")
-        );
+        assert!(result
+            .unwrap_err()
+            .contains("actual native producer admission"));
         assert_eq!(recipient.document(EXPRESSION).unwrap(), &before);
         assert!(
             recipient
@@ -1260,8 +1255,8 @@ fn a02_a05_state_layer_scope_refuses_another_layer_or_membership_change() {
 #[test]
 fn a02_a05_duplicate_state_layer_projection_does_not_hide_distinct_material() {
     let mut d = nested_layers_document();
-    d.scenes[0].presentation.as_mut().unwrap().scene["entities"][0]["sequence"]["steps"][1]["layers"]
-        [0]["id"] = json!("layer:state-a");
+    d.scenes[0].presentation.as_mut().unwrap().scene["entities"][0]["sequence"]["steps"][1]
+        ["layers"][0]["id"] = json!("layer:state-a");
     let selected = addr(Component::Layer, Some("a"), Some("layer:state-a"), None);
     assert!(
         addressed(&d, &selected).is_err(),
@@ -1599,16 +1594,12 @@ fn a05_a07_a08_a13_native_owned_output_reading_extends_only_original_applied_cre
             reading["applied_operation"],
             serde_json::to_value(&applied_operation).unwrap()
         );
-        assert!(
-            reading["current_basis"]["scene"]
-                .get("procedural")
-                .is_none()
-        );
-        assert!(
-            reading["generated_basis"]["scene"]
-                .get("procedural")
-                .is_none()
-        );
+        assert!(reading["current_basis"]["scene"]
+            .get("procedural")
+            .is_none());
+        assert!(reading["generated_basis"]["scene"]
+            .get("procedural")
+            .is_none());
         assert_eq!(reading["source_basis"], json!(source_basis));
     }
     let entity = fixture["contributions"][0]["generated_basis"]["scene"]["entities"][0]["id"]
@@ -2820,15 +2811,13 @@ fn a11_a14_native_layer_source_admission_is_same_in_procedural_and_ordinary_appl
             }
             "state_budget" => {
                 let layer = entity["sequence"]["steps"][0]["layers"][0].clone();
-                entity["sequence"]["steps"][0]["layers"] = json!(
-                    (0..7)
-                        .map(|i| {
-                            let mut l = layer.clone();
-                            l["id"] = json!(format!("state:{i}"));
-                            l
-                        })
-                        .collect::<Vec<_>>()
-                );
+                entity["sequence"]["steps"][0]["layers"] = json!((0..7)
+                    .map(|i| {
+                        let mut l = layer.clone();
+                        l["id"] = json!(format!("state:{i}"));
+                        l
+                    })
+                    .collect::<Vec<_>>());
             }
             "base_container" => entity["layers"] = json!({"id":"object-is-not-a-layer-list"}),
             "state_container_null" => entity["sequence"]["steps"][0]["layers"] = Value::Null,
@@ -3259,8 +3248,8 @@ fn a07_a14_source_current_contribution_intake_re_attests_material_without_granti
     );
     for case in ["retired", "foreign_owner"] {
         let mut wrong = d.clone();
-        let retained = &mut wrong.scenes[0].presentation.as_mut().unwrap().scene["procedural"]["contributions"]
-            [0];
+        let retained = &mut wrong.scenes[0].presentation.as_mut().unwrap().scene["procedural"]
+            ["contributions"][0];
         if case == "retired" {
             retained["status"] = json!("retired");
         } else {
@@ -3435,8 +3424,8 @@ fn a09_a13_a14_original_native_program_source_survives_unrelated_actual_document
 }
 
 #[test]
-fn a02_a09_a14_original_native_source_readmission_refuses_changed_material_subject_profile_and_locus()
- {
+fn a02_a09_a14_original_native_source_readmission_refuses_changed_material_subject_profile_and_locus(
+) {
     let original = independent_source_read_document();
     let source = source_native_scene_source(
         &original,
@@ -3455,8 +3444,8 @@ fn a02_a09_a14_original_native_source_readmission_refuses_changed_material_subje
             "profile" => {
                 presentation.scene["procedural"]["source_basis"][0]["revision"] =
                     json!("source-r2");
-                presentation.scene["procedural"]["bindings"][1]["principal"]["sources"][0]["revision"] =
-                    json!("source-r2");
+                presentation.scene["procedural"]["bindings"][1]["principal"]["sources"][0]
+                    ["revision"] = json!("source-r2");
             }
             _ => {
                 presentation.scene["procedural"]["bindings"][1]["locus"]["revision"] =
@@ -3534,8 +3523,8 @@ fn a14_native_source_history_cannot_claim_future_zero_or_untyped_read_ordinals()
 // the genuine native Source/CONDUCT artifact gate.
 
 #[test]
-fn a09_a14_native_flow_focus_omits_empty_relation_and_scene_remove_changes_selection_and_order_together()
- {
+fn a09_a14_native_flow_focus_omits_empty_relation_and_scene_remove_changes_selection_and_order_together(
+) {
     let original = independent_source_read_document();
     let main = original.scenes[0].scene_ref.clone();
     let second = format!("{EXPRESSION}:scene:canonical-other");
@@ -3660,15 +3649,13 @@ fn independent_shared_source_document() -> Document {
     let mut presentation = d.scenes[0].presentation.clone().unwrap();
     presentation.scene["id"] = json!(second);
     presentation.scene["name"] = json!("Second location of the continuing subject");
-    presentation.scene["entities"] = json!(
-        presentation.scene["entities"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter(|entity| entity["id"] == entity_ref)
-            .cloned()
-            .collect::<Vec<_>>()
-    );
+    presentation.scene["entities"] = json!(presentation.scene["entities"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|entity| entity["id"] == entity_ref)
+        .cloned()
+        .collect::<Vec<_>>());
     presentation
         .scene
         .as_object_mut()
@@ -3714,8 +3701,8 @@ fn independent_shared_force_contribution(d: &Document) -> Value {
 }
 
 #[test]
-fn a02_a04_a07_shared_global_parameter_reads_every_real_scene_coordinate_without_duplicate_entities()
- {
+fn a02_a04_a07_shared_global_parameter_reads_every_real_scene_coordinate_without_duplicate_entities(
+) {
     let before = independent_shared_source_document();
     let entity_ref = format!("{EXPRESSION}:entity:a");
     let d = before
@@ -3856,11 +3843,9 @@ fn a07_a10_a14_event_contexts_come_from_real_scene_material_and_do_not_grant_nat
         );
         assert_eq!(context["basis"]["document_revision"], json!(d.revision));
         assert_eq!(context["basis"]["retained_native_records"], json!([]));
-        assert!(
-            context["basis"]["current_presentation"]["scene"]
-                .get("procedural")
-                .is_none()
-        );
+        assert!(context["basis"]["current_presentation"]["scene"]
+            .get("procedural")
+            .is_none());
     }
     let payload = json!({"expression_ref":EXPRESSION,"document_revision":d.revision,
         "current_contributions":[row],"intervention_contexts":contexts});
@@ -3889,8 +3874,8 @@ fn a07_a10_a14_event_contexts_come_from_real_scene_material_and_do_not_grant_nat
                     json!("expression:foreign:scene")
             }
             "changed_material" => {
-                wrong["intervention_contexts"][0]["basis"]["current_presentation"]["scene"]["character"] =
-                    json!("caller material")
+                wrong["intervention_contexts"][0]["basis"]["current_presentation"]["scene"]
+                    ["character"] = json!("caller material")
             }
             "old_revision" => {
                 wrong["intervention_contexts"][0]["basis"]["document_revision"] =
@@ -4041,18 +4026,16 @@ fn a13_native_fork_keeps_original_receipts_and_copies_material_without_live_auth
             original.entities[&format!("{EXPRESSION}:entity:a")].parameters
         );
         assert!(journal(&fork).unwrap().is_empty());
-        assert!(
-            !app.procedural_runtime
-                .operations
-                .values()
-                .any(|op| op.envelope.expression_ref == fork_ref)
-        );
-        assert!(
-            !app.procedural_runtime
-                .producers
-                .values()
-                .any(|producer| producer.expression_ref == fork_ref)
-        );
+        assert!(!app
+            .procedural_runtime
+            .operations
+            .values()
+            .any(|op| op.envelope.expression_ref == fork_ref));
+        assert!(!app
+            .procedural_runtime
+            .producers
+            .values()
+            .any(|producer| producer.expression_ref == fork_ref));
         if committed {
             let old = &original
                 .scenes
@@ -4111,11 +4094,10 @@ fn a13_native_fork_keeps_original_receipts_and_copies_material_without_live_auth
                     .unwrap();
                 assert_eq!(saved_scene["id"], format!("{fork_ref}:scene:generated"));
             }
-            assert!(
-                app.procedural_runtime
-                    .output_readings(&fork, "procedure:independent-owner")
-                    .is_err()
-            );
+            assert!(app
+                .procedural_runtime
+                .output_readings(&fork, "procedure:independent-owner")
+                .is_err());
         }
         let (reading, _) = app
             .procedural(
@@ -4207,23 +4189,20 @@ fn a13_native_runtime_retirement_and_reopen_resynchronise_without_prior_life_del
     // receiving ACK, producer qualification or external effect is fabricated.
     app.procedural_runtime.release_expression(EXPRESSION);
     assert_eq!(app.procedural_runtime.cursor, cursor);
-    assert!(
-        !app.procedural_runtime
-            .deltas
-            .iter()
-            .any(|row| row["delta"]["expression_ref"] == EXPRESSION)
-    );
-    assert!(
-        app.procedural_runtime
-            .deltas
-            .iter()
-            .any(|row| row["delta"]["expression_ref"] == other)
-    );
-    assert!(
-        app.procedural_runtime
-            .inspect(&other_intent.operation_ref)
-            .is_ok()
-    );
+    assert!(!app
+        .procedural_runtime
+        .deltas
+        .iter()
+        .any(|row| row["delta"]["expression_ref"] == EXPRESSION));
+    assert!(app
+        .procedural_runtime
+        .deltas
+        .iter()
+        .any(|row| row["delta"]["expression_ref"] == other));
+    assert!(app
+        .procedural_runtime
+        .inspect(&other_intent.operation_ref)
+        .is_ok());
     let mut fresh = Application {
         procedural_runtime: std::mem::take(&mut app.procedural_runtime),
         ..Application::default()
@@ -4248,13 +4227,11 @@ fn a13_native_runtime_retirement_and_reopen_resynchronise_without_prior_life_del
     assert_eq!(reopened["deltas"], json!([]));
     assert_eq!(reopened["effective_observations"], json!([]));
     assert!(!reopened["snapshot"].as_array().unwrap().is_empty());
-    assert!(
-        reopened["operation_history"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .all(|row| row["restored"] == true)
-    );
+    assert!(reopened["operation_history"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|row| row["restored"] == true));
     let unchanged = fresh.document(EXPRESSION).unwrap().clone();
     let (repeated, changed) = fresh
         .procedural(
@@ -4487,13 +4464,11 @@ fn a02_a04_a06_native_driver_read_preserves_actual_automation_units_and_all_scen
         assert_eq!(target.property.as_deref(), Some("radius"));
         assert_eq!(target.entity_ref.as_deref(), Some(entity_ref.as_str()));
         assert_eq!(row["scene_ref"], json!(target.scene_ref));
-        assert!(
-            row["entity_refs"]
-                .as_object()
-                .unwrap()
-                .values()
-                .any(|reference| reference == &json!(entity_ref))
-        );
+        assert!(row["entity_refs"]
+            .as_object()
+            .unwrap()
+            .values()
+            .any(|reference| reference == &json!(entity_ref)));
         let entity = row["presentation"]["scene"]["entities"]
             .as_array()
             .unwrap()
@@ -4545,8 +4520,8 @@ fn a02_a04_a06_native_driver_read_preserves_actual_automation_units_and_all_scen
 }
 
 #[test]
-fn a04_a06_native_driver_preview_uses_native_parameter_conversion_without_replacing_original_driver_or_source()
- {
+fn a04_a06_native_driver_preview_uses_native_parameter_conversion_without_replacing_original_driver_or_source(
+) {
     let d = independent_driver_document();
     let original = serde_json::to_vec(&d).unwrap();
     let entity_ref = format!("{EXPRESSION}:entity:a");
@@ -4721,25 +4696,24 @@ fn a06_a13_actual_control_fork_preserves_persistent_configuration() {
         assert_eq!(app.document(&original.expression_ref).unwrap(), &original);
         let fork = app.document(reference).unwrap();
         assert!(journal(fork).unwrap().is_empty());
-        assert!(
-            app.procedural_runtime
-                .operations
-                .values()
-                .all(|operation| operation.envelope.expression_ref != reference)
-        );
-        assert!(
-            app.procedural_runtime
-                .producers
-                .values()
-                .all(|producer| producer.expression_ref != reference)
-        );
+        assert!(app
+            .procedural_runtime
+            .operations
+            .values()
+            .all(|operation| operation.envelope.expression_ref != reference));
+        assert!(app
+            .procedural_runtime
+            .producers
+            .values()
+            .all(|producer| producer.expression_ref != reference));
         let scene = &fork.scenes[0].presentation.as_ref().unwrap().scene;
         let retained = &scene["procedural"];
 
         let control = &retained["controls"][0];
         assert_eq!(
             control["takeover"],
-            input["original"]["scenes"][0]["presentation"]["scene"]["procedural"]["controls"][0]["takeover"],
+            input["original"]["scenes"][0]["presentation"]["scene"]["procedural"]["controls"][0]
+                ["takeover"],
             "persistent authored takeover provenance/lifetime was discarded"
         );
         let target =
@@ -4803,9 +4777,9 @@ fn a13_actual_fork_remaps_only_typed_parameter_and_atlas_basis_reference_slots()
         property: None,
     };
     let flow_basis = json!({"schema":"ql.native-atlas-state/v1","expression_ref":expression,"focus":original.selection,"scene_order":[original.scenes[0].scene_ref]});
-    let mut row =
-        original.scenes[0].presentation.as_ref().unwrap().scene["procedural"]["contributions"][0]
-            .clone();
+    let mut row = original.scenes[0].presentation.as_ref().unwrap().scene["procedural"]
+        ["contributions"][0]
+        .clone();
     row["contribution_ref"] = json!(format!("{expression}:contribution:parameter"));
     row["occurrence_ref"] = json!(owned.entity_ref);
     row["owned_addresses"] = json!([owned]);
@@ -4966,11 +4940,9 @@ fn a10_a16_borrowed_material_and_entity_refs_count_exact_escaped_native_serializ
     );
     let mut short = budget::Budget::new();
     short.reserve(budget::SOURCE_BYTES - count + 1).unwrap();
-    assert!(
-        short
-            .material(scene.presentation.as_ref().unwrap())
-            .is_err()
-    );
+    assert!(short
+        .material(scene.presentation.as_ref().unwrap())
+        .is_err());
     let refs = manual::scene_entity_refs(&d, scene).unwrap();
     let count = serde_json::to_vec(&refs).unwrap().len();
     let mut exact = budget::Budget::new();
@@ -5204,24 +5176,21 @@ fn a05_a14_budget_creation_selector_refuses_actual_public_manual_preparation_as_
     let accepted = app.document(EXPRESSION).unwrap();
     let journal = budget::borrowed_journal(accepted).unwrap();
     assert_eq!(journal.len(), 1);
-    assert!(
-        budget::first_valid_creation(
-            accepted,
-            "procedure:independent:basis",
-            &contribution,
-            &app.procedural_runtime,
-            &journal
-        )
-        .unwrap()
-        .is_none()
-    );
+    assert!(budget::first_valid_creation(
+        accepted,
+        "procedure:independent:basis",
+        &contribution,
+        &app.procedural_runtime,
+        &journal
+    )
+    .unwrap()
+    .is_none());
     assert!(app.procedural_runtime.producers.is_empty());
     assert!(app.procedural_runtime.qualified_operations.is_empty());
-    assert!(
-        app.procedural_runtime
-            .output_readings(accepted, "procedure:independent:basis")
-            .is_err()
-    );
+    assert!(app
+        .procedural_runtime
+        .output_readings(accepted, "procedure:independent:basis")
+        .is_err());
 }
 
 // Append after the actual native budget/source helpers. No Source grant/cache.
@@ -5250,8 +5219,8 @@ fn a10_a16_manual_count_refuses_65_actual_affected_outputs_before_qualification_
     assert!(app.procedural_runtime.qualified_operations.is_empty());
 }
 #[test]
-fn a02_a10_a16_affected_material_comparison_borrows_exact_selected_leaf_and_preserves_sibling_scope()
- {
+fn a02_a10_a16_affected_material_comparison_borrows_exact_selected_leaf_and_preserves_sibling_scope(
+) {
     let d = independent_budget_document(false, 1, 1024 * 1024);
     let target = addr(Component::Force, Some("a"), None, Some("strength"));
     let root =
@@ -5319,8 +5288,8 @@ fn independent_control_request(d: &Document) -> Request {
     }
 }
 #[test]
-fn a02_a05_a06_native_control_rejects_unqualified_configured_procedure_and_all_foreign_scalar_intakes()
- {
+fn a02_a05_a06_native_control_rejects_unqualified_configured_procedure_and_all_foreign_scalar_intakes(
+) {
     let d = independent_budget_document(true, 1, 0)
         .edited(vec![Change::ParameterSet {
             entity_ref: format!("{EXPRESSION}:entity:a"),
@@ -5428,10 +5397,9 @@ fn a05_a06_control_wire_refuses_unknown_action_and_public_cached_or_source_recei
         let request: Request = serde_json::from_value(raw).unwrap();
         let mut app = Application::default();
         app.open(d.clone(), "agent:independent".into()).unwrap();
-        assert!(
-            app.prepare_procedural_control(&ExpressionRequest::Procedural { request })
-                .is_err()
-        );
+        assert!(app
+            .prepare_procedural_control(&ExpressionRequest::Procedural { request })
+            .is_err());
         assert_eq!(app.document(EXPRESSION).unwrap(), &d);
     }
 }
@@ -5504,20 +5472,18 @@ fn a13_native_export_observes_ordinary_material_without_creating_procedural_keys
             },
         )
         .unwrap();
-    assert!(
-        reopened
-            .document("expression:plain-export-fork")
+    assert!(reopened
+        .document("expression:plain-export-fork")
+        .unwrap()
+        .scenes
+        .iter()
+        .all(|s| s
+            .presentation
+            .as_ref()
             .unwrap()
-            .scenes
-            .iter()
-            .all(|s| s
-                .presentation
-                .as_ref()
-                .unwrap()
-                .scene
-                .get("procedural")
-                .is_none())
-    );
+            .scene
+            .get("procedural")
+            .is_none()));
     assert!(reopened.procedural_runtime.producers.is_empty());
 }
 
@@ -5681,12 +5647,10 @@ fn a06_a10_a16_joined_active_controls_charge_full_material_before_source_qualifi
     let mut application = Application::default();
     application.open(d.clone(), "human:owner".into()).unwrap();
     assert!(application.procedural_runtime.producers.is_empty());
-    assert!(
-        application
-            .procedural_runtime
-            .qualified_operations
-            .is_empty()
-    );
+    assert!(application
+        .procedural_runtime
+        .qualified_operations
+        .is_empty());
     let request = ExpressionRequest::Edit {
         expression_ref: d.expression_ref.clone(),
         expected_revision: d.revision,
@@ -5702,12 +5666,10 @@ fn a06_a10_a16_joined_active_controls_charge_full_material_before_source_qualifi
     );
     assert_eq!(application.document(EXPRESSION).unwrap(), &d);
     assert!(application.procedural_runtime.producers.is_empty());
-    assert!(
-        application
-            .procedural_runtime
-            .qualified_operations
-            .is_empty()
-    );
+    assert!(application
+        .procedural_runtime
+        .qualified_operations
+        .is_empty());
 }
 
 // Append after actual native budget helpers; no Source/grant/receipt injection.
@@ -5774,12 +5736,10 @@ fn a05_a06_a16_direct_native_control_rejects_complete_preview_bytes_before_quali
     );
     assert_eq!(application.document(EXPRESSION).unwrap(), &d);
     assert!(application.procedural_runtime.producers.is_empty());
-    assert!(
-        application
-            .procedural_runtime
-            .qualified_operations
-            .is_empty()
-    );
+    assert!(application
+        .procedural_runtime
+        .qualified_operations
+        .is_empty());
     assert!(application.procedural_runtime.controls.is_empty());
 }
 
@@ -5823,12 +5783,10 @@ fn a05_a14_a16_source_snapshot_respects_actual_document_boundary_without_qualifi
     );
     assert!(application.document(EXPRESSION).unwrap() == &document);
     assert!(application.procedural_runtime.producers.is_empty());
-    assert!(
-        application
-            .procedural_runtime
-            .qualified_operations
-            .is_empty()
-    );
+    assert!(application
+        .procedural_runtime
+        .qualified_operations
+        .is_empty());
 
     // The actual ordinary owner rejects an oversized Document before it can
     // become a snapshot. Do not bypass Application::open to manufacture an
@@ -5838,24 +5796,20 @@ fn a05_a14_a16_source_snapshot_respects_actual_document_boundary_without_qualifi
         json!("c".repeat(budget::SOURCE_BYTES));
     assert!(serde_json::to_vec(&oversized).unwrap().len() > budget::SOURCE_BYTES);
     let mut streamed = budget::Budget::new();
-    assert!(
-        streamed
-            .value(&oversized)
-            .unwrap_err()
-            .contains("byte budget")
-    );
+    assert!(streamed
+        .value(&oversized)
+        .unwrap_err()
+        .contains("byte budget"));
     let error = application
         .open(oversized, "human:owner".into())
         .unwrap_err();
     assert!(error.contains("Expression document exceeds 8 MiB"));
     assert!(application.document(EXPRESSION).unwrap() == &document);
     assert!(application.procedural_runtime.producers.is_empty());
-    assert!(
-        application
-            .procedural_runtime
-            .qualified_operations
-            .is_empty()
-    );
+    assert!(application
+        .procedural_runtime
+        .qualified_operations
+        .is_empty());
 }
 
 #[test]
@@ -5901,12 +5855,10 @@ fn a05_a14_actual_edit_rejects_stale_source_snapshot_before_unqualified_payload_
     );
     assert!(application.document(EXPRESSION).unwrap() == &current);
     assert!(application.procedural_runtime.producers.is_empty());
-    assert!(
-        application
-            .procedural_runtime
-            .qualified_operations
-            .is_empty()
-    );
+    assert!(application
+        .procedural_runtime
+        .qualified_operations
+        .is_empty());
     assert!(application.procedural_runtime.operations.is_empty());
 }
 
@@ -5942,8 +5894,8 @@ fn independent_configured_peer() -> Value {
     })
 }
 #[test]
-fn a02_a05_a06_native_peer_intake_refuses_wrong_coordinates_duplicate_or_lost_paired_fact_unchanged()
- {
+fn a02_a05_a06_native_peer_intake_refuses_wrong_coordinates_duplicate_or_lost_paired_fact_unchanged(
+) {
     for case in [
         "wrong_scene",
         "foreign_entity",
@@ -5988,12 +5940,10 @@ fn a02_a05_a06_native_peer_intake_refuses_wrong_coordinates_duplicate_or_lost_pa
             );
             assert_eq!(application.document(EXPRESSION).unwrap(), &before);
             assert!(application.procedural_runtime.producers.is_empty());
-            assert!(
-                application
-                    .procedural_runtime
-                    .qualified_operations
-                    .is_empty()
-            );
+            assert!(application
+                .procedural_runtime
+                .qualified_operations
+                .is_empty());
             assert!(application.procedural_runtime.controls.is_empty());
             continue;
         }
@@ -6024,12 +5974,10 @@ fn a02_a05_a06_native_peer_intake_refuses_wrong_coordinates_duplicate_or_lost_pa
         }
         assert!(application.document(EXPRESSION).unwrap() == &document);
         assert!(application.procedural_runtime.producers.is_empty());
-        assert!(
-            application
-                .procedural_runtime
-                .qualified_operations
-                .is_empty()
-        );
+        assert!(application
+            .procedural_runtime
+            .qualified_operations
+            .is_empty());
         assert!(application.procedural_runtime.controls.is_empty());
     }
 }
@@ -6052,12 +6000,10 @@ fn a05_a06_saved_peer_procedure_labels_never_mint_current_native_control_qualifi
     );
     assert!(application.document(EXPRESSION).unwrap() == &document);
     assert!(application.procedural_runtime.producers.is_empty());
-    assert!(
-        application
-            .procedural_runtime
-            .qualified_operations
-            .is_empty()
-    );
+    assert!(application
+        .procedural_runtime
+        .qualified_operations
+        .is_empty());
     assert!(application.procedural_runtime.controls.is_empty());
 }
 
@@ -6071,7 +6017,9 @@ fn a06_a10_a16_distinct_native_peer_cardinality_refuses_before_source_qualificat
     // Keep it in the actual Document; only the five selected peers contribute
     // the bounded 2560 native control coordinates below.
     let original_primary_entity = format!("{EXPRESSION}:entity:a");
-    let original_unaddressed = document.entities.iter()
+    let original_unaddressed = document
+        .entities
+        .iter()
         .filter(|(reference, _)| reference.as_str() != original_primary_entity.as_str())
         .map(|(reference, entity)| (reference.clone(), entity.clone()))
         .collect::<BTreeMap<_, _>>();
@@ -6202,8 +6150,13 @@ fn a06_a10_a16_distinct_native_peer_cardinality_refuses_before_source_qualificat
     document.validate().unwrap();
     assert_eq!(document.scenes.len(), 64);
     assert_eq!(document.entities.len(), original_entity_count + 4);
-    assert!(original_unaddressed.iter().all(|(reference, entity)| document.entities.get(reference) == Some(entity)));
-    assert!(document.scenes.iter().all(|scene| scene.entity_refs == entities));
+    assert!(original_unaddressed
+        .iter()
+        .all(|(reference, entity)| document.entities.get(reference) == Some(entity)));
+    assert!(document
+        .scenes
+        .iter()
+        .all(|scene| scene.entity_refs == entities));
     assert!(serde_json::to_vec(&document).unwrap().len() < budget::SOURCE_BYTES);
     let distinct = document
         .scenes
@@ -6233,12 +6186,10 @@ fn a06_a10_a16_distinct_native_peer_cardinality_refuses_before_source_qualificat
     );
     assert!(application.document(EXPRESSION).unwrap() == &document);
     assert!(application.procedural_runtime.producers.is_empty());
-    assert!(
-        application
-            .procedural_runtime
-            .qualified_operations
-            .is_empty()
-    );
+    assert!(application
+        .procedural_runtime
+        .qualified_operations
+        .is_empty());
     assert!(application.procedural_runtime.controls.is_empty());
 }
 
@@ -6290,12 +6241,10 @@ fn a02_a06_ordinary_active_edit_refuses_wrong_encoded_native_target_before_quali
         );
         assert!(application.document(EXPRESSION).unwrap() == &document);
         assert!(application.procedural_runtime.producers.is_empty());
-        assert!(
-            application
-                .procedural_runtime
-                .qualified_operations
-                .is_empty()
-        );
+        assert!(application
+            .procedural_runtime
+            .qualified_operations
+            .is_empty());
         assert!(application.procedural_runtime.controls.is_empty());
     }
 }
@@ -6305,8 +6254,8 @@ fn a02_a06_ordinary_active_edit_refuses_wrong_encoded_native_target_before_quali
 // Source admission, timing witness, private receiver boundary, or consumer ACK.
 
 #[test]
-fn a05_a14_normal_receiving_preflight_preserves_validation_and_changes_neither_document_nor_runtime()
- {
+fn a05_a14_normal_receiving_preflight_preserves_validation_and_changes_neither_document_nor_runtime(
+) {
     let d = document();
     let original = d.clone();
     let mut runtime = Runtime::default();

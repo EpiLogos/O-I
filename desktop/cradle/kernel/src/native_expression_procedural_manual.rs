@@ -3,7 +3,7 @@
 //! commits its actual candidate at the same CAS. No field ordinal is consumed.
 use super::super::sha256_hex;
 use crate::expression::procedural::manual::{ManualBatchRecords, ManualCandidate};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 const MAX_BYTES: usize = 8 * 1024 * 1024;
 

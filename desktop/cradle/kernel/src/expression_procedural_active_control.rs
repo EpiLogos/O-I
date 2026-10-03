@@ -874,8 +874,8 @@ mod tests {
         }
     }
     #[test]
-    fn existing_authored_field_control_survives_real_ordinary_edit_without_native_parameter_authority()
-     {
+    fn existing_authored_field_control_survives_real_ordinary_edit_without_native_parameter_authority(
+    ) {
         let mut document = actual_document();
         let scene = document.scenes[0].scene_ref.clone();
         let field = json!({"address":{"expression_ref":document.expression_ref,"scene_ref":scene,"entity_ref":null,"component":"field","constituent_ref":null,"property":"params.opacity"},
@@ -891,12 +891,10 @@ mod tests {
             .open(document.clone(), "human:owner".into())
             .unwrap();
         let original = rename(&document);
-        assert!(
-            application
-                .prepare_procedural_manual_request(&client, &original)
-                .unwrap()
-                .is_none()
-        );
+        assert!(application
+            .prepare_procedural_manual_request(&client, &original)
+            .unwrap()
+            .is_none());
         let (_, changed) = application.apply(&client, original).unwrap();
         assert!(changed.is_some());
         let actual = application.document(&document.expression_ref).unwrap();
@@ -969,15 +967,13 @@ mod tests {
             json!([source_parameter_location(&document, scene, entity, "force_strength").unwrap()])
         );
         assert_eq!(driver["native_parameter"]["value"], json!(0.2));
-        assert!(
-            source_parameter_location(
-                &document,
-                "expression:foreign:scene:main",
-                entity,
-                "force_strength"
-            )
-            .is_err()
-        );
+        assert!(source_parameter_location(
+            &document,
+            "expression:foreign:scene:main",
+            entity,
+            "force_strength"
+        )
+        .is_err());
         assert!(source_parameter_location(&document, scene, entity, "caption").is_err());
         assert_eq!(driver["scenes"][0]["entity_refs"][entity], json!(entity));
     }

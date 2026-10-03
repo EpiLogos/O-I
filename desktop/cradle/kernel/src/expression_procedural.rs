@@ -6,7 +6,7 @@
 use super::{Application, Change, Changed, Document, ReadingRef, Request as ExpressionRequest};
 use crate::flow::CentralClient;
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -2962,12 +2962,10 @@ fn end_fork_gestures(
         let lanes = material["automation"].as_array_mut().unwrap();
         lanes.retain(|lane| !lane["id"].as_str().is_some_and(|id| ids.contains(id)));
         lanes.extend(dormant.iter().cloned());
-        material["propertyTracks"] = json!(
-            current_tracks
-                .into_iter()
-                .chain(tracks.iter().cloned())
-                .collect::<Vec<_>>()
-        );
+        material["propertyTracks"] = json!(current_tracks
+            .into_iter()
+            .chain(tracks.iter().cloned())
+            .collect::<Vec<_>>());
         bases.push((address, native_base, native_value));
     }
     material["procedural"]["controls"] = json!(retained);

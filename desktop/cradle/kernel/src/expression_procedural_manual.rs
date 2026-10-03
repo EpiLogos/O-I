@@ -1383,11 +1383,10 @@ mod accepted_tests {
             serde_json::to_value(changed.unwrap()).unwrap(),
             serde_json::to_value(&accepted.events[0]).unwrap()
         );
-        assert!(
-            app.accepted_request_candidate(&client, &review(3))
-                .unwrap()
-                .is_none()
-        );
+        assert!(app
+            .accepted_request_candidate(&client, &review(3))
+            .unwrap()
+            .is_none());
         assert_eq!(app.document("expression:acceptance").unwrap().revision, 4);
     }
     #[test]
@@ -1400,11 +1399,10 @@ mod accepted_tests {
             document: Box::new(checkpoint.clone()),
             actor: "nara:original:checkpoint-return".into(),
         };
-        assert!(
-            app.accepted_request_candidate(&client, &noop)
-                .unwrap()
-                .is_none()
-        );
+        assert!(app
+            .accepted_request_candidate(&client, &noop)
+            .unwrap()
+            .is_none());
         let (read, changed) = app.apply(&client, noop).unwrap();
         assert_eq!(read["state"], "ready");
         assert!(changed.is_none());
@@ -1453,10 +1451,9 @@ mod accepted_tests {
         app.apply(&client, request(json!({"operation":"edit","expression_ref":"expression:acceptance","expected_revision":2,
             "actor":"human:owner","changes":[{"change":"rename","title":"Intervening work"}]}))).unwrap();
         let current = app.document("expression:acceptance").unwrap().clone();
-        assert!(
-            app.commit_accepted_candidate(&basis, candidate, accepted)
-                .is_err()
-        );
+        assert!(app
+            .commit_accepted_candidate(&basis, candidate, accepted)
+            .is_err());
         assert_eq!(app.document("expression:acceptance").unwrap(), &current);
         assert!(current.refinements.is_empty());
     }
@@ -1464,16 +1461,15 @@ mod accepted_tests {
     fn ordinary_reviewed_focus_without_procedures_needs_no_source_service() {
         let (client, mut app) = live();
         let before = app.document("expression:acceptance").unwrap().clone();
-        assert!(
-            app.prepare_procedural_reviewed_focus(
+        assert!(app
+            .prepare_procedural_reviewed_focus(
                 &client,
                 &proposal(2),
                 "human:reviewer",
                 "Reviewed the source"
             )
             .unwrap()
-            .is_none()
-        );
+            .is_none());
         assert_eq!(app.document("expression:acceptance").unwrap(), &before);
         let (data, events) = app
             .finish_procedural_reviewed_focus(

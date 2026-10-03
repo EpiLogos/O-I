@@ -57,7 +57,10 @@ impl NativeDocumentSceneReader {
     pub(crate) fn native_manifest(&self) -> Result<Value, String> {
         // Existing expanded Document and 32MiB delivery bounds are preflighted
         // before constructing transport strings/Value copies. No cap increase.
-        crate::expression_procedural_source_budget::measure(&self.document, crate::expression::DOCUMENT_BYTES)?;
+        crate::expression_procedural_source_budget::measure(
+            &self.document,
+            crate::expression::DOCUMENT_BYTES,
+        )?;
         let document_bytes = serde_json::to_vec(&self.document).map_err(|e| e.to_string())?;
         let scene_bytes = serde_json::to_vec(self.scene()).map_err(|e| e.to_string())?;
         let canonical_document_bytes =
@@ -126,16 +129,24 @@ pub(crate) enum NativeSceneSourceReader<'a> {
 }
 impl NativeSceneSourceReader<'_> {
     pub(crate) fn document(&self) -> &Document {
-        match self { Self::CurrentDocument(reader) => reader.document() }
+        match self {
+            Self::CurrentDocument(reader) => reader.document(),
+        }
     }
     pub(crate) fn scene(&self) -> &Scene {
-        match self { Self::CurrentDocument(reader) => reader.scene() }
+        match self {
+            Self::CurrentDocument(reader) => reader.scene(),
+        }
     }
     pub(crate) fn native_manifest(&self) -> Result<Value, String> {
-        match self { Self::CurrentDocument(reader) => reader.native_manifest() }
+        match self {
+            Self::CurrentDocument(reader) => reader.native_manifest(),
+        }
     }
     pub(crate) fn field_source_part(&self, index: usize) -> Result<Value, String> {
-        match self { Self::CurrentDocument(reader) => reader.field_source_part(index) }
+        match self {
+            Self::CurrentDocument(reader) => reader.field_source_part(index),
+        }
     }
 }
 
@@ -180,7 +191,6 @@ impl crate::Kernel {
             currentness,
         })
     }
-
 }
 
 #[cfg(test)]

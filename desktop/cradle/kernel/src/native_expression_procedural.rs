@@ -1,11 +1,11 @@
 //! Read-only native procedural producer through the existing installed QL
 //! selection and bounded process owner. No executable path arrives from UI.
 use super::{
-    BINDING_TIMEOUT, PrivateFile, compose_executables, diagnostic_text, run_bounded, sha256_hex,
-    unix_ms,
+    compose_executables, diagnostic_text, run_bounded, sha256_hex, unix_ms, PrivateFile,
+    BINDING_TIMEOUT,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 const MAX_BYTES: usize = 1_048_576;

@@ -1,7 +1,7 @@
 //! Bounded lossless control-side pages embedded in the existing native Act.
 //! Hashes identify canonical bytes; they never admit playback or disclosure.
 //! No allocation/codec operation runs on the audio callback.
-use base64::{Engine as _, engine::general_purpose::STANDARD};
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::sync::OnceLock;
@@ -323,11 +323,9 @@ mod tests {
         assert!(serde_json::from_value::<EncodedPage>(supplied_cache).is_err());
         let mut wrong = serde_json::to_value(&page).unwrap();
         wrong["decoded_sha256"] = serde_json::json!(hash(b"different"));
-        assert!(
-            serde_json::from_value::<EncodedPage>(wrong)
-                .unwrap()
-                .bytes()
-                .is_err()
-        );
+        assert!(serde_json::from_value::<EncodedPage>(wrong)
+            .unwrap()
+            .bytes()
+            .is_err());
     }
 }

@@ -713,9 +713,10 @@ impl Serialize for OriginSourceBasis<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         super::super::readings(self.0).map_err(serde::ser::Error::custom)?;
         if self.0.is_empty()
-            || self.0.iter().any(|source| {
-                source.availability != super::super::Availability::Available
-            })
+            || self
+                .0
+                .iter()
+                .any(|source| source.availability != super::super::Availability::Available)
         {
             return Err(serde::ser::Error::custom(
                 "Original native output sources must all be available",

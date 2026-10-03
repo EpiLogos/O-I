@@ -56,4 +56,3 @@ fn fingerprint<T: Serialize + ?Sized>(value: &T, limit: usize) -> Result<(usize,
     serde_json::to_writer(&mut output, value).map_err(|e| e.to_string())?;
     Ok((output.bytes, format!("sha256:{:x}", output.hash.finalize())))
 }
-

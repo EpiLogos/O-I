@@ -104,26 +104,70 @@ impl NativeOwner {
         }
         Ok(grants)
     }
-    fn procedural_admitted_request<'a>(&self, input: &'a Request) -> Result<Option<&'a KernelOp>, String> {
-        let world = match input { Request::Describe {world_ref} | Request::Apply {world_ref,..}=>world_ref };
-        if world != &self.world_ref {return Err("native_owner.wrong_world: this owner does not own the requested World".into());}
-        let Request::Apply {expected_owner_generation,request,..}=input else {return Ok(None)};
-        if expected_owner_generation != &self.generation {return Err("native_owner.stale_generation: describe this fresh owner before operating; effects were not performed".into());}
-        if !admitted(request) {return Err("native_owner.operation_refused: this offer admits native document, Expression and session operations only".into());}
-        if !self.grants()?.operations.iter().any(|op|op == request.as_ref()) {return Err("native_owner.grant_refused: this exact subject, verb and input were not offered by the native World owner; effects were not performed".into());}
+    fn procedural_admitted_request<'a>(
+        &self,
+        input: &'a Request,
+    ) -> Result<Option<&'a KernelOp>, String> {
+        let world = match input {
+            Request::Describe { world_ref } | Request::Apply { world_ref, .. } => world_ref,
+        };
+        if world != &self.world_ref {
+            return Err(
+                "native_owner.wrong_world: this owner does not own the requested World".into(),
+            );
+        }
+        let Request::Apply {
+            expected_owner_generation,
+            request,
+            ..
+        } = input
+        else {
+            return Ok(None);
+        };
+        if expected_owner_generation != &self.generation {
+            return Err("native_owner.stale_generation: describe this fresh owner before operating; effects were not performed".into());
+        }
+        if !admitted(request) {
+            return Err("native_owner.operation_refused: this offer admits native document, Expression and session operations only".into());
+        }
+        if !self
+            .grants()?
+            .operations
+            .iter()
+            .any(|op| op == request.as_ref())
+        {
+            return Err("native_owner.grant_refused: this exact subject, verb and input were not offered by the native World owner; effects were not performed".into());
+        }
         Ok(Some(request))
     }
-    pub fn prepare_native_procedural_manual(&self, kernel:&Kernel, input:&Request) -> Result<Option<crate::native_expression::procedural::manual::Prepared>,String> {
+    pub fn prepare_native_procedural_manual(
+        &self,
+        kernel: &Kernel,
+        input: &Request,
+    ) -> Result<Option<crate::native_expression::procedural::manual::Prepared>, String> {
         match self.procedural_admitted_request(input)? {
-            Some(request)=>kernel.prepare_native_procedural_manual(request),
-            None=>Ok(None),
+            Some(request) => kernel.prepare_native_procedural_manual(request),
+            None => Ok(None),
         }
     }
-    pub fn finish_native_procedural_manual(&self,kernel:&mut Kernel,input:Request,completed:crate::native_expression::procedural::manual::Completed) -> Result<Value,String> {
-        let original=self.procedural_admitted_request(&input)?.ok_or("Native attribution completion cannot answer Describe")?;
-        let KernelOp::Expression {request}=original else {return Err("Native attribution completion belongs to an Expression operation".into())};
-        if request != completed.original() {return Err("Native attribution completion differs from the exact offered operation".into());}
-        let outcome=kernel.finish_native_procedural_manual(completed)?;
+    pub fn finish_native_procedural_manual(
+        &self,
+        kernel: &mut Kernel,
+        input: Request,
+        completed: crate::native_expression::procedural::manual::Completed,
+    ) -> Result<Value, String> {
+        let original = self
+            .procedural_admitted_request(&input)?
+            .ok_or("Native attribution completion cannot answer Describe")?;
+        let KernelOp::Expression { request } = original else {
+            return Err("Native attribution completion belongs to an Expression operation".into());
+        };
+        if request != completed.original() {
+            return Err(
+                "Native attribution completion differs from the exact offered operation".into(),
+            );
+        }
+        let outcome = kernel.finish_native_procedural_manual(completed)?;
         Ok(json!({"world_ref":self.world_ref,"owner_generation":self.generation,"outcome":outcome}))
     }
     pub fn apply(&self, kernel: &mut Kernel, request: Request) -> Result<Value, String> {
