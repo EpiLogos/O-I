@@ -3,7 +3,7 @@ role: architecture
 standing: agent-inference
 scope: O:I composed World; native ownership and current operation routes
 design_refs: ["../positions/FOUNDING-POSITIONS.md", "../experience/PLURAL-FLOW-SPEC.md", "../experience/SHARED-FIELD-DESKTOP.md", "../../.wayfinder/maps/agent-praxis-document-world.md"]
-updated: 2026-10-01
+updated: 2026-10-04
 ---
 
 # Architecture navigation and current joins
@@ -37,6 +37,70 @@ Every arrow is indexed in [relations.json](relations.json). Use a later
 owner return only after reading the source it cites; a branch name is not an
 evidence revision.
 
+Retained publication snapshot, checked 4 October 2026, 18:58 UTC: Central's
+native-operation and architecture corrections are on `main` through
+[Central #257](https://github.com/EpiLogos/Central/pull/257) at
+`1a94aeef3791dd083e789ebd332d4856daa1c62d`. The qualified `f596` source tree
+is preserved in that merge. Its primary checkout was refreshed while all 88
+unrelated NOW files retained their bytes and physical metadata; the env-3
+Central seat was released cleanly to the same main revision and its claim
+cleared. Factory's architecture corrections remain on `main` at `24ea8944`.
+AIKit [#483](https://github.com/EpiLogos/ai-kit/pull/483), Actuation
+[#130](https://github.com/EpiLogos/Actuation/pull/130) and O:I
+[#578](https://github.com/EpiLogos/O-I/pull/578) remain open at this snapshot.
+The Actuation companion is published at `185f972`; subsequent process-owner
+source `2ca54e0` failed formatting on both hosted platforms before its fifteen
+native cases. Its 45-predicate documentation advisory remains an actual failure.
+The source-reviewed seventeen-operation documentation successor is proposed
+until normally published. The six suite diagrams retain their inspected
+revisions and navigation proof; source publication, hosted results, installed
+replay and human acceptance retain separate standing.
+
+Historical publication snapshot — 4 October 2026, 18:15 UTC.
+The following paragraph retains the earlier inspection and its open facts:
+
+Publication standing at 4 October 2026, 18:15 UTC: the later
+native-operation and architecture corrections in [Central #257](https://github.com/EpiLogos/Central/pull/257)
+merged to `main` at `1a94aeef3791dd083e789ebd332d4856daa1c62d`, including the
+qualified `f596baecb469e07ef0f704a03b45d38454b01369` source. Factory's reviewed
+corrections remain on `main` at `24ea8944b40c177362e59ef446b1a87658ac8af3`.
+AIKit's companion remains in open [AIKit #483](https://github.com/EpiLogos/ai-kit/pull/483):
+its `0a8a742563eee48ef3c2ecae4c8f588335d14173` documentation inspection is
+history alongside the source active at that checkpoint,
+`db4e1ab3a0b839f4671f8088d7e8f59808bd1925`.
+Actuation's current native process/handoff companion and capability relations
+are published at `185f972d685a33bf7a0703dff205f9566c387046` in open
+[Actuation #130](https://github.com/EpiLogos/Actuation/pull/130). The six suite
+diagrams and original navigation proof retain their recorded revisions; the
+later two-document correction `e16a64fc184b1801267ab7d9be3a94e1f1e5f285`
+is published on `ci/shared-expression-native-925c4781`.
+At the 19:03 UTC read, draft [O:I #578](https://github.com/EpiLogos/O-I/pull/578)
+remained at `13b8376bd3394e199e288e89185ace5d7e6e5b8f`; Source publication
+on the CI branch and integration into that PR are distinct.
+The dated evidence below separates source, hosted operation, primary refresh,
+installed replay and whole-programme acceptance.
+
+Historical publication snapshot — 4 October 2026, before these later cuts.
+The following paragraph retains the earlier inspection and its open facts:
+
+The native Central and
+Factory architecture companions are present on their canonical `main` trees.
+Factory's reviewed corrections landed through [Factory #277](https://github.com/EpiLogos/Factory/pull/277)
+on 2 October at `24ea8944b40c177362e59ef446b1a87658ac8af3`.
+AIKit's companion is published in [AIKit #483](https://github.com/EpiLogos/ai-kit/pull/483)
+at `0a8a742563eee48ef3c2ecae4c8f588335d14173`,
+and Actuation's six document corrections are published in
+[Actuation #130](https://github.com/EpiLogos/Actuation/pull/130) at
+`e62839bb73e9ea6a8156e80f15131a31f6b6c18a`; both integration PRs remain open.
+Central's later native-operation documentation correction is published in
+[Central #257](https://github.com/EpiLogos/Central/pull/257), which also remains open.
+Those later source cuts need their corresponding verification; the older
+checks below retain their original evidence basis. Publication, primary
+refresh, installed replay and whole-programme acceptance remain distinct.
+
+Historical publication snapshot — 1 October 2026. The following paragraph
+records the then-current custody and is retained as history:
+
 Publication standing on 1 October: O:I, Workcell and QL-MEF navigation has
 landed. The native `ARCHITECTURE-NAVIGATION.md` companions in Central, AIKit,
 Actuation and Factory are reviewed candidate corrections awaiting primary
@@ -53,6 +117,24 @@ The source manifest also names its inspected checkout locator. Central's append
 source was inspected in `Work/Central`, not an older `env-2/central` seat.
 Resolve the owner/revision first; matching product labels on two checkouts do
 not make their modules equivalent.
+
+The 4 October upgrade successor corrects U2’s unsupported older-source claim:
+[the companion](upgrade-lifecycle.md) binds prepare-all/commit-links to exact
+`e16a64fc` source, retains pre-smoke selection at `17c22891` as history, and
+shows incomplete receipt/composition rollback as an open implementation join.
+Stored generation-file tests do not prove survival of a running old process.
+
+The ongoing Epi owner audit at `cef883881f174bed66aa40511219a5334765fe4f`
+(19:59:35 UTC, SHA-256 `bba8750db11cf0d630db62ce92f15dc750718a9a4f25a9d02308810b437ade91`)
+is the [current consumed account](https://github.com/EpiLogos/QL-MEF/blob/cef883881f174bed66aa40511219a5334765fe4f/docs/kernel-rebuild/EPI-WORLD-FIDELITY-AUDIT-2026-09-30.md). It reports an actual pointer Save/use
+acknowledgement and restart retention of the controlled personal scene, while
+native full/current Source acknowledgement, valid world supplement binding,
+prepared Nara identity/centre and form Action routing remain broken or unproved.
+The successor replay is pending. One geocentric occasion, Personal Pratibimba,
+shared locus, private person/current and Expression instance retain the owner's
+richer meanings. All185 runtime obligations and person-owned H remain unaccepted;
+no numerical or domain mapping is adjudicated here. The earlier `deb6` audit and
+its results remain dated history.
 
 ## Six operational questions
 
