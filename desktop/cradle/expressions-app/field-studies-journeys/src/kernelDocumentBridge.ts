@@ -253,6 +253,14 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
  if(journey.shared)journey.shared.toolbelt=journey.shared.toolbelt.map(entry=>entry.entityId?{...entry,entityId:converted.get(entry.entityId)?.id??entry.entityId}:entry);
  return{journey:validateJourney(journey),document:doc,notes,bindings,entity_ids:Object.fromEntries([...converted].map(([ref,e])=>[ref,e.id])),startSceneId:scenes.find(s=>bindings[s.id].scene_ref===doc.selection?.scene_ref)?.id??scenes[0].id};
 }
+/** Existing authored-to-native scalar projection, shared by the ordinary
+ * view diff and the native control intent adapter. It creates no native driver
+ * preview, Source authority or live Parameter acknowledgement. */
+export function kernelEntityControlValues(entity:Readonly<Entity>) {
+ return {x:entity.position.x*WORLD_SCALE,y:entity.position.y*WORLD_SCALE,z:entity.position.z*WORLD_SCALE,
+  scale:entity.scale??1,rotation:entity.rotation*Math.PI/180,
+  force_strength:entity.force.strength,force_spin:entity.force.spin,force_radius:entity.force.radius*WORLD_SCALE};
+}
 /** Only changed, loaded material returns. Hidden members and native relations,
  * bodies, metadata and source bindings are never treated as deleted. Human or
  * Agent construction operations use their own native Actions, not this diff. */
@@ -273,12 +281,13 @@ export function kernelViewToChanges(view:KernelConversion,edited:Journey):ViewCh
     if(values.has(key)&&!same(values.get(key),next))throw new Error('Different occurrences proposed conflicting edits to one native entity');
     if(!values.has(key)){values.set(key,next);changes.push({change:'parameter_set',entity_ref:occurrence.entity_ref,parameter,value:next});}
    };
-   for(const axis of ['x','y','z'] as const)scalar(axis,before.position[axis]*WORLD_SCALE,e.position[axis]*WORLD_SCALE);
-   scalar('scale',before.scale??1,e.scale??1);scalar('share',before.share,e.share);
+   const oldControl=kernelEntityControlValues(before),nextControl=kernelEntityControlValues(e);
+   for(const axis of ['x','y','z'] as const)scalar(axis,oldControl[axis],nextControl[axis]);
+   scalar('scale',oldControl.scale,nextControl.scale);scalar('share',before.share,e.share);
    scalar('width',before.size.x*WORLD_SCALE,e.size.x*WORLD_SCALE);scalar('height',before.size.y*WORLD_SCALE,e.size.y*WORLD_SCALE);
-   scalar('rotation',before.rotation*Math.PI/180,e.rotation*Math.PI/180);
+   scalar('rotation',oldControl.rotation,nextControl.rotation);
    scalar('glyph',before.text,e.text);scalar('shape',before.shape==='text'?'glyph':before.shape,e.shape==='text'?'glyph':e.shape);scalar('kind',before.kind,e.kind);
-   scalar('force_mode',before.force.kind,e.force.kind);scalar('force_strength',before.force.strength,e.force.strength);scalar('force_spin',before.force.spin,e.force.spin);scalar('force_radius',before.force.radius*WORLD_SCALE,e.force.radius*WORLD_SCALE);
+   scalar('force_mode',before.force.kind,e.force.kind);scalar('force_strength',oldControl.force_strength,nextControl.force_strength);scalar('force_spin',oldControl.force_spin,nextControl.force_spin);scalar('force_radius',oldControl.force_radius,nextControl.force_radius);
    if(!same(e.source,before.source)){
     scalar('image',before.source?.kind==='image'?before.source.image.dataUrl??'':'',e.source?.kind==='image'?e.source.image.dataUrl??'':'');
     scalar('ascii',before.source?.kind==='ascii'?before.source.ascii.text:'',e.source?.kind==='ascii'?e.source.ascii.text:'');
