@@ -235,7 +235,9 @@ fn safe_storage(value: &Value, depth: usize) -> Result<(), String> {
         return Err("native performance file nesting budget exceeded".into());
     }
     match value {
-        Value::Number(number) if number.as_f64().is_none() => return Err("native performance file number must be finite".into()),
+        Value::Number(number) if number.as_f64().is_none() => {
+            return Err("native performance file number must be finite".into())
+        }
         Value::String(s) if s.contains('\0') => {
             return Err("native performance file contains NUL".into());
         }
@@ -250,7 +252,13 @@ fn safe_storage(value: &Value, depth: usize) -> Result<(), String> {
         Value::Object(o) => {
             for (k, v) in o {
                 if k.contains('\0')
-                    || ["__proto__", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&k.as_str())
+                    || [
+                        "__proto__",
+                        "prototype",
+                        "$serde_json::private::Number",
+                        "$serde_json::private::RawValue",
+                    ]
+                    .contains(&k.as_str())
                     || (k == "constructor"
                         && !crate::expression_performance_source_asset::native_constructor_metadata(
                             o,
@@ -653,13 +661,18 @@ impl ActPerformanceCustody {
                 performance_manifest,
             });
         }
+        // One complete native Serde stream supplies both the original digest
+        // and expanded byte count. Raw/native admission remains independent.
+        let (expanded_bytes, expanded_document_sha256) =
+            crate::expression_act_storage::fingerprint(
+                document,
+                crate::expression_act_storage::LIVE_BYTES,
+            )?;
         next.documents.push(DocumentEdition {
             fields: refs,
             scenes,
-            expanded_document_sha256: expression_file::digest(
-                &serde_json::to_vec(document).map_err(|e| e.to_string())?,
-            ),
-            expanded_bytes: u32::try_from(weight(document)?)
+            expanded_document_sha256,
+            expanded_bytes: u32::try_from(expanded_bytes)
                 .map_err(|_| "native Document expanded size overflow")?,
         });
         next.validate()?;
@@ -1081,8 +1094,93 @@ mod borrowed_metadata_tests {
         assert_eq!(scene["body"], Value::Null);
         assert_eq!(scene["triggers"], serde_json::json!([]));
     }
-}
 
+    #[test]
+    fn native_document_fingerprint_preserves_full_owner_bytes_and_cold_refusals() {
+        use crate::expression::{Change, Request};
+        use sha2::{Digest, Sha256};
+
+        fn actual_document(kernel: &mut crate::Kernel, request: Request) -> Document {
+            let outcome = kernel
+                .apply(crate::KernelOp::Expression { request })
+                .unwrap();
+            let crate::KernelOpResult::Expression { data } = outcome.result else {
+                panic!("actual native Expression result absent");
+            };
+            serde_json::from_value(data["document"].clone()).unwrap()
+        }
+        fn assert_complete(document: &Document) {
+            // Independent original materialized-byte oracle, not the new writer.
+            let original = serde_json::to_vec(document).unwrap();
+            let custody = ActPerformanceCustody::default().appended(document).unwrap();
+            let (reference, revision, digest, bytes) = custody.document_identity(0).unwrap();
+            assert_eq!(reference, document.expression_ref);
+            assert_eq!(revision, document.revision);
+            assert_eq!(digest, format!("sha256:{:x}", Sha256::digest(&original)));
+            assert_eq!(bytes as usize, original.len());
+            assert_eq!(serde_json::to_vec(document).unwrap(), original);
+            let cold = ActPerformanceCustody::read(custody.snapshot()).unwrap();
+            assert_eq!(cold.restore(0).unwrap(), *document);
+
+            let mut wrong_weight = custody.snapshot();
+            wrong_weight.documents[0].expanded_bytes += 1;
+            assert!(ActPerformanceCustody::read(wrong_weight).is_err());
+            let mut wrong_digest = custody.snapshot();
+            wrong_digest.documents[0].expanded_document_sha256 =
+                format!("sha256:{}", "0".repeat(64));
+            let cold = ActPerformanceCustody::read(wrong_digest).unwrap();
+            assert!(cold
+                .restore(0)
+                .unwrap_err()
+                .contains("differs from exact edition"));
+        }
+
+        let source = include_str!("../tests/fixtures/epi-world-131.expression.json");
+        assert_eq!(
+            format!("{:x}", Sha256::digest(source.as_bytes())),
+            "630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
+        let fixture = expression_file::decode(source).unwrap();
+        let mut kernel = crate::Kernel::new(crate::flow::CentralClient::discover());
+        let admitted = actual_document(
+            &mut kernel,
+            Request::Open {
+                document: Box::new(fixture.clone()),
+                actor: "agent:native-document-fingerprint-test".into(),
+            },
+        );
+        assert_eq!(admitted, fixture);
+        assert_complete(&admitted);
+        let changed = actual_document(
+            &mut kernel,
+            Request::Edit {
+                expression_ref: admitted.expression_ref.clone(),
+                expected_revision: admitted.revision,
+                actor: "agent:native-document-fingerprint-test".into(),
+                changes: vec![Change::Rename {
+                    title: "Complete retained world after a native rename".into(),
+                }],
+            },
+        );
+        assert_eq!(changed.revision, admitted.revision + 1);
+        assert_complete(&changed);
+        let created = actual_document(
+            &mut kernel,
+            Request::Create {
+                expression_ref: "expression:native-document-fingerprint".into(),
+                title: "Native complete Document fingerprint".into(),
+                actor: "agent:native-document-fingerprint-test".into(),
+            },
+        );
+        assert_complete(&created);
+        let mut oversized = admitted;
+        oversized.title = "x".repeat(DOCUMENT_BYTES);
+        assert!(ActPerformanceCustody::default()
+            .appended(&oversized)
+            .unwrap_err()
+            .contains("Expression document exceeds 8 MiB"));
+    }
+}
 
 #[cfg(test)]
 mod numeric_admission_conservation_tests {
@@ -1091,8 +1189,15 @@ mod numeric_admission_conservation_tests {
     fn programmatic_nonfinite_or_reserved_maps_do_not_enter_performance_custody() {
         let infinite: Value = serde_json::from_str("1e400").unwrap();
         assert!(safe_storage(&infinite, 0).is_err());
-        for key in ["$serde_json::private::Number", "$serde_json::private::RawValue"] {
-            let object = Value::Object([(key.into(), Value::String("3600".into()))].into_iter().collect());
+        for key in [
+            "$serde_json::private::Number",
+            "$serde_json::private::RawValue",
+        ] {
+            let object = Value::Object(
+                [(key.into(), Value::String("3600".into()))]
+                    .into_iter()
+                    .collect(),
+            );
             assert!(safe_storage(&object, 0).is_err());
         }
     }

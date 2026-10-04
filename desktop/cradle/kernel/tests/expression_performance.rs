@@ -584,7 +584,10 @@ fn actual_scene_act_file_edition_restart_seek_and_continue_preserve_the_complete
     assert_eq!(admitted["act"]["sequence"][0]["kind"], "edition");
     let initial = document(&mut k);
     assert_eq!(initial, expected_initial, "complete native snapshot must retain the actual producer/body/source and every original Document field");
-    assert_eq!(admitted["act"]["sequence"][0]["edition"], expected_initial, "native immutable Edition and ordinary Inspect must receive the complete same Document");
+    assert_eq!(
+        admitted["act"]["sequence"][0]["edition"], expected_initial,
+        "native immutable Edition and ordinary Inspect must receive the complete same Document"
+    );
     let revision = initial["revision"].as_u64().unwrap();
     kernel_world(
         &mut k,
@@ -1182,6 +1185,18 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
         .unwrap()
         .unwrap();
     assert_eq!(act.sequence.len(), 180);
+    // The actual final native Act must retain the exact original complete
+    // Document byte stream, including every one of its 45,000 source events.
+    let literal = serde_json::to_vec(&selected).unwrap();
+    let custody = act.performance_custody.as_ref().unwrap();
+    let (reference, revision, digest, bytes) = custody.document_identity(179).unwrap();
+    assert_eq!(reference, selected.expression_ref);
+    assert_eq!(revision, selected.revision);
+    assert_eq!(
+        digest,
+        format!("sha256:{:x}", sha2::Sha256::digest(&literal))
+    );
+    assert_eq!(bytes as usize, literal.len());
     assert_eq!(serde_json::to_value(&act).unwrap(), last_act.unwrap());
     eprintln!(
         "actual fifteen-minute Act record metadata+shared material bytes={} editions={}",
