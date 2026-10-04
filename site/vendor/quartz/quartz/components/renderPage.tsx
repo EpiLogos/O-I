@@ -242,19 +242,21 @@ export function renderPage(
   const Body = BodyConstructor()
 
   const LeftComponent = (
-    <div class="left sidebar">
+    <dialog open id="essay-pages" class="left sidebar" aria-label="Pages">
+      <div class="essay-panel-heading"><span>Pages</span><button type="button" data-essay-close="pages" aria-label="Close pages">Close</button></div>
       {left.map((BodyComponent) => (
         <BodyComponent {...componentData} />
       ))}
-    </div>
+    </dialog>
   )
 
   const RightComponent = (
-    <div class="right sidebar">
+    <dialog open id="essay-connections" class="right sidebar" aria-label="Connections">
+      <div class="essay-panel-heading"><span>Connections</span><button type="button" data-essay-close="connections" aria-label="Close connections">Close</button></div>
       {right.map((BodyComponent) => (
         <BodyComponent {...componentData} />
       ))}
-    </div>
+    </dialog>
   )
 
   const lang = componentData.fileData.frontmatter?.lang ?? cfg.locale?.split("-")[0] ?? "en"

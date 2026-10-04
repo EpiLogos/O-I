@@ -53,7 +53,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Antykathera-Essay-Work
-          ref: 8265f382177086daff1fbd461c932b521babc971
+          ref: b2b5b706105891f69e2a68ecd160dbe4add3828e
           path: .publication-sources/essay-reading
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -142,6 +142,7 @@ jobs:
           python tests/library-regressions.py || result=1
           python tests/publication-acceptance.py || result=1
           python tests/essay-host-smoke.py || result=1
+          python tests/essay-reader-controls.py || result=1
           exit "$result"
       - name: Retain publication verification separately from deployable files
         if: always()
