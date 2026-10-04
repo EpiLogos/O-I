@@ -55,6 +55,16 @@ jobs:
           npm run preview -- --host 127.0.0.1 --port 4173 > evidence/shell-v2/server.log 2>&1 &
           for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/shell.html >/dev/null && break; sleep 1; done
           python tests/shell-v2-acceptance.py
+      - name: Preserve the complete built site for artifact retention
+        if: always()
+        working-directory: site
+        # Quartz keeps native filenames and case-distinct aliases. Archive
+        # those paths intact before the artifact service applies its limits.
+        run: |
+          mkdir -p evidence/shell-v2
+          if [ -d dist ]; then
+            tar -cf evidence/shell-v2/built-site.tar -C dist .
+          fi
       - name: Retain preview and evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -64,7 +74,6 @@ jobs:
           if-no-files-found: error
           path: |
             site/evidence/shell-v2/
-            site/dist/
             site/src/shell/
             site/src/tokens.css
             site/tests/shell-v2-acceptance.py
