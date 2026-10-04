@@ -110,6 +110,19 @@ revisions; a binary that failed its smoke check stayed linked anyway
    back; the receipts are written only after all flips landed, and a receipt
    write that fails puts them back too.
 
+### Implementation standing — 4 October 2026
+
+The whole-machine behavior above remains the governing contract. Source at
+`e16a64fc184b1801267ab7d9be3a94e1f1e5f285` implements prepare-all before
+selection, then sequential per-link atomic renames. It does not establish an
+indivisible multi-product swap. `restore_link` discards recovery errors;
+a composition failure after the active receipt was persisted invokes
+`undo_flips` without restoring that receipt. Complete rollback of links,
+receipts and composition is a missing implementation join, not a deliberate
+exception to the contract. [The architecture companion](architecture/upgrade-lifecycle.md)
+names the exact operation/source/test definitions and keeps installed
+failure/recovery acceptance open.
+
 ## Direction
 
 The plan names how each cut relates to what is installed: `upgrade`, `same`,

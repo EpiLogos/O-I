@@ -66,6 +66,22 @@
       "git_revision": "dd0765dd9596086e14ce7bef8d604759cc8daf8f",
       "storage": "git-blob",
       "dirty_inspected_sources": []
+    },
+    {
+      "product": "O:I",
+      "cut": "upgrade-successor",
+      "checkout_locator": "worktrees/env-2/o-i",
+      "git_revision": "e16a64fc184b1801267ab7d9be3a94e1f1e5f285",
+      "storage": "git-blob",
+      "dirty_inspected_sources": []
+    },
+    {
+      "product": "QL-MEF",
+      "cut": "fidelity-current-20261004",
+      "checkout_locator": "worktrees/env-2/ql-mef",
+      "git_revision": "cef883881f174bed66aa40511219a5334765fe4f",
+      "storage": "git-blob",
+      "dirty_inspected_sources": []
     }
   ],
   "sources": [
@@ -404,9 +420,10 @@
       "id": "O:I:cli/src/update_flow.rs",
       "product": "O:I",
       "path": "cli/src/update_flow.rs",
-      "sha256": "607dc0f0755ad11f3a7b5b1b53da852bcf1373b9101cde28389abaa33921953f",
+      "sha256": "01027bfe3117b0dd788c1b3af223521dd56921b1e2240f33a5b84bfc75d8266b",
       "storage": "git-blob",
-      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
+      "git_revision": "e16a64fc184b1801267ab7d9be3a94e1f1e5f285",
+      "cut": "upgrade-successor"
     },
     {
       "id": "AIKit:crates/aikit-cli/tests/encounter_shutdown.rs",
@@ -572,6 +589,41 @@
       "storage": "git-blob",
       "sha256": "61ab96fc0471d245fd4830d44eb030857300d5af3d84400d774e0b7573d336c6",
       "relation": "Managed provider process lifetime, retention refusal and explicit recovery; distinct from the collapsed-local harness registry"
+    },
+    {
+      "id": "O:I:cli/src/update_flow.rs@17c22891",
+      "product": "O:I",
+      "path": "cli/src/update_flow.rs",
+      "sha256": "607dc0f0755ad11f3a7b5b1b53da852bcf1373b9101cde28389abaa33921953f",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
+    },
+    {
+      "id": "O:I:docs/INSTALL-UPDATE-FLOW.md",
+      "product": "O:I",
+      "cut": "upgrade-successor",
+      "path": "docs/INSTALL-UPDATE-FLOW.md",
+      "sha256": "35bab2f09ddcaebb019888325c70da87d782ec0fbc8a1deff11ad078630102ae",
+      "storage": "git-blob",
+      "git_revision": "e16a64fc184b1801267ab7d9be3a94e1f1e5f285"
+    },
+    {
+      "id": "O:I:cli/src/frontdoor.rs",
+      "product": "O:I",
+      "cut": "upgrade-successor",
+      "path": "cli/src/frontdoor.rs",
+      "sha256": "95d6f7ddd9f1788e824467fec57ec7a30c07d7c515feb1e9d063b3fff10d8f79",
+      "storage": "git-blob",
+      "git_revision": "e16a64fc184b1801267ab7d9be3a94e1f1e5f285"
+    },
+    {
+      "id": "QL-MEF:docs/kernel-rebuild/EPI-WORLD-FIDELITY-AUDIT-2026-09-30.md@cef88388",
+      "product": "QL-MEF",
+      "cut": "fidelity-current-20261004",
+      "path": "docs/kernel-rebuild/EPI-WORLD-FIDELITY-AUDIT-2026-09-30.md",
+      "sha256": "bba8750db11cf0d630db62ce92f15dc750718a9a4f25a9d02308810b437ade91",
+      "storage": "git-blob",
+      "git_revision": "cef883881f174bed66aa40511219a5334765fe4f"
     }
   ],
   "limit": "File hashes identify inspected bytes; git_revision alone does not identify dirty sources. Tests named are definitions inspected unless verification.md records an executed command. Active lanes may supersede this cut.",
