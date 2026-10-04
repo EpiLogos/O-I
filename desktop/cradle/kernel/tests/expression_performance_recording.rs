@@ -13,6 +13,54 @@ fn read(path: impl AsRef<std::path::Path>) -> Value {
     assert!(bytes.len() < 32 * 1024 * 1024);
     serde_json::from_slice(&bytes).unwrap()
 }
+// Compare the complete declared native application. Only its seven finite
+// Scalar leaves use their exact binary64 domain; all original non-scalar wire
+// fields, optional-field presence and opaque determination Values stay exact.
+fn same_wire_fields_except_scalars(actual: &Value, expected: &Value, scalars: &[&str]) -> bool {
+    let (Some(actual), Some(expected)) = (actual.as_object(), expected.as_object()) else {
+        return false;
+    };
+    actual.len() == expected.len()
+        && actual.iter().all(|(key, value)| {
+            expected.get(key).is_some_and(|other| {
+                if scalars.contains(&key.as_str()) {
+                    value.is_number() && other.is_number()
+                } else {
+                    value == other
+                }
+            })
+        })
+}
+fn same_native_application(actual: &Value, expected: &Value) -> bool {
+    use oi_cradle_kernel::expression_performance_recording::NativeApplication;
+    let (Ok(actual_typed), Ok(expected_typed)) = (
+        serde_json::from_value::<NativeApplication>(actual.clone()),
+        serde_json::from_value::<NativeApplication>(expected.clone()),
+    ) else {
+        return false;
+    };
+    if actual_typed != expected_typed {
+        return false;
+    }
+    let (Some(actual), Some(expected)) = (actual.as_object(), expected.as_object()) else {
+        return false;
+    };
+    actual.len() == expected.len()
+        && actual.iter().all(|(key, value)| {
+            expected.get(key).is_some_and(|other| match key.as_str() {
+                "value" | "pitch_hz" => value.is_number() && other.is_number(),
+                "native_clock" => {
+                    same_wire_fields_except_scalars(value, other, &["mapping_uncertainty_samples"])
+                }
+                "note" if value.is_object() => same_wire_fields_except_scalars(
+                    value,
+                    other,
+                    &["fundamental_hz", "hertz", "phase_sin", "phase_cos"],
+                ),
+                _ => value == other,
+            })
+        })
+}
 fn scalar(value: f64) -> Scalar {
     Scalar::new(value).unwrap()
 }
@@ -179,7 +227,7 @@ fn actual_applied_attack_expression_parameter_release_record_exact_native_sample
     let bytes = serde_json::to_vec(recorded.receipts()).unwrap();
     let reopened: Value = serde_json::from_slice(&bytes).unwrap();
     for (i, app) in applications.iter().enumerate() {
-        assert_eq!(reopened[i]["application"], *app);
+        assert!(same_native_application(&reopened[i]["application"], app));
     }
     recorded
         .verify_replay(
@@ -639,10 +687,10 @@ fn actual_native_receipts_are_atomic_lossless_scene_parts_and_survive_authored_e
         "boxing must preserve the existing real native recording bytes/hash"
     );
     let decoded: Value = serde_json::from_slice(&decoded_bytes).unwrap();
-    assert_eq!(
-        decoded["value"]["receipts"][0]["application"],
-        applications[0]
-    );
+    assert!(same_native_application(
+        &decoded["value"]["receipts"][0]["application"],
+        &applications[0],
+    ));
     assert_eq!(
         decoded["value"]["input_journal"],
         serde_json::to_value(&journal).unwrap()
@@ -2283,14 +2331,17 @@ fn actual_original_requested_time_survives_late_resolution_and_legacy_absence_st
     for (receipt, original) in old.receipts().iter().zip(&historical) {
         assert_eq!(receipt.application.requested_sample, None);
         assert!(receipt.application.require_requested_sample().is_err());
-        assert_eq!(
-            serde_json::to_value(&receipt.application).unwrap(),
-            *original
-        );
+        assert!(same_native_application(
+            &serde_json::to_value(&receipt.application).unwrap(),
+            original,
+        ));
     }
     let present_zero: NativeApplication = serde_json::from_value(applications[1].clone()).unwrap();
     assert_eq!(present_zero.require_requested_sample().unwrap(), Counter(0));
-    assert_eq!(serde_json::to_value(present_zero).unwrap(), applications[1]);
+    assert!(same_native_application(
+        &serde_json::to_value(present_zero).unwrap(),
+        &applications[1],
+    ));
     let (_, continued, all, _) = managed_order("release", true);
     let future: NativeApplication = serde_json::from_value(all[2].clone()).unwrap();
     assert_eq!(future.sequence, Counter(2));
@@ -2793,4 +2844,56 @@ fn actual_pre_pulse_checkpoints_refuse_the_later_journal_at_both_real_cuts() {
             prepare_recording(performance, admission(&coherent, &bindings), apps, journal).unwrap();
         }
     }
+}
+
+#[test]
+fn actual_application_equality_keeps_wire_shape_and_refuses_changed_native_scalar_bits() {
+    use oi_cradle_kernel::expression_performance_recording::NativeApplication;
+    let (_, _, applications, _) = actual();
+    let original = &applications[0];
+    let native: NativeApplication = serde_json::from_value(original.clone()).unwrap();
+    let canonical = serde_json::to_value(native).unwrap();
+    assert!(same_native_application(&canonical, original));
+    for pointer in [
+        "/value",
+        "/pitch_hz",
+        "/native_clock/mapping_uncertainty_samples",
+        "/note/fundamental_hz",
+        "/note/hertz",
+        "/note/phase_sin",
+        "/note/phase_cos",
+    ] {
+        let value = canonical.pointer(pointer).unwrap().as_f64().unwrap();
+        let mut changed = canonical.clone();
+        *changed.pointer_mut(pointer).unwrap() = json!(f64::from_bits(value.to_bits() + 1));
+        assert!(
+            !same_native_application(&changed, original),
+            "changed {pointer}"
+        );
+        *changed.pointer_mut(pointer).unwrap() = json!(value.to_string());
+        assert!(
+            !same_native_application(&changed, original),
+            "non-number {pointer}"
+        );
+    }
+    for field in ["touch", "requested_sample", "note", "determination"] {
+        let mut missing = canonical.clone();
+        missing.as_object_mut().unwrap().remove(field);
+        assert!(
+            !same_native_application(&missing, original),
+            "missing {field}"
+        );
+    }
+    let mut extra = canonical.clone();
+    extra["unknown_application_field"] = json!(true);
+    assert!(!same_native_application(&extra, original));
+    let mut unavailable = canonical.clone();
+    unavailable["requested_sample"] = Value::Null;
+    assert!(!same_native_application(&unavailable, original));
+    let mut foreign = canonical.clone();
+    foreign["identity"]["subject"] = json!("foreign:subject");
+    assert!(!same_native_application(&foreign, original));
+    let mut opaque = canonical.clone();
+    opaque["determination"] = json!({"changed_original_evidence": true});
+    assert!(!same_native_application(&opaque, original));
 }
