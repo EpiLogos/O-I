@@ -9,7 +9,7 @@ import { marked } from 'marked';
 import { posix } from 'node:path';
 
 export const ESSAY_REMOTE = 'https://github.com/EpiLogos/Antykathera-Essay-Work.git';
-export const ESSAY_REF = 'fix/publish-readiness-2026-09-24';
+export const ESSAY_REF = 'main';
 export const MANUSCRIPT_ID = 'manuscript/THE-RETURN-OF-ZERO';
 export const READING_ROOT = 'README';
 
