@@ -52,6 +52,29 @@ function voices(influence:any):SceneVoice[]{
  });
 }
 
+/** Read the native snapshot or the earlier flat composition provenance.
+ * A current-origin saved occasion is not a fresh sky request. The date and
+ * freshness standing belong to the native receipt, never the browser clock. */
+export function readSceneSky(composed:any):SceneSky{
+ const sky=composed?.sky,admission=composed?.world?.sky_admission;
+ if(sky==null){requireValue(admission==null,'sky admission has no snapshot');return{kind:'none',label:'No dated sky requested'};}
+ requireValue(object(sky),'sky source is not an object');
+ const snapshot=sky.schema==='ql.sky-snapshot/v1';
+ requireValue(sky.schema==null||snapshot,'unsupported sky source schema');
+ const mode=snapshot?sky.request?.mode:sky.mode,epoch=snapshot?sky.epoch_utc:sky.epoch,ref=sky.snapshot_ref;
+ requireValue(mode==='current'||mode==='historical','sky request mode unavailable');
+ requireValue(typeof epoch==='string'&&epoch.length>0&&typeof ref==='string'&&ref.length>0,'sky epoch or snapshot reference unavailable');
+ let label='Dated sky';
+ if(admission!=null){
+  requireValue(object(admission)&&admission.schema==='ql.sky-admission/v1'&&admission.snapshot_ref===ref&&admission.epoch_utc===epoch&&admission.original_mode===mode,'sky admission differs from its source snapshot');
+  requireValue((admission.purpose==='requested'||admission.purpose==='retained-occasion')&&typeof admission.fresh_current_attested==='boolean','sky admission standing unavailable');
+  requireValue(!admission.fresh_current_attested||(admission.purpose==='requested'&&mode==='current'),'sky admission claims freshness for a retained or historical occasion');
+  if(admission.purpose==='retained-occasion')label='Retained dated sky';
+  else if(admission.fresh_current_attested)label='Dated sky now';
+ }
+ return{kind:'dated',mode,epoch,snapshot_ref:ref,label:`${label} · ${epoch}`};
+}
+
 export function readScene(sources:any,influence:any,composed:any):SceneActing{
  const current=sources?.current,m1=current?.m1,input=current?.input;
  requireValue(isScene(sources),'owner is not the scene provider');
@@ -64,15 +87,12 @@ export function readScene(sources:any,influence:any,composed:any):SceneActing{
  const basis=Array.isArray(m1.ratio_basis)?m1.ratio_basis.map((r:any)=>r?.ratio as [number,number]):[];
  const transcription=current.m3?.transcription;
  requireValue(typeof transcription?.rna==='boolean'&&typeof transcription.sequence==='string','M3 transcription unavailable');
- const sky=composed?.sky;
  const at=input.m2?.world_observations?.[0]?.observed_at_unix_ms;
  if(influence!=null)requireValue(influence.schema===SCENE_INFLUENCE,'influence schema mismatch');
  const material=influence?.material,geometry=influence?.geometry;
  return{
   event_ref:String(input.m1.event_ref),subject_ref:String(input.m3.subject_ref),
-  sky:sky&&typeof sky==='object'
-   ?{kind:'dated',mode:String(sky.mode),epoch:String(sky.epoch),snapshot_ref:String(sky.snapshot_ref),label:`${sky.mode==='current'?'Dated sky now':'Dated sky'} · ${String(sky.epoch)}`}
-   :{kind:'none',label:'No dated sky requested'},
+  sky:readSceneSky(composed),
   observations_unix_ms:Number.isSafeInteger(at)?at:null,
   m1:{revision:config.revision,cycle:config.cycle,tick12:config.tick12,lens12:config.lens12,lens:lensLabel(config.lens12),context_frame:config.context_frame,
    context:String(m1.music.context_frame),mode:String(m1.music.mode),basis:String(config.basis)},

@@ -90,15 +90,35 @@ export interface KernelReceipt {
 export type {CentralLocation} from "./location";
 import type {CentralLocation} from "./location";
 /** QL composes the K² binding; the consumer names only texture, scale, sky and an optional event. */
-export interface NativeComposeRequest { texture: [number, number]; units_per_metre: number; sky: "none" | "now" | {epoch: string}; event?: Record<string, unknown> }
-export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string};
-/** The actual current native recording owner receives authored choices and CAS only.
- * Source, clock, participant authority and private native receipts stay native. */
+export type NativeComposeRequest = { texture: [number, number]; units_per_metre: number }
+  & ({sky: "none" | "now" | {epoch: string}; sky_snapshot?: never; snapshot_purpose?:'requested'}
+    | {sky?: never; sky_snapshot: {schema: "ql.sky-snapshot/v1"; snapshot_ref: string; [key: string]: unknown}; snapshot_purpose?:import('../nara/identity/types').SnapshotPurpose})
+  & ({event?: Record<string, unknown>; world?: never; snapshot_purpose?:'requested'}
+    | {event?: never; world: {instance_ref: string; subject_ref: string; start?: Readonly<Record<string, unknown>>}});
+export interface NativeSelectedSceneRequest {expression_ref:string;document_revision:number;scene_ref:string;scene_revision:number}
+export interface NativePhysicalSceneRequest {schema:'oi.native-physical-scene-edit/v1';lease:string;expression_ref:string;document_revision:number;scene_ref:string;scene_revision:number;actor:string;declared_seed:string;edit:Record<string,unknown>}
+export interface NativeAcousticConfiguration {schema:'ql.native-acoustic-receiving-configuration/v1';source_ref:string;source_motion_ref:string;receiver_motion_ref:string;policy_ref:string;policy_revision:string;standing:'architecture-model'|'reference'|'tunable-model';revision:number;source_translation_metres:[number,number,number];receiver_position_metres:[number,number,number];receiver_forward:[number,number,number];source_velocity_metres_per_second:[number,number,number];receiver_velocity_metres_per_second:[number,number,number];speed_metres_per_second:number;minimum_distance_metres:number;directivity:'omnidirectional'|'cardioid';propagation_delay:boolean;span_samples:number}
+export interface NativeAcousticSceneRequest {schema:'oi.native-acoustic-scene-edit/v1';lease:string;expression_ref:string;document_revision:number;scene_ref:string;scene_revision:number;actor:string;declared_seed:string;configuration:NativeAcousticConfiguration}
 export interface NativeSceneRecordingCas {request_id:string;lease:string;expression_ref:string;document_revision:number;scene_ref:string;scene_revision:number;actor:string}
-export type NativeSceneRecordingRequest = NativeSceneRecordingCas & (
-  | {operation:'prepare_scene';definition:{declared_seed:string;performance_ref:string;layer_ref:string;title:string;duration_samples:string;ppq:number;micros_per_quarter:number;max_reconstruction_samples:string}}
-  | {operation:'begin';basis:number;checkpoint_ref:string}
-  | {operation:'command';basis:number;layer:number;command:Record<string,unknown>});
+export type NativeSceneRecordingRequest=NativeSceneRecordingCas&(
+ | {operation:'prepare_scene';definition:{declared_seed:string;performance_ref:string;layer_ref:string;title:string;duration_samples:string;ppq:number;micros_per_quarter:number;max_reconstruction_samples:string}}
+ | {operation:'continue_act';act_ref:string;selection:{expected_act_revision:number;edition_position:number;scene_ref:string;expected_expression_revision:number;expected_scene_revision:number;performance_digest:string};checkpoint_index:number;transaction_ref:string}
+ | {operation:'save_cut';basis:number;layer:number;checkpoint_ref:string}
+ | {operation:'begin';basis:number;checkpoint_ref:string}
+ | {operation:'command';basis:number;layer:number;command:Record<string,unknown>});
+export interface NativeSelectedSceneSourceRequest {selection:NativeSelectedSceneRequest;lease:string;actor:string;expected_request_id:string;expected_generation:string;expected_samples_elapsed:string;}
+export interface NativeStageLibraryIntent {
+ basis:{expression_ref:string;document_revision:number;scene_ref:string};
+ operation_ref:string;source:unknown;profile:{ref:string;revision:string;availability:'available'|'withheld'|'unavailable'};
+ authored:unknown;choice:unknown;scope:unknown;action:'prepare'|'regenerate';
+}
+export type NativeStageLibraryRequest=
+ | {operation:'procedural_stage_capability';request:{basis:NativeStageLibraryIntent['basis']}}
+ | {operation:'procedural_stage_library'|'procedural_stage_library_retry';request:NativeStageLibraryIntent};
+/** Existing installed procedural Source6 compiler request, distinct hosted source ingress. */
+export interface NativeProcedureCompileRequest {operation:'procedural_compile';request:{schema:'oi.expression-procedure-source-request/v1';command:'discover'|'manifest'|'prepare'|'regenerate'|'atlas'|'rule'|'library'|'interventions';request:Record<string,unknown>|null;basis?:{expression_ref:string;document_revision:number}}}
+export interface NativeProceduralConductRequest {lease:string;expression_ref:string;document_revision:number;source_producer_ref?:string|null;request:unknown}
+export type NativeExpressionRequest = NativeProcedureCompileRequest | {operation:'acoustic_scene_edit';request:NativeAcousticSceneRequest} | {operation:'physical_scene_edit';request:NativePhysicalSceneRequest} | {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "prepare_world"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string} | {operation:'open_selected_scene';request:NativeSelectedSceneRequest} | {operation:'recover_selected_scene';request:NativeSelectedSceneRequest} | {operation:'abandon_selected_scene';request:NativeSelectedSceneRequest} | {operation:'retain_selected_scene_source'|'recover_selected_scene_source';request:{selection:{expression_ref:string;document_revision:number;scene_ref:string;scene_revision:number};lease:string;actor:string;expected_request_id:string;expected_generation:string;expected_samples_elapsed:string}} | {operation:'procedural_conduct'|'procedural_definition_retry';request:NativeProceduralConductRequest} | NativeStageLibraryRequest | {operation: "source_authorship";request:{selection:NativeSelectedSceneRequest;actor:string}} | {operation: "procedure_authorship";request:{selection:NativeSelectedSceneRequest;source_material_fingerprint:string}} | {operation: "procedural_source_bootstrap_retry"; request: {schema:"oi.expression-procedural-source-bootstrap-retry/v1"; lease:string; expression_ref:string; document_revision:number; intent:Record<string,unknown>}};
 /** Provenance of a composed open (`source` in `oi.native-expression-open/v1`). */
 export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
 export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }

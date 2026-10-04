@@ -1,5 +1,5 @@
 import type { Entity, SequenceState } from './fieldModel';
-import { effectiveLinks, resolveSequence } from './fieldModel';
+import { effectiveLinks, resolveSequence, validateNativeEntityControls } from './fieldModel';
 
 export interface EvaluatedEntityPose {
   entityId: string;
@@ -36,25 +36,27 @@ export function resolveEntityPose(
   const mix = (x: number, y: number) => x + (y - x) * t;
   const sa = a?.state, sb = b?.state;
   const fa = sa?.forces ?? entity.forces, fb = sb?.forces ?? entity.forces;
+  const controls=validateNativeEntityControls(entity.nativeControls,entity.id);
+  const active=new Map(controls?.controls.map(c=>[c.parameter,c.value]));
   return {
     entityId: entity.id,
-    x: entity.x + (a?.x ?? 0) * (1 - t) + (b?.x ?? 0) * t,
-    y: entity.y + (a?.y ?? 0) * (1 - t) + (b?.y ?? 0) * t,
-    z: entity.z + (a?.z ?? 0) * (1 - t) + (b?.z ?? 0) * t,
-    scale: mix(sa?.scale ?? entity.scale, sb?.scale ?? entity.scale),
+    x: active.get('x') ?? (entity.x + (a?.x ?? 0) * (1 - t) + (b?.x ?? 0) * t),
+    y: active.get('y') ?? (entity.y + (a?.y ?? 0) * (1 - t) + (b?.y ?? 0) * t),
+    z: active.get('z') ?? (entity.z + (a?.z ?? 0) * (1 - t) + (b?.z ?? 0) * t),
+    scale: active.get('scale') ?? (mix(sa?.scale ?? entity.scale, sb?.scale ?? entity.scale)),
     extent: {
       width: mix(sa?.extent?.width ?? entity.extent?.width ?? 400, sb?.extent?.width ?? entity.extent?.width ?? 400),
       height: mix(sa?.extent?.height ?? entity.extent?.height ?? 400, sb?.extent?.height ?? entity.extent?.height ?? 400),
-      rotation: mix(sa?.extent?.rotation ?? entity.extent?.rotation ?? 0, sb?.extent?.rotation ?? entity.extent?.rotation ?? 0),
+      rotation: active.get('rotation') ?? (mix(sa?.extent?.rotation ?? entity.extent?.rotation ?? 0, sb?.extent?.rotation ?? entity.extent?.rotation ?? 0)),
       normalized: (t<.5?sa?.extent?.normalized:sb?.extent?.normalized) ?? entity.extent?.normalized ?? !!entity.extent,
     },
     tint: t < .5 ? (sa?.tint ?? entity.tint) : (sb?.tint ?? entity.tint),
     tintWeight: mix(sa?.tintWeight ?? entity.tintWeight, sb?.tintWeight ?? entity.tintWeight),
     forces: {
       mode: t < .5 ? fa.mode : fb.mode,
-      strength: mix(fa.strength, fb.strength),
-      radius: mix(fa.radius, fb.radius),
-      spin: mix(fa.spin, fb.spin),
+      strength: active.get('force_strength') ?? mix(fa.strength, fb.strength),
+      radius: active.get('force_radius') ?? mix(fa.radius, fb.radius),
+      spin: active.get('force_spin') ?? mix(fa.spin, fb.spin),
     },
     sequence,
   };

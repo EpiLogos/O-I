@@ -23,6 +23,63 @@ impl crate::Kernel {
         request: crate::expression::Request,
     ) -> Result<(Value, Option<crate::expression::Changed>), String> {
         if let crate::expression::Request::Procedural {
+            request: intent @ crate::expression::procedural::Request::AuthoredDriver { .. },
+        } = &request
+        {
+            if let Some(sealed) = self.native_expression.procedural_authored_completion.take() {
+                let original = sealed.original();
+                let mut evidence = sealed.response();
+                if original != request {
+                    evidence["state"] = json!("reconciliation_required");
+                    evidence["reason"] =
+                        json!("Private authored completion has another original intent");
+                    evidence["source_current"] = json!(false);
+                    return Ok((evidence, None));
+                }
+                return match self
+                    .expressions
+                    .finish_authored_mutation(&self.client, sealed)
+                {
+                    Ok(result) => Ok(result),
+                    Err(reason) => {
+                        evidence["state"] = json!("reconciliation_required");
+                        evidence["reason"] = json!(reason);
+                        evidence["source_current"] = json!(false);
+                        if let crate::expression::procedural::Request::AuthoredDriver {
+                            expression_ref,
+                            ..
+                        } = intent
+                        {
+                            evidence["document"] = self
+                                .expressions
+                                .procedural_current_receiver_document(expression_ref)
+                                .ok()
+                                .and_then(|document| serde_json::to_value(document).ok())
+                                .unwrap_or(Value::Null);
+                        }
+                        Ok((evidence, None))
+                    }
+                };
+            }
+            let mut response = self.expressions.replay_authored_mutation(intent)?;
+            if response["state"] == "document_applied" {
+                let current = self
+                    .expressions
+                    .authored_replay_owner(intent)?
+                    .ok_or("Original authored private replay owner absent")?
+                    .require_current(&mut self.native_expression);
+                match current {
+                    Ok(()) => response["source_current"] = json!(true),
+                    Err(reason) => {
+                        response["source_current"] = json!(false);
+                        response["state"] = json!("reconciliation_required");
+                        response["reason"] = json!(reason);
+                    }
+                }
+            }
+            return Ok((response, None));
+        }
+        if let crate::expression::Request::Procedural {
             request: control @ crate::expression::procedural::Request::Control { .. },
         } = &request
         {
@@ -160,6 +217,23 @@ impl crate::Kernel {
     }
 
     pub fn native_procedural_conduct(&mut self, input: Request) -> Result<Value, String> {
+        if matches!(input.request["command"]["request"]["action"].as_str(), Some("install_prepared"|"source_continue")) {
+            if input.request["schema"]!="ql.field-host-request/v1" || input.request["command"]["operation"]!="procedure" {
+                return Err("Native definition uses the original scoped Host request".into());
+            }
+            let before=self.expressions.procedural_current_receiver_document(&input.expression_ref)?;
+            if before.revision!=input.document_revision {return Err("revision_conflict".into());}
+            let scene_ref=self.native_expression.native_definition_scene_ref(&self.expressions,before)?;
+            let outcome=if input.request["command"]["request"]["action"]=="install_prepared" {
+                self.native_install_prepared_definition(input,&scene_ref)?
+            } else {
+                self.native_continue_original_definition(input,&scene_ref)?
+            };
+            return match outcome.result {
+                crate::KernelOpResult::NativeExpression {data}=>Ok(data),
+                _=>Err("Native definition returned another original Kernel result".into()),
+            };
+        }
         let before = self
             .expressions
             .procedural_source_snapshot(&input.expression_ref, input.document_revision)?;
@@ -360,13 +434,22 @@ impl crate::Kernel {
     }
 }
 
+#[path = "native_expression_procedural_definition_budget.rs"]
+mod definition_budget;
 impl super::super::Manager {
     pub(crate) fn procedural_definition(
+        &self, lease: &str, expression: &str, procedure: &str,
+    ) -> Result<Value, String> {
+        let definition = self.procedural_definition_borrowed(lease, expression, procedure)?;
+        crate::expression::procedural::bootstrap::preflight_source_message(definition)?;
+        Ok(definition.clone())
+    }
+    pub(crate) fn procedural_definition_borrowed(
         &self,
         lease: &str,
         expression: &str,
         procedure: &str,
-    ) -> Result<Value, String> {
+    ) -> Result<&Value, String> {
         let owner = self
             .active
             .as_ref()
@@ -381,7 +464,7 @@ impl super::super::Manager {
         if definition["expression_ref"] != expression {
             return Err("Native procedure belongs to another Expression".into());
         }
-        Ok(definition.clone())
+        Ok(definition)
     }
     pub(crate) fn check_procedural_definition_budget(
         &self,
@@ -398,17 +481,7 @@ impl super::super::Manager {
         let reference = definition["procedure"]["procedure_ref"]
             .as_str()
             .ok_or("Missing original procedure identity")?;
-        let mut definitions = owner.procedural_definitions.clone();
-        definitions.insert(reference.into(), definition.clone());
-        if definitions.len() > 64
-            || serde_json::to_vec(&definitions)
-                .map_err(|e| e.to_string())?
-                .len()
-                > 8 * 1024 * 1024
-        {
-            return Err("Existing owner procedural qualification budget exceeded".into());
-        }
-        Ok(())
+        definition_budget::prospective(&owner.procedural_definitions, reference, definition)
     }
     pub(crate) fn retain_procedural_definition(
         &mut self,

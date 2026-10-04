@@ -13,6 +13,7 @@ use crate::expression_procedural_scene_reader::NativeDocumentSceneReader;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::io::Write;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -256,7 +257,7 @@ impl Manager {
         }
         #[cfg(any(target_os = "linux", target_os = "macos"))]
         {
-            if self.recording_failure.is_some() {
+            if self.recording_failure.is_some() || self.contact_custody.is_some() {
                 return Err(
                     "original native recording failure remains held; no subsequent delivery".into(),
                 );
@@ -264,7 +265,10 @@ impl Manager {
             let constructor =
                 owner.closed_constructor_fact(reader.document(), &reader.scene().scene_ref)?;
             let mut procedural_query = procedural_query;
-            if !matches!(mode, "recording-command" | "recording-origin") {
+            if !matches!(
+                mode,
+                "recording-command" | "recording-origin" | "recording-save-cut"
+            ) {
                 return Err("foreign recording channel mode".into());
             }
             procedural_query["scene_constructor"] = constructor;
@@ -609,6 +613,16 @@ impl crate::Kernel {
     }
 }
 
+/// Declared by this dispatcher and held equal to its exact DTO by the native
+/// variant parity test. This describes callable source, never source authority.
+pub const RECORDING_OPERATIONS: &[&str] = &[
+    "prepare_scene",
+    "begin",
+    "command",
+    "save_cut",
+    "continue_act",
+];
+
 /// Existing kernel transport receives only authored intent and current CAS.
 /// Deserialization does not construct a SceneOwner, native checkpoint or lease.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -634,6 +648,31 @@ pub enum NativeSceneRecordingRequest {
         actor: String,
         basis: u16,
         checkpoint_ref: String,
+    },
+    SaveCut {
+        request_id: String,
+        lease: String,
+        expression_ref: String,
+        document_revision: u64,
+        scene_ref: String,
+        scene_revision: u64,
+        actor: String,
+        basis: u16,
+        layer: u16,
+        checkpoint_ref: String,
+    },
+    ContinueAct {
+        request_id: String,
+        lease: String,
+        expression_ref: String,
+        document_revision: u64,
+        scene_ref: String,
+        scene_revision: u64,
+        actor: String,
+        act_ref: String,
+        selection: crate::expression_performance_delivery::Selection,
+        checkpoint_index: usize,
+        transaction_ref: String,
     },
     Command {
         request_id: String,
@@ -671,13 +710,35 @@ impl crate::Kernel {
         &mut self,
         request: NativeSceneRecordingRequest,
     ) -> Result<crate::KernelOpOutcome, String> {
-        if self.native_expression.recording_failure.is_some() {
+        if self.native_expression.recording_failure.is_some()
+            || self.native_expression.contact_custody.is_some()
+        {
             return Err("an original native recording failure remains in Manager custody; preserve/resolve it before another recording command".into());
+        }
+        if let Some(cut) = self.native_expression.recording_cut.as_ref() {
+            // Only THIS already committed request may retry its original-file
+            // return. No native exchange, Edit or Session ordinal is repeated.
+            let same_owner = self.native_expression.active.as_ref().is_some_and(|owner| {
+                owner.last_request_id == cut.request_id
+                    && matches!(&cut.request,
+                        NativeSceneRecordingRequest::SaveCut { lease, .. } | NativeSceneRecordingRequest::ContinueAct { lease, .. } if lease == &owner.lease)
+            });
+            if !same_owner || request != cut.request {
+                return Err("the original stopped cut files await native-owner export; a different intent or owner cannot reuse them".into());
+            }
+            return self
+                .native_expression
+                .recording_cut
+                .as_mut()
+                .unwrap()
+                .take_original_return();
         }
         let request_id = match &request {
             NativeSceneRecordingRequest::PrepareScene { request_id, .. }
             | NativeSceneRecordingRequest::Begin { request_id, .. }
-            | NativeSceneRecordingRequest::Command { request_id, .. } => {
+            | NativeSceneRecordingRequest::Command { request_id, .. }
+            | NativeSceneRecordingRequest::SaveCut { request_id, .. }
+            | NativeSceneRecordingRequest::ContinueAct { request_id, .. } => {
                 cursor(&json!(request_id))?
             }
         };
@@ -689,6 +750,7 @@ impl crate::Kernel {
         if active.last_request_id.checked_add(1) != Some(request_id) {
             return Err("recording outer ordinal stale/repeated/skipped; use the SAME actual InstrumentSession".into());
         }
+        let mut committed_cut_request = None;
         let result = match request {
             NativeSceneRecordingRequest::PrepareScene {
                 request_id: _,
@@ -730,6 +792,90 @@ impl crate::Kernel {
                 basis,
                 checkpoint_ref: &checkpoint_ref,
             }),
+            NativeSceneRecordingRequest::SaveCut {
+                request_id,
+                lease,
+                expression_ref,
+                document_revision,
+                scene_ref,
+                scene_revision,
+                actor,
+                basis,
+                layer,
+                checkpoint_ref,
+            } => {
+                let result =
+                    self.save_cut_current_native_scene(CurrentSceneRecordingSaveCutIntent {
+                        lease: &lease,
+                        expression_ref: &expression_ref,
+                        document_revision,
+                        scene_ref: &scene_ref,
+                        scene_revision,
+                        actor: &actor,
+                        basis,
+                        layer,
+                        checkpoint_ref: &checkpoint_ref,
+                    });
+                // Move the complete authored intent after the real native call;
+                // retain no caller-data clone or alternate writable Document.
+                committed_cut_request = Some(NativeSceneRecordingRequest::SaveCut {
+                    request_id,
+                    lease,
+                    expression_ref,
+                    document_revision,
+                    scene_ref,
+                    scene_revision,
+                    actor,
+                    basis,
+                    layer,
+                    checkpoint_ref,
+                });
+                result
+            }
+            NativeSceneRecordingRequest::ContinueAct {
+                request_id,
+                lease,
+                expression_ref,
+                document_revision,
+                scene_ref,
+                scene_revision,
+                actor,
+                act_ref,
+                selection,
+                checkpoint_index,
+                transaction_ref,
+            } => {
+                let result = self.continue_current_native_scene_act(
+                    super::scene_continuation::CurrentSceneContinueActIntent {
+                        lease: &lease,
+                        expression_ref: &expression_ref,
+                        document_revision,
+                        scene_ref: &scene_ref,
+                        scene_revision,
+                        actor: &actor,
+                        act_ref: &act_ref,
+                        selection: selection.clone(),
+                        checkpoint_index,
+                        transaction_ref: &transaction_ref,
+                    },
+                );
+                // Keep the SAME original continuation intent for file-return recovery.
+                // This moves its already admitted selection; no new native request is issued.
+                committed_cut_request = Some(NativeSceneRecordingRequest::ContinueAct {
+                    request_id,
+                    lease,
+                    expression_ref,
+                    document_revision,
+                    scene_ref,
+                    scene_revision,
+                    actor,
+                    act_ref,
+                    selection,
+                    checkpoint_index,
+                    transaction_ref,
+                });
+                result
+            }
             NativeSceneRecordingRequest::Command {
                 request_id: _,
                 lease,
@@ -775,10 +921,23 @@ impl crate::Kernel {
             .and_then(Option::as_ref)
             .map(|outcome| outcome.receipts.clone())
             .unwrap_or_default();
+        let original_kind =
+            if native_reply["result"]["schema"] == "ql.native-scene-recording-save-cut/v1" {
+                Some(RecordingOriginalKind::SaveCut)
+            } else if native_reply["result"]["readmitted"] == true && !diagnostics.is_empty() {
+                Some(RecordingOriginalKind::Continuation)
+            } else {
+                None
+            };
         let data = json!({"schema":"oi.native-scene-recording-result/v1","accepted":accepted,
+            "recording_operations":RECORDING_OPERATIONS,
             "application":application.as_ref().map(|op|op.as_ref().map(|op|&op.result)),
             "currentness":currentness,"native_reply":native_reply,"diagnostics":diagnostics.reading(),
             "delivery_attempted":delivery_attempted});
+        let outcome = crate::KernelOpOutcome {
+            receipts,
+            result: crate::KernelOpResult::NativeExpression { data },
+        };
         if !accepted && (delivery_attempted || !native_reply.is_null() || !diagnostics.is_empty()) {
             self.native_expression.recording_failure = Some(NativeRecordingFailureCustody {
                 reason: application
@@ -791,11 +950,28 @@ impl crate::Kernel {
                 reply: native_reply,
                 diagnostics,
             });
+        } else if let (true, Some(kind)) = (accepted, original_kind) {
+            // Success owns original files too. NativeHost must copy each actual
+            // file before releasing this typed custody and admitting the next
+            // Session request; a descriptor-only response is not retention.
+            self.native_expression.recording_cut = Some(NativeRecordingCutCustody {
+                kind,
+                request_id,
+                request: committed_cut_request
+                    .ok_or("native file-custodied operation lost its original authored request")?,
+                outcome,
+                publication_receipts_returned: false,
+                diagnostics,
+                exported: std::collections::BTreeSet::new(),
+            });
+            return self
+                .native_expression
+                .recording_cut
+                .as_mut()
+                .unwrap()
+                .take_original_return();
         }
-        Ok(crate::KernelOpOutcome {
-            receipts,
-            result: crate::KernelOpResult::NativeExpression { data },
-        })
+        Ok(outcome)
     }
     pub fn native_recording_failure_reply(&self) -> Option<&Value> {
         self.native_expression
@@ -820,6 +996,69 @@ impl crate::Kernel {
 #[cfg(test)]
 mod outer_recording_intent_tests {
     use super::*;
+    #[test]
+    fn declared_recording_operations_match_the_actual_serde_dispatch_surface() {
+        let common = json!({"request_id":"1","lease":"native:lease","expression_ref":"expression:original",
+            "document_revision":1,"scene_ref":"scene:original","scene_revision":1,"actor":"user:record"});
+        let mut prepare = common.clone();
+        prepare["operation"] = json!("prepare_scene");
+        prepare["definition"] = json!({"declared_seed":"1","performance_ref":"performance:declared",
+            "layer_ref":"layer:declared","title":"Declared instrument","duration_samples":"48000",
+            "ppq":960,"micros_per_quarter":500000,"max_reconstruction_samples":"48000"});
+        let mut begin = common.clone();
+        begin["operation"] = json!("begin");
+        begin["basis"] = json!(0);
+        begin["checkpoint_ref"] = json!("native:record/birth");
+        let mut command = common.clone();
+        command["operation"] = json!("command");
+        command["basis"] = json!(0);
+        command["layer"] = json!(0);
+        command["command"] = json!({"operation":"performance-inspect"});
+        let mut save = common;
+        save["operation"] = json!("save_cut");
+        save["basis"] = json!(0);
+        save["layer"] = json!(0);
+        save["checkpoint_ref"] = json!("native:record/later-take");
+        let mut continuation = save.clone();
+        continuation["operation"] = json!("continue_act");
+        continuation.as_object_mut().unwrap().remove("basis");
+        continuation.as_object_mut().unwrap().remove("layer");
+        continuation
+            .as_object_mut()
+            .unwrap()
+            .remove("checkpoint_ref");
+        continuation["act_ref"] = json!("act:actual-retained");
+        continuation["checkpoint_index"] = json!(0);
+        continuation["transaction_ref"] = json!("transaction:actual-continue");
+        continuation["selection"] = json!({"expected_act_revision":1,"edition_position":0,"scene_ref":"scene:original","expected_expression_revision":1,"expected_scene_revision":1,"performance_digest":"sha256:original-selection"});
+        let requests = [prepare, begin, command, save.clone(), continuation];
+        let operations = requests
+            .into_iter()
+            .map(|wire| {
+                let request: NativeSceneRecordingRequest = serde_json::from_value(wire).unwrap();
+                serde_json::to_value(request).unwrap()["operation"]
+                    .as_str()
+                    .unwrap()
+                    .to_owned()
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(operations, RECORDING_OPERATIONS);
+        for key in [
+            "native_checkpoint",
+            "source",
+            "receipt",
+            "samples_elapsed",
+            "transport_epoch",
+            "native_target",
+        ] {
+            let mut foreign = save.clone();
+            foreign[key] = json!("1");
+            assert!(
+                serde_json::from_value::<NativeSceneRecordingRequest>(foreign).is_err(),
+                "{key}"
+            );
+        }
+    }
     #[test]
     fn begin_outer_ordinal_does_not_grant_native_audio_time_or_checkpoint() {
         let base = json!({"operation":"begin","request_id":"1","lease":"native:lease",
@@ -883,6 +1122,389 @@ impl NativeCurrentRecordingRefusal {
             native_reply,
             diagnostics,
             delivery_attempted,
+        }
+    }
+}
+
+/// Authored stopped current checkpoint address, distinct from immutable birth.
+pub struct CurrentSceneRecordingSaveCutIntent<'a> {
+    pub lease: &'a str,
+    pub expression_ref: &'a str,
+    pub document_revision: u64,
+    pub scene_ref: &'a str,
+    pub scene_revision: u64,
+    pub actor: &'a str,
+    pub basis: u16,
+    pub layer: u16,
+    pub checkpoint_ref: &'a str,
+}
+impl crate::Kernel {
+    pub fn save_cut_current_native_scene(
+        &mut self,
+        input: CurrentSceneRecordingSaveCutIntent<'_>,
+    ) -> Result<NativeSceneRecordingCommit, NativeCurrentRecordingRefusal> {
+        crate::expression::text(input.actor)?;
+        crate::expression::text(input.checkpoint_ref)?;
+        let before = self
+            .expressions
+            .procedural_source_snapshot(input.expression_ref, input.document_revision)?;
+        let performance = before
+            .scenes
+            .iter()
+            .find(|scene| scene.scene_ref == input.scene_ref)
+            .and_then(|scene| scene.performance.as_ref())
+            .ok_or("save cut Scene has no retained native performance")?;
+        require_retained_recording_prefix(
+            performance,
+            &RecordingIntent {
+                actor: input.actor.to_owned(),
+                basis: input.basis,
+                layer: input.layer,
+            },
+        )?;
+        if performance
+            .checkpoints
+            .iter()
+            .any(|checkpoint| checkpoint.checkpoint_ref == input.checkpoint_ref)
+        {
+            return Err("save-cut checkpoint address already retained; choose a new authored take/cut address".into());
+        }
+        let owner = self
+            .expressions
+            .procedural_scene_owner(&before, input.scene_ref)?;
+        let reader = NativeDocumentSceneReader::from_native_scene_owner(
+            &self.expressions,
+            &owner,
+            before,
+            input.scene_ref,
+            input.scene_revision,
+        )?;
+        self.expressions
+            .require_procedural_scene_owner(&owner, reader.document())?;
+        let (id, reply) = self.native_expression.capture_recording_exchange(
+            input.lease,
+            &reader,
+            &owner,
+            "recording-save-cut",
+            json!({"schema":"ql.native-scene-recording-save-cut/v1"}),
+        )?;
+        let prepared = self
+            .expressions
+            .prepare_native_scene_recording_save_cut(
+                reader.document(),
+                input.scene_ref,
+                owner,
+                id,
+                super::recording::RecordingSaveCutIntent {
+                    actor: input.actor.into(),
+                    basis: input.basis,
+                    layer: input.layer,
+                    checkpoint_ref: input.checkpoint_ref.into(),
+                },
+                reply,
+            )
+            .map_err(NativeCurrentRecordingRefusal::from)?;
+        Ok(self.finish_native_scene_recording_save_cut(prepared))
+    }
+}
+
+/// Successful stopped-cut originals on the same actual Manager. No serde,
+/// Clone or imported path constructor. Export acknowledgements are produced
+/// only after the native owner writes and flushes the original held bytes.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RecordingOriginalKind {
+    SaveCut,
+    Continuation,
+}
+impl RecordingOriginalKind {
+    fn field(self) -> &'static str {
+        match self {
+            Self::SaveCut => "original_cut_files",
+            Self::Continuation => "original_continuation_files",
+        }
+    }
+    fn schema(self) -> &'static str {
+        match self {
+            Self::SaveCut => "oi.native-recording-cut-original-files/v1",
+            Self::Continuation => "oi.native-recording-continuation-original-files/v1",
+        }
+    }
+}
+pub(super) struct NativeRecordingCutCustody {
+    kind: RecordingOriginalKind,
+    request_id: u64,
+    request: NativeSceneRecordingRequest,
+    outcome: crate::KernelOpOutcome,
+    publication_receipts_returned: bool,
+    diagnostics: NativeDiagnosticReceipts,
+    exported: std::collections::BTreeSet<u64>,
+}
+impl NativeRecordingCutCustody {
+    fn take_original_return(&mut self) -> Result<crate::KernelOpOutcome, String> {
+        // The immutable original remains evidence in SAME native custody.
+        // Tauri/walk publish the returned receipts; only the first return may
+        // expose them. A retry recovers the original result and HostReceipt,
+        // while the existing ordered kernel log remains the cursor authority.
+        // Failed preflight leaves this fence and all original files untouched.
+        crate::expression_act_storage::measure(&self.outcome, super::MAX_REPLY)?;
+        let mut returned = self.outcome.clone();
+        if self.publication_receipts_returned {
+            returned.receipts.clear();
+        }
+        self.publication_receipts_returned = true;
+        Ok(returned)
+    }
+    fn reply(&self) -> &Value {
+        let crate::KernelOpResult::NativeExpression { data } = &self.outcome.result else {
+            unreachable!("a recording cut retains its original native result family")
+        };
+        &data["native_reply"]
+    }
+}
+impl std::fmt::Debug for NativeRecordingCutCustody {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("NativeRecordingCutCustody")
+            .field("request_id", &self.request_id)
+            .field("originals", &self.diagnostics.reading())
+            .field("exported", &self.exported)
+            .finish_non_exhaustive()
+    }
+}
+impl crate::Kernel {
+    pub fn native_recording_cut_reply(&self) -> Option<&Value> {
+        self.native_expression
+            .recording_cut
+            .as_ref()
+            .map(NativeRecordingCutCustody::reply)
+    }
+    pub fn native_recording_cut_diagnostic_reading(&self) -> Option<Value> {
+        self.native_expression
+            .recording_cut
+            .as_ref()
+            .map(|cut| cut.diagnostics.reading())
+    }
+    /// NativeHost's existing original-file transport writes one checked original
+    /// at a time. A failed/partial write retains custody and never ACKs export.
+    pub fn write_native_recording_cut_diagnostic(
+        &mut self,
+        ordinal: u64,
+        output: &mut impl Write,
+    ) -> Result<(), String> {
+        let cut = self
+            .native_expression
+            .recording_cut
+            .as_mut()
+            .ok_or("original stopped recording cut absent")?;
+        cut.diagnostics.write_receipt(ordinal, output)?;
+        output.flush().map_err(|e| e.to_string())?;
+        cut.exported.insert(ordinal);
+        Ok(())
+    }
+    /// No public native request routes this release. The native transport calls
+    /// it only after both original-file writes; a browser cannot supply an ACK.
+    pub fn release_native_recording_cut_custody(&mut self, request_id: u64) -> Result<(), String> {
+        let cut = self
+            .native_expression
+            .recording_cut
+            .as_ref()
+            .ok_or("original stopped recording cut absent")?;
+        let reading = cut.diagnostics.reading();
+        let originals = reading["receipts"]
+            .as_array()
+            .ok_or("original stopped cut files absent")?;
+        if cut.request_id != request_id
+            || originals.len() != 2
+            || originals.iter().any(|receipt| {
+                receipt["complete"] != true
+                    || !cursor(&receipt["descriptor"]["receipt_ordinal"])
+                        .is_ok_and(|ordinal| cut.exported.contains(&ordinal))
+            })
+        {
+            return Err(
+                "original stopped cut files are not wholly exported by this native request".into(),
+            );
+        }
+        self.native_expression.recording_cut.take();
+        Ok(())
+    }
+
+    /// Called at the existing NativeHost/walk return boundary, under the SAME
+    /// Kernel mutex. The destination is chosen by that native host, never by a
+    /// public request. Each original is copied separately; no aggregate CP is
+    /// reconstructed and no file/hash/reference grants source authority.
+    pub fn finish_native_recording_cut_return(
+        &mut self,
+        outcome: &mut crate::KernelOpOutcome,
+        native_directory: Result<PathBuf, String>,
+    ) {
+        let crate::KernelOpResult::NativeExpression { data } = &mut outcome.result else {
+            return;
+        };
+        if data["schema"] != "oi.native-scene-recording-result/v1" || data["accepted"] != true {
+            return;
+        }
+        let Some(custody) = self.native_expression.recording_cut.as_ref() else {
+            return;
+        };
+        if &data["native_reply"] != custody.reply() {
+            return;
+        }
+        let kind = custody.kind;
+        let exported = native_directory
+            .and_then(|directory| self.export_native_recording_cut_originals(&directory));
+        match exported {
+            Ok(originals) => data[kind.field()] = originals,
+            Err(reason) => {
+                // The actual Scene checkpoint has committed. Keep that actual
+                // CAS and original HostReceipt in the refused return; retain
+                // both source files and block further captured delivery.
+                data["accepted"] = json!(false);
+                data[kind.field()] = json!({
+                    "schema":kind.schema(),
+                    "available":false,"reason":reason,
+                    "document_committed":data["application"].get("Ok").is_some()
+                });
+            }
+        }
+    }
+
+    fn export_native_recording_cut_originals(
+        &mut self,
+        native_directory: &Path,
+    ) -> Result<Value, String> {
+        use sha2::{Digest, Sha256};
+        use std::fs::{self, DirBuilder, OpenOptions};
+        use std::os::unix::fs::{DirBuilderExt, MetadataExt, OpenOptionsExt};
+
+        let cut = self
+            .native_expression
+            .recording_cut
+            .as_ref()
+            .ok_or("original stopped recording cut absent")?;
+        let request_id = cut.request_id;
+        let original_kind = cut.kind;
+        let reading = cut.diagnostics.reading();
+        let originals = reading["receipts"]
+            .as_array()
+            .ok_or("original stopped cut file descriptors absent")?;
+        let coherent = match cut.kind {
+            RecordingOriginalKind::SaveCut => {
+                originals.len() == 2
+                    && originals[0]["descriptor"]["kind"] == "recording.cut_observation"
+                    && originals[1]["descriptor"]["kind"] == "recording.cut_checkpoint"
+            }
+            RecordingOriginalKind::Continuation => {
+                originals.len() == 2
+                    && originals[0]["descriptor"]["kind"] == "before_restoration_receipt"
+                    && originals[0]["descriptor"]["original_index"] == "0"
+                    && originals[1]["descriptor"]["kind"] == "source_readoption_original_request"
+                    && originals[1]["descriptor"]["original_index"] == "1"
+            }
+        };
+        if !coherent || originals.iter().any(|receipt| receipt["complete"] != true) {
+            return Err("stopped cut original file cohort is incomplete".into());
+        }
+        if !native_directory.is_absolute() {
+            return Err("native cut return destination is not absolute".into());
+        }
+        match fs::symlink_metadata(native_directory) {
+            Ok(_) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                DirBuilder::new()
+                    .recursive(true)
+                    .mode(0o700)
+                    .create(native_directory)
+                    .map_err(|error| error.to_string())?;
+            }
+            Err(error) => return Err(error.to_string()),
+        }
+        let root = fs::symlink_metadata(native_directory).map_err(|error| error.to_string())?;
+        if !root.is_dir() || root.mode() & 0o777 != 0o700 {
+            return Err("native cut return directory is not private native custody".into());
+        }
+        let mut random = [0u8; 32];
+        getrandom::fill(&mut random).map_err(|error| error.to_string())?;
+        let directory =
+            native_directory.join(format!("cut-{request_id}-{:x}", Sha256::digest(random)));
+        DirBuilder::new()
+            .mode(0o700)
+            .create(&directory)
+            .map_err(|error| error.to_string())?;
+        let mut attempt = NativeCutExportAttempt {
+            directory: directory.clone(),
+            complete: false,
+        };
+        let mut files = Vec::new();
+        for original in originals {
+            let descriptor = &original["descriptor"];
+            let ordinal = cursor(&descriptor["receipt_ordinal"])?;
+            let bytes = cursor(&descriptor["bytes"])?;
+            let file_name = format!("original-{ordinal}.json");
+            let path = directory.join(&file_name);
+            let mut output = OpenOptions::new()
+                .read(true)
+                .write(true)
+                .create_new(true)
+                .mode(0o600)
+                .custom_flags(libc::O_NOFOLLOW)
+                .open(&path)
+                .map_err(|error| error.to_string())?;
+            self.write_native_recording_cut_diagnostic(ordinal, &mut output)?;
+            output.sync_all().map_err(|error| error.to_string())?;
+            let metadata = output.metadata().map_err(|error| error.to_string())?;
+            let copied = fs::read(&path).map_err(|error| error.to_string())?;
+            if !metadata.is_file()
+                || metadata.mode() & 0o777 != 0o600
+                || metadata.len() != bytes
+                || copied.len() as u64 != bytes
+                || descriptor["sha256"] != format!("sha256:{:x}", Sha256::digest(&copied))
+            {
+                return Err("native cut original copy lost complete bytes".into());
+            }
+            files.push(json!({"descriptor":descriptor,"file":file_name}));
+        }
+        let current = fs::symlink_metadata(native_directory).map_err(|error| error.to_string())?;
+        if root.dev() != current.dev()
+            || root.ino() != current.ino()
+            || root.uid() != current.uid()
+            || root.mode() != current.mode()
+        {
+            return Err("native cut return directory changed during original copy".into());
+        }
+        let manifest = json!({"schema":original_kind.schema(),
+            "available":true,"request_id":request_id.to_string(),"directory":directory,
+            "encoding":reading["encoding"],"files":files});
+        let mut output = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .custom_flags(libc::O_NOFOLLOW)
+            .open(directory.join("manifest.json"))
+            .map_err(|error| error.to_string())?;
+        serde_json::to_writer(&mut output, &manifest).map_err(|error| error.to_string())?;
+        output
+            .flush()
+            .and_then(|_| output.sync_all())
+            .map_err(|error| error.to_string())?;
+        fs::File::open(&directory)
+            .and_then(|file| file.sync_all())
+            .map_err(|error| error.to_string())?;
+        self.release_native_recording_cut_custody(request_id)?;
+        attempt.complete = true;
+        Ok(manifest)
+    }
+}
+
+/// Only newly generated copies are removed after a failed export. Original
+/// received PrivateFiles remain held by the actual Manager on every failure.
+struct NativeCutExportAttempt {
+    directory: PathBuf,
+    complete: bool,
+}
+impl Drop for NativeCutExportAttempt {
+    fn drop(&mut self) {
+        if !self.complete {
+            let _ = std::fs::remove_dir_all(&self.directory);
         }
     }
 }

@@ -1,3 +1,5 @@
+import type {KernelConversion} from './kernelDocumentBridge';
+import {projectNativeEntityControls} from './proceduralNativeControlProjection';
 import {applyBlueprintAnchors} from './blueprintGeometry.js';
 import {stateSource} from './sourceState';
 import {resolvedAutomation,automationLeader} from './automationLinks';
@@ -114,13 +116,13 @@ function projectNativeConfig(s:Scene):PointCloudConfig{
  return cfg;
 }
 /** Lossless native documents: display defaults do not rewrite unedited native data. */
-export function toNativeConfig(s:Scene):PointCloudConfig {
+export function toNativeConfig(s:Scene,correspondence?:KernelConversion):PointCloudConfig {
  const projected=projectNativeConfig(s);
- if(!s.native)return applyBlueprintAnchors(s,projected);
+ if(!s.native)return projectNativeEntityControls(s,applyBlueprintAnchors(s,projected),correspondence);
  // Earlier Expressions files have an original config but no projection baseline.
  // Recover that baseline without mutating the document or erasing authored edits.
  const baseline=s.native.projection??nativeSnapshotToJourney({schemaVersion:CONFIG_SCHEMA_VERSION,config:s.native.config}).scenes[0].native!.projection!;
- return applyBlueprintAnchors(s,applyNativeDelta(s.native.config,baseline,projected) as PointCloudConfig);
+ return projectNativeEntityControls(s,applyBlueprintAnchors(s,applyNativeDelta(s.native.config,baseline,projected) as PointCloudConfig),correspondence);
 }
 const shellShape=(s:NativeShape):Shape=>s.kind==='glyph'?'text':s.kind==='primitive'?s.primitive??'disc':s.kind;
 export function fromNativeEntity(e:NativeEntity):Entity{
@@ -184,7 +186,7 @@ export function importDocuments(raw:unknown):{journeys:Journey[];errors:{index:n
  }catch(e){errors.push({index,message:e instanceof Error?e.message:String(e)});}
  return{journeys,errors};
 }
-export function nativeExport(s:Scene){return{schemaVersion:CONFIG_SCHEMA_VERSION,id:s.id,name:s.name,timestamp:Date.now(),config:toNativeConfig(s),authoringView:clone(s.view),source:s.native?.original};}
+export function nativeExport(s:Scene,correspondence?:KernelConversion){return{schemaVersion:CONFIG_SCHEMA_VERSION,id:s.id,name:s.name,timestamp:Date.now(),config:toNativeConfig(s,correspondence),authoringView:clone(s.view),source:s.native?.original};}
 export function nativeChakras():Entity[]{return makeSemanticChakraEntities('yantra').slice().reverse().map((e,i)=>{
  const out=fromNativeEntity(e);out.position={x:.18,y:-.82+i*.274,z:0};out.size={x:.235,y:.235};out.scale=1;out.native={...e,extent:{width:94,height:94,rotation:0}};out.force.radius=.27;return out;
 });}

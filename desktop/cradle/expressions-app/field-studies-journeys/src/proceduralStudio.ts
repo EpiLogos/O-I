@@ -1,20 +1,21 @@
 /** Procedural authorship over the existing Studio and native Workspace.
  * This view owns DOM and uncommitted form text only. The Workspace owns CAS,
  * recovery and adoption; native scene/body/audio owners alone report effects. */
-import {clone,blankScene,type Journey,type Scene} from './model';
+import {clone,blankScene,validateJourney,type EntityLayer,type Journey,type Scene} from './model';
 import {automationTarget,NATIVE_BINDINGS} from './nativeParameters';
 import {isShared,effectiveScene,globalPath,writeShared} from './sharedSettings';
 import {resolvedAutomation} from './automationLinks';
 import {prepareCompositionEdit} from './kernelComposition';
 import type {KernelConversion} from './kernelDocumentBridge';
-import {controlCapabilities,takeOver,releaseControl,setAuthoredBase,recordControl,type PropertyCapability,type ControlContext} from './proceduralControls';
+import {controlCapabilities,recordControl,type PropertyCapability,type ControlContext} from './proceduralControls';
 import {retention,withRetention,addressKey,addressCovers,validateAddress,type StageAddress,type SourceBasis,type ManifestationBinding,type RestorationMode,type ContributionRetention} from './proceduralRetention';
-import {ProceduralClient,proceduralChanges,validateEnvelope,validateOperation,sameNative,observationBasisCurrent,type Scope,type Participant,type Envelope,type Operation,type StateReading,type Observation,type ProceduralOwner} from './proceduralProtocol';
+import {ProceduralClient,proceduralChanges,validateEnvelope,validateOperation,sameNative,type Scope,type Participant,type Envelope,type Operation,type StateReading,type Observation,type ProceduralOwner} from './proceduralProtocol';
 
 export interface StudioBasis {expression_ref:string;document_revision:number;scene_ref:string}
 export interface StudioSnapshot {view:KernelConversion;journey:Readonly<Journey>;sceneId:string;selected:readonly string[];/** Existing DocumentStore revision, so native pulses update values without rebuilding forms. */draft_revision?:number;/** Current qualified native source readings, never inferred from a saved recipe. */currentSources?:readonly SourceBasis[];/** Actual admitted host instances and their CURRENT generations. Missing reception is disclosed as unobserved. */currentConsumers?:readonly Participant[];}
 export type StudioChangeIntent=
  |{kind:'control';basis:StudioBasis;operation_ref:string;address:StageAddress;target:string;mode:'set_base'|'takeover'|'release'|'record';value?:number;lifetime?:'gesture'|'persistent';record?:{time_seconds:number;track_ref:string}}
+ |{kind:'layer_material';basis:StudioBasis;operation_ref:string;address:StageAddress;original_value:unknown;value:unknown;principal_basis:string;source_basis:SourceBasis[]}
  |{kind:'shared_control';basis:StudioBasis;operation_ref:string;address:StageAddress;target:string;value:number}
  |{kind:'detach';basis:StudioBasis;operation_ref:string;contribution_ref:string}
  |{kind:'insert_scene';basis:StudioBasis;operation_ref:string;name:string}
@@ -35,6 +36,13 @@ export interface ProceduralStudioHost {
   * Check this intent's original basis, flush only its own admitted local draft,
   * then buildStudioEnvelope on that new basis and perform native preparation. */
  prepare(intent:StudioChangeIntent):Promise<Operation>;
+ /** Actual atomic Expression.procedural control route; no frontend driver or
+  * attribution metadata is submitted as authority. Callback presence alone is
+  * not live availability: the actual native driver read must return first. */
+ readNativeDriver?(intent:StudioNativeDriverIntent):Promise<NativeParameterDriverReading>;
+ applyNativeControl?(intent:StudioNativeControlIntent):Promise<NativeControlResult>;
+ pendingNativeControl?():PendingNativeControl|null;
+ retryNativeControl?():Promise<NativeControlResult>;
  /** Optional until actual QL typed producer is joined; absence is disclosed. */
  procedureTemplates?():readonly NativeProcedureTemplate[];
  prepareProcedure?(intent:ProcedureAuthoringIntent):Promise<ProcedurePreview>;
@@ -174,7 +182,8 @@ export function buildStudioEnvelope(snapshot:StudioSnapshot,intent:StudioChangeI
  const journey=clone(snapshot.journey);let index=journey.scenes.findIndex(s=>s.id===snapshot.sceneId);
  if(index<0)throw Error('Current authored Scene disappeared');
  let scope:Scope={kind:'scenes',scene_refs:[basis.scene_ref]},focus:string|undefined;
- if(intent.kind==='shared_control'){
+ if(intent.kind==='layer_material'){index=authorBaseLayer(snapshot,journey,intent);scope={kind:'addresses',addresses:[intent.address]};
+ }else if(intent.kind==='shared_control'){
   const capability=sharedControlCapabilities(snapshot).find(c=>c.target===intent.target&&addressKey(c.address)===addressKey(intent.address));
   if(!capability||!Number.isFinite(intent.value)||intent.value<capability.min||intent.value>capability.max)throw Error('The shared property is unavailable or outside its actual native scalar domain');
   const [,bucket,...parts]=intent.target.split(':'),bind=parts.join(':');
@@ -189,24 +198,12 @@ export function buildStudioEnvelope(snapshot:StudioSnapshot,intent:StudioChangeI
   const context=studioControlContext({...snapshot,sceneId:sceneId!}),capability=controlCapabilities(journey.scenes[index],context).find(c=>c.target===intent.target&&addressKey(c.address)===addressKey(intent.address));
   if(!capability)throw Error('This property no longer addresses the captured native target');
   const target=automationTarget(journey.scenes[index],intent.target)!;
-  if(intent.mode==='takeover'&&!target.entityId&&isShared(journey,journey.scenes[index],target.bind))throw Error('The Expression override owns this value; address its native whole-field target before takeover');
-  if(intent.mode==='release')journey.scenes[index]=releaseControl(journey.scenes[index],intent.address);
-  else{
-   if(typeof intent.value!=='number'||!Number.isFinite(intent.value))throw Error('Enter a finite property value');
-   if(intent.mode==='set_base')journey.scenes[index]=setAuthoredBase(journey.scenes[index],intent.target,intent.value);
-   else if(intent.mode==='takeover'){
-    if(!intent.lifetime)throw Error('Choose the manual intervention lifetime');
-    journey.scenes[index]=takeOver(journey.scenes[index],{context,target:intent.target,value:intent.value,actor,operation_ref:intent.operation_ref,lifetime:intent.lifetime});
-   }else{
-    if(!intent.record)throw Error('Recording needs an admitted owner position and track identity');
-    journey.scenes[index]=recordControl(journey.scenes[index],{target:intent.target,value:intent.value,time:intent.record.time_seconds,track_ref:intent.record.track_ref});
-   }
-  }
+  if(intent.mode!=='record')throw Error('Use the actual native Source-owned scalar control intent port; caller driver/override metadata is not authority');
+  if(typeof intent.value!=='number'||!Number.isFinite(intent.value)||!intent.record)throw Error('Recording needs a finite value, admitted owner position and track identity');
+  journey.scenes[index]=recordControl(journey.scenes[index],{target:intent.target,value:intent.value,time:intent.record.time_seconds,track_ref:intent.record.track_ref});
   scope={kind:'addresses',addresses:[intent.address]};
  }else if(intent.kind==='detach'){
-  const r=retention(journey.scenes[index]),c=r.contributions.find(c=>c.contribution_ref===intent.contribution_ref);
-  if(!c||c.status!=='active')throw Error('The generated contribution is absent or already detached');
-  c.status='detached';journey.scenes[index]=withRetention(journey.scenes[index],r);
+  throw Error('Per-contribution detachment requires the native Source-owned intent endpoint; caller retention metadata is not authority');
  }else if(intent.kind==='insert_scene'){
   const name=intent.name.trim();if(!name||name.length>160||journey.scenes.length>=64)throw Error('Name the new scene within the admitted 64-scene budget');
   journey.scenes.splice(index+1,0,blankScene(name));scope={kind:'expression'};
@@ -215,10 +212,7 @@ export function buildStudioEnvelope(snapshot:StudioSnapshot,intent:StudioChangeI
   if(intent.scene_refs.length!==journey.scenes.length||new Set(intent.scene_refs).size!==refs.length||refs.some(ref=>!intent.scene_refs.includes(ref)))throw Error('Scene reorder must retain every existing native Scene exactly once');
   journey.scenes.sort((a,b)=>intent.scene_refs.indexOf(snapshot.view.bindings[a.id].scene_ref)-intent.scene_refs.indexOf(snapshot.view.bindings[b.id].scene_ref));scope={kind:'expression'};
  }else{
-  const destination=Object.entries(snapshot.view.bindings).find(([,binding])=>binding.scene_ref===intent.to_scene_ref);
-  if(!destination||destination[1].scene_ref===basis.scene_ref||!Number.isSafeInteger(intent.cursor)||intent.cursor<0)throw Error('Choose another admitted Scene and its native continuation position');
-  const r=retention(journey.scenes[index]);r.scene_flow.push({from_scene_ref:basis.scene_ref,to_scene_ref:intent.to_scene_ref,policy:intent.policy,cursor:intent.cursor});
-  journey.scenes[index]=withRetention(journey.scenes[index],r);focus=destination[0];scope={kind:'expression'};
+  throw Error('Scene continuation policy requires the native Source-owned flow and observed cursor endpoint; caller scene_flow metadata is not authority');
  }
  const edit=prepareCompositionEdit(snapshot.view,journey,focus?{sceneId:focus,entityId:null,actor}:{actor});
  if(!edit.changes.length)throw Error('The proposed native edit has no changed material');
@@ -250,7 +244,7 @@ export function generatedPropertyBasis(snapshot:StudioSnapshot,contribution:Cont
 export function effectiveProperty(reading:StateReading|null,address:StageAddress,revision:number,currentConsumers:readonly Participant[]=[]):PropertyReading['effective'] {
  if(!reading||reading.document_revision!==revision||!currentConsumers.length)return null;
  for(const observation of reading.effective_observations){
-  if(!observationBasisCurrent(reading,observation)||!observation.owner||!observation.instance_ref||!observation.operation_ref||!Number.isSafeInteger(observation.generation)||observation.generation<1||!Number.isSafeInteger(observation.cursor)||observation.cursor<0||!observation.targets.some(a=>addressCovers(a,address)))continue;
+  if(observation.document_revision!==revision||!observation.owner||!observation.instance_ref||!observation.operation_ref||!Number.isSafeInteger(observation.generation)||observation.generation<1||!Number.isSafeInteger(observation.cursor)||observation.cursor<0||!observation.targets.some(a=>addressCovers(a,address)))continue;
   if(!currentConsumers.some(p=>p.owner===observation.owner&&p.instance_ref===observation.instance_ref&&p.required_generation===observation.generation&&p.targets.some(a=>addressCovers(a,address))))continue;
   const values=(observation.effective as {values?:Array<{address:StageAddress;value:unknown}>}|null)?.values;
   if(!Array.isArray(values))continue;
@@ -290,7 +284,7 @@ function label(text:string,input:HTMLElement):HTMLLabelElement{const l=element('
 function choices(rows:Array<[string,string]>,name:string):HTMLSelectElement{const s=element('select');s.setAttribute('aria-label',name);for(const [value,title] of rows){const o=element('option',title);o.value=value;s.append(o);}return s;}
 function section(title:string):{root:HTMLDetailsElement;content:HTMLDivElement}{const root=element('details');root.open=true;root.append(element('summary',title));const content=element('div');root.append(content);return {root,content};}
 
-export interface ProceduralStudio {readonly panel:HTMLElement;attach(mount:HTMLElement):void;setActive(active:boolean):void;refresh():void;read():Promise<void>;dispose():void;}
+export interface ProceduralStudio {readonly panel:HTMLElement;attach(mount:HTMLElement):void;setActive(active:boolean):void;refresh():void;read():Promise<void>;acceptPrepared(operation:Operation):Promise<void>;dispose():void;}
 export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStudio {
  const panel=element('section',undefined,'procedural-studio');panel.setAttribute('aria-label','Procedural stage');panel.style.overflowWrap='anywhere';panel.style.minWidth='0';
  const intro=element('p','Inspect the whole stage or a native constituent. Preview a change, then apply it to the same work.','control-note');
@@ -306,14 +300,35 @@ export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStu
  const propertyChoice=choices([],'Native property'),value=element('input');value.type='number';value.step='any';value.setAttribute('aria-label','Property value');
  const lifetime=choices([['persistent','Persistent authored override'],['gesture','Temporary takeover; release explicitly']],'Intervention lifetime');
  const propertyFacts=element('div'),controlActions=element('div'),draftNotice=element('p','','control-note');
+ const controlProcedure=choices([],'Native control procedure'),driverFacts=element('div'),controlReceiptFacts=element('div');
+ let nativeDriver:NativeParameterDriverReading|null=null,driverSignature='',driverReason='Read the actual native Parameter driver before applying a scalar control.',retainedControlIntent:StudioNativeControlIntent|null=null,lastControlResult:NativeControlResult|null=null;
+ const controlSignature=()=>snapshot?JSON.stringify([studioBasis(snapshot),propertyChoice.value,snapshot.draft_revision??snapshot.journey.updatedAt]):'';
+ const acceptControl=(result:NativeControlResult)=>{
+  lastControlResult=result;retainedControlIntent=result.receipt.state==='document_applied'?null:clone(result.intent);nativeDriver=null;driverSignature='';refresh();
+  say(result.receipt.state==='document_applied'?'Native Document control applied. Effective field/body/sound state requires its own current receiving observation.':`${result.receipt.state} · ${result.receipt.reason??'Original control intent retained for native Source reconciliation.'}`);
+ };
+ const readDriver=()=>void run(async()=>{
+  const row=propertyMap.get(propertyChoice.value);if(!snapshot||!row||!host.readNativeDriver)throw Error('The actual native driver reader is unavailable');
+  const key=controlSignature(),input={basis:studioBasis(snapshot),address:clone(row.capability.address),target:row.capability.target};nativeDriver=null;driverSignature='';
+  try{const result=await host.readNativeDriver(input);if(key!==controlSignature())throw Error('The actual control target changed while its driver returned; original text retained');nativeDriver=result;driverSignature=key;driverReason='';showProperty();}
+  catch(error){driverReason=error instanceof Error?error.message:String(error);showProperty();throw error;}
+ });
+ const driverButton=button('Read native Parameter driver',readDriver,!host.readNativeDriver);
+ const retryControlButton=button('Retry original native control',()=>void run(async()=>{if(host.pendingNativeControl?.()){if(!host.retryNativeControl)throw Error('Native control recovery is unavailable');acceptControl(await host.retryNativeControl());}else{if(!retainedControlIntent||!host.applyNativeControl)throw Error('The original control intent is unavailable');acceptControl(await host.applyNativeControl(clone(retainedControlIntent)));}}),!host.retryNativeControl&&!host.applyNativeControl);
+ controlProcedure.addEventListener('change',()=>showProperty());
+
  const control=(mode:'set_base'|'takeover'|'release'|'record')=>void run(async()=>{
   const row=propertyMap.get(propertyChoice.value);if(!snapshot||!row)throw Error('Choose a current native property');
-  if(row.capability.address.component==='expression'){
-   if(mode!=='set_base'||!value.value.trim())throw Error('This shared property admits an explicit base edit through the native whole-field target');
-   await prepared(await host.prepare({kind:'shared_control',basis:studioBasis(snapshot),operation_ref:mint(),address:clone(row.capability.address),target:row.capability.target,value:Number(value.value)}));return;
+  if(mode!=='record'){
+   if(!host.applyNativeControl||!nativeDriver||driverSignature!==controlSignature())throw Error(driverReason||'Read the actual current native Parameter driver before control');
+   if(!controlProcedure.value)throw Error('Choose the actual accepted native Procedure for this control');
+   if(retainedControlIntent||host.pendingNativeControl?.())throw Error('An original control intent is retained; retry/reconcile its exact native standing before creating another operation');
+   if(mode!=='release'&&!value.value.trim())throw Error('Enter a finite authored value');
+   const input:StudioNativeControlIntent={basis:studioBasis(snapshot),operation_ref:mint(),procedure_ref:controlProcedure.value,address:clone(row.capability.address),target:row.capability.target,action:mode==='release'?{kind:'release'}:mode==='set_base'?{kind:'set_base',value:Number(value.value)}:{kind:'takeover',value:Number(value.value),lifetime:lifetime.value as 'gesture'|'persistent'}};
+   retainedControlIntent=clone(input);showProperty();acceptControl(await host.applyNativeControl(input));return;
   }
-  const input:StudioChangeIntent={kind:'control',basis:studioBasis(snapshot),operation_ref:mint(),address:clone(row.capability.address),target:row.capability.target,mode,...(mode==='release'?{}:{value:Number(value.value),lifetime:lifetime.value as 'gesture'|'persistent'})};
-  if(mode!=='release'&&!value.value.trim())throw Error('Enter a property value');
+  const input:StudioChangeIntent={kind:'control',basis:studioBasis(snapshot),operation_ref:mint(),address:clone(row.capability.address),target:row.capability.target,mode,value:Number(value.value)};
+  if(!value.value.trim())throw Error('Enter a property value');
   if(mode==='record'){
    const position=host.recordPosition?.();
    if(!position||position.scene_ref!==row.capability.address.scene_ref||!Number.isFinite(position.time_seconds)||position.time_seconds<0)throw Error('The current property-take owner does not map this target to Scene seconds');
@@ -323,11 +338,11 @@ export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStu
   }
   await prepared(await host.prepare(input));
  });
- controlActions.append(button('Preview base edit',()=>control('set_base')),button('Preview takeover',()=>control('takeover')),button('Preview release',()=>control('release')),button('Use current base',()=>{if(propertyKey)drafts.delete(propertyKey);propertyKey='';showProperty();}),button('Preview recorded key',()=>control('record'),!host.recordPosition));
- state.content.append(label('Property',propertyChoice),propertyFacts,label('Value',value),label('Lifetime',lifetime),draftNotice,controlActions);
+ controlActions.append(button('Apply native base edit',()=>control('set_base')),button('Take over native driver',()=>control('takeover')),button('Release retained native control',()=>control('release')),button('Use current base',()=>{if(propertyKey)drafts.delete(propertyKey);propertyKey='';showProperty();}),button('Preview recorded key',()=>control('record'),!host.recordPosition));
+ state.content.append(label('Property',propertyChoice),propertyFacts,driverButton,driverFacts,label('Control procedure',controlProcedure),label('Value',value),label('Lifetime',lifetime),draftNotice,controlActions,controlReceiptFacts,retryControlButton);
  let propertyKey='';
  value.addEventListener('input',()=>{if(propertyKey)drafts.set(propertyKey,value.value);draftNotice.textContent='Uncommitted value retained on this native target.';});
- propertyChoice.addEventListener('change',()=>showProperty());
+ propertyChoice.addEventListener('change',()=>{nativeDriver=null;driverSignature='';driverReason='Read the actual native Parameter driver for this target.';showProperty();});
  const templateChoice=choices([],'Native recipe'),recipeForm=element('div'),ruleFacts=element('p','','control-note'),recipeSources=element('div'),ruleActions=element('div');
  rules.content.append(label('Recipe',templateChoice),ruleFacts,recipeSources,recipeForm,ruleActions);
  let templateKey='',template:NativeProcedureTemplate|null=null,editingTemplate:NativeProcedureTemplate|null=null;
@@ -338,10 +353,10 @@ export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStu
  templateChoice.addEventListener('change',()=>{saveRecipeDraft();templateKey='';showRecipe();});
  const sceneChoice=choices([],'Destination native scene'),policy=choices([['continue','Continue background scene'],['hold','Hold background scene'],['checkpoint_release','Checkpoint and release']],'Scene background policy'),sceneList=element('div'),sceneName=element('input');sceneName.maxLength=160;sceneName.setAttribute('aria-label','New scene name');
  const flowActions=element('div');flow.content.append(sceneList,label('New authored scene',sceneName),label('Destination',sceneChoice),label('Continuity',policy),flowActions);
- flowActions.append(button('Preview scene insertion',()=>void run(async()=>{if(!snapshot)throw Error('Open a native Expression');await prepared(await host.prepare({kind:'insert_scene',basis:studioBasis(snapshot),operation_ref:mint(),name:sceneName.value}));})),button('Preview transition',()=>void run(async()=>{
+ flowActions.append(button('Preview scene insertion',()=>void run(async()=>{if(!snapshot)throw Error('Open a native Expression');await prepared(await host.prepare({kind:'insert_scene',basis:studioBasis(snapshot),operation_ref:mint(),name:sceneName.value}));})),button('Preview transition · native flow endpoint unavailable',()=>void run(async()=>{
   if(!snapshot||!reading||reading.document_revision!==snapshot.view.document.revision)throw Error('Read the current native scene before a transition');
   await prepared(await host.prepare({kind:'transition',basis:studioBasis(snapshot),operation_ref:mint(),to_scene_ref:sceneChoice.value,policy:policy.value as 'continue'|'hold'|'checkpoint_release',cursor:reading.cursor}));
- })));
+ }),true));
  const sourceList=element('div'),sourceDiff=element('div'),restoreChoice=choices([['configuration','Open configuration'],['replay','Replay recorded act'],['checkpoint','Resume compatible checkpoint']],'Restoration mode'),continuationActions=element('div');
  continuation.content.append(sourceList,sourceDiff,label('Restoration',restoreChoice),continuationActions);
  continuationActions.append(button('Save through native owner',()=>void run(()=>host.save())),button('Restore selected mode',()=>void run(async()=>{
@@ -372,8 +387,39 @@ export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStu
   if(o.failure)operationFacts.append(element('p',o.failure,'control-note'));
  }
  function sourceButton(source:SourceBasis){return button(`${source.ref} · ${source.revision} · ${source.availability}`,()=>host.openSource(clone(source)),source.availability==='withheld');}
+ let retainedIdentityFocus:HTMLElement|null=null;
+ const layerEditors=new Map<string,{node:HTMLElement;input:HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement;basis:StudioBasis;original:unknown;principal:string;sources:SourceBasis[];capability:LayerMaterialControl;dirty:boolean;facts:HTMLElement}>();
+ function showBaseLayer(address:StageAddress){
+  if(!snapshot)return;const material=baseLayerMaterial(snapshot,address),base=studioBasis(snapshot);
+  for(const capability of baseLayerControls(snapshot,address)){
+   const key=addressKey(capability.address);let editor=layerEditors.get(key);
+   const reset=()=>{if(!snapshot||!editor)return;const current=baseLayerControls(snapshot,address).find(c=>addressKey(c.address)===key);if(!current)throw Error('The original source field is unavailable');editor.capability=current;editor.original=cloneValue(current.value);editor.basis=studioBasis(snapshot);editor.principal=layerPrincipalBasis(snapshot,address);editor.sources=clone(retention(baseLayerMaterial(snapshot,address).scene).source_basis);editor.dirty=false;if(current.type==='boolean')(editor.input as HTMLInputElement).checked=current.value===true;else if(current.type==='source')editor.input.value=(current.value as EntityLayer['source'])?.kind??'none';else editor.input.value=current.value===undefined?'':String(current.value);};
+   if(!editor){
+    const node=element('div'),input=capability.type==='source'?choices([['none','Glyph'],['ascii','ASCII drawing'],['image','Image']],'Base source'):capability.type==='text'?element('textarea'):element('input'),facts=element('p','','control-note');
+    if(input instanceof HTMLInputElement)input.type=capability.type==='boolean'?'checkbox':'number';input.dataset.baseLayerProperty=capability.address.property!;input.dataset.layerRef=address.constituent_ref!;input.dataset.parentRef='base';
+    editor={node,input,basis:base,original:cloneValue(capability.value),principal:layerPrincipalBasis(snapshot,address),sources:clone(retention(material.scene).source_basis),capability,dirty:false,facts};layerEditors.set(key,editor);reset();
+    input.addEventListener('input',()=>{editor!.dirty=true;});input.addEventListener('change',()=>{editor!.dirty=true;});
+    const preview=async(value:unknown)=>{if(!snapshot)throw Error('Open the original native Expression');await prepared(await host.prepare({kind:'layer_material',basis:editor!.basis,operation_ref:mint(),address:clone(editor!.capability.address),original_value:cloneValue(editor!.original),value,principal_basis:editor!.principal,source_basis:clone(editor!.sources)}));};
+    node.append(label(capability.label,input),facts,button('Preview base material edit',()=>void run(async()=>{
+     let value:unknown=input.value;if(editor!.capability.type==='number'){if(input.value.trim()==='')throw Error('Enter a finite base material value');value=Number(input.value);}else if(editor!.capability.type==='boolean')value=(input as HTMLInputElement).checked;else if(editor!.capability.type==='source'){const source=editor!.original as EntityLayer['source'];value=input.value==='none'?undefined:source?.kind===input.value?source:input.value==='ascii'?{kind:'ascii',ascii:{text:'',fontFamily:'monospace'}}:{kind:'image',image:{mode:'luminance',threshold:DEFAULT_SOURCE_THRESHOLD,invert:false,scale:1}};}await preview(value);
+    })),button('Use current base material',()=>void run(async()=>{reset();})));
+    if(capability.type==='source'){const file=element('input');file.type='file';file.accept='image/png,image/jpeg,image/webp';file.setAttribute('aria-label','Choose base layer image');file.dataset.baseLayerImage='true';node.append(label('Choose base image',file),button('Preview chosen base image',()=>void run(async()=>{
+     const selected=file.files?.[0];if(!selected)throw Error('Choose an actual base image first');if(!['image/png','image/jpeg','image/webp'].includes(selected.type)||selected.size>8_000_000)throw Error('Use a PNG, JPEG or WebP smaller than 8 MB');
+     const captured={basis:clone(editor!.basis),original:cloneValue(editor!.original),principal:editor!.principal,sources:clone(editor!.sources)};
+     const url=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error('Base image could not be read'));reader.readAsDataURL(selected);});
+     if(file.files?.[0]!==selected||!sameNative(captured.basis,editor!.basis)||!sameNative(captured.original,editor!.original)||captured.principal!==editor!.principal||!sameNative(captured.sources,editor!.sources))throw Error('The original base image intent changed; your file is retained');
+     await preview({kind:'image',image:{mode:'luminance',threshold:DEFAULT_SOURCE_THRESHOLD,invert:false,scale:1,dataUrl:url,name:selected.name}});
+    })));
+    }
+   }
+   if(!editor.dirty&&!editor.node.contains(document.activeElement)&&!editor.node.contains(retainedIdentityFocus)&&!editor.node.querySelector<HTMLInputElement>('[data-base-layer-image]')?.files?.length)reset();
+   const actual=effectiveProperty(reading,capability.address,snapshot.view.document.revision,snapshot.currentConsumers);
+   editor.facts.textContent=`Authored base · ${capability.type==='source'?(capability.value as EntityLayer['source'])?.kind??'glyph':showValue(capability.value)} ${capability.units} · ${actual?`Effective · ${showValue(actual.value)}`:'Effective · unobserved'}${editor.dirty?' · Uncommitted input retained':''}`;
+   identity.content.append(editor.node);
+  }
+ }
  function showIdentity(){
-  identity.content.replaceChildren();if(!snapshot)return;
+  const focused=identity.content.contains(document.activeElement)?document.activeElement as HTMLElement:null,selection=focused instanceof HTMLTextAreaElement||focused instanceof HTMLInputElement?[focused.selectionStart,focused.selectionEnd] as const:null;retainedIdentityFocus=focused;identity.content.replaceChildren();if(!snapshot)return;
   const basis=studioBasis(snapshot);identity.content.append(element('p',`${snapshot.view.document.title} · revision ${basis.document_revision}`),element('p',`Expression ${basis.expression_ref}`,'control-note'),element('p',`Scene ${basis.scene_ref}`,'control-note'));
   const general:StageAddress={expression_ref:basis.expression_ref,scene_ref:scope.kind==='expression'?null:basis.scene_ref,entity_ref:null,component:scope.kind==='expression'?'expression':'scene',constituent_ref:null,property:null};
   const admitted=snapshot.journey.scenes.flatMap(s=>retention(s).bindings).map(b=>b.address).filter(a=>scopeContains(scope,a,snapshot!));
@@ -383,14 +429,16 @@ export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStu
    if(seen.has(addressKey(address)))continue;seen.add(addressKey(address));
    const binding=scopeBinding(snapshot,address),principal=binding?.principal??snapshot.view.document.entities[address.entity_ref??'']?.subject;
    identity.content.append(element('p',`Occurrence · ${addressLabel(address)}`,'control-note'));
-   if(address.scene_ref){const material=inspectComponentMaterial(snapshot,address);identity.content.append(element('p',`Authored material · ${material.title}`,'control-note'));for(const fact of material.facts)identity.content.append(element('p',fact,'control-note'));if(material.reason)identity.content.append(element('p',material.reason,'control-note'));if(address.entity_ref)identity.content.append(button('Open existing constituent editor',()=>void run(async()=>{if(!host.editComponent)throw Error('The existing native constituent editor is not connected');await host.editComponent(clone(address));}),!host.editComponent||!material.editor));}
+   if(address.scene_ref){const material=inspectComponentMaterial(snapshot,address);identity.content.append(element('p',`Authored material · ${material.title}`,'control-note'));for(const fact of material.facts)identity.content.append(element('p',fact,'control-note'));if(material.reason)identity.content.append(element('p',material.reason,'control-note'));if(address.component==='layer'&&address.parent_ref===null)showBaseLayer(address);if(address.entity_ref)identity.content.append(button('Open existing constituent editor',()=>void run(async()=>{if(!host.editComponent)throw Error('The existing native constituent editor is not connected');await host.editComponent(clone(address));}),!host.editComponent||!material.editor));}
    identity.content.append(element('p',principal?`Principal · ${principal.subject_ref} · ${principal.native_owner}`:'No native principal disclosed','control-note'));
    if(binding){identity.content.append(element('p',`Place · ${binding.locus.ref}`,'control-note'),sourceButton(binding.locus));for(const c of binding.contributors)identity.content.append(element('p',`Contributor · ${c.subject_ref} · ${c.native_owner}`,'control-note'));for(const s of binding.principal.sources)identity.content.append(sourceButton(s));}
   }
+  if(focused?.isConnected){focused.focus({preventScroll:true});if(selection&&selection[0]!==null&&selection[1]!==null&&(focused instanceof HTMLInputElement||focused instanceof HTMLTextAreaElement))focused.setSelectionRange(selection[0],selection[1]);}retainedIdentityFocus=null;
  }
  function showProperty(){
   const row=propertyMap.get(propertyChoice.value);propertyFacts.replaceChildren();
-  if(!row){propertyFacts.append(element('p','No controllable scalar in this admitted scope. Layers and sequence states remain inspectable above.','control-note'));value.disabled=true;return;}
+  driverFacts.replaceChildren();controlReceiptFacts.replaceChildren();
+  if(!row){propertyFacts.append(element('p','No controllable scalar in this admitted scope. Layers and sequence states remain inspectable above.','control-note'));value.disabled=true;driverButton.disabled=true;for(const index of [0,1,2,4])(controlActions.children[index] as HTMLButtonElement).disabled=true;return;}
   value.disabled=false;const key=addressKey(row.capability.address);
   if(key!==propertyKey){propertyKey=key;value.value=drafts.get(key)??String(row.capability.base);draftNotice.textContent=drafts.has(key)?'Uncommitted value retained on this native target.':'';}
   else if(!drafts.has(key)&&document.activeElement!==value)value.value=String(row.capability.base);
@@ -400,9 +448,28 @@ export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStu
   if(snapshot)for(const contribution of snapshot.journey.scenes.flatMap(s=>retention(s).contributions)){const generated=generatedPropertyBasis(snapshot,contribution,row.capability.address);if(generated!==undefined)propertyFacts.append(element('p',`Generated basis · ${showValue(generated)} ${row.capability.units} · ${contribution.procedure_ref} · recipe ${contribution.recipe_revision}`,'control-note'));}
   if(row.effective){const o=row.effective.observation;propertyFacts.append(element('p',`${o.owner} · ${o.instance_ref} · generation ${o.generation} · cursor ${o.cursor} · ${o.operation_ref}`,'control-note'));}
   propertyFacts.append(element('p',`${addressLabel(row.capability.address)} · ${row.capability.min}…${row.capability.max} ${row.capability.units}`,'control-note'));
-  (controlActions.children[1] as HTMLButtonElement).disabled=row.shared;
-  if(row.shared&&row.capability.address.component!=='expression')propertyFacts.append(element('p','An Expression override owns this value. Base edits retain it; select Whole Expression to edit its shared target.','control-note'));
-  (controlActions.children[2] as HTMLButtonElement).disabled=!row.takeover;
+  const mapping=snapshot?nativeControlTarget(snapshot,row.capability):{state:'unavailable' as const,reason:'Open the original native Document before control'};
+  const definitions=snapshot?.view.document.scenes.flatMap(scene=>((scene.presentation?.scene as {procedural?:{procedures?:Array<{procedure_ref:string;definition?:unknown}>}}|undefined)?.procedural?.procedures??[])).filter(row=>row.definition)??[];
+  const refs=[...new Set(definitions.map(row=>row.procedure_ref))],previous=controlProcedure.value;
+  replaceOptions(controlProcedure,[['','Choose an accepted native Procedure'],...refs.map(ref=>[ref,ref] as [string,string])],previous);
+  if(previous&&!refs.includes(previous)){if(![...controlProcedure.options].some(o=>o.value===previous)){const option=element('option',`${previous} · no longer admitted`);option.value=previous;controlProcedure.append(option);}controlProcedure.value=previous;}
+  if(driverSignature!==controlSignature()){nativeDriver=null;driverSignature='';}
+  const pending=host.pendingNativeControl?.(),original=pending?.intent??retainedControlIntent;
+  driverButton.disabled=!host.readNativeDriver||mapping.state==='unavailable';
+  if(mapping.state==='unavailable')driverFacts.append(element('p',mapping.reason,'control-note'));
+  else if(!host.readNativeDriver||!host.applyNativeControl)driverFacts.append(element('p','The actual native driver/control owner callback is unavailable; authored input is retained.','control-note'));
+  else if(!nativeDriver)driverFacts.append(element('p',driverReason||'Read the actual current native Parameter driver.','control-note'));
+  else{
+   driverFacts.append(element('p',`Native Parameter ${nativeDriver.parameter} · ${showValue(nativeDriver.native_parameter.value)} native units · Document revision ${nativeDriver.document_revision}`),element('p',`${nativeDriver.scenes.length} actual Scene manifestations · ${nativeDriver.native_parameter.automation?'Native automation active':'Native manual driver'} · effective field/body/sound requires its own observation`,'control-note'));
+   for(const address of nativeDriver.addresses)driverFacts.append(element('p',addressLabel(address),'control-note'));
+  }
+  const available=mapping.state==='available'&&!!nativeDriver&&!!host.applyNativeControl&&refs.includes(controlProcedure.value)&&!original;
+  (controlActions.children[0] as HTMLButtonElement).disabled=!available||row.takeover;
+  (controlActions.children[1] as HTMLButtonElement).disabled=!available;
+  (controlActions.children[2] as HTMLButtonElement).disabled=!available||!row.takeover;
+  retryControlButton.disabled=!original||!host.retryNativeControl&&!host.applyNativeControl;
+  if(original)controlReceiptFacts.append(element('p',`Original ${original.action.kind.replaceAll('_',' ')} intent retained · ${original.operation_ref}`,'control-note'),element('p',pending?'Full original intent is retained by NativeWorking. Cold history still requires current native Source requalification.':'Original intent is retained in this open Studio; no native recovery acknowledgement has returned.','control-note'));
+  if(lastControlResult)controlReceiptFacts.append(element('p',`${lastControlResult.receipt.state.replaceAll('_',' ')} · ${lastControlResult.request.operation_ref}`,'control-note'));
   const record=host.recordPosition?.();(controlActions.children[4] as HTMLButtonElement).disabled=row.shared||!record||record.scene_ref!==row.capability.address.scene_ref;
  }
  function showRecipe(){
@@ -443,7 +510,7 @@ export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStu
   contributions.content.replaceChildren();if(!snapshot)return;
   const records=snapshot.journey.scenes.flatMap(s=>retention(s).contributions.map(c=>({scene:s,c}))).filter(({c})=>c.owned_addresses.some(a=>scopeContains(scope,a,snapshot!)));
   if(!records.length)contributions.content.append(element('p','No generated contribution in this admitted scope.','control-note'));
-  for(const {scene,c} of records){const card=element('div');card.append(element('p',`${c.output_slot} · ${c.status}`),element('p',`${c.contribution_ref} · ${c.procedure_ref} · recipe ${c.recipe_revision}`,'control-note'),element('p',`${c.owned_addresses.length} owned targets · ${c.authored_overrides.length} persistent interventions`,'control-note'));for(const o of c.authored_overrides)card.append(element('p',`${addressLabel(o.address)} · ${showValue(o.value)} · ${o.actor}`,'control-note'));card.append(button('Detach as authored material',()=>void run(async()=>{if(!snapshot||scene.id!==snapshot.sceneId)throw Error('Open the contribution’s native Scene before detaching it');await prepared(await host.prepare({kind:'detach',basis:studioBasis(snapshot),operation_ref:mint(),contribution_ref:c.contribution_ref}));}),c.status!=='active'||scene.id!==snapshot.sceneId));contributions.content.append(card);}
+  for(const {scene,c} of records){const card=element('div');card.append(element('p',`${c.output_slot} · ${c.status}`),element('p',`${c.contribution_ref} · ${c.procedure_ref} · recipe ${c.recipe_revision}`,'control-note'),element('p',`${c.owned_addresses.length} owned targets · ${c.authored_overrides.length} persistent interventions`,'control-note'));for(const o of c.authored_overrides)card.append(element('p',`${addressLabel(o.address)} · ${showValue(o.value)} · ${o.actor}`,'control-note'));card.append(button('Detach as authored material',()=>void run(async()=>{if(!snapshot||scene.id!==snapshot.sceneId)throw Error('Open the contribution’s native Scene before detaching it');await prepared(await host.prepare({kind:'detach',basis:studioBasis(snapshot),operation_ref:mint(),contribution_ref:c.contribution_ref}));}),true));card.append(element('p','Native Source-owned per-contribution detachment is unavailable; material and interventions remain intact.','control-note'));contributions.content.append(card);}
  }
  function showFlow(){
   if(!snapshot)return;const current=studioBasis(snapshot),previous=sceneChoice.value;
@@ -469,7 +536,7 @@ export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStu
   try{
    const formBasis=JSON.stringify([studioBasis(next),next.draft_revision??next.journey.updatedAt,next.selected,scopeChoice.value,componentChoice.value,next.currentSources,host.procedureTemplates?.().map(t=>[t.procedure_ref,t.revision])]);
    if(formBasis===renderedBasis&&!scopeError){for(const row of propertyMap.values())row.effective=effectiveProperty(reading,row.capability.address,next.view.document.revision,next.currentConsumers);showProperty();showOperation();return;}
-   const components=componentAddresses(next),previous=componentChoice.value;componentMap.clear();for(const row of components)componentMap.set(addressKey(row.address),row.address);replaceOptions(componentChoice,components.map(row=>[addressKey(row.address),row.label]),previous);componentChoice.parentElement!.hidden=scopeChoice.value!=='component';
+   const components=componentAddresses(next),previous=componentChoice.value;componentMap.clear();for(const row of components)componentMap.set(addressKey(row.address),row.address);replaceOptions(componentChoice,constituentOptions(components,previous),previous);componentChoice.parentElement!.hidden=scopeChoice.value!=='component';
    scope=resolveStudioScope(next,scopeChoice.value as StudioScopeKind,scopeChoice.value==='component'?componentMap.get(componentChoice.value):undefined);scopeError='';
    if(reading&&(reading.expression_ref!==next.view.document.expression_ref||reading.document_revision!==next.view.document.revision||readSignature!==signature()))reading=null;
    showIdentity();const properties=propertyReadings(next,scope,reading),old=propertyChoice.value;propertyMap.clear();for(const p of properties)propertyMap.set(addressKey(p.capability.address),p);replaceOptions(propertyChoice,properties.map(p=>[addressKey(p.capability.address),p.label]),old);showProperty();showRecipe();showContributions();showFlow();showSources();showOperation();renderedBasis=JSON.stringify([studioBasis(next),next.draft_revision??next.journey.updatedAt,next.selected,scopeChoice.value,componentChoice.value,next.currentSources,host.procedureTemplates?.().map(t=>[t.procedure_ref,t.revision])]);
@@ -483,7 +550,41 @@ export function installProceduralStudio(host:ProceduralStudioHost):ProceduralStu
   finally{readingBusy=false;if(readAgain){readAgain=false;void read();}}
  }
  refresh();
- return {panel,attach(mount){if(panel.parentElement!==mount)mount.replaceChildren(panel);},setActive(next){if(disposed||active===next)return;active=next;requestGeneration++;if(active){unsubscribe=host.subscribe?.(()=>{refresh();void read();});refresh();void read();}else{unsubscribe?.();unsubscribe=undefined;}},refresh,read,dispose(){if(disposed)return;disposed=true;requestGeneration++;unsubscribe?.();panel.remove();drafts.clear();recipeDrafts.clear();}};
+ return {panel,attach(mount){if(panel.parentElement!==mount)mount.replaceChildren(panel);},setActive(next){if(disposed||active===next)return;active=next;requestGeneration++;if(active){unsubscribe=host.subscribe?.(()=>{refresh();void read();});refresh();void read();}else{unsubscribe?.();unsubscribe=undefined;}},refresh,read,acceptPrepared:prepared,dispose(){if(disposed)return;disposed=true;requestGeneration++;unsubscribe?.();panel.remove();drafts.clear();recipeDrafts.clear();}};
 }
 function replaceOptions(select:HTMLSelectElement,rows:Array<[string,string]>,previous:string){const old=[...select.options];if(old.length!==rows.length||old.some((o,i)=>o.value!==rows[i]?.[0]||o.textContent!==rows[i]?.[1])){select.replaceChildren(...rows.map(([value,title])=>{const option=element('option',title);option.value=value;return option;}));}if(rows.some(([value])=>value===previous))select.value=previous;}
-export function addressLabel(a:StageAddress):string{return [a.entity_ref??a.scene_ref??a.expression_ref,a.component,a.constituent_ref,a.property].filter(Boolean).join(' · ');}
+export function addressLabel(a:StageAddress):string{return [a.entity_ref??a.scene_ref??a.expression_ref,a.component,a.constituent_ref,...(a.component==='layer'?[a.parent_ref===undefined?'legacy parent':a.parent_ref===null?'base':`state ${a.parent_ref}`]:[]),a.property].filter(Boolean).join(' · ');}
+
+import {stageConstituents,constituentOptions} from './proceduralStageTargets';
+import {nativeControlTarget,type StudioNativeControlIntent,type StudioNativeDriverIntent,type NativeParameterDriverReading,type NativeControlResult,type PendingNativeControl} from './proceduralNativeControls.js';
+import {DEFAULT_SOURCE_THRESHOLD} from '../../src/engine/sourceSampling';
+export interface LayerMaterialControl {address:StageAddress;label:string;type:'text'|'number'|'boolean'|'source';units:string;value:unknown;minimum?:number;maximum?:number;}
+export function baseLayerMaterial(snapshot:StudioSnapshot,address:StageAddress){
+ validateAddress(address);if(address.expression_ref!==snapshot.view.document.expression_ref||address.component!=='layer'||address.parent_ref!==null)throw Error('Choose the explicit native base Layer coordinate');
+ const entry=Object.entries(snapshot.view.bindings).find(([,binding])=>binding.scene_ref===address.scene_ref),scene=entry?snapshot.journey.scenes.find(s=>s.id===entry[0]):undefined;
+ const occurrence=entry?.[1].occurrences.find(o=>o.entity_ref===address.entity_ref),entity=scene?.entities.find(e=>e.id===occurrence?.view_entity_id),matches=entity?.layers?.filter(layer=>layer.id===address.constituent_ref)??[];
+ if(!scene||!entity||matches.length!==1)throw Error('The exact native base Layer is absent or ambiguous');
+ return {scene,entity,layer:matches[0]};
+}
+export function layerPrincipalBasis(snapshot:StudioSnapshot,address:StageAddress):string {const subject=snapshot.view.document.entities[address.entity_ref??'']?.subject;return JSON.stringify({subject_ref:subject?.subject_ref??null,native_owner:subject?.native_owner??null,sources:subject?.sources??[]});}
+export function baseLayerControls(snapshot:StudioSnapshot,address:StageAddress):LayerMaterialControl[]{
+ const {layer}=baseLayerMaterial(snapshot,address),rows:LayerMaterialControl[]=[];
+ const add=(property:string,label:string,type:LayerMaterialControl['type'],units:string,value:unknown,minimum?:number,maximum?:number)=>rows.push({address:{...address,property},label,type,units,value,...(minimum===undefined?{}:{minimum,maximum})});
+ add('text','Base glyph','text','text',layer.text);add('z','Base depth','number','stage units',layer.z,-100,100);add('scale','Base scale','number','ratio',layer.scale,.01,10);add('source','Base source','source','source',layer.source);
+ if(layer.source?.kind==='ascii'){add('source.ascii.text','ASCII drawing','text','text',layer.source.ascii.text);add('source.ascii.fontFamily','Monospace font','text','font',layer.source.ascii.fontFamily);add('source.ascii.fontSize','Font size ceiling','number','pixels',layer.source.ascii.fontSize,1,1024);add('source.ascii.invert','Sample negative space','boolean','boolean',layer.source.ascii.invert);}
+ if(layer.source?.kind==='image'){const image=layer.source.image;add('source.image.threshold','Ink threshold','number','ratio',image.threshold,0,1);add('source.image.scale','Source scale','number','ratio',image.scale,.01,100);add('source.image.invert','Invert source ink','boolean','boolean',image.invert);}
+ return rows;
+}
+const cloneValue=(value:unknown)=>value===undefined?undefined:clone(value);
+function layerValue(layer:EntityLayer,property:string):unknown {let value:unknown=layer;for(const key of property.split('.')){if(['__proto__','prototype','constructor'].includes(key)||!value||typeof value!=='object'||!Object.hasOwn(value,key))return undefined;value=(value as Record<string,unknown>)[key];}return value;}
+function authorBaseLayer(snapshot:StudioSnapshot,journey:Journey,intent:Extract<StudioChangeIntent,{kind:'layer_material'}>):number {
+ const material=baseLayerMaterial(snapshot,intent.address),capability=baseLayerControls(snapshot,{...intent.address,property:null}).find(row=>addressKey(row.address)===addressKey(intent.address));
+ if(!capability||material.entity.locked)throw Error('The exact base Layer property is unavailable or locked');
+ if(!sameNative(layerValue(material.layer,intent.address.property!),intent.original_value)||layerPrincipalBasis(snapshot,intent.address)!==intent.principal_basis||!sameNative(retention(material.scene).source_basis,intent.source_basis))throw Error('The original base Layer source, principal or authored value changed; your input is retained');
+ if(capability.type==='number'&&(typeof intent.value!=='number'||!Number.isFinite(intent.value)||intent.value<capability.minimum!||intent.value>capability.maximum!)||capability.type==='text'&&typeof intent.value!=='string'||capability.type==='boolean'&&typeof intent.value!=='boolean')throw Error('Enter a value within the actual base Layer domain');
+ const index=journey.scenes.findIndex(scene=>scene.id===material.scene.id),layer=journey.scenes[index].entities.find(e=>e.id===material.entity.id)!.layers!.find(l=>l.id===material.layer.id)!;
+ let target=layer as unknown as Record<string,unknown>;const path=intent.address.property!.split('.');for(const key of path.slice(0,-1)){const child=target[key];if(!child||typeof child!=='object')throw Error('The exact retained source field is unavailable');target=child as Record<string,unknown>;}target[path.at(-1)!]=intent.value===undefined?undefined:clone(intent.value);
+ // The application's actual authored validator, including image/ASCII
+ // source domains, is the producer guard before existing native conversion.
+ validateJourney(journey);return index;
+}

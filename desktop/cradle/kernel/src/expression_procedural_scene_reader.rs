@@ -11,6 +11,20 @@ pub struct NativeDocumentSceneReader {
     document: Document,
     scene_index: usize,
     document_digest: String,
+    recording_render_selection: Option<NativeRecordingRenderSelection>,
+}
+/// Native data derived from this actual closed current typed Performance.
+/// It is not Deserialize and cannot establish a clock/current cursor. The
+/// receiving owner independently compares its full stopped state before render.
+#[derive(serde::Serialize)]
+struct NativeRecordingRenderSelection {
+    schema: &'static str,
+    performance_digest: String,
+    basis_digest: String,
+    checkpoint_ref: String,
+    checkpoint_digest: String,
+    sample: crate::expression_performance::Counter,
+    event_prefix_digest: String,
 }
 impl NativeDocumentSceneReader {
     /// Recording borrows the actual registered Scene constructor and THIS
@@ -53,7 +67,83 @@ impl NativeDocumentSceneReader {
             document,
             scene_index,
             document_digest,
+            recording_render_selection: None,
         })
+    }
+    /// A second selected Scene borrows THIS same opaque current Document.
+    /// It neither clones the Document nor obtains a new World/clock/owner.
+    pub(crate) fn select_scene(
+        &self,
+        scene_ref: &str,
+    ) -> Result<NativeDocumentSceneView<'_>, String> {
+        let mut matching = self
+            .document
+            .scenes
+            .iter()
+            .enumerate()
+            .filter(|(_, scene)| scene.scene_ref == scene_ref);
+        let (scene_index, scene) = matching.next().ok_or("Actual cohort Scene absent")?;
+        if matching.next().is_some() || scene.presentation.is_none() {
+            return Err("Actual cohort Scene is ambiguous or has no material".into());
+        }
+        Ok(NativeDocumentSceneView {
+            reader: self,
+            scene_index,
+        })
+    }
+    /// A same-document view for the private native render operation, selected
+    /// from the EXACT captured checkpoint now retained in this Scene. The full
+    /// current Document and source parts stay under the original reader guard.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub(crate) fn recording_render_view(
+        &self,
+        basis: u16,
+        cut: &crate::expression_performance::CheckpointBinding,
+    ) -> Result<Self, String> {
+        let performance = self
+            .scene()
+            .performance
+            .as_ref()
+            .ok_or("native render has no retained performance")?;
+        performance.validate()?;
+        cut.validate()?;
+        let basis = performance
+            .bases
+            .get(usize::from(basis))
+            .ok_or("native render musical basis absent")?;
+        let mut cuts = performance
+            .checkpoints
+            .iter()
+            .filter(|c| c.checkpoint_ref == cut.checkpoint_ref);
+        if cuts.next() != Some(cut)
+            || cuts.next().is_some()
+            || cut.basis_digest != basis.content_digest
+            || cut.identity != basis.identity
+            || cut.event_prefix_digest != performance.prefix_digest(cut.sample.0)?
+        {
+            return Err(
+                "native render cut lost exact full current Scene/basis/original prefix".into(),
+            );
+        }
+        crate::expression_procedural_source_budget::measure(
+            &self.document,
+            crate::expression::DOCUMENT_BYTES,
+        )?;
+        let mut view = Self::from_current_document(
+            self.document.clone(),
+            &self.scene().scene_ref,
+            self.scene().revision,
+        )?;
+        view.recording_render_selection = Some(NativeRecordingRenderSelection {
+            schema: "oi.native-scene-recording-render-selection/v1",
+            performance_digest: performance.content_digest.clone(),
+            basis_digest: basis.content_digest.clone(),
+            checkpoint_ref: cut.checkpoint_ref.clone(),
+            checkpoint_digest: cut.content_digest.clone(),
+            sample: cut.sample,
+            event_prefix_digest: cut.event_prefix_digest.clone(),
+        });
+        Ok(view)
     }
     pub(crate) fn document(&self) -> &Document {
         &self.document
@@ -100,6 +190,9 @@ impl NativeDocumentSceneReader {
         }
     }
     pub(crate) fn native_manifest(&self) -> Result<Value, String> {
+        self.native_manifest_for_scene(self.scene())
+    }
+    fn native_manifest_for_scene(&self, scene: &Scene) -> Result<Value, String> {
         // Existing expanded Document and 32MiB delivery bounds are preflighted
         // before constructing transport strings/Value copies. No cap increase.
         crate::expression_procedural_source_budget::measure(
@@ -107,7 +200,7 @@ impl NativeDocumentSceneReader {
             crate::expression::DOCUMENT_BYTES,
         )?;
         let document_bytes = serde_json::to_vec(&self.document).map_err(|e| e.to_string())?;
-        let scene_bytes = serde_json::to_vec(self.scene()).map_err(|e| e.to_string())?;
+        let scene_bytes = serde_json::to_vec(scene).map_err(|e| e.to_string())?;
         let canonical_document_bytes =
             String::from_utf8(document_bytes.clone()).map_err(|e| e.to_string())?;
         let canonical_scene_bytes =
@@ -129,6 +222,8 @@ impl NativeDocumentSceneReader {
             canonical_scene_bytes: &'a str,
             selected_scene_sha256: String,
             field_source_manifest: &'a Option<Value>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            native_render_selection: &'a Option<NativeRecordingRenderSelection>,
         }
         let delivery = Delivery {
             schema: "oi.expression-native-current-scene-delivery/v1",
@@ -136,12 +231,13 @@ impl NativeDocumentSceneReader {
             expression_revision: self.document.revision,
             expanded_document_sha256: digest(&document_bytes),
             canonical_document_bytes: &canonical_document_bytes,
-            scene_ref: &self.scene().scene_ref,
-            scene_revision: self.scene().revision,
-            scene: self.scene(),
+            scene_ref: &scene.scene_ref,
+            scene_revision: scene.revision,
+            scene: scene,
             canonical_scene_bytes: &canonical_scene_bytes,
             selected_scene_sha256: digest(&scene_bytes),
             field_source_manifest: &field_source_manifest,
+            native_render_selection: &self.recording_render_selection,
         };
         crate::expression_procedural_source_budget::measure(
             &delivery,
@@ -150,6 +246,9 @@ impl NativeDocumentSceneReader {
         serde_json::to_value(delivery).map_err(|e| e.to_string())
     }
     pub(crate) fn field_source_part(&self, index: usize) -> Result<Value, String> {
+        self.field_source_part_for_scene(self.scene(), index)
+    }
+    fn field_source_part_for_scene(&self, scene: &Scene, index: usize) -> Result<Value, String> {
         let source = self.field_source()?.ok_or(
             "current Document World lacks full original/current native FIELD source custody",
         )?;
@@ -157,9 +256,21 @@ impl NativeDocumentSceneReader {
         part["selection"] = json!({"expression_ref":self.document.expression_ref,
             "expression_revision":self.document.revision,
             "expanded_document_sha256":self.document_digest,
-            "scene_ref":self.scene().scene_ref,"scene_revision":self.scene().revision,
+            "scene_ref":scene.scene_ref,"scene_revision":scene.revision,
             "source_digest":source.source_digest()});
         Ok(part)
+    }
+}
+
+/// Constructed only by selecting an existing Scene of the privately held
+/// complete current Application Document. No Deserialize/Clone/JSON factory.
+pub(crate) struct NativeDocumentSceneView<'a> {
+    reader: &'a NativeDocumentSceneReader,
+    scene_index: usize,
+}
+impl NativeDocumentSceneView<'_> {
+    fn scene(&self) -> &Scene {
+        &self.reader.document.scenes[self.scene_index]
     }
 }
 
@@ -167,26 +278,33 @@ impl NativeDocumentSceneReader {
 /// in its separate native owner module; this child has no imported wire factory.
 pub(crate) enum NativeSceneSourceReader<'a> {
     CurrentDocument(&'a NativeDocumentSceneReader),
+    CurrentDocumentScene(&'a NativeDocumentSceneView<'a>),
 }
 impl NativeSceneSourceReader<'_> {
     pub(crate) fn document(&self) -> &Document {
         match self {
             Self::CurrentDocument(reader) => reader.document(),
+            Self::CurrentDocumentScene(view) => view.reader.document(),
         }
     }
     pub(crate) fn scene(&self) -> &Scene {
         match self {
             Self::CurrentDocument(reader) => reader.scene(),
+            Self::CurrentDocumentScene(view) => view.scene(),
         }
     }
     pub(crate) fn native_manifest(&self) -> Result<Value, String> {
         match self {
             Self::CurrentDocument(reader) => reader.native_manifest(),
+            Self::CurrentDocumentScene(view) => view.reader.native_manifest_for_scene(view.scene()),
         }
     }
     pub(crate) fn field_source_part(&self, index: usize) -> Result<Value, String> {
         match self {
             Self::CurrentDocument(reader) => reader.field_source_part(index),
+            Self::CurrentDocumentScene(view) => {
+                view.reader.field_source_part_for_scene(view.scene(), index)
+            }
         }
     }
 }

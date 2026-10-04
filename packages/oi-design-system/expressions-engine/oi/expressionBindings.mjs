@@ -26,7 +26,7 @@ export function hitConnection(paths, x, y, project, radius=7) {
 export class ExpressionConnectionLayer {
   constructor(engine) { this.engine=engine; }
   paths=[]; unavailable=[];
-  configure(bindings=[],selected=[]) { this.engine.setNativeConnections(bindings,selected); }
+  configure(bindings=[],selected=[],restOpacity=1) { this.engine.setNativeConnections(bindings,selected,restOpacity); }
   update() {
     const runtime=this.engine.nativeConnectionRuntime();
     this.paths=runtime.paths;this.unavailable=runtime.unavailable;

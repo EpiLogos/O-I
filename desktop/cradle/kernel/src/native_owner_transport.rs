@@ -140,6 +140,37 @@ impl NativeOwner {
         }
         Ok(Some(request))
     }
+    pub fn prepare_native_authored_driver(
+        &self,
+        kernel: &mut Kernel,
+        input: &Request,
+    ) -> Result<Option<crate::native_expression::procedural::authored_driver::Prepared>, String>
+    {
+        match self.procedural_admitted_request(input)? {
+            Some(request) => kernel.prepare_native_authored_driver(request),
+            None => Ok(None),
+        }
+    }
+    pub fn finish_native_authored_driver(
+        &self,
+        kernel: &mut Kernel,
+        input: Request,
+        completed: crate::native_expression::procedural::authored_driver::Completed,
+    ) -> Result<Value, String> {
+        let original = self
+            .procedural_admitted_request(&input)?
+            .ok_or("Native authored completion cannot answer Describe")?;
+        let KernelOp::Expression { request } = original else {
+            return Err("Native authored completion belongs to an Expression operation".into());
+        };
+        if request != &completed.original() {
+            return Err(
+                "Native authored completion differs from the exact offered operation".into(),
+            );
+        }
+        let outcome = kernel.finish_native_authored_driver(completed)?;
+        Ok(json!({"world_ref":self.world_ref,"owner_generation":self.generation,"outcome":outcome}))
+    }
     pub fn prepare_native_procedural_manual(
         &self,
         kernel: &Kernel,

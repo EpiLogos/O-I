@@ -19,7 +19,7 @@
 
 import {esc} from './icons.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readLibraryEntries,KernelExpressionListing,LibraryReadingEntry} from './kernelExpressions.js';
-import {nativeLibrarySectionHTML,NativeLibraryState} from './nativeLibrary.js';
+import {nativeLibrarySectionHTML,NativeLibraryState,type NativeLibraryFileBasis} from './nativeLibrary.js';
 
 export type {KernelExpressionListing} from './kernelExpressions.js';
 
@@ -86,7 +86,8 @@ function scheduleNativeLibraryFill():void {
         try {
           const read=await withTimeout(readLibraryEntries('local'),6000);
           const entries=read.entries as LibraryReadingEntry[];
-          state=entries.length?{state:'ready',entries}:{state:'empty'};
+          const incomplete=read.coverage.filter(row=>row.state!=='complete');
+          state=entries.length?{state:'ready',entries,coverage:read.coverage}:incomplete.length?{state:'error',reason:incomplete.map(row=>row.reason??`${row.provider} is ${row.state}`).join('; ')}:{state:'empty'};
         } catch(cause) {state={state:'error',reason:cause instanceof Error?cause.message:String(cause)};}
       }
     } catch {state={state:'absent'};}
@@ -125,10 +126,17 @@ export function installNativeLibraryInteractions():void {
     const open=target?.closest<HTMLElement>('[data-native-open]');
     if(open){
       const ref=open.dataset.nativeOpen;
-      const api=(window as unknown as {__FIELD_STUDIES__?:{openNative?:(ref:string)=>unknown}}).__FIELD_STUDIES__;
-      if(!ref||!api?.openNative){return;}
+      const api=(window as unknown as {__FIELD_STUDIES__?:{openNative?:(ref:string)=>unknown;openNativeFile?:(path:string,observed?:NativeLibraryFileBasis)=>unknown}}).__FIELD_STUDIES__;
+      if(!ref||!api){return;}
       open.setAttribute('aria-busy','true');
-      void Promise.resolve(api.openNative(ref)).then(()=>{
+      let request:unknown;
+      try{
+        const file=open.dataset.nativeFile?JSON.parse(open.dataset.nativeFile) as NativeLibraryFileBasis:null;
+        if(file){if(file.location.ref!==ref||!api.openNativeFile)throw Error('This host cannot open the selected saved native file');request=api.openNativeFile(file.location.path,file);}
+        else{if(!api.openNative)throw Error('This host cannot open the selected native Expression');request=api.openNative(ref);}
+      }catch(cause){open.setAttribute('aria-busy','false');open.title=cause instanceof Error?cause.message:String(cause);return;}
+      void Promise.resolve(request).then(acknowledged=>{
+        if(acknowledged!==true)throw Error('The native owner refused opening. Your current work and this Library position were retained.');
         document.querySelector<HTMLElement>('[data-action="close-library"]')?.click();
       }).catch(cause=>{
         open.setAttribute('aria-busy','false');

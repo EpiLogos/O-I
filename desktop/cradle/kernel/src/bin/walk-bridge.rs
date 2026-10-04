@@ -47,6 +47,22 @@ fn main() {
         .map(|(socket, owner)| {
             let shared = Arc::clone(&kernel);
             oi_cradle_kernel::expression_transport::serve_native_owner(&socket, move |request| {
+                let authored = owner.prepare_native_authored_driver(
+                    &mut *shared
+                        .lock()
+                        .map_err(|_| "native kernel lock unavailable")?,
+                    &request,
+                )?;
+                if let Some(prepared) = authored {
+                    let completed = prepared.execute()?;
+                    return owner.finish_native_authored_driver(
+                        &mut *shared
+                            .lock()
+                            .map_err(|_| "native kernel lock unavailable")?,
+                        request,
+                        completed,
+                    );
+                }
                 owner.apply(
                     &mut *shared
                         .lock()
@@ -236,6 +252,17 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 }
                 if let KernelOp::NaraCoordinate { request } = op {
                     return oi_cradle_kernel::nara_coordinate::execute(request);
+                }
+                let authored = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_native_authored_driver(&op)?;
+                if let Some(prepared) = authored {
+                    let completed = prepared.execute()?;
+                    return kernel
+                        .lock()
+                        .expect("kernel mutex")
+                        .finish_native_authored_driver(completed);
                 }
                 let selected_scene = kernel
                     .lock()
@@ -466,7 +493,18 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                         .expect("kernel mutex")
                         .finish_decision(receipt, matches!(&op, KernelOp::InvokeAction { .. }));
                 }
-                kernel.lock().expect("kernel mutex").apply(op)
+                let mut kernel = kernel.lock().expect("kernel mutex");
+                let outcome = kernel.apply(op)?;
+                #[cfg(any(target_os = "linux", target_os = "macos"))]
+                let outcome = {
+                    let mut outcome = outcome;
+                    kernel.finish_native_recording_cut_return(
+                        &mut outcome,
+                        Ok(std::env::temp_dir().join("oi-walk-native-recording-originals")),
+                    );
+                    outcome
+                };
+                Ok(outcome)
             };
             let result = execute();
             match result {

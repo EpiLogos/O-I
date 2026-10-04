@@ -8,6 +8,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeSet;
 
+fn native_scalar<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Scalar, D::Error> {
+    Scalar::from_native_wire(f64::deserialize(d)?).map_err(serde::de::Error::custom)
+}
 pub const SCHEMA: &str = "ql.performance-management-checkpoint/v1";
 const MAX_INPUTS: usize = 96;
 const MAX_HISTORY: usize = 256;
@@ -78,9 +81,13 @@ pub struct NativeNoteTarget {
     pub source_face: u8,
     pub pitch_class: u8,
     pub register_octave: i8,
+    #[serde(deserialize_with = "native_scalar")]
     pub fundamental_hz: Scalar,
+    #[serde(deserialize_with = "native_scalar")]
     pub hertz: Scalar,
+    #[serde(deserialize_with = "native_scalar")]
     pub phase_sin: Scalar,
+    #[serde(deserialize_with = "native_scalar")]
     pub phase_cos: Scalar,
     pub exact_ratio: bool,
 }

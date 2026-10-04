@@ -30,34 +30,167 @@ on:
       - 'shared-field/expression-material.test.mjs'
       - 'shared-field/scripts/direct-expression-activity-producer.mts'
       - 'desktop/cradle/tests/native-expression*'
+      - 'desktop/cradle/tests/fixtures/native-expression*'
       - 'desktop/cradle/tests/*formation*'
       - 'desktop/cradle/tests/candidate-cache-native.mjs'
       - 'desktop/cradle/tests/native-capture-compiler.py'
       - 'desktop/cradle/tests/native-text-authoring.test.mjs'
       - 'desktop/cradle/tests/wiki-native-binaries.py'
+      - 'desktop/cradle/tests/epi-*'
+      - 'desktop/cradle/tests/current-manifest-artifact-guards.mjs'
+      - 'desktop/cradle/tests/fixtures/epi-world-hosted/**'
       - 'packages/oi-design-system/expressions-engine/engine/**'
       - 'packages/oi-design-system/expressions-engine/shell/**'
       - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
       - 'scripts/vendor-expressions-engine.mjs'
+      - 'scripts/epi-mac-candidate.py'
+      - 'scripts/prepare-retained-performance-fixture.py'
+      - 'scripts/retained-performance-ci-environment.py'
+      - 'scripts/retained-performance-environment-regressions.py'
+      - 'desktop/cradle/tests/fixtures/retained-performance/source-owner.json'
       - 'packages/oi-design-system/expressions-engine/oi/**'
       - '.github/workflows/native-expression-backcheck.yml'
   workflow_dispatch:
+    inputs:
+      build_mac_candidate:
+        description: Build exact committed Mac artifacts with the canonical packager
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
   group: native-expression-backcheck-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  native-kernel-regressions:
+    name: Full native kernel regressions / exact O:I head
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Read the separately qualified retained performance test source
+        id: retained-performance-source
+        run: |
+          python3 - <<'PY_SOURCE'
+          import json, os, re
+          from pathlib import Path
+          value = json.loads(Path('desktop/cradle/tests/fixtures/retained-performance/source-owner.json').read_text())
+          assert value['schema'] == 'oi.retained-performance-test-source-owner/v1'
+          assert value['repository'] == 'EpiLogos/QL-MEF'
+          assert value['consumer'] == 'retained-performance-native-kernel-tests'
+          assert re.fullmatch(r'[0-9a-f]{40}', value['revision'])
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('revision=' + value['revision'] + '\n')
+          PY_SOURCE
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ steps.retained-performance-source.outputs.revision }}
+          path: .native-owner/retained-performance/QL-MEF
+          persist-credentials: false
+      - name: Native retained performance codec dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libjson-c-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          workspaces: |
+            desktop/cradle/kernel -> target
+            .native-owner/retained-performance/QL-MEF -> target
+      - name: Exact native regression source and toolchain receipt
+        env:
+          EXPECTED_OI_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks
+          test "$(git rev-parse HEAD)" = "$EXPECTED_OI_HEAD"
+          git diff --exit-code -- desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes
+          git diff --cached --exit-code -- desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes
+          git rev-parse HEAD > /tmp/w5-checks/source-head.txt
+          git archive --format=tar HEAD desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes > /tmp/w5-checks/kernel-source.tar
+          sha256sum /tmp/w5-checks/kernel-source.tar > /tmp/w5-checks/kernel-source.sha256
+          { uname -a; rustc --version --verbose; cargo --version; } > /tmp/w5-checks/toolchain.txt
+          rustup which rustc > /tmp/w5-checks/rustc-path.txt
+          rustup which cargo > /tmp/w5-checks/cargo-path.txt
+          sha256sum "$(cat /tmp/w5-checks/rustc-path.txt)" "$(cat /tmp/w5-checks/cargo-path.txt)" > /tmp/w5-checks/toolchain.sha256
+      - name: Produce the actual retained source, Manager, full workload and native checkpoints
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/retained-performance"
+          python3 scripts/prepare-retained-performance-fixture.py \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/retained-performance/QL-MEF" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output "$RUNNER_TEMP/retained-performance" --timeout-seconds 900 \
+            > "$RUNNER_TEMP/retained-performance/result.json"
+          python3 scripts/retained-performance-environment-regressions.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" \
+            > "$RUNNER_TEMP/retained-performance/publication-counterproof.json" \
+            2> "$RUNNER_TEMP/retained-performance/publication-counterproof.log"
+          python3 scripts/retained-performance-ci-environment.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" --github-env "$GITHUB_ENV"
+      - name: Native kernel regressions
+        if: always()
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks
+          cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge 2>&1 | tee /tmp/w5-checks/kernel-build.log
+          # Replay the original delivered-value and reservation failures first.
+          # These real native checks do not replace the unchanged full gate.
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --lib scalar_operand_tests -- --nocapture 2>&1 | tee /tmp/w5-checks/scalar-operands.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_performance_delivery actual_native_act_delivery_preserves_encoded_original_bytes_decoded_applications_and_current_score -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/delivered-native-operands.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_performance_delivery actual_pending_native_reservation_delivers_original_occurrence_without_a_played_future_receipt -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/reserved-native-operands.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_transport_native native_large_document_inspect_is_complete_and_world_routing_is_preserved -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/complete-native-inspect.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets --no-fail-fast -- --nocapture 2>&1 | tee /tmp/w5-checks/kernel.log
+      - name: Qualify the native regression source after all original tests
+        if: always()
+        env:
+          EXPECTED_OI_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_OI_HEAD"
+          git diff --exit-code -- desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes
+          git diff --cached --exit-code -- desktop/cradle/kernel desktop/cradle/tests desktop/cradle/material/factory-expressions desktop/cradle/src-tauri/icons packages/oi-design-system/themes
+          git rev-parse HEAD > /tmp/w5-checks/source-head-after.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w5-native-kernel-regressions-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            /tmp/w5-checks
+            ${{ runner.temp }}/retained-performance
+          retention-days: 14
+          if-no-files-found: error
+
   embedded:
     runs-on: ubuntu-latest
+    # Independent full native regressions also run in the separate mandatory exact-head job.
+    # This job retains its own actual bridge and all receiving/effect gates.
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      # The vendored clients name the exact QL cut they were copied from; the
-      # owner is checked out there, so identity and behaviour have one pin.
+      - name: Actual Linux owned-process lifetimes and strict refusal regressions
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks/native
+          sha256sum desktop/cradle/tests/epi-owned-processes-native.py desktop/cradle/tests/epi-world-hosted-native.py > /tmp/w5-checks/native/owned-process-source-before.sha256
+          python3 desktop/cradle/tests/epi-owned-processes-native.py 2>&1 | tee /tmp/w5-checks/native/owned-process-regressions.log
+          sha256sum -c /tmp/w5-checks/native/owned-process-source-before.sha256
+      # These unchanged clients are qualified byte-for-byte at the named native
+      # cut. Keep browser scheduling and current native behaviour on one pin.
       - id: ql
         run: echo "revision=$(jq -r .revision desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
@@ -72,6 +205,29 @@ jobs:
           ref: 2a604574774c41921003ed99a2eed73b4c9f4266
           path: .native-owner/Central
           persist-credentials: false
+      - name: Qualify the exact native cut, copied clients and retained default
+        env:
+          EXPECTED_QL_HEAD: ${{ steps.ql.outputs.revision }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks/native
+          test "$(git -C .native-owner/QL-MEF rev-parse HEAD)" = "$EXPECTED_QL_HEAD"
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          owner = Path('.native-owner/QL-MEF')
+          copied = Path('desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql')
+          provenance = json.loads((copied / 'PROVENANCE.json').read_text())
+          records = []
+          for name, expected in provenance['files'].items():
+              native_hash = hashlib.sha256((owner / 'adapters/retained-field' / name).read_bytes()).hexdigest()
+              copied_hash = hashlib.sha256((copied / name).read_bytes()).hexdigest()
+              assert native_hash == copied_hash == expected, name + ': copied client differs from qualified native cut'
+              records.append({'file': name, 'sha256': expected, 'native_equals_copy': True})
+          Path('/tmp/w5-checks/native/client-qualification.json').write_text(json.dumps({'revision': provenance['revision'], 'files': records}, indent=2) + '\n')
+          PY
+          python3 .native-owner/QL-MEF/scripts/check-scene-default-source.py > /tmp/w5-checks/native/default-source.json
+          python3 .native-owner/QL-MEF/scripts/test-scene-default-source.py > /tmp/w5-checks/native/default-source-tests.log 2>&1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -124,6 +280,17 @@ jobs:
           (cd desktop/cradle && node --test tests/native-expression-central.test.mjs) 2>&1 | tee /tmp/w5-checks/native-owner-cleanup.log
           npm test --prefix desktop/cradle/expressions-app 2>&1 | tee /tmp/w5-checks/embedded.log
           node --test .native-owner/QL-MEF/adapters/retained-field/native-audio.test.mjs .native-owner/QL-MEF/adapters/retained-field/instrument-session.test.mjs 2>&1 | tee /tmp/w5-checks/native-clients.log
+      - name: Current receiver source custody, protocol/instrument and retained native body regressions
+        if: always()
+        env:
+          EXPECTED_OI_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          QL_SOURCE: ${{ github.workspace }}/.native-owner/QL-MEF
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks
+          cd desktop/cradle
+          node tests/native-expression-receiving-backcheck.mjs --output /tmp/w5-checks/receiver \
+            2>&1 | tee /tmp/w5-checks/receiver.log
       - name: Native formation authoring, emitted modules and bounded candidate retention
         if: always()
         run: |
@@ -213,6 +380,24 @@ jobs:
           set -o pipefail
           cd desktop/cradle
           node tests/shared-expression-resource-native.mjs 2>&1 | tee /tmp/w5-checks/shared-native-text-render.log
+      - name: Full native text, ordinary DOM and actual capture receiving
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks/native-text
+          node --test desktop/cradle/tests/native-text-authoring.test.mjs > /tmp/w5-checks/native-text/authored-layout.log 2>&1
+          cargo build --locked --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge --message-format=json-render-diagnostics > /tmp/w5-checks/native-text/current-build.jsonl
+          bridge=$(python3 - <<'PYART'
+          import json
+          from pathlib import Path
+          artifacts = [json.loads(line) for line in Path('/tmp/w5-checks/native-text/current-build.jsonl').read_text().splitlines() if line.strip()]
+          paths = {item['executable'] for item in artifacts if item.get('reason') == 'compiler-artifact' and item.get('target', {}).get('name') == 'walk-bridge' and item.get('executable') and not item.get('profile', {}).get('test')}
+          assert len(paths) == 1, paths
+          print(paths.pop())
+          PYART
+          )
+          test -x "$bridge"
+          NATIVE_TEXT_BRIDGE="$bridge" NATIVE_TEXT_BRIDGE_SHA256="$(sha256sum "$bridge" | cut -d' ' -f1)" NATIVE_TEXT_OUT=/tmp/w5-checks/native-text/browser \
+            node desktop/cradle/tests/native-expression-text-browser.mjs > /tmp/w5-checks/native-text/browser.log 2>&1
       - name: Build the exact real QL host and C++ material owner
         if: always()
         run: |
@@ -224,13 +409,28 @@ jobs:
           cargo build --locked --release --manifest-path .native-owner/QL-MEF/Cargo.toml -p ql-mef --bin ql-field-host -p ql-cli --bin ql 2>&1 | tee /tmp/w5-checks/native/build.log
           cp .native-owner/QL-MEF/cpp/build/ql-field-worker /tmp/w5-checks/native/
           cp .native-owner/QL-MEF/target/release/ql-field-host /tmp/w5-checks/native/
-          sha256sum /tmp/w5-checks/native/ql-field-* > /tmp/w5-checks/native/binaries.sha256
+          cp .native-owner/QL-MEF/target/release/ql /tmp/w5-checks/native/
+          sha256sum /tmp/w5-checks/native/ql /tmp/w5-checks/native/ql-field-* > /tmp/w5-checks/native/binaries.sha256
+      - name: Generate and re-admit current native input; refuse retained stale sources
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 desktop/cradle/tests/native-expression-current-input.py \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/QL-MEF" \
+            --expected-ql-head "${{ steps.ql.outputs.revision }}" \
+            --ql "$GITHUB_WORKSPACE/.native-owner/QL-MEF/target/release/ql" \
+            --host "$GITHUB_WORKSPACE/.native-owner/QL-MEF/target/release/ql-field-host" \
+            --worker "$GITHUB_WORKSPACE/.native-owner/QL-MEF/cpp/build/ql-field-worker" \
+            --historical-input "$GITHUB_WORKSPACE/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json" \
+            --expected-historical-sha256 7af61b3ceb9a08f04d892c36b80b629fed4e5e2341775cff5aedab77ebdb22ca \
+            --output /tmp/w5-checks/native/current-input \
+            2>&1 | tee /tmp/w5-checks/native/current-input.log
       - name: Real native effects through the production process manager
         if: always()
         env:
           OI_QL_FIELD_HOST_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/target/release/ql-field-host
           OI_QL_FIELD_WORKER_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/cpp/build/ql-field-worker
-          NATIVE_EXPRESSION_INPUT: ${{ github.workspace }}/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json
+          NATIVE_EXPRESSION_INPUT: /tmp/w5-checks/native/current-input/input.json
           NATIVE_EXPRESSION_NATIVE_RECEIPT: /tmp/w5-checks/native/acceptance.json
         run: |
           set -o pipefail
@@ -241,7 +441,7 @@ jobs:
           NATIVE_EXPRESSION_BRIDGE: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
           OI_QL_FIELD_HOST_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/target/release/ql-field-host
           OI_QL_FIELD_WORKER_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/cpp/build/ql-field-worker
-          NATIVE_EXPRESSION_INPUT: ${{ github.workspace }}/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json
+          NATIVE_EXPRESSION_INPUT: /tmp/w5-checks/native/current-input/input.json
         run: |
           set -o pipefail
           cd desktop/cradle
@@ -260,6 +460,74 @@ jobs:
           set -o pipefail
           cd desktop/cradle
           python3 tests/native-expression-receipt.test.py 2>&1 | tee /tmp/w5-checks/actual-native-receipt-admission.log
+      - name: Join actual native input custody across helper, manager and browser
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, re, runpy
+          from pathlib import Path
+          api = runpy.run_path('desktop/cradle/tests/native-expression-current-input.py')
+          require = api['require']
+          report = {'schema': 'oi.native-expression-input-consumer-join/v1', 'pass': False,
+                    'standing': 'same consumed input bytes across separate native admission, manager and software-GPU traces; no installed/personal-world or listening claim'}
+          try:
+              base = Path('/tmp/w5-checks')
+              paths = {'helper': base / 'native/current-input/receipt.json',
+                       'manager': base / 'native/acceptance.json',
+                       'local': base / 'local-join/local-receipt.json',
+                       'browser': base / 'local-join/browser/joined.json'}
+              receipts = {}
+              report['receipts'] = {}
+              for name, path in paths.items():
+                  require(path.is_file() and not path.is_symlink(), name + ': receipt must be a regular file')
+                  with path.open('rb') as source:
+                      raw = source.read(api['MAX_JSON'] + 1)
+                  receipts[name] = api['parse'](raw)
+                  report['receipts'][name] = {'path': str(path), 'sha256': hashlib.sha256(raw).hexdigest()}
+              helper, manager, local, browser = (receipts[name] for name in ('helper', 'manager', 'local', 'browser'))
+              for name, schema in [('helper', 'oi.native-expression-current-input/v1'),
+                                   ('manager', 'oi.native-expression-native-acceptance/v1'),
+                                   ('browser', 'oi.native-expression-joined-browser/v1')]:
+                  value = receipts[name]
+                  require(value.get('schema') == schema and value.get('pass') is True
+                          and 'failure' not in value and 'error' not in value, name + ': unsuccessful receipt')
+              require(local.get('schema') == 'oi.native-expression-local/v1'
+                      and local.get('status') == 'isolated-native-browser-passed'
+                      and 'failure' not in local and 'error' not in local, 'local: unsuccessful receipt')
+              code = local['checks']['browser_process']['code']
+              require(type(code) is int and code == 0, 'local: browser process did not succeed')
+              require(all(type(browser['requests'][key]) is int and browser['requests'][key] == 1
+                          for key in ('opens', 'closes')), 'browser: incomplete native lifetime')
+              verified = local['checks']['browser_receipt']
+              require(verified['schema'] == browser['schema']
+                      and verified['sha256'] == report['receipts']['browser']['sha256']
+                      and Path(verified['path']).resolve(strict=True) == paths['browser'].resolve(strict=True),
+                      'local: different verified browser receipt')
+              expected = base / 'native/current-input/input.json'
+              require(expected.is_file() and not expected.is_symlink(), 'generated input is unavailable')
+              records = {'helper': helper['input'],
+                         'manager': {'path': manager['input'], 'sha256': manager['input_sha256']},
+                         'local': local['files']['input'], 'browser': browser['sources']['input']}
+              actual_hash = api['digest'](expected)
+              for name, value in records.items():
+                  path = Path(value['path'])
+                  require(path.is_absolute() and path.is_file() and not path.is_symlink()
+                          and path.resolve(strict=True) == expected.resolve(strict=True), name + ': different input path')
+                  checksum = value['sha256']
+                  require(isinstance(checksum, str) and re.fullmatch('[0-9a-f]{64}', checksum) is not None
+                          and checksum == actual_hash, name + ': different consumed input bytes')
+              report['input'] = {'path': str(expected), 'sha256': actual_hash}
+              report['consumers'] = records
+              report['pass'] = True
+          except Exception as error:
+              report['failure'] = str(error)
+          finally:
+              target = Path('/tmp/w5-checks/native/input-consumer-join.json')
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(json.dumps(report, indent=2) + '\n')
+          require(report['pass'], report.get('failure', 'input consumer join did not pass'))
+          PY
       - name: Scene causal trace and deliberately disconnected consumer
         if: always()
         env:
@@ -308,3 +576,199 @@ jobs:
           path: /tmp/w5-checks
           retention-days: 14
           if-no-files-found: error
+
+
+  epi-whole:
+    name: Complete controlled Epi world / source-built hosted Linux
+    # This is independent whole-experience evidence, not installation authority.
+    # The full native job remains mandatory for workflow success. A native failure
+    # must retain this actual encounter instead of skipping its independent proof.
+    needs: [embedded]
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    env:
+      # The replay owns XDG_CACHE_HOME; install and launch the same browser
+      # runtime explicitly instead of looking in two different caches.
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.epi-whole-browser-runtime
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - id: source
+        name: Freeze actual O:I head and qualified QL adapter owner
+        run: |
+          set -euo pipefail
+          echo "oi=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          ql=$(jq -r .revision desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json)
+          test "$ql" = 6a81fc441e4dda477f4de3a7ebd59c368cb28f37
+          echo "ql=$ql" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ steps.source.outputs.ql }}
+          path: .native-owner/QL-MEF
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          # Qualified source-horizon transaction/readback owner, not PR255's broader successor.
+          ref: 6bcfc1661cd0eccec1a4a691503ea401d411023a
+          path: .native-owner/Central
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          # Existing source-qualified native context owner; no provider or gateway is launched.
+          ref: 64d4e1d12fd95a331db75e1f1df21f332aebab6f
+          path: .native-owner/AIKit
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: astral-sh/setup-uv@v6
+      - name: Actual production build and browser runtime
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y libjson-c-dev pkg-config
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+          npm run build --prefix desktop/cradle
+          npm run build:journeys --prefix desktop/cradle/expressions-app
+          (cd desktop/cradle && npx playwright install --with-deps chromium)
+      - name: Complete real native production, causal receiving and owned-kernel restart
+        env:
+          EXPECTED_OI_HEAD: ${{ steps.source.outputs.oi }}
+          EXPECTED_QL_HEAD: ${{ steps.source.outputs.ql }}
+        run: |
+          set -euo pipefail
+          python3 desktop/cradle/tests/epi-world-hosted-native.py \
+            --repo "$GITHUB_WORKSPACE" \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/QL-MEF" \
+            --central-source "$GITHUB_WORKSPACE/.native-owner/Central" \
+            --aikit-source "$GITHUB_WORKSPACE/.native-owner/AIKit" \
+            --expected-oi-head "$EXPECTED_OI_HEAD" \
+            --expected-ql-head "$EXPECTED_QL_HEAD" \
+            --expected-central-head 6bcfc1661cd0eccec1a4a691503ea401d411023a \
+            --expected-aikit-head 64d4e1d12fd95a331db75e1f1df21f332aebab6f \
+            --fixture-archive "$GITHUB_WORKSPACE/desktop/cradle/tests/fixtures/epi-world-hosted/controlled-native.tar.gz" \
+            --fixture-sha256 b173b96c51bdf964e131c36da1cd171e97e077c340c4b6b36116c52f46093461 \
+            --source-expectation-template "$GITHUB_WORKSPACE/desktop/cradle/tests/fixtures/epi-world-hosted/expectation-template-d30-6a81fc44.json" \
+            --uv "$(command -v uv)" \
+            --output "$RUNNER_TEMP/epi-whole-hosted"
+      - name: Retain same-environment requests, source/build custody, bodies and restart evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epi-whole-hosted-${{ github.event.pull_request.head.sha || github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/epi-whole-hosted/**
+            !${{ runner.temp }}/epi-whole-hosted/build/**
+            !${{ runner.temp }}/epi-whole-hosted/cache/**
+            !${{ runner.temp }}/epi-whole-hosted/uv-cache/**
+            !${{ runner.temp }}/epi-whole-hosted/nara-provider-cache/**
+            !${{ runner.temp }}/epi-whole-hosted/oi-home/**
+            !${{ runner.temp }}/epi-whole-hosted/oi-data/**
+            !${{ runner.temp }}/epi-whole-hosted/world/**
+            !${{ runner.temp }}/epi-whole-hosted/toolchain-bin/**
+
+  epi-mac-candidate:
+    name: Exact native Mac candidate / canonical managed bundle
+    # Explicit candidate builds support installed diagnosis; native failures remain acceptance failures.
+    # Build the exact diagnostic candidate after the embedded source/build
+    # proof while mandatory native/whole gates run. Build success is never
+    # native, whole, installed or release acceptance; their failures remain red.
+    if: ${{ always() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.build_mac_candidate && needs.embedded.result == 'success' }}
+    needs: [embedded]
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Resolve the committed QL source required by this frontend
+        id: mac-ql-source
+        run: |
+          set -euo pipefail
+          revision="$(jq -er '.revision | select(type == "string")' desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json)"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ steps.mac-ql-source.outputs.revision }}
+          path: .native-owner/QL-MEF
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 6bcfc1661cd0eccec1a4a691503ea401d411023a
+          path: .native-owner/Central
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Actuation
+          ref: 39c28eb6e74fe87d10f70910be91005960ff4bf1
+          path: .native-owner/Actuation
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: astral-sh/setup-uv@v6
+      - name: Install only canonical native build prerequisites
+        run: |
+          set -euo pipefail
+          test "$(uname -s)/$(uname -m)" = Darwin/arm64
+          brew install json-c pkg-config
+          curl -sSf https://install.spacetimedb.com -o "$RUNNER_TEMP/epi-mac-spacetime-install.sh"
+          shasum -a 256 "$RUNNER_TEMP/epi-mac-spacetime-install.sh" > "$RUNNER_TEMP/epi-mac-spacetime-install.sha256"
+          SPACETIME_DOWNLOAD_ROOT="https://github.com/clockworklabs/SpacetimeDB/releases/download/v2.8.1" \
+            sh "$RUNNER_TEMP/epi-mac-spacetime-install.sh" -y
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          spacetime version install 2.8.1
+          spacetime version use 2.8.1
+          spacetime --version | tee "$RUNNER_TEMP/epi-mac-spacetime-version.txt"
+          grep -q '2.8.1' "$RUNNER_TEMP/epi-mac-spacetime-version.txt"
+      - name: Build actual source archives, all-five QL owners and canonical desktop bundle
+        env:
+          APPLE_SIGNING_IDENTITY: '-'
+          EXPECTED_OI_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python3 scripts/epi-mac-candidate.py \
+            --repo "$GITHUB_WORKSPACE" \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/QL-MEF" \
+            --central-source "$GITHUB_WORKSPACE/.native-owner/Central" \
+            --act-source "$GITHUB_WORKSPACE/.native-owner/Actuation" \
+            --expected-oi-head "$EXPECTED_OI_HEAD" \
+            --expected-ql-head "${{ steps.mac-ql-source.outputs.revision }}" \
+            --expected-central-head 6bcfc1661cd0eccec1a4a691503ea401d411023a \
+            --expected-act-head 39c28eb6e74fe87d10f70910be91005960ff4bf1 \
+            --output "$RUNNER_TEMP/epi-mac-candidate"
+      - name: Retain exact native artifacts and build/source custody without installation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epi-mac-candidate-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/epi-mac-candidate/receipt.json
+            ${{ runner.temp }}/epi-mac-candidate/*-source.tar
+            ${{ runner.temp }}/epi-mac-candidate/commands/**
+            ${{ runner.temp }}/epi-mac-candidate/native/**
+            ${{ runner.temp }}/epi-mac-candidate/bundle/**
+            ${{ runner.temp }}/epi-mac-candidate/frontend/**
+            ${{ runner.temp }}/epi-mac-spacetime-version.txt
+            ${{ runner.temp }}/epi-mac-spacetime-install.sh
+            ${{ runner.temp }}/epi-mac-spacetime-install.sha256

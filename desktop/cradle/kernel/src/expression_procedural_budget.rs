@@ -35,6 +35,12 @@ impl Budget {
     ) -> Result<(), String> {
         self.value(&Material(presentation))
     }
+    pub(super) fn driver_material(
+        &mut self,
+        presentation: &crate::expression_scene::Presentation,
+    ) -> Result<(), String> {
+        self.value(&DriverMaterial(presentation))
+    }
     pub(super) fn entity_refs(
         &mut self,
         presentation: &crate::expression_scene::Presentation,
@@ -85,6 +91,65 @@ impl Serialize for Material<'_> {
     }
 }
 struct EntityRefs<'a>(&'a Value);
+struct DriverProcedural<'a>(&'a Value);
+impl Serialize for DriverProcedural<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let Some(object) = self.0.as_object() else {
+            return self.0.serialize(serializer);
+        };
+        let mut map = serializer.serialize_map(Some(object.len()))?;
+        for (key, value) in object {
+            if key == "operations" {
+                map.serialize_entry(key, &[] as &[Value])?;
+            } else {
+                map.serialize_entry(key, value)?;
+            }
+        }
+        map.end()
+    }
+}
+struct DriverScene<'a>(&'a Value);
+impl Serialize for DriverScene<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let object = self
+            .0
+            .as_object()
+            .ok_or_else(|| serde::ser::Error::custom("Actual native Scene object missing"))?;
+        let mut map = serializer.serialize_map(Some(object.len()))?;
+        for (key, value) in object {
+            if key == "procedural" {
+                map.serialize_entry(key, &DriverProcedural(value))?;
+            } else {
+                map.serialize_entry(key, value)?;
+            }
+        }
+        map.end()
+    }
+}
+struct DriverMaterial<'a>(&'a crate::expression_scene::Presentation);
+impl Serialize for DriverMaterial<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut state = serializer
+            .serialize_struct("Presentation", if self.0.saved.is_some() { 3 } else { 2 })?;
+        state.serialize_field("schema", &self.0.schema)?;
+        state.serialize_field("scene", &DriverScene(&self.0.scene))?;
+        if let Some(saved) = &self.0.saved {
+            state.serialize_field("saved", saved)?;
+        }
+        state.end()
+    }
+}
+pub(super) fn material_value(
+    presentation: &crate::expression_scene::Presentation,
+) -> Result<Value, String> {
+    serde_json::to_value(Material(presentation)).map_err(|error| error.to_string())
+}
+
+pub(super) fn driver_material_value(
+    presentation: &crate::expression_scene::Presentation,
+) -> Result<Value, String> {
+    serde_json::to_value(DriverMaterial(presentation)).map_err(|e| e.to_string())
+}
 impl Serialize for EntityRefs<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;

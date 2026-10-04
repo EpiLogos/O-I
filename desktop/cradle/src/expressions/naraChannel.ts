@@ -4,11 +4,14 @@
 import {kernelOp} from '../kernel/bridge';
 import {validateCoordinateExpression} from '../nara/coordinateExpression';
 import {validateRuntimeReadiness} from '../nara/runtimeReadiness';
+import {readNativePersonalSkyInput} from '../nara/nativeSkyInput';
 import type {KernelTransportStatus} from '../kernel/types';
 import {encounter, type EncounterReading, type EncounterStatus} from '../encounter/client';
 import {listFlowInstances, readFlowInstance, type FlowInstance, type FlowInstanceRow} from '../flow/instances';
 import {readNativeAnswer, readDayTarget, retainAnswerInFlow, proposeAnswerForDay,
   type NativeAnswer, type NativeDayTarget} from '../nara/nativeReturn';
+import {keepNativeAnswerInExpression,readStoredNativeAnswers} from '../nara/nativeAnswerExpression';
+import {keptAnswerCarrier} from '../nara/nativeKeptAnswer';
 import {nativeEpii} from '../nara/nativeEpii';
 import {nativeVoice} from '../nara/nativeVoice';
 import {naraIdentity} from '../nara/identity/client';
@@ -69,10 +72,23 @@ function request(value: unknown): NaraInstrumentRequest {
   if (new TextEncoder().encode(JSON.stringify(value)).length > (isCapture ? 13 * 1024 * 1024 : 2 * 1024 * 1024)) throw new Error('The Nara request exceeds its bounded input size.');
   const v = object(value);
   switch (v.operation) {
+    case 'source': {
+      fields(v,['operation','coordinate_ref','inventory']);
+      const coordinate_ref=text(v.coordinate_ref,'exact source reference');
+      if(v.inventory===undefined)return {operation:'source',coordinate_ref};
+      const page=object(v.inventory);fields(page,['offset','limit']);
+      if(!Number.isSafeInteger(page.offset)||Number(page.offset)<0||!Number.isSafeInteger(page.limit)||Number(page.limit)<1||Number(page.limit)>256)throw Error('Source inventory needs an existing offset and 1–256 records.');
+      return {operation:'source',coordinate_ref,inventory:{offset:Number(page.offset),limit:Number(page.limit)}};
+    }
     case 'coordinate': {
-      fields(v,['operation','request']);const inner=object(v.request);fields(inner,['coordinate_ref','face']);
+      fields(v,['operation','request']);const inner=object(v.request);fields(inner,['coordinate_ref','face','include_content','related_coordinates','inventory']);
       if(inner.face!=='bimba'&&inner.face!=='pratibimba')throw Error('Choose a native coordinate face.');
-      return {operation:'coordinate',request:{coordinate_ref:text(inner.coordinate_ref,'coordinate reference'),face:inner.face}};
+      if(inner.include_content!==undefined&&typeof inner.include_content!=='boolean')throw Error('Full source disclosure must be an explicit boolean.');
+      let related_coordinates:string[]|undefined;
+      if(inner.related_coordinates!==undefined){if(!Array.isArray(inner.related_coordinates)||inner.related_coordinates.length>63)throw Error('Choose at most 63 related native coordinates.');related_coordinates=inner.related_coordinates.map(ref=>text(ref,'related coordinate'));}
+      let inventory:{offset:number;limit:number}|undefined;
+      if(inner.inventory!==undefined){const page=object(inner.inventory);fields(page,['offset','limit']);if(!Number.isSafeInteger(page.offset)||Number(page.offset)<0||!Number.isSafeInteger(page.limit)||Number(page.limit)<1||Number(page.limit)>256)throw Error('Source inventory needs an existing offset and 1–256 records.');inventory={offset:Number(page.offset),limit:Number(page.limit)};}
+      return {operation:'coordinate',request:{coordinate_ref:text(inner.coordinate_ref,'coordinate reference'),face:inner.face,...(inner.include_content!==undefined?{include_content:inner.include_content}:{}),...(related_coordinates?{related_coordinates}:{}),...(inventory?{inventory}:{})}};
     }
     case 'identity': {
       fields(v, ['operation', 'request']); const inner = object(v.request);
@@ -88,8 +104,8 @@ function request(value: unknown): NaraInstrumentRequest {
           break;
         case 'transit': fields(inner,['operation','request']); object(inner.request); break;
         case 'personal_current':
-          fields(inner,['operation','source_ref','expected_revision','sky_request']);
-          text(inner.source_ref,'saved identity source');text(inner.expected_revision,'saved source revision');object(inner.sky_request);break;
+          fields(inner,['operation','source_ref','expected_revision','sky_request','sky_snapshot','snapshot_purpose']);
+          text(inner.source_ref,'saved identity source');text(inner.expected_revision,'saved source revision');readNativePersonalSkyInput(inner);break;
         default: throw new Error('Unsupported native identity operation.');
       }
       return {operation: 'identity', request: inner as unknown as NaraIdentityRequest};
@@ -99,7 +115,8 @@ function request(value: unknown): NaraInstrumentRequest {
       return {operation: 'select_identity', source: source(v.source), input_revision: text(v.input_revision, 'native identity input revision')};
     case 'release_identity': fields(v, ['operation']); return {operation: 'release_identity'};
     case 'read': case 'send': case 'epii_delegate': case 'epii_inspect': case 'epii_accept': case 'reconnect': case 'interrupt':
-    case 'act_inspect': case 'act_focus': case 'act_restore': case 'act_status': case 'current_pin': case 'current_read': case 'readiness': case 'm3':
+    case 'act_inspect': case 'act_focus': case 'act_restore': case 'act_status': case 'current_pin': case 'current_read': case 'current_restore': case 'readiness': case 'm3':
+    case 'return_expression':case 'return_expression_list':case 'return_expression_read':
     case 'return_inspect': case 'return_flow_read': case 'return_flow': case 'return_day': case 'voice': {
       const extra = v.operation === 'read' ? ['before'] : (v.operation === 'send' || v.operation === 'epii_delegate') ? ['question']
         : v.operation === 'epii_inspect' ? ['answer_block_id']
@@ -107,7 +124,8 @@ function request(value: unknown): NaraInstrumentRequest {
         : v.operation === 'act_inspect' ? ['answer_block_id']
         : v.operation === 'act_focus' ? ['answer_block_id','target_ref']
         : v.operation === 'act_restore' ? ['act_ref','expected_revision']
-        : v.operation === 'current_pin' ? ['sky_request']
+        : v.operation === 'current_pin' ? ['sky_request','sky_snapshot','snapshot_purpose']
+        : v.operation === 'return_expression' ? ['review_ref'] : v.operation === 'return_expression_read' ? ['answer_ref']
         : v.operation === 'return_inspect' ? ['answer_block_id']
         : v.operation === 'return_flow_read' ? ['review_ref', 'flow_ref']
         : v.operation === 'return_flow' ? ['review_ref', 'flow_ref', 'expected_revision']
@@ -117,7 +135,10 @@ function request(value: unknown): NaraInstrumentRequest {
       const basis: InstrumentBasis = {expression_ref: text(b.expression_ref, 'Expression reference'), source: source(b.source)};
       if (v.role !== 'nara' && v.role !== 'epii') throw new Error('Choose the native Nara or Epii dialogue.');
       if(['epii_delegate','epii_inspect','epii_accept'].includes(String(v.operation))&&v.role!=='epii')throw Error('Structured inquiry belongs to the native Epii session.');
-      if(['act_inspect','act_focus','act_restore','act_status','current_pin','current_read','readiness'].includes(String(v.operation))&&v.role!=='nara')throw Error('Personal context belongs to the native Nara session.');
+      if(['act_inspect','act_focus','act_restore','act_status','current_pin','current_read','current_restore','readiness'].includes(String(v.operation))&&v.role!=='nara')throw Error('Personal context belongs to the native Nara session.');
+      if(v.operation==='return_expression_list')return {operation:'return_expression_list',basis,role:v.role};
+      if(v.operation==='return_expression_read')return {operation:'return_expression_read',basis,role:v.role,answer_ref:text(v.answer_ref,'kept native answer reference')};
+      if(v.operation==='return_expression')return {operation:'return_expression',basis,role:v.role,review_ref:text(v.review_ref,'native answer review')};
       if(v.operation==='act_status')return {operation:'act_status',basis,role:'nara'};
       if(v.operation==='readiness')return {operation:'readiness',basis,role:'nara'};
       if(v.operation==='m3'){
@@ -142,8 +163,8 @@ function request(value: unknown): NaraInstrumentRequest {
         }else throw Error('Unsupported native M3 operation.');
         return {operation:'m3',basis,role:'nara',request:inner as unknown as import('../nara/nativeM3').M3Gesture};
       }
-      if(v.operation==='current_read')return {operation:'current_read',basis,role:'nara'};
-      if(v.operation==='current_pin')return {operation:'current_pin',basis,role:'nara',sky_request:object(v.sky_request) as unknown as import('../nara/identity/types').SkyRequest};
+      if(v.operation==='current_read'||v.operation==='current_restore')return {operation:v.operation,basis,role:'nara'};
+      if(v.operation==='current_pin')return {operation:'current_pin',basis,role:'nara',...readNativePersonalSkyInput(v)};
       if(v.operation==='act_inspect')return {operation:'act_inspect',basis,role:'nara',answer_block_id:positiveId(v.answer_block_id)};
       if(v.operation==='act_focus')return {operation:'act_focus',basis,role:'nara',answer_block_id:positiveId(v.answer_block_id),target_ref:text(v.target_ref,'cited native focus')};
       if(v.operation==='act_restore')return {operation:'act_restore',basis,role:'nara',act_ref:text(v.act_ref,'native expressive act'),expected_revision:positiveId(v.expected_revision)};
@@ -213,6 +234,13 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
   const loaded = () => {epoch++; release(); calculated.clear(); seen.clear(); mutating = false; announce();};
   const execute = async (r: NaraInstrumentRequest, requireEpoch: () => void): Promise<NaraInstrumentReply> => {
     requireEpoch();
+    if(r.operation==='source'){
+      const response=await kernelOp(transport,{op:'nara_coordinate',request:{coordinate_ref:r.coordinate_ref,face:'bimba',source_only:true,...(r.inventory?{inventory:r.inventory}:{})}});requireEpoch();
+      if(response.error||response.outcome?.result!=='nara_coordinate')throw Error(response.error??'The complete shared source owner did not return a reading.');
+      const reading=response.outcome.data as unknown as import('../nara/instrumentProtocol').NaraSourceReading;
+      if(!['ql.bimba-coordinate-content/v1','ql.bimba-inventory/v1'].includes(reading?.schema)||!reading.source_revision||!reading.registry_revision)throw Error('The native source owner returned an unsupported source reading.');
+      return reading;
+    }
     if(r.operation==='coordinate'){
       const response=await kernelOp(transport,{op:'nara_coordinate',request:r.request});requireEpoch();
       if(response.error||response.outcome?.result!=='nara_coordinate')throw Error(response.error??'The native coordinate owner did not return a reading.');
@@ -331,16 +359,25 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
       if(value.schema!=='oi.m3-reception-context/v1'||value.expression_ref!==expression.expression_ref||value.expression_revision!==expression.revision||value.person_ref!==identity.reading.person_ref||value.identity_revision!==identity.source.revision)throw Error('M3 returned a different encounter.');
       return value;
     }
-    if(r.operation==='current_pin'||r.operation==='current_read'){
+    if(r.operation==='current_pin'||r.operation==='current_read'||r.operation==='current_restore'){
       const binding:import('../nara/dialogueTypes').NativeDialogueRequest={operation:'context',
         source_ref:identity.source.source_ref,expected_revision:identity.source.revision,
         person_ref:identity.reading.person_ref,nara_ref:identity.reading.nara_ref,
         expression_ref:expression.expression_ref,role:'nara'};
       const request:import('../nara/nativeCurrent').NativeCurrentRequest=r.operation==='current_pin'
-        ?{operation:'pin',binding,sky_request:r.sky_request}:{operation:'read',binding};
+        ?{operation:'pin',binding,...readNativePersonalSkyInput(r)}:{operation:r.operation==='current_restore'?'restore':'read',binding};
       requireCurrent();const reply=await kernelOp(transport,{op:'nara_current',project,request});requireCurrent();
       if(reply.error||reply.outcome?.result!=='nara_current')throw Error(reply.error??'The native personal current owner did not answer.');
       return reply.outcome.data;
+    }
+    if(r.operation==='return_expression_list'||r.operation==='return_expression_read'){
+      const carrier=keptAnswerCarrier(document);
+      if(carrier.world.person_ref!==identity.reading.person_ref||carrier.world.nara_ref!==identity.reading.nara_ref)throw Error('The stored answer belongs to another personal world.');
+      const readings=await readStoredNativeAnswers(transport,document);requireCurrent();
+      const own=readings.filter(value=>value.record.original_person_ref===identity.reading.person_ref&&value.record.original_nara_ref===identity.reading.nara_ref);
+      if(r.operation==='return_expression_list')return {schema:'oi.nara-instrument-return/v1',review_ref:'stored-native-answers',expressions:own.map(r=>r.record)};
+      const kept=own.find(value=>value.record.answer_ref===r.answer_ref);if(!kept)throw Error('That attributed native answer is not part of this personal world.');
+      return {schema:'oi.nara-instrument-return/v1',review_ref:'stored-native-answers',kept};
     }
     let dialogue: NativeDialogue | null = await lookupNativeDialogue(transport, project, identity, expression.expression_ref, r.role, true);
     requireCurrent();
@@ -406,6 +443,21 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
         day: target ? {source_ref: target.document.source.ref, document_id: target.document.document_id,
           revision: target.document.revision.revision, civil_date: target.day.temporal.civil_date, fields: target.fields} : null,
         unavailable: {...(listed.status === 'rejected' ? {flows: String(listed.reason)} : {}), ...(day.status === 'rejected' ? {day: String(day.reason)} : {})}};
+    }
+    if(r.operation==='return_expression'){
+      const held=review;
+      if(!held||held.ref!==r.review_ref||held.selection!==identity.selection_ref||held.expressionRevision!==expression.revision
+        ||held.answer.dialogue.key!==dialogue?.key)throw Error('Review the exact completed native answer before keeping it in this Expression.');
+      const basis=await currentTurnBasis(transport,held.answer.dialogue,identity,expression.expression_ref);requireCurrent();
+      const input=JSON.parse(nativeTurnText(held.answer.question,basis,r.role)) as Record<string,unknown>;
+      const receipt=await keepNativeAnswerInExpression(transport,held.answer,input,requireCurrent);
+      // This explicit commit advances the native document. Do not compare it
+      // with the precommit revision, resend it, or adopt into a new selection.
+      requireEpoch();
+      if(currentIdentity()?.selection_ref!==identity.selection_ref||owner.project().trim()!==project
+        ||owner.expression()?.expression_ref!==expression.expression_ref)throw Error('The native answer was kept; reopen its personal Expression to read the acknowledged revision.');
+      review=null;
+      return {schema:'oi.nara-instrument-return/v1',review_ref:held.ref,expression:receipt};
     }
     if (r.operation === 'return_flow_read' || r.operation === 'return_flow' || r.operation === 'return_day') {
       const held = review;
@@ -502,7 +554,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
       // Reads, interruption and release remain available during native work.
       // Release invalidates the selection immediately; outstanding operations
       // must pass their current-selection guard before publishing a result.
-      const changes = r.operation !== 'act_status' && r.operation !== 'current_read' && r.operation !== 'act_inspect' && r.operation !== 'epii_inspect' && r.operation !== 'coordinate' && r.operation !== 'read' && r.operation !== 'interrupt' && r.operation !== 'release_identity'
+      const changes = r.operation !== 'return_expression_list' && r.operation !== 'return_expression_read' && r.operation !== 'act_status' && r.operation !== 'current_read' && r.operation !== 'act_inspect' && r.operation !== 'epii_inspect' && r.operation !== 'coordinate' && r.operation !== 'source' && r.operation !== 'read' && r.operation !== 'interrupt' && r.operation !== 'release_identity'
         && !(r.operation === 'voice' && (r.request.operation === 'close' || r.request.operation === 'read'))
         && !(r.operation === 'm3' && r.request.operation === 'read')
         && !(r.operation === 'identity' && ['list', 'open'].includes(r.request.operation));

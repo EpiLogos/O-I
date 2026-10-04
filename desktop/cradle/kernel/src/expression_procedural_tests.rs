@@ -6535,3 +6535,140 @@ fn a05_a14_original_source_projection_refuses_unavailable_or_invalid_typed_sourc
     assert!(serde_json::to_value(budget::OriginSourceBasis(&[])).is_err());
     assert_eq!(serde_json::to_vec(&original).unwrap(), original_bytes);
 }
+
+#[path = "expression_procedural_continuation_reading_tests.rs"]
+mod continuation_reading_tests;
+
+#[path = "expression_procedural_force_continuation_tests.rs"]
+mod force_continuation_tests;
+
+/// Exercises the real Application/Runtime journal and Scene constructor. The
+/// legacy ownership-only envelope is not a qualified Source or numeric ACK.
+#[test]
+fn actual_prepare_journal_requires_a_new_current_scene_read_without_rewriting_original_intent() {
+    let (mut app, client) = opened();
+    let before = app.document(EXPRESSION).unwrap().clone();
+    let scene_ref = before.scenes[0].scene_ref.clone();
+    let initial_owner = app.procedural_scene_owner(&before, &scene_ref).unwrap();
+    let initial_fact = initial_owner
+        .closed_constructor_fact(&before, &scene_ref)
+        .unwrap();
+    let envelope = envelope(&before, Scope::Expression, "a");
+    let original_envelope = envelope.clone();
+    let (reply, changed) = app
+        .procedural(
+            &client,
+            Request::Prepare {
+                envelope: Box::new(envelope),
+            },
+        )
+        .unwrap();
+    assert!(changed.is_some());
+    assert_eq!(reply["durability"], "native_document_until_file_save");
+    let after = app.document(EXPRESSION).unwrap().clone();
+    assert_eq!(after.revision, before.revision + 1);
+    let admitted: Operation = serde_json::from_value(reply["operation"].clone()).unwrap();
+    assert_eq!(admitted.envelope, original_envelope);
+    assert_eq!(admitted.envelope.expected_revision, before.revision);
+    assert_eq!(admitted.accepted_revision, Some(after.revision));
+    assert_eq!(admitted.status, Status::Prepared);
+    assert_eq!(admitted.applied_revision, None);
+    assert!(admitted.observations.is_empty());
+    assert!(
+        app.require_procedural_scene_owner(&initial_owner, &after)
+            .is_err()
+    );
+    assert!(
+        initial_owner
+            .closed_constructor_fact(&after, &scene_ref)
+            .is_err()
+    );
+    let fresh_owner = app.procedural_scene_owner(&after, &scene_ref).unwrap();
+    app.require_procedural_scene_owner(&fresh_owner, &after)
+        .unwrap();
+    let fresh_fact = fresh_owner
+        .closed_constructor_fact(&after, &scene_ref)
+        .unwrap();
+    assert_eq!(initial_owner.instance_ref(), fresh_owner.instance_ref());
+    assert_eq!(
+        initial_owner.construction_generation(),
+        fresh_owner.construction_generation()
+    );
+    assert_eq!(
+        initial_fact["initial_document_sha256"],
+        fresh_fact["initial_document_sha256"]
+    );
+    assert_eq!(initial_fact["document_revision"], before.revision);
+    assert_eq!(fresh_fact["document_revision"], after.revision);
+    assert_ne!(
+        initial_fact["document_sha256"],
+        fresh_fact["document_sha256"]
+    );
+
+    let strip_journal_metadata = |document: &Document| {
+        let mut material = document
+            .scenes
+            .iter()
+            .find(|s| s.scene_ref == scene_ref)
+            .unwrap()
+            .presentation
+            .as_ref()
+            .unwrap()
+            .clone();
+        material.scene.as_object_mut().unwrap().remove("procedural");
+        material
+    };
+    assert_eq!(
+        strip_journal_metadata(&before),
+        strip_journal_metadata(&after)
+    );
+    assert_eq!(before.entities, after.entities);
+    let (repeated, changed) = app
+        .procedural(
+            &client,
+            Request::Prepare {
+                envelope: Box::new(original_envelope.clone()),
+            },
+        )
+        .unwrap();
+    assert_eq!(repeated["repeated"], true);
+    assert!(changed.is_none());
+    assert_eq!(app.document(EXPRESSION).unwrap(), &after);
+    let retained = app
+        .procedural_runtime
+        .inspect(&original_envelope.operation_ref)
+        .unwrap();
+    assert_eq!(retained, &admitted);
+    assert!(retained.envelope.producer_ref.is_none());
+    assert!(app.procedural_runtime.producers.is_empty());
+}
+
+#[test]
+fn a13_actual_continuation_stale_document_refuses_before_shared_copy_callback() {
+    let before=source_source_read_document();
+    let mut app=Application::default();
+    app.open(before.clone(),"human:actual-resource-reader".into()).unwrap();
+    let stale=before.edited(vec![Change::ParameterSet {
+        entity_ref:format!("{EXPRESSION}:entity:a"),parameter:"force_strength".into(),
+        value:json!(0.63),
+    }]).unwrap();
+    let mut calls=0;
+    let error=app.procedural_continuation_reading_with_capture(&stale,
+        &stale.scenes[0].scene_ref,&Value::Null,&mut |_|{calls+=1;Ok(())}).unwrap_err();
+    assert_eq!(error,"revision_conflict");
+    assert_eq!(calls,0);
+    assert_eq!(app.document(EXPRESSION).unwrap(),&before);
+}
+#[test]
+fn a05_actual_current_document_does_not_turn_bare_definition_into_source_custody() {
+    let before=source_source_read_document();
+    let mut app=Application::default();
+    app.open(before.clone(),"human:actual-resource-reader".into()).unwrap();
+    let mut calls=0;
+    assert!(app.procedural_continuation_reading_with_capture(&before,
+        &before.scenes[0].scene_ref,&Value::Null,&mut |_|{calls+=1;Ok(())}).is_err());
+    assert_eq!(calls,0);
+    assert!(app.procedural_runtime.producers.is_empty());
+    assert!(app.procedural_runtime.qualified_operations.is_empty());
+    assert_eq!(app.document(EXPRESSION).unwrap(),&before);
+}

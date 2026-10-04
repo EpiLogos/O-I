@@ -1,3 +1,4 @@
+import {readNativeProcedureCompileRequest} from './procedureSourceRequest';
 import type {LibraryItem} from "../library/scope";
 import type {NativeInsertionTarget,VerifiedInsertionSource} from "./sourceInsertion";
 import {hostedCompositionFile} from "./hostedComposition";
@@ -288,6 +289,17 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       } catch (cause) {
         refuse(kind, req, cause instanceof Error ? cause.message : String(cause));
       }
+      return;
+    }
+    if (kind === "kernel-procedure-source") {
+      try {
+        const request = readNativeProcedureCompileRequest(event.data.request);
+        // The native Kernel prepares the captured Doc/CAS, executes the installed
+        // source outside its lock, then finishes under the original owner.
+        const call = await kernelOp(transport, {op: "native_expression", request});
+        if (call.error || call.outcome?.result !== "native_expression") throw new Error(call.error ?? "the native procedural source did not answer");
+        reply(`${kind}-result`, req, {ok: true, data: call.outcome.data});
+      } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
       return;
     }
     if (kind === "kernel-expression-world") {

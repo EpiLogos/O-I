@@ -58,7 +58,7 @@ fn counter(value: &Value) -> Result<Counter, String> {
 /// checkpoint. Later checkpoints cannot justify dropping the original prefix.
 /// Existing native page/termination codecs supply BOTH boundaries, including
 /// the real transport acknowledgement which starts an after epoch.
-fn require_original_recording_streams(performance: &Performance) -> Result<(), String> {
+pub(super) fn require_original_recording_streams(performance: &Performance) -> Result<(), String> {
     let mut streams = std::collections::BTreeMap::new();
     let mut closed_epochs = std::collections::BTreeSet::new();
     for page in &performance.native_recordings {
@@ -107,7 +107,7 @@ fn require_original_recording_streams(performance: &Performance) -> Result<(), S
         {
             return Err("native termination reused an already-retained transport epoch".into());
         }
-        if page.termination()?.is_some() {
+        if page.termination()?.is_some() || page.continuation()?.is_some() {
             // Lost retains its literal same-epoch after checkpoint as historical
             // evidence. A cancellation may start the distinct ACK epoch; neither
             // permits another page to revive the original before epoch.
@@ -128,7 +128,9 @@ fn previous_stream(
 ) -> Result<(Counter, Counter), String> {
     require_original_recording_streams(performance)?;
     for page in &performance.native_recordings {
-        if page.termination()?.is_some() && page.recording_stream_before()?.0 == epoch {
+        if (page.termination()?.is_some() || page.continuation()?.is_some())
+            && page.recording_stream_before()?.0 == epoch
+        {
             return Err("recording command targets a terminated transport epoch".into());
         }
     }
@@ -359,7 +361,7 @@ fn compile_original_batch(
     .map(|prepared| Some(Box::new(prepared)))
 }
 
-fn compile_original_pulse(
+pub(super) fn compile_original_pulse(
     performance: &Performance,
     intent: &RecordingIntent,
     pulse: &Value,
@@ -525,7 +527,7 @@ impl NativeSceneRecordingCommit {
     pub fn currentness(&self) -> Result<(), &str> {
         self.currentness
             .as_ref()
-            .copied()
+            .map(|()| ())
             .map_err(String::as_str)
     }
     pub fn native_reply(&self) -> &Value {
@@ -932,6 +934,357 @@ impl NativeSceneRecordingCommit {
             currentness,
             native_reply,
             diagnostics: NativeDiagnosticReceipts::empty(),
+        }
+    }
+}
+
+/// One genuinely stopped current cut. Original birth/history remains retained.
+pub(crate) struct RecordingSaveCutIntent {
+    pub(crate) actor: String,
+    pub(crate) basis: u16,
+    pub(crate) layer: u16,
+    pub(crate) checkpoint_ref: String,
+}
+pub(crate) struct PreparedNativeSceneSaveCut {
+    before: Box<Document>,
+    scene_ref: String,
+    owner: SceneOwner,
+    intent: RecordingSaveCutIntent,
+    prospective: Box<Performance>,
+    operations: Vec<PerformanceOperation>,
+    original_channel: Box<NativeActChannelReply>,
+}
+fn compile_save_cut(
+    original: &Performance,
+    intent: &RecordingSaveCutIntent,
+    observation: &Value,
+    checkpoint_pulse: &Value,
+) -> Result<(CheckpointBinding, Performance, Vec<PerformanceOperation>), String> {
+    crate::expression::text(&intent.actor)?;
+    crate::expression::text(&intent.checkpoint_ref)?;
+    original.validate()?;
+    for pulse in [observation, checkpoint_pulse] {
+        if pulse["accepted"] != true
+            || !matches!(
+                pulse["reading"]["device"]["state"].as_str(),
+                Some("closed" | "prepared")
+            )
+            || pulse["recording"]["failure"] != 0
+            || counter(&pulse["recording"]["dropped_applications"])? != Counter(0)
+            || counter(&pulse["last_input_ordinal"])?
+                != counter(&pulse["reading"]["last_input_ordinal"])?
+        {
+            return Err("save cut lost actual stopped/full recording acknowledgement".into());
+        }
+    }
+    for field in [
+        "session_ref",
+        "transport_epoch",
+        "samples_elapsed",
+        "accepted_sequence",
+        "last_applied_application_ordinal",
+        "last_input_ordinal",
+        "scope",
+        "physical",
+        "parameters",
+    ] {
+        if observation["reading"][field] != checkpoint_pulse["reading"][field] {
+            return Err(format!("actual stopped save boundary changed: {field}"));
+        }
+    }
+    if checkpoint_pulse["operation"] != "checkpoint"
+        || !checkpoint_pulse["applications"]
+            .as_array()
+            .is_some_and(Vec::is_empty)
+        || !checkpoint_pulse["input_history"]
+            .as_array()
+            .is_some_and(Vec::is_empty)
+    {
+        return Err(
+            "checkpoint pulse has additional native feedback; both originals remain retained"
+                .into(),
+        );
+    }
+    let recording = compile_original_pulse(
+        original,
+        &RecordingIntent {
+            actor: intent.actor.clone(),
+            basis: intent.basis,
+            layer: intent.layer,
+        },
+        observation,
+    )?;
+    let mut operations = recording
+        .as_ref()
+        .map(|r| r.record_operations())
+        .unwrap_or_default();
+    let prospective = original.clone().edited(operations.clone())?;
+    let basis = prospective
+        .bases
+        .get(usize::from(intent.basis))
+        .ok_or("save cut basis absent")?;
+    let wire = &checkpoint_pulse["payload"]["checkpoint"];
+    let audio = &wire["native_pair"]["audio"];
+    let sample = counter(&audio["cursor"])?;
+    if sample != counter(&observation["reading"]["samples_elapsed"])?
+        || counter(&audio["accepted_sequence"])?
+            != counter(&observation["reading"]["accepted_sequence"])?
+        || counter(&audio["applied_application_ordinal"])?
+            != counter(&observation["reading"]["last_applied_application_ordinal"])?
+        || counter(&wire["transport_epoch"])?
+            != counter(&observation["reading"]["transport_epoch"])?
+        || counter(&wire["input_history"]["last_ordinal"])?
+            != counter(&observation["last_input_ordinal"])?
+        || !audio["applications"]["entries"]
+            .as_array()
+            .is_some_and(Vec::is_empty)
+        || !wire["input_history"]["entries"]
+            .as_array()
+            .is_some_and(Vec::is_empty)
+    {
+        return Err("save checkpoint is not the complete actual post-feedback boundary".into());
+    }
+    let pending = crate::expression_performance::checkpoint_queue(audio)?;
+    let epoch = counter(&wire["transport_epoch"])?;
+    let mut queued_events = Vec::new();
+    for reservation in &prospective.native_reservations {
+        if reservation.transport_epoch != epoch {
+            continue;
+        }
+        if let Some(operation) = pending.get(&reservation.native_sequence) {
+            reservation.validate(&prospective)?;
+            if serde_json::to_vec(*operation).map_err(|e| e.to_string())?
+                != serde_json::to_vec(&reservation.native_operation).map_err(|e| e.to_string())?
+            {
+                return Err(
+                    "saved authored reservation differs from exact native pending operation".into(),
+                );
+            }
+            queued_events.push(QueuedEventReceipt {
+                native_sequence: reservation.native_sequence,
+                recorded_sequence: reservation.recorded_sequence,
+                effective_sample: reservation.effective_sample,
+            });
+        }
+    }
+    let checkpoint = CheckpointBinding::from_native_management_capturing_pending(
+        CheckpointReceipt {
+            checkpoint_ref: intent.checkpoint_ref.clone(),
+            identity: basis.identity.clone(),
+            sample,
+            basis_digest: basis.content_digest.clone(),
+            event_prefix_digest: prospective.prefix_digest(sample.0)?,
+            queued_events,
+            acknowledged_stopped: true,
+        },
+        {
+            crate::expression_act_storage::measure(
+                wire,
+                crate::expression_performance::MAX_PERFORMANCE_BYTES,
+            )?;
+            wire.clone()
+        },
+    )?;
+    NativeRecordState::from_checkpoint(basis, &checkpoint)?;
+    operations.push(PerformanceOperation::Checkpoint {
+        checkpoint: Box::new(checkpoint.clone()),
+    });
+    let prospective = original.clone().edited(operations.clone())?;
+    Ok((checkpoint, prospective, operations))
+}
+
+impl Application {
+    pub(super) fn prepare_native_scene_recording_save_cut(
+        &self,
+        before: &Document,
+        scene_ref: &str,
+        owner: SceneOwner,
+        expected_request_id: u64,
+        intent: RecordingSaveCutIntent,
+        reply: NativeActChannelReply,
+    ) -> Result<PreparedNativeSceneSaveCut, NativeSceneRecordingRefusal> {
+        let basis = intent.basis;
+        let prepared =
+            (|| -> Result<(CheckpointBinding, Performance, Vec<PerformanceOperation>), String> {
+                self.require_procedural_scene_owner(&owner, before)?;
+                let fact = owner.closed_constructor_fact(before, scene_ref)?;
+                crate::expression_act_storage::measure(before, crate::expression::DOCUMENT_BYTES)?;
+                let scene = before
+                    .scenes
+                    .iter()
+                    .find(|scene| scene.scene_ref == scene_ref)
+                    .ok_or("recording selected current Scene absent")?;
+                let original = scene
+                    .performance
+                    .as_ref()
+                    .ok_or("recording Scene has no retained native performance")?;
+                let envelope = reply.value();
+                let selection = &envelope["result"]["selection"];
+                let document_bytes =
+                    serde_json::to_vec(before).map_err(|error| error.to_string())?;
+                let scene_bytes = serde_json::to_vec(scene).map_err(|error| error.to_string())?;
+                // Both native owners serialize THIS typed Document with the same
+                // compact Serde JSON serializer. Compare their actual algorithms,
+                // not two caller-selected digest strings or sorted Value bytes.
+                let constructor_hash =
+                    crate::expression::procedural::bootstrap::fingerprint(before)?;
+                if fact["document_sha256"] != constructor_hash
+                    || crate::expression_file::digest(&document_bytes)
+                        != format!("sha256:{constructor_hash}")
+                {
+                    return Err(
+                        "native Scene constructor and C Document canonical bytes differ".into(),
+                    );
+                }
+                if expected_request_id == 0
+                    || envelope["schema"] != "ql.native-act-owner-result/v1"
+                    || counter(&envelope["request_id"])? != Counter(expected_request_id)
+                    || counter(&envelope["last_request_id"])? != Counter(expected_request_id)
+                    || envelope["available"] != true
+                    || envelope["status"] != "ok"
+                    || envelope["result"]["schema"] != "ql.native-scene-recording-save-cut/v1"
+                    || envelope["result"]["accepted"] != true
+                    || envelope["instance_ref"]
+                        != original
+                            .bases
+                            .get(usize::from(basis))
+                            .ok_or("recording basis absent")?
+                            .identity
+                            .instance_ref
+                    || selection["native_parent_qualification"] != *reply.qualification()
+                    || selection["source_custody"] != "current-document"
+                    || selection["scene_constructor"] != fact
+                    || selection["expression_ref"] != before.expression_ref
+                    || selection["expression_revision"].as_u64() != Some(before.revision)
+                    || selection["scene_ref"] != scene_ref
+                    || selection["scene_revision"].as_u64() != Some(scene.revision)
+                    || selection["expanded_document_sha256"]
+                        != crate::expression_file::digest(&document_bytes)
+                    || selection["selected_scene_sha256"]
+                        != crate::expression_file::digest(&scene_bytes)
+                    || ["act_ref", "act_revision", "act_digest", "edition_position"]
+                        .iter()
+                        .any(|key| selection.get(*key).is_some())
+                {
+                    return Err(
+                        "recording lost original qualified channel/current Scene constructor/CAS"
+                            .into(),
+                    );
+                }
+
+                let diagnostic_reading = reply.diagnostic_reading();
+                let receipts = diagnostic_reading["receipts"]
+                    .as_array()
+                    .ok_or("original cut files absent")?;
+                if receipts.len() != 2
+                    || receipts[0]["descriptor"]["kind"] != "recording.cut_observation"
+                    || receipts[1]["descriptor"]["kind"] != "recording.cut_checkpoint"
+                    || receipts
+                        .iter()
+                        .any(|r| r["complete"] != true || r["descriptor"]["original_index"] != "0")
+                {
+                    return Err("save cut lost exact original two-receipt file custody".into());
+                }
+                let (checkpoint, prospective, operations) =
+                    reply.with_original_receipt("recording.cut_observation", 0, |observation| {
+                        reply.with_original_receipt("recording.cut_checkpoint", 0, |checkpoint| {
+                            compile_save_cut(original, &intent, observation, checkpoint)
+                        })
+                    })?;
+                self.require_procedural_scene_owner(&owner, before)?;
+                Ok((checkpoint, prospective, operations))
+            })();
+        match prepared {
+            Ok((_checkpoint, prospective, operations)) => Ok(PreparedNativeSceneSaveCut {
+                before: Box::new(before.clone()),
+                scene_ref: scene_ref.into(),
+                owner,
+                intent,
+                prospective: Box::new(prospective),
+                operations,
+                original_channel: Box::new(reply),
+            }),
+            Err(reason) => Err(NativeSceneRecordingRefusal {
+                reason,
+                original_channel: Box::new(reply),
+            }),
+        }
+    }
+}
+impl crate::Kernel {
+    pub(crate) fn finish_native_scene_recording_save_cut(
+        &mut self,
+        prepared: PreparedNativeSceneSaveCut,
+    ) -> NativeSceneRecordingCommit {
+        let application = self
+            .expressions
+            .require_procedural_scene_owner(&prepared.owner, &prepared.before)
+            .and_then(|()| {
+                self.apply(crate::KernelOp::Expression {
+                    request: Request::Edit {
+                        expression_ref: prepared.before.expression_ref.clone(),
+                        expected_revision: prepared.before.revision,
+                        actor: prepared.intent.actor.clone(),
+                        changes: vec![Change::ScenePerformanceEdit {
+                            scene_ref: prepared.scene_ref.clone(),
+                            operations: prepared.operations,
+                        }],
+                    },
+                })
+            })
+            .map(Some);
+        let currentness = (|| -> Result<(), String> {
+            application.as_ref().map_err(Clone::clone)?;
+            let after = self.expressions.procedural_source_snapshot(
+                &prepared.before.expression_ref,
+                prepared
+                    .before
+                    .revision
+                    .checked_add(1)
+                    .ok_or("origin Document revision exhausted")?,
+            )?;
+            let scene = after
+                .scenes
+                .iter()
+                .find(|s| s.scene_ref == prepared.scene_ref)
+                .ok_or("origin Scene absent after native edit")?;
+            if scene.performance.as_ref() != Some(prepared.prospective.as_ref()) {
+                return Err("ordinary Scene edit lost actual original native checkpoint".into());
+            }
+            let owner = self
+                .expressions
+                .procedural_scene_owner(&after, &prepared.scene_ref)?;
+            self.expressions
+                .require_procedural_scene_owner(&owner, &after)?;
+            if owner.instance_ref() != prepared.owner.instance_ref()
+                || owner.construction_generation() != prepared.owner.construction_generation()
+            {
+                return Err("origin edit replaced actual Scene lifetime".into());
+            }
+            Ok(())
+        })();
+        let (native_reply, diagnostics) = (*prepared.original_channel).into_custody();
+        NativeSceneRecordingCommit {
+            application,
+            currentness,
+            native_reply,
+            diagnostics,
+        }
+    }
+}
+
+impl NativeSceneRecordingCommit {
+    pub(super) fn from_native_continuation(
+        application: Result<Option<crate::KernelOpOutcome>, String>,
+        currentness: Result<(), String>,
+        channel: NativeActChannelReply,
+    ) -> Self {
+        let (native_reply, diagnostics) = channel.into_custody();
+        Self {
+            application,
+            currentness,
+            native_reply,
+            diagnostics,
         }
     }
 }

@@ -10,6 +10,11 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "expression_procedural_authored_driver.rs"]
+pub(crate) mod authored_driver;
+#[path = "expression_procedural_authored_mutation.rs"]
+mod authored_mutation;
+
 #[path = "expression_procedural_address.rs"]
 mod address_material;
 
@@ -31,6 +36,8 @@ pub(crate) mod receiver;
 pub(crate) mod scene_receiver;
 #[path = "expression_procedural_stage_library.rs"]
 pub(crate) mod stage_library;
+#[path = "expression_procedural_continuation_reading.rs"]
+mod continuation_reading;
 
 pub const SCHEMA: &str = "oi.expression-procedural/v1";
 pub const MAX_OPERATIONS: usize = 256;
@@ -209,6 +216,27 @@ pub enum Request {
         address: Address,
         parameter: String,
     },
+    ReadAuthoredDrivers {
+        expression_ref: String,
+        expected_revision: u64,
+        scene_ref: String,
+        scope: Scope,
+    },
+    /// Readonly full-original lookup. Missing custody can never issue a new edit.
+    AuthoredDriverRetry { original_intent: Box<Request> },
+    AuthoredDriver {
+        expression_ref: String,
+        expected_revision: u64,
+        scene_ref: String,
+        procedure_ref: String,
+        expected_procedure_revision: String,
+        actor: String,
+        operation_ref: String,
+        scope: Scope,
+        catalog_revision: String,
+        target: authored_driver::Target,
+        action: Box<authored_driver::Action>,
+    },
     Control {
         expression_ref: String,
         expected_revision: u64,
@@ -266,6 +294,7 @@ pub struct Runtime {
     /// its large producer preparation. Saved labels never populate it.
     qualified_definitions: BTreeMap<String, String>,
     controls: BTreeMap<String, control::Replay>,
+    authored_controls: BTreeMap<String, authored_mutation::Replay>,
     scene_receivers: scene_receiver::Registry,
     bootstrap_replays: BTreeMap<String, bootstrap::Replay>,
     /// Live native material/current-journal pairing, never restored from JSON.
@@ -3495,6 +3524,8 @@ impl Runtime {
             .retain(|row| row["delta"]["expression_ref"] != expression_ref);
         self.controls
             .retain(|_, control| control.expression_ref != expression_ref);
+        self.authored_controls
+            .retain(|_, control| control.expression_ref != expression_ref);
         self.bootstrap_replays
             .retain(|_, source| source.expression_ref != expression_ref);
         self.retired_through = Some(self.cursor);
@@ -4710,6 +4741,9 @@ impl Application {
             request @ Request::Control { .. } => {
                 Ok((self.replay_procedural_control(&request)?, None))
             }
+            Request::AuthoredDriverRetry { .. } => Err("Readonly authored recovery requires native original outcome custody; no automatic re-delivery".into()),
+            Request::ReadAuthoredDrivers { .. } => Err("Authored drivers require the actual private native Source/catalogue reader".into()),
+            request @ Request::AuthoredDriver { .. } => Ok((self.replay_authored_mutation(&request)?, None)),
             Request::ReadDriver {
                 expression_ref,
                 expected_revision,

@@ -100,9 +100,42 @@ export interface EntityForces {
   spin: number;           // extra tangential swirl added for any mode (signed)
 }
 
+/** Source-owned scalar takeover projected from protected retained native rows.
+ * Values are already native units; the field creates no clock or conversion.
+ * This configuration is not a receiving/physical/audio acknowledgement. */
+export type NativeEntityControlParameter = 'force_strength'|'force_radius'|'force_spin'|'x'|'y'|'z'|'scale'|'rotation';
+export interface NativeEntityControl {
+  parameter:NativeEntityControlParameter;
+  value:number;
+  actor_ref:string;
+  operation_ref:string;
+  document_revision:number;
+  lifetime:'gesture'|'persistent';
+}
+export interface NativeEntityControls {
+  schema:'ql.native-entity-controls/v1';
+  entity_ref:string;
+  controls:NativeEntityControl[];
+}
+export function validateNativeEntityControls(raw:unknown,entityRef:string):NativeEntityControls|undefined {
+  if(raw===undefined)return undefined;
+  const r=raw as NativeEntityControls;
+  if(!r||r.schema!=='ql.native-entity-controls/v1'||r.entity_ref!==entityRef||!Array.isArray(r.controls)||r.controls.length>8)throw Error('Invalid native entity control projection');
+  const parameters=new Set<NativeEntityControlParameter>();
+  for(const c of r.controls){
+    if(!['force_strength','force_radius','force_spin','x','y','z','scale','rotation'].includes(c.parameter)||parameters.has(c.parameter)||!Number.isFinite(c.value)||!c.actor_ref||!c.operation_ref||!Number.isSafeInteger(c.document_revision)||c.document_revision<1||!['gesture','persistent'].includes(c.lifetime))throw Error('Invalid native entity scalar control');
+    const bounds:Record<NativeEntityControlParameter,readonly [number,number]>={force_strength:[-20,20],force_spin:[-20,20],force_radius:[1,1600],x:[-1600,1600],y:[-1600,1600],z:[-1600,1600],scale:[.05,4],rotation:[-Math.PI*2,Math.PI*2]};
+    const [minimum,maximum]=bounds[c.parameter];
+    if(c.value<minimum||c.value>maximum)throw Error('Native entity control is outside actual native Parameter bounds');
+    parameters.add(c.parameter);
+  }
+  return r;
+}
+
 export type EntityKind = 'formation' | 'pin';
 
 export interface Entity {
+  nativeControls?:NativeEntityControls;
   authoringSource?: {kind:'image';image:import('./types').CustomImageConfig}|{kind:'ascii';ascii:import('./types').AsciiGlyphConfig};
   id: string;
   name: string;
@@ -588,6 +621,7 @@ export function normaliseEntity(raw: any): Entity {
   };
   e.kind = raw?.kind === 'pin' ? 'pin' : 'formation';
   e.id = typeof raw?.id === 'string' && raw.id ? raw.id : newId('ent');
+  e.nativeControls=validateNativeEntityControls(raw?.nativeControls,e.id);
   return e;
 }
 

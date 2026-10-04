@@ -276,34 +276,38 @@ impl crate::Kernel {
             .currentness
             .and_then(|()| issued.require_scene_owner(&self.expressions, &before));
         let (data, changed) = if reply["status"] == "ok" {
-            let admitted = source_currentness.and(completion).and_then(|completion| {
-                let scene_owner = self
-                    .expressions
-                    .procedural_scene_owner(&before, &intent.scene_ref)?;
-                let admission = issued.qualify(&before, &intent, &reply)?;
-                let mut accepted = self
-                    .expressions
-                    .finish_source_bootstrap(&self.client, admission)?;
-                if accepted.0["source_current"] == true {
-                    // Only SAME actual current CAS qualifies constructor custody.
-                    // A binding Edit instead requires fresh native no-write bootstrap.
-                    match self.native_expression.retain_registered_consumers(
-                        &self.expressions,
-                        &before,
-                        scene_owner,
-                        completion,
-                    ) {
-                        Ok(()) => accepted.0["receiving_qualification"] = json!("registered"),
-                        Err(reason) => {
-                            self.native_expression.invalidate_registered_consumers();
-                            // Preserve the actual accepted Source reply/adoption and
-                            // full native receipt despite this later factory refusal.
-                            accepted.0["receiving_qualification"] = json!("pending_reception");
-                            accepted.0["receiving_reason"] = json!(reason);
+            let admitted = source_currentness
+                .and(completion)
+                .and_then(|completion| {
+                    let scene_owner = self
+                        .expressions
+                        .procedural_scene_owner(&before, &intent.scene_ref)?;
+                    let admission = issued.qualify(&before, &intent, &reply)?;
+                    let mut accepted = self
+                        .expressions
+                        .finish_source_bootstrap(&self.client, admission)?;
+                    if accepted.0["source_current"] == true {
+                        // Only SAME actual current CAS qualifies constructor custody.
+                        // A binding Edit instead requires fresh native no-write bootstrap.
+                        match self.native_expression.retain_registered_consumers(
+                            &self.expressions,
+                            &before,
+                            scene_owner,
+                            completion,
+                        ).and_then(|()| self.native_expression.retain_registered_definition_scene_read(
+                            &self.expressions, &before, issued, intent.clone(),
+                        )) {
+                            Ok(()) => accepted.0["receiving_qualification"] = json!("registered"),
+                            Err(reason) => {
+                                self.native_expression.invalidate_registered_consumers();
+                                // Preserve the actual accepted Source reply/adoption and
+                                // full native receipt despite this later factory refusal.
+                                accepted.0["receiving_qualification"] = json!("pending_reception");
+                                accepted.0["receiving_reason"] = json!(reason);
+                            }
                         }
-                    }
-                } else {
-                    self.native_expression.invalidate_registered_consumers();
+                    } else {
+                        self.native_expression.invalidate_registered_consumers();
                     accepted.0["receiving_qualification"] = json!("fresh_current_source_required");
                 }
                 Ok(accepted)
@@ -475,6 +479,27 @@ impl IssuedSceneRead {
     /// C31 captures this only while its actual Document/Scene reader is held.
     /// The receipt contains the original authored selection; it cannot be
     /// reconstructed by a procedural request or a retained source label.
+    /// Charge the full privately held pair before its transport Values copy.
+    /// Actual original Document/material/intent are validated by the SAME
+    /// closed_source_read immediately afterward; this lends no issuer authority.
+    /// Borrow every already-owned original issuer byte for shared resource
+    /// accounting. This exposes no wire constructor or native source grant.
+    pub(super) fn retained_source_payload(&self) -> impl serde::Serialize + '_ {
+        (
+            &self.before_fingerprint,
+            &self.reading,
+            &self.issuer_receipt,
+        )
+    }
+
+    pub(crate) fn charge_closed_source_read(
+        &self,
+        budget: &mut crate::expression::procedural::budget::Budget,
+    ) -> Result<(), String> {
+        budget.value(&self.reading)?;
+        budget.value(&self.issuer_receipt)?;
+        budget.reserve(1024)
+    }
     pub(crate) fn closed_source_read(
         &self,
         reader: &crate::expression_procedural_scene_reader::NativeSceneSourceReader<'_>,
@@ -505,6 +530,27 @@ impl IssuedSceneRead {
             );
         }
         Ok(())
+    }
+
+    pub(super) fn lifecycle_reading_borrowed(
+        &self,
+        before: &Document,
+        scene_ref: &str,
+    ) -> Result<&Value, String> {
+        if self.before_fingerprint != fingerprint(before)?
+            || self.reading["expression_ref"] != before.expression_ref
+            || self.reading["document_revision"].as_u64() != Some(before.revision)
+            || self.reading["scene_ref"] != scene_ref
+        {
+            return Err(
+                "Lifecycle private selected-Scene read has another actual Document/Scene".into(),
+            );
+        }
+        let mut budget = crate::expression::procedural::budget::Budget::new();
+        budget.value(&self.reading)?;
+        budget.value(&self.issuer_receipt["original_intent"])?;
+        budget.reserve(1024)?;
+        Ok(&self.reading)
     }
 
     pub(super) fn lifecycle_reading(

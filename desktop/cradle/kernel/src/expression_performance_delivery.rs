@@ -319,7 +319,7 @@ impl SelectedPerformance {
             // This reading witnesses the restituted full native part. The
             // existing encoded checkpoint remains in the same Act catalog.
             "canonical_part_bytes":utf8(canonical.clone())?,
-            "reading":{"ref":digest(&canonical),"revision":"oi.expression-performance-checkpoint/v1","availability":"available"},
+            "reading":{"ref":digest(&canonical),"revision":checkpoint.schema,"availability":"available"},
             "native_management_wire":wire,
             "canonical_native_wire_bytes":utf8(wire_bytes.clone())?,
             "native_wire_sha256":digest(&wire_bytes)

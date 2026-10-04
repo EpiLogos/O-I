@@ -316,3 +316,7 @@ export interface LibraryReadingEntry {
 }
 export interface LibraryReadingCoverage {provider:string;state:string;reason?:string}
 export const readLibraryEntries = (scope:'local'|'shared'='local'):Promise<{entries:LibraryReadingEntry[];coverage:LibraryReadingCoverage[]}> => call('library-read',{request:{scope}},20000);
+
+export async function nativeProcedureSourceRequest(request:Record<string,unknown>):Promise<unknown>{
+ return call('kernel-procedure-source',{request},40_000);
+}

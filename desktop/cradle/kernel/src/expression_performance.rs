@@ -9,11 +9,15 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "expression_performance_contact.rs"]
+pub mod contact;
+
 pub const SCHEMA: &str = "oi.expression-performance/v1";
 pub const SOURCE_SCHEMA: &str = "oi.expression-performance/v2";
 pub const RECORDING_SCHEMA: &str = "oi.expression-performance/v3";
 pub const BASIS_SCHEMA: &str = "oi.expression-performance-basis/v1";
 pub const CHECKPOINT_SCHEMA: &str = "oi.expression-performance-checkpoint/v1";
+pub const PENDING_CHECKPOINT_SCHEMA: &str = "oi.expression-performance-checkpoint/v2";
 pub const MAX_PAGE_EVENTS: usize = 4096;
 pub const RETAINED_PAGE_EVENTS: usize = 128;
 pub const MAX_PAGES: usize = MAX_EVENTS / RETAINED_PAGE_EVENTS + 1;
@@ -54,6 +58,12 @@ impl Scalar {
             return Err("performance scalar must be finite".into());
         }
         Ok(Self((if value == 0.0 { 0.0 } else { value }).to_bits()))
+    }
+    pub(crate) fn from_native_wire(value: f64) -> Result<Self, String> {
+        if !value.is_finite() {
+            return Err("native performance scalar must be finite".into());
+        }
+        Ok(Self(value.to_bits()))
     }
     pub fn value(self) -> f64 {
         f64::from_bits(self.0)
@@ -735,11 +745,21 @@ impl TimedEvent {
         usize::from(self.3)
     }
 }
+fn native_note_phase<'de, D: Deserializer<'de>>(d: D) -> Result<Scalar, D::Error> {
+    Scalar::from_native_wire(f64::deserialize(d)?).map_err(serde::de::Error::custom)
+}
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum EventAction {
     /// touch token, member token, pitch index, velocity, initial sin/cos.
     #[serde(rename = "n")]
-    NoteOn(Counter, Counter, u16, Scalar, Scalar, Scalar),
+    NoteOn(
+        Counter,
+        Counter,
+        u16,
+        Scalar,
+        #[serde(deserialize_with = "native_note_phase")] Scalar,
+        #[serde(deserialize_with = "native_note_phase")] Scalar,
+    ),
     #[serde(rename = "o")]
     NoteOff(Counter),
     #[serde(rename = "s")]
@@ -761,6 +781,9 @@ pub enum EventAction {
     Context,
     #[serde(rename = "x")]
     Panic,
+    /// Full historical committed native Contact application, not queue authority.
+    #[serde(rename = "k")]
+    Contact(crate::expression_performance_native_contact::NativeContactApplication),
 }
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -814,6 +837,105 @@ pub struct CheckpointReceipt {
     pub queued_events: Vec<QueuedEventReceipt>,
     pub acknowledged_stopped: bool,
 }
+/// An actual queued live input has not become a performed score event. This
+/// optional checkpoint custody retains its original operation and original
+/// native input binding without assigning an application or score ordinal.
+/// The complete native audio queue remains retained unchanged as well.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct UnscoredQueuedInput {
+    native_sequence: Counter,
+    effective_sample: Counter,
+    operation: Value,
+    input: Option<crate::expression_performance_management::InputBinding>,
+}
+impl UnscoredQueuedInput {
+    pub fn native_sequence(&self) -> Counter {
+        self.native_sequence
+    }
+    pub fn effective_sample(&self) -> Counter {
+        self.effective_sample
+    }
+    pub fn operation(&self) -> &Value {
+        &self.operation
+    }
+    pub fn input(&self) -> Option<&crate::expression_performance_management::InputBinding> {
+        self.input.as_ref()
+    }
+}
+pub(crate) fn checkpoint_queue(audio: &Value) -> Result<BTreeMap<Counter, &Value>, String> {
+    let mut pending = BTreeMap::new();
+    for (path, key) in [
+        ("/operations/entries", None),
+        ("/releases/entries", None),
+        ("/pending_operations", Some("operation")),
+        ("/pending_releases", Some("release")),
+    ] {
+        for entry in member(audio, path)?
+            .as_array()
+            .ok_or("native pending queue array absent")?
+        {
+            let operation = key.map_or(entry, |key| &entry[key]);
+            let sequence: Counter = serde_json::from_value(member(operation, "/sequence")?.clone())
+                .map_err(|error| error.to_string())?;
+            if sequence.0 == 0 || pending.insert(sequence, operation).is_some() {
+                return Err("duplicate or zero actual native pending operation".into());
+            }
+        }
+    }
+    if pending.len() > 320 {
+        return Err("actual native pending queue exceeds owner bound".into());
+    }
+    Ok(pending)
+}
+fn queued_native_input(
+    operation: &Value,
+    inputs: &[crate::expression_performance_management::InputBinding],
+) -> Result<Option<crate::expression_performance_management::InputBinding>, String> {
+    let sequence: Counter = serde_json::from_value(member(operation, "/sequence")?.clone())
+        .map_err(|error| error.to_string())?;
+    let kind = operation["kind"]
+        .as_u64()
+        .ok_or("native queued operation kind absent")?;
+    let candidates: Vec<_> = inputs
+        .iter()
+        .filter(|input| match kind {
+            0 => input.press_sequence == sequence,
+            1 => input.release_sequence == sequence,
+            3 => operation["touch"] == serde_json::json!(input.target.touch),
+            _ => false,
+        })
+        .collect();
+    if matches!(kind, 0 | 1 | 3) {
+        let [input] = candidates.as_slice() else {
+            return Err("queued native gesture lost its exact original input binding".into());
+        };
+        if kind == 0 {
+            let target: crate::expression_performance_management::NativeNoteTarget =
+                serde_json::from_value(operation["note"].clone())
+                    .map_err(|error| error.to_string())?;
+            if target != input.target {
+                return Err("queued attack differs from original native input target".into());
+            }
+        } else if operation["touch"] != serde_json::json!(input.target.touch) {
+            return Err(
+                "queued release/expression differs from original native input lifetime".into(),
+            );
+        }
+        Ok(Some((*input).clone()))
+    } else if kind <= 6 {
+        Ok(None)
+    } else if kind == 7 {
+        let handle: crate::expression_performance_native_contact::NativeContactHandle =
+            serde_json::from_value(operation["contact"].clone()).map_err(|e| e.to_string())?;
+        handle.validate()?;
+        // This is historical queue custody only. validate_content independently
+        // requires the SAME complete CPv3 slot/generation/programme.
+        Ok(None)
+    } else {
+        Err("queued native kind requires its actual registered consumer".into())
+    }
+}
 /// A bounded immutable snapshot of BOTH native owners at one acknowledged
 /// stopped sample boundary. It is stored by the ordinary Scene/file owner.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -829,6 +951,10 @@ pub struct CheckpointBinding {
     pub native_physical_contract: String,
     pub audio: Value,
     pub queued_events: Vec<QueuedEventReceipt>,
+    /// Explicit save-cut addition. Empty old v1 checkpoints preserve exact
+    /// bytes and the original digest; no pending input becomes a played note.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unscored_queued_inputs: Vec<UnscoredQueuedInput>,
     pub physical: Value,
     /// Complete native input/session custody, with the native pair stored once.
     /// Paired-only v1 editions retain their original serialization and hash.
@@ -858,13 +984,25 @@ impl CheckpointBinding {
             &self.physical,
             self.acknowledged_stopped,
         ))?;
-        match &self.management {
-            Some(management) => digest(&(&original, management)),
-            None => Ok(original),
+        let management = match &self.management {
+            Some(management) => digest(&(&original, management))?,
+            None => original,
+        };
+        if self.unscored_queued_inputs.is_empty() {
+            Ok(management)
+        } else {
+            digest(&(&management, &self.unscored_queued_inputs))
         }
     }
     fn validate_content(&self) -> Result<(), String> {
-        if self.schema != CHECKPOINT_SCHEMA || !self.acknowledged_stopped {
+        if self.schema
+            != if self.unscored_queued_inputs.is_empty() {
+                CHECKPOINT_SCHEMA
+            } else {
+                PENDING_CHECKPOINT_SCHEMA
+            }
+            || !self.acknowledged_stopped
+        {
             return Err("checkpoint requires acknowledged stopped native custody".into());
         }
         self.identity.validate()?;
@@ -894,8 +1032,11 @@ impl CheckpointBinding {
         let ordinal_checkpoint = match self.audio["schema"].as_str() {
             Some("ql.performance-checkpoint/v1") if self.audio["version"] == 1 => false,
             Some("ql.performance-checkpoint/v2") if self.audio["version"] == 2 => true,
+            Some("ql.performance-checkpoint/v3") if self.audio["version"] == 3 => true,
             _ => return Err("unsupported native audio checkpoint schema/version".into()),
         };
+        let contact_checkpoint =
+            crate::expression_performance_native_contact::checkpoint_contacts(&self.audio)?;
         equal_string(&self.audio, "/model_revision", "ql.performance-audio/v1")?;
         equal_string(&self.physical, "/schema", "ql.physical-body-checkpoint/v1")?;
         if self.physical["version"] != 1 {
@@ -914,7 +1055,9 @@ impl CheckpointBinding {
             }
             let mut previous = Counter(0);
             for application in unread {
-                equal_string(application, "/schema", "ql.performance-applied-event/v2")?;
+                crate::expression_performance_native_contact::validate_application_discriminator(
+                    application,
+                )?;
                 let ordinal: Counter = serde_json::from_value(
                     member(application, "/applied_application_ordinal")?.clone(),
                 )
@@ -1033,6 +1176,14 @@ impl CheckpointBinding {
                 .ok_or("native pending queue array absent")?
             {
                 let op = key.map_or(entry, |k| &entry[k]);
+                if op["kind"] == 7 {
+                    contact_checkpoint
+                        .as_ref()
+                        .ok_or("Contact queued inside legacy no-contact checkpoint")?
+                        .validate_queued_operation(op)?;
+                } else if op.get("contact").is_some() {
+                    return Err("ordinary queued operation acquired Contact operands".into());
+                }
                 let sequence: Counter = serde_json::from_value(member(op, "/sequence")?.clone())
                     .map_err(|e| e.to_string())?;
                 let sample: Counter = serde_json::from_value(member(op, "/sample")?.clone())
@@ -1042,8 +1193,12 @@ impl CheckpointBinding {
                 }
             }
         }
-        if queued.len() > 320 || self.queued_events.len() != queued.len() {
-            return Err("checkpoint lost native-to-recorded pending event receipts".into());
+        if queued.len() > 320
+            || self.queued_events.len() + self.unscored_queued_inputs.len() != queued.len()
+        {
+            return Err(
+                "checkpoint lost native-to-recorded or unscored pending input custody".into(),
+            );
         }
         let mut mapped = BTreeSet::new();
         for event in &self.queued_events {
@@ -1054,6 +1209,32 @@ impl CheckpointBinding {
                 return Err("checkpoint native/recorded pending event mapping differs".into());
             }
         }
+        let original_queue = checkpoint_queue(&self.audio)?;
+        for input in &self.unscored_queued_inputs {
+            if !mapped.insert(input.native_sequence)
+                || queued.get(&input.native_sequence) != Some(&input.effective_sample)
+                || original_queue
+                    .get(&input.native_sequence)
+                    .copied()
+                    .map(serde_json::to_vec)
+                    .transpose()
+                    .map_err(|e| e.to_string())?
+                    != Some(serde_json::to_vec(&input.operation).map_err(|e| e.to_string())?)
+            {
+                return Err(
+                    "checkpoint lost/altered/duplicated original unscored native queue".into(),
+                );
+            }
+            let management = self
+                .management
+                .as_ref()
+                .ok_or("unscored live queue requires original native input custody")?;
+            if queued_native_input(&input.operation, &management.inputs)? != input.input {
+                return Err(
+                    "unscored pending input differs from complete native management binding".into(),
+                );
+            }
+        }
         if let Some(management) = &self.management {
             management.validate_against(self)?;
         }
@@ -1062,8 +1243,11 @@ impl CheckpointBinding {
     /// Receive exactly A/P's frozen paired transport. The stopped native
     /// owner still validates/restores its candidate before committing either.
     pub fn from_native_pair(receipt: CheckpointReceipt, pair: Value) -> Result<Self, String> {
+        Self::native_pair_candidate(receipt, pair)?.seal()
+    }
+    fn native_pair_candidate(receipt: CheckpointReceipt, pair: Value) -> Result<Self, String> {
         equal_string(&pair, "/schema", "ql.performance-physical-checkpoint/v1")?;
-        Self {
+        Ok(Self {
             schema: CHECKPOINT_SCHEMA.into(),
             checkpoint_ref: receipt.checkpoint_ref,
             identity: receipt.identity,
@@ -1076,10 +1260,10 @@ impl CheckpointBinding {
             physical: member(&pair, "/physical")?.clone(),
             management: None,
             queued_events: receipt.queued_events,
+            unscored_queued_inputs: vec![],
             acknowledged_stopped: receipt.acknowledged_stopped,
             content_digest: String::new(),
-        }
-        .seal()
+        })
     }
     /// Receive the actual stopped native management owner without discarding
     /// original input bindings, pending releases or undelivered journal data.
@@ -1092,6 +1276,93 @@ impl CheckpointBinding {
         )?;
         checkpoint.management = Some(management);
         checkpoint.seal()
+    }
+    /// Explicit stopped save-cut consumer. Existing authored queue mappings
+    /// stay exact; every other actual queued operation remains unscored until
+    /// the native application owner commits its real receipt.
+    pub fn from_native_management_capturing_pending(
+        receipt: CheckpointReceipt,
+        wire: Value,
+    ) -> Result<Self, String> {
+        crate::expression_act_storage::measure(&wire, MAX_PERFORMANCE_BYTES)?;
+        let mut checkpoint =
+            Self::native_pair_candidate(receipt, member(&wire, "/native_pair")?.clone())?;
+        // Complete ManagementState validation requires the checkpoint queue
+        // coverage below, so decode its strict fields first and validate only
+        // after the full original queue/input cohort is installed.
+        let mut object = wire
+            .as_object()
+            .ok_or("native management object absent")?
+            .clone();
+        if object
+            .remove("native_pair")
+            .ok_or("native management pair absent")?
+            != checkpoint.native_pair_unchecked()
+        {
+            return Err(
+                "save-cut native pair differs from complete original management wire".into(),
+            );
+        }
+        let management: crate::expression_performance_management::ManagementState =
+            serde_json::from_value(Value::Object(object)).map_err(|error| error.to_string())?;
+        let scored: BTreeSet<_> = checkpoint
+            .queued_events
+            .iter()
+            .map(|entry| entry.native_sequence)
+            .collect();
+        let mut unscored = Vec::new();
+        for (&sequence, operation) in checkpoint_queue(&checkpoint.audio)? {
+            if !scored.contains(&sequence) {
+                unscored.push(UnscoredQueuedInput {
+                    native_sequence: sequence,
+                    effective_sample: serde_json::from_value(member(operation, "/sample")?.clone())
+                        .map_err(|error| error.to_string())?,
+                    input: queued_native_input(operation, &management.inputs)?,
+                    operation: operation.clone(),
+                });
+            }
+        }
+        checkpoint.management = Some(management);
+        checkpoint.unscored_queued_inputs = unscored;
+        if !checkpoint.unscored_queued_inputs.is_empty() {
+            checkpoint.schema = PENDING_CHECKPOINT_SCHEMA.into();
+        }
+        checkpoint.seal()
+    }
+    fn native_pair_unchecked(&self) -> Value {
+        serde_json::json!({"schema":"ql.performance-physical-checkpoint/v1", "audio":self.audio,"physical":self.physical})
+    }
+    /// Storage order can distinguish two genuine stopped captures at the same
+    /// native sample (for example a parameter queued before first play).
+    fn follows_same_cursor(&self, earlier: &Self) -> Result<bool, String> {
+        if self.sample != earlier.sample
+            || self.identity != earlier.identity
+            || self.basis_digest != earlier.basis_digest
+        {
+            return Ok(false);
+        }
+        let (Some(before), Some(after)) = (&earlier.management, &self.management) else {
+            return Ok(false);
+        };
+        Ok(before.session_ref == after.session_ref
+            && before.transport_epoch == after.transport_epoch
+            && before.input_history.last_ordinal <= after.input_history.last_ordinal
+            && serde_json::from_value::<Counter>(
+                member(&earlier.audio, "/accepted_sequence")?.clone(),
+            )
+            .map_err(|e| e.to_string())?
+                <= serde_json::from_value::<Counter>(
+                    member(&self.audio, "/accepted_sequence")?.clone(),
+                )
+                .map_err(|e| e.to_string())?
+            && serde_json::from_value::<Counter>(
+                member(&earlier.audio, "/applied_application_ordinal")?.clone(),
+            )
+            .map_err(|e| e.to_string())?
+                <= serde_json::from_value::<Counter>(
+                    member(&self.audio, "/applied_application_ordinal")?.clone(),
+                )
+                .map_err(|e| e.to_string())?)
     }
     pub fn native_management_wire(&self) -> Result<Value, String> {
         self.validate()?;
@@ -1144,6 +1415,11 @@ pub struct Performance {
     pub native_recordings: Vec<crate::expression_performance_recording::NativeRecordingPage>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub native_reservations: Vec<crate::expression_performance_reservation::NativeScoreReservation>,
+    /// Authored contact geometry; only the privately held current native Scene
+    /// can select one for actual native force/timing admission. Empty legacy
+    /// performances preserve original serialization and content fingerprints.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub contact_definitions: Vec<contact::AuthoredContactDefinition>,
     /// Seals the full act, including all event, route and transport operands.
     pub content_digest: String,
 }
@@ -1206,6 +1482,12 @@ pub enum PerformanceOperation {
     RetainNativeSource {
         source: Box<crate::expression_performance_source_asset::NativePerformanceSourceAsset>,
     },
+    ContactDefinitionSet {
+        definition: Box<contact::AuthoredContactDefinition>,
+    },
+    ContactDefinitionClear {
+        contact_ref: String,
+    },
 }
 impl Performance {
     pub fn events(&self) -> impl Iterator<Item = &TimedEvent> {
@@ -1243,10 +1525,15 @@ impl Performance {
         } else {
             digest(&(&source, &self.native_recordings))?
         };
-        if self.native_reservations.is_empty() {
-            Ok(recording)
+        let reserved = if self.native_reservations.is_empty() {
+            recording
         } else {
-            digest(&(&recording, &self.native_reservations))
+            digest(&(&recording, &self.native_reservations))?
+        };
+        if self.contact_definitions.is_empty() {
+            Ok(reserved)
+        } else {
+            digest(&(&reserved, &self.contact_definitions))
         }
     }
     pub fn seal(mut self) -> Result<Self, String> {
@@ -1395,6 +1682,7 @@ impl Performance {
         {
             return Err("missing retained native source asset for saved basis".into());
         }
+        contact::validate_definitions(&self.contact_definitions)?;
         for p in &self.pitches {
             p.validate(&self.bases, self.sample_rate)?;
         }
@@ -1448,12 +1736,18 @@ impl Performance {
             self.validate_event(e, &mut touches)?;
         }
         let mut checkpoint_refs = BTreeSet::new();
-        let mut previous_sample = None;
+        let mut previous_checkpoint: Option<&CheckpointBinding> = None;
         for c in &self.checkpoints {
             c.validate()?;
             if !checkpoint_refs.insert(&c.checkpoint_ref)
                 || c.sample > self.duration_samples
-                || previous_sample.is_some_and(|p| c.sample <= p)
+                || match previous_checkpoint {
+                    Some(previous) if c.sample < previous.sample => true,
+                    Some(previous) if c.sample == previous.sample => {
+                        !c.follows_same_cursor(previous)?
+                    }
+                    _ => false,
+                }
                 || c.event_prefix_digest != self.prefix_digest(c.sample.0)?
             {
                 return Err("checkpoint detached from retained event prefix/order".into());
@@ -1485,7 +1779,7 @@ impl Performance {
                     );
                 }
             }
-            previous_sample = Some(c.sample);
+            previous_checkpoint = Some(c);
         }
         crate::expression_performance_reservation::validate_pending(self)?;
         crate::expression_performance_recording::validate_recording_pages(self)?;
@@ -1576,6 +1870,14 @@ impl Performance {
                 // native transfer/reset operation; do not invent that here.
                 if touches.values().any(|(l, _)| *l == e.layer()) {
                     return Err("basis/context change requires explicit held-note release".into());
+                }
+            }
+            EventAction::Contact(contact) => {
+                crate::expression_performance_native_contact::require_recorded_application(
+                    self, e.3, contact, None,
+                )?;
+                if e.1 != contact.operands.impact_sample {
+                    return Err("Contact performed score event changed original impact date".into());
                 }
             }
             EventAction::Panic => touches.retain(|_, (l, _)| *l != e.layer()),
@@ -1686,6 +1988,35 @@ impl Performance {
             PerformanceOperation::Record { events } => self.append(events)?,
             PerformanceOperation::RecordNative { events, page } => {
                 page.validate()?;
+                if let Some(proof) = page.continuation()? {
+                    proof.validate(self)?;
+                    if proof.saved.event_prefix_digest
+                        != self.prefix_digest(proof.saved.sample.0)?
+                        || proof.before.event_prefix_digest
+                            != self.prefix_digest(proof.before.sample.0)?
+                    {
+                        return Err("new native continuation is detached from the current author-score prefix".into());
+                    }
+                    let epochs =
+                        crate::expression_performance_reservation::reservation_epochs(self)?;
+                    for reserved in &proof.reservations {
+                        if !self.native_reservations.contains(reserved)
+                            || epochs
+                                .get(&(reserved.transport_epoch, reserved.native_sequence))
+                                .copied()
+                                .unwrap_or(reserved.transport_epoch)
+                                != proof.saved_epoch()?
+                        {
+                            return Err(
+                                "native continuation has no exact pending original reservation"
+                                    .into(),
+                            );
+                        }
+                    }
+                    if !events.is_empty() {
+                        return Err("native continuation has no performed event to append".into());
+                    }
+                }
                 let mut all: Vec<_> = self.events().cloned().collect();
                 for (reservation, replacement) in page.reservation_updates()? {
                     let position = self
@@ -1774,6 +2105,31 @@ impl Performance {
                     .layers
                     .get_mut(usize::from(index))
                     .ok_or("layer absent")? = layer;
+            }
+            PerformanceOperation::ContactDefinitionSet { definition } => {
+                definition.validate()?;
+                if let Some(original) = self
+                    .contact_definitions
+                    .iter_mut()
+                    .find(|old| old.contact_ref == definition.contact_ref)
+                {
+                    *original = *definition;
+                } else {
+                    if self.contact_definitions.len() >= MAX_ROUTES {
+                        return Err("authored contact definition budget exceeded".into());
+                    }
+                    self.contact_definitions.push(*definition);
+                }
+            }
+            PerformanceOperation::ContactDefinitionClear { contact_ref } => {
+                let index = self
+                    .contact_definitions
+                    .iter()
+                    .position(|original| original.contact_ref == contact_ref)
+                    .ok_or("authored current contact definition absent")?;
+                // Only the current authored selection is removed. Existing
+                // source/admission/recording pages and Act editions stay exact.
+                self.contact_definitions.remove(index);
             }
             PerformanceOperation::RouteSet { route } => {
                 route.validate()?;
@@ -2274,6 +2630,9 @@ impl ReplayPlan<'_> {
                 EventAction::Context => NativeOperation::Rebind {
                     context_switch: true,
                 },
+                EventAction::Contact(_) => {
+                    return Err("Contact replay requires the closed original source/occurrence native queue owner; a historical handle cannot be imported".into());
+                }
                 EventAction::Panic => NativeOperation::Panic,
             };
             sequence = sequence

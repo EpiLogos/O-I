@@ -60,6 +60,8 @@ pub struct NativePerformanceSourceAsset {
     native_physical_source_history: Option<Vec<Value>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     native_acoustic_source_history: Option<Vec<Value>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    native_contact_admission_history: Option<Vec<Value>>,
 }
 impl NativePerformanceSourceAsset {
     /// The existing native worker lease passes the ACTUAL PerformanceOwner
@@ -83,9 +85,10 @@ impl NativePerformanceSourceAsset {
             .ok_or("actual complete native source bundle absent")?;
         let history = artifact.get("native_physical_source_history");
         let acoustic = artifact.get("native_acoustic_source_history");
+        let contacts = artifact.get("native_contact_admission_history");
         // Count both borrowed payloads before any potentially large clone.
         crate::expression_act_storage::measure(
-            &(bundle, history, acoustic),
+            &(bundle, history, acoustic, contacts),
             MAX_PERFORMANCE_BYTES,
         )?;
         let history = history
@@ -94,7 +97,10 @@ impl NativePerformanceSourceAsset {
         let acoustic = acoustic
             .map(|v| serde_json::from_value::<Vec<Value>>(v.clone()).map_err(|e| e.to_string()))
             .transpose()?;
-        Self::from_native_with_source_histories(basis, bundle.clone(), history, acoustic)
+        let contacts = contacts
+            .map(|v| serde_json::from_value::<Vec<Value>>(v.clone()).map_err(|e| e.to_string()))
+            .transpose()?;
+        Self::from_native_with_contact_history(basis, bundle.clone(), history, acoustic, contacts)
     }
     pub fn from_native_with_physical_history(
         basis: &PerformanceBasis,
@@ -116,6 +122,21 @@ impl NativePerformanceSourceAsset {
         native_physical_source_history: Option<Vec<Value>>,
         native_acoustic_source_history: Option<Vec<Value>>,
     ) -> Result<Self, String> {
+        Self::from_native_with_contact_history(
+            basis,
+            native_bundle,
+            native_physical_source_history,
+            native_acoustic_source_history,
+            None,
+        )
+    }
+    pub fn from_native_with_contact_history(
+        basis: &PerformanceBasis,
+        native_bundle: Value,
+        native_physical_source_history: Option<Vec<Value>>,
+        native_acoustic_source_history: Option<Vec<Value>>,
+        native_contact_admission_history: Option<Vec<Value>>,
+    ) -> Result<Self, String> {
         basis.validate()?;
         let asset = Self {
             schema: SCHEMA.into(),
@@ -125,6 +146,7 @@ impl NativePerformanceSourceAsset {
             native_bundle,
             native_physical_source_history,
             native_acoustic_source_history,
+            native_contact_admission_history,
         };
         asset.validate_basis(basis)?;
         Ok(asset)
@@ -137,6 +159,9 @@ impl NativePerformanceSourceAsset {
     }
     pub fn native_acoustic_source_history(&self) -> Option<&[Value]> {
         self.native_acoustic_source_history.as_deref()
+    }
+    pub fn native_contact_admission_history(&self) -> Option<&[Value]> {
+        self.native_contact_admission_history.as_deref()
     }
     pub fn basis_digest(&self) -> &str {
         &self.basis_digest
@@ -157,6 +182,12 @@ impl NativePerformanceSourceAsset {
             || acoustic_source::validate_history(
                 &self.native_bundle,
                 self.native_acoustic_source_history.as_deref(),
+                true,
+            )
+            .is_err()
+            || crate::expression_performance_native_contact::validate_history(
+                &self.native_bundle,
+                self.native_contact_admission_history.as_deref(),
                 true,
             )
             .is_err()
@@ -194,6 +225,11 @@ impl NativePerformanceSourceAsset {
             }
         }
         if let Some(history) = &self.native_acoustic_source_history {
+            for original in history {
+                crate::expression_performance::safe(original, 0)?;
+            }
+        }
+        if let Some(history) = &self.native_contact_admission_history {
             for original in history {
                 crate::expression_performance::safe(original, 0)?;
             }
@@ -260,6 +296,11 @@ impl NativePerformanceSourceAsset {
             self.native_acoustic_source_history.as_deref(),
             false,
         )?;
+        crate::expression_performance_native_contact::validate_history(
+            bundle,
+            self.native_contact_admission_history.as_deref(),
+            false,
+        )?;
         Ok(())
     }
     /// Retention of unclassified opaque source is not public disclosure or
@@ -276,6 +317,11 @@ impl NativePerformanceSourceAsset {
         acoustic_source::validate_history(
             &self.native_bundle,
             self.native_acoustic_source_history.as_deref(),
+            true,
+        )?;
+        crate::expression_performance_native_contact::validate_history(
+            &self.native_bundle,
+            self.native_contact_admission_history.as_deref(),
             true,
         )?;
         let witness = &self.native_bundle["source_context"];
@@ -367,6 +413,7 @@ impl NativePerformanceSourceAsset {
             "operative_physical_consumer_projection",
             "physical_transition_history",
             "acoustic_transition_history",
+            "contact_occurrence_history",
         ];
         if bundle.keys().any(|key| !known.contains(&key.as_str())) {
             return Err(
@@ -436,6 +483,11 @@ impl NativePerformanceSourceAsset {
             }
         }
         if let Some(history) = &self.native_acoustic_source_history {
+            for original in history {
+                reject_episode_transfer(original, basis)?;
+            }
+        }
+        if let Some(history) = &self.native_contact_admission_history {
             for original in history {
                 reject_episode_transfer(original, basis)?;
             }

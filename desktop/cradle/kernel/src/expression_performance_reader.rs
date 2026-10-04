@@ -49,6 +49,17 @@ impl NativeActDeliveryReader {
         }
         Ok(())
     }
+    /// Borrow only the complete native-selected typed source. These getters
+    /// confer neither a Scene constructor lifetime nor procedural Source grant.
+    pub(crate) fn document(&self) -> &crate::expression::Document {
+        self.selected.document()
+    }
+    pub(crate) fn scene(&self) -> &crate::expression::Scene {
+        self.selected.scene()
+    }
+    pub(crate) fn performance(&self) -> &crate::expression_performance::Performance {
+        self.selected.performance()
+    }
     pub fn page(&self, index: usize) -> Result<Value, String> {
         self.selected.native_page(index)
     }
@@ -74,4 +85,13 @@ impl NativeActDeliveryReader {
         crate::expression_performance_act::validate(act)?;
         Ok(())
     }
+}
+
+/// Original native consumer result survives an independent post-store refusal.
+/// Consumers must retain receipt custody in T and check currentness before
+/// publishing any Source witness, Document edit or playback acceptance.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub(crate) struct NativeActSourceCustody<T> {
+    pub(crate) result: Result<T, String>,
+    pub(crate) currentness: Result<(), String>,
 }

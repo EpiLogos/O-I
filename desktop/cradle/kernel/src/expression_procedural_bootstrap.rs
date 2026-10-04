@@ -121,6 +121,38 @@ impl Application {
             "Lifecycle requires the actual live accepted source authorship; saved labels cannot recreate it".into())
     }
 
+    /// Borrow the same accepted authorship before aggregate intake is charged.
+    pub(crate) fn lifecycle_source_intent_borrowed(
+        &self,
+        before: &Document,
+        scene_ref: &str,
+    ) -> Result<&Intent, String> {
+        if self.document(&before.expression_ref)? != before {
+            return Err("revision_conflict".into());
+        }
+        let target = address(before, Some(scene_ref), None, Component::Scene);
+        let actual = source_exact_binding_borrowed(before, &target)?
+            .ok_or("Lifecycle selected Scene has no actual native source binding")?;
+        let mut intent: Option<&Intent> = None;
+        for previous in self
+            .procedural_runtime
+            .bootstrap_replays
+            .values()
+            .filter(|previous| {
+                previous.expression_ref == before.expression_ref
+                    && previous.intent.scene_ref == scene_ref
+                    && &previous.response["source"]["binding"] == actual
+            })
+        {
+            if intent.is_some_and(|old| old.authorship != previous.intent.authorship) {
+                return Err("Lifecycle retained source authorship is ambiguous; requalify its original source".into());
+            }
+            intent = Some(&previous.intent);
+        }
+        intent.ok_or_else(||
+            "Lifecycle requires the actual live accepted source authorship; saved labels cannot recreate it".into())
+    }
+
     /// The native owner checks SAME live lease/current selected source before
     /// calling this historical retry. A cache hit never emits a new native ACK
     /// or grants the historical source as current compiler input.

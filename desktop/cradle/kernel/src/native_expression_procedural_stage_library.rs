@@ -1284,3 +1284,129 @@ impl crate::Kernel {
 #[cfg(test)]
 #[path = "native_expression_procedural_stage_compilation_tests.rs"]
 mod compilation_tests;
+
+/// A resource-only private work container. Rust drops data before resource,
+/// including on early return/unwind. It carries no native constructor or grant.
+pub(in crate::native_expression) struct SourceDeliveryContext<T,R> {
+    pub(in crate::native_expression) data:T,
+    pub(in crate::native_expression) resource:R,
+}
+
+/// Sibling definition delivery uses the same process count/byte registry. It is
+/// resource custody only, never a native Source or receiver constructor.
+#[derive(Debug)]
+pub(in crate::native_expression) struct SourceDeliveryCapture {
+    resource: capture::Reservation,
+    reply_limit: usize,
+    context_bytes: usize,
+    capacity: usize,
+}
+impl SourceDeliveryCapture {
+    pub(in crate::native_expression) fn reply_limit(&self) -> usize {
+        self.reply_limit
+    }
+    /// Add a complete borrowed prospective copy cohort to this ORIGINAL
+    /// reservation before allocating it. No second count slot or cap increase.
+    /// Every byte is taken from the finite reply allowance prior to dispatch.
+    pub(in crate::native_expression) fn preflight_copy_bytes(
+        &mut self, bytes:usize,
+    ) -> Result<(),String> {
+        let context_bytes=self.context_bytes.checked_add(bytes)
+            .ok_or("Native Source prospective copy budget overflow")?;
+        let reply_limit=self.capacity.checked_sub(context_bytes)
+            .ok_or("Native Source prospective copies exceed original shared custody")?/8;
+        if reply_limit==0 {
+            return Err("Native Source prospective copies leave no bounded reply capacity".into());
+        }
+        self.context_bytes=context_bytes;self.reply_limit=reply_limit;
+        Ok(())
+    }
+    pub(in crate::native_expression) fn preflight_copies<T:Serialize+?Sized>(
+        &mut self, copies:&T,
+    ) -> Result<(),String> {
+        let mut budget=crate::expression::procedural::budget::Budget::new();
+        budget.value(copies)?;
+        self.preflight_copy_bytes(budget.charged_bytes())
+    }
+    /// The complete response is already moved into original custody. Charge
+    /// the full outward wrapper before allocating its copy, including the
+    /// retained response/context which remain alive during delivery.
+    pub(in crate::native_expression) fn preflight_outward<T: Serialize + ?Sized>(
+        &self,
+        outcome: &T,
+        wrapper: &impl Serialize,
+    ) -> Result<(), String> {
+        let mut measured = crate::expression::procedural::budget::Budget::new();
+        measured.reserve(self.context_bytes)?;
+        measured.value(outcome)?;
+        measured.value(wrapper)?;
+        if measured.charged_bytes() > self.capacity {
+            return Err("Native Source outward result exceeds original reserved custody; original outcome remains retained".into());
+        }
+        Ok(())
+    }
+    pub(in crate::native_expression) fn settle_outcome<T: Serialize + ?Sized>(
+        &mut self,
+        outcome: &T,
+        original_intent: &impl Serialize,
+    ) -> Result<(), String> {
+        let mut measured = crate::expression::procedural::budget::Budget::new();
+        measured.reserve(self.context_bytes)?;
+        // The full original channel/receipt have already been MOVED into this
+        // outcome. Only retained outcome and one outward outcome coexist; a
+        // caller must retain any additional original locals before this call.
+        measured.value(outcome)?;
+        measured.value(outcome)?;
+        measured.value(original_intent)?;
+        // The readonly wrapper has its original intent plus fixed disclosure.
+        // Original request copies and this overhead were reserved at dispatch.
+        measured.reserve(1024)?;
+        self.resource.settle_capacity(measured.charged_bytes())?;
+        self.capacity = measured.charged_bytes();
+        Ok(())
+    }
+}
+impl Memos {
+    pub(in crate::native_expression) fn reserve_source_delivery<T: Serialize + ?Sized>(
+        &self,
+        context: &T,
+    ) -> Result<SourceDeliveryCapture, String> {
+        let mut retained = crate::expression::procedural::budget::Budget::new();
+        retained.value(&self.rows)?;
+        retained.value(&self.compiling)?;
+        let retained_bytes = retained.charged_bytes();
+        self.captures.charge(&mut retained, None)?;
+        let mut context_budget = crate::expression::procedural::budget::Budget::new();
+        context_budget.value(context)?;
+        context_budget.reserve(1024)?;
+        let context_bytes = context_budget.charged_bytes();
+        retained.reserve(context_bytes)?;
+        // Raw line, parsed result, original outcome and outward result share
+        // this finite allowance. A limit overflow has no imported receipt.
+        let reply_limit = COMPILER_BYTES
+            .checked_sub(retained.charged_bytes())
+            .ok_or("Native definition capture budget exceeded before dispatch")?
+            / 8;
+        if reply_limit == 0 {
+            return Err("Native definition capture has no reply capacity".into());
+        }
+        let capacity = context_bytes
+            .checked_add(
+                reply_limit
+                    .checked_mul(8)
+                    .ok_or("Native definition capture overflow")?,
+            )
+            .ok_or("Native definition capture overflow")?;
+        let resource = self.captures.reserve(capacity, retained_bytes)?;
+        Ok(SourceDeliveryCapture {
+            resource,
+            reply_limit,
+            context_bytes,
+            capacity,
+        })
+    }
+}
+
+#[cfg(test)]
+#[path = "native_expression_source_capture_tests.rs"]
+mod source_capture_tests;

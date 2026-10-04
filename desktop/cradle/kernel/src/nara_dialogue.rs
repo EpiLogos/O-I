@@ -139,6 +139,166 @@ pub(crate) fn read_context(
     )
 }
 
+/// Entity and profile have different subjects. A changing native form keeps
+/// its process identity, while its first canonical reading names the current
+/// source consumed by that occurrence. Provenance sources may retain its
+/// opening form and must not override this current reading.
+fn selected_coordinate(
+    subject: &Value,
+    document: &Value,
+) -> Result<Option<(String, Value)>, String> {
+    let Some(reference) = subject["subject_ref"].as_str() else {
+        return Ok(None);
+    };
+    let canonical = reference.starts_with("ql:m-coordinate:");
+    let process = reference.starts_with("ql:scene-form:");
+    if !canonical && !process {
+        return Ok(None);
+    }
+    if !matches!(
+        subject["native_owner"].as_str(),
+        Some("ql" | "ql-mef" | "QL-MEF")
+    ) {
+        return Err(
+            "The selected canonical coordinate or form process has a different native owner".into(),
+        );
+    }
+    let reading = if process {
+        subject["readings"]
+            .as_array()
+            .and_then(|rows| {
+                rows.iter().find(|row| {
+                    row["ref"]
+                        .as_str()
+                        .is_some_and(|r| r.starts_with("ql:m-coordinate:"))
+                })
+            })
+            .ok_or("The selected native form process has no actual current canonical reading")?
+    } else {
+        subject["sources"]
+            .as_array()
+            .and_then(|rows| rows.iter().find(|row| row["ref"] == reference))
+            .or_else(|| {
+                subject["readings"]
+                    .as_array()
+                    .and_then(|rows| rows.iter().find(|row| row["ref"] == reference))
+            })
+            .ok_or("The selected canonical subject has no source-qualified native reading")?
+    };
+    if process {
+        let record = document["scenes"]
+            .as_array()
+            .and_then(|scenes| {
+                scenes
+                    .iter()
+                    .map(|scene| &scene["presentation"]["scene"]["epiWorld"])
+                    .find(|record| {
+                        record["world"]["current_form"]["process_subject_ref"] == reference
+                    })
+            })
+            .ok_or("The selected form process has no actual retained native world reading")?;
+        let actual = if record["native_readback"].is_object() {
+            &record["native_readback"]["form_process"]
+        } else {
+            &record["world"]["native_readback"]["form_process"]
+        };
+        if record["world"]["instance_ref"] != document["expression_ref"]
+            || actual["process_subject_ref"] != reference
+            || actual["instance_ref"] != document["expression_ref"]
+            || actual["subject_ref"] != record["person_ref"]
+            || actual["event_ref"] != record["world"]["event_ref"]
+            || &actual["current_reading"] != reading
+        {
+            return Err(
+                "The selected form source differs from its actual retained native process reading"
+                    .into(),
+            );
+        }
+    }
+    if reading["availability"] != "available"
+        || reading["revision"].as_str().is_none_or(str::is_empty)
+    {
+        return Err("The selected native source is not currently qualified and available".into());
+    }
+    Ok(Some((
+        reading["ref"]
+            .as_str()
+            .ok_or("Selected native reading has no ref")?
+            .to_owned(),
+        reading.clone(),
+    )))
+}
+
+/// The body receives raw retained determinants, not an explanation computed
+/// by the presentation producer. Complete inventory, raster assets and target
+/// samples stay with their native owners. Protected personal-current values
+/// remain in the separately authorised private context path.
+fn selected_scene_native_basis(
+    document: &Value,
+    request: &Request,
+    registry_revision: &Value,
+) -> Result<Value, String> {
+    let Some(record) = document["scenes"].as_array().and_then(|scenes| {
+        scenes
+            .iter()
+            .map(|scene| &scene["presentation"]["scene"]["epiWorld"])
+            .find(|record| record.is_object())
+    }) else {
+        return Ok(Value::Null);
+    };
+    let world = &record["world"];
+    let current = if record["native_readback"].is_object() {
+        &record["native_readback"]
+    } else {
+        &world["native_readback"]
+    };
+    let source = &record["source_basis"];
+    if record["schema"] != "oi.epi-world-material/v1"
+        || world["instance_ref"] != document["expression_ref"]
+        || world["subject_ref"] != request.person_ref
+        || record["person_ref"] != request.person_ref
+        || record["nara_ref"] != request.nara_ref
+        || world["event_ref"] != world["snapshot_ref"]
+        || world["snapshot_ref"] != world["sky"]["snapshot_ref"]
+        || current["schema"] != "ql.scene-source-reading/v1"
+        || current["event_ref"] != world["event_ref"]
+        || current["subject_ref"] != request.person_ref
+        || current["form_process"]["instance_ref"] != document["expression_ref"]
+        || current["form_process"]["event_ref"] != world["event_ref"]
+        || source["registry_revision"] != *registry_revision
+        || source["source_revision"] != world["scene"]["sources"]["sky_revision"]
+        || source["numerical_source_revision"] != source["source_revision"]
+        || source["numerical_registry_revision"] != world["scene"]["sources"]["registry_revision"]
+    {
+        return Err("The selected scene has a different retained native instance, person, occasion or source basis".into());
+    }
+    let pick = |value: &Value, keys: &[&str]| -> Value {
+        Value::Object(
+            keys.iter()
+                .filter_map(|key| {
+                    value
+                        .get(*key)
+                        .map(|field| ((*key).to_owned(), field.clone()))
+                })
+                .collect(),
+        )
+    };
+    Ok(json!({"schema":"oi.selected-scene-native-basis/v1",
+        "instance_ref":world["instance_ref"],"person_ref":record["person_ref"],
+        "event_ref":world["event_ref"],"snapshot_ref":world["snapshot_ref"],
+        "selected_scene_ref":document["selection"]["scene_ref"],
+        "source_basis":pick(source,&["source_revision","registry_revision","numerical_source_revision",
+            "numerical_registry_revision","native_owner_sources","scene","event","clocks"]),
+        "opening_scene":pick(&world["scene"],&["schema","event_ref","snapshot_ref","epoch_utc",
+            "observer_ref","m1","bodies","centres","sources","tuning"]),
+        "current_readback":pick(current,&["schema","event_ref","subject_ref","profile_generation",
+            "m1_clock","m3_clock","continuous_clock","selected_aperture"]),
+        "current_form_process":pick(&current["form_process"],&["process_subject_ref","instance_ref",
+            "subject_ref","event_ref","canonical_subject_ref","coordinate_ref","current_reading",
+            "triplet","hexagram_coordinate_ref","hexagram_reading","hexagram_source_ref",
+            "hexagram_glyph","source_refs"])}))
+}
+
 pub(crate) fn read_context_with_state(
     client: &CentralClient,
     project: &str,
@@ -177,7 +337,7 @@ pub(crate) fn read_context_with_state(
         })
         .ok_or("The resolved profile is not adopted by this Expression")?;
     let source_basis = &adoption["source_basis"];
-    let (coordinate, owner) = if source_basis.is_object() {
+    let (containing_coordinate, owner) = if source_basis.is_object() {
         if source_basis["availability"] != "available" {
             return Err("The adopted coordinate source basis is not current and available".into());
         }
@@ -220,10 +380,62 @@ pub(crate) fn read_context_with_state(
             "The adopted Expression profile does not admit the selected native owner".into(),
         );
     }
+    let containing_binding = crate::nara_identity::run_ql_nara(
+        "coordinate",
+        &json!({"coordinate_ref":containing_coordinate}),
+    )?;
+    if source_basis.is_object()
+        && (source_basis["revision"] != containing_binding["rooted_world"]["registry_revision"]
+            || profile["profile_ref"] != containing_binding["resolved_profile_ref"]
+            || profile["revision"] != containing_binding["profile_revision"])
+    {
+        return Err("The adopted coordinate or profile changed at its source; explicitly review its current revision".into());
+    }
+    let projection = crate::nara_coordinate::project(containing_binding.clone())?;
+    let expected: Vec<crate::expression_profile::ExpressionProfile> =
+        serde_json::from_value(projection["profiles"].clone())
+            .map_err(|e| format!("Native coordinate profile projection is invalid: {e}"))?;
+    if expected.len() != profile_basis.lineage.len()
+        || expected
+            .iter()
+            .any(|native| !profile_basis.lineage.iter().any(|stored| stored == native))
+        || expected
+            .last()
+            .and_then(|native| serde_json::to_value(native).ok())
+            .as_ref()
+            != Some(profile)
+    {
+        return Err("The stored coordinate profile or its inherited content differs from its native source projection".into());
+    }
     let canonical = Binding::new(project, request)?;
     let relation = selection["relation_ref"]
         .as_str()
         .map(|r| &document["relations"][r]);
+    let mut selected = subject
+        .map(|subject| selected_coordinate(subject, document))
+        .transpose()?
+        .flatten();
+    // A selected source relation can disclose both endpoints even when there
+    // is no selected entity. Its native directed relation remains pointed.
+    let mut relation_coordinates = Vec::new();
+    if let Some(relation) = relation {
+        for endpoint in ["from_entity_ref", "to_entity_ref"] {
+            if let Some(reference) = relation[endpoint].as_str() {
+                if let Some(value) =
+                    selected_coordinate(&document["entities"][reference]["subject"], document)?
+                {
+                    if selected.is_none() {
+                        selected = Some(value.clone());
+                    }
+                    relation_coordinates.push(value);
+                }
+            }
+        }
+    }
+    let coordinate = selected
+        .as_ref()
+        .map(|value| value.0.as_str())
+        .unwrap_or(containing_coordinate);
     let pointed = relation
         .map(|r| &r["relation"]["ref"])
         .filter(|r| r.is_string())
@@ -265,6 +477,80 @@ pub(crate) fn read_context_with_state(
         disclosed.push(json!({"ref_id":state.personal_current["reading_ref"],"revision":state.personal_current["reading_revision"],
             "standing":"derived","disclosure":"personal-consent","disclosed_via_ref":context_ref}));
     }
+    let mut selected_source_content = Value::Null;
+    let mut selected_source_relation = Value::Null;
+    let mut source_content = std::collections::BTreeMap::new();
+    for (reference, reading) in selected.iter().chain(relation_coordinates.iter()) {
+        if !source_content.contains_key(reference) {
+            source_content.insert(
+                reference.clone(),
+                crate::nara_identity::run_ql_nara(
+                    "coordinate-content",
+                    &json!({"coordinate_ref":reference}),
+                )?,
+            );
+        }
+        let content = &source_content[reference];
+        if content["schema"] != "ql.bimba-coordinate-content/v1"
+            || (reading["revision"] != content["registry_revision"]
+                && reading["revision"] != content["source_revision"])
+            || content["registry_revision"]
+                != containing_binding["rooted_world"]["registry_revision"]
+        {
+            return Err("The selected source reading changed or belongs to another current coordinate registry".into());
+        }
+        if selected_source_content.is_null() {
+            selected_source_content = content.clone();
+        }
+        if !disclosed.iter().any(|row| row["ref_id"] == reading["ref"]) {
+            disclosed.push(
+                json!({"ref_id":reading["ref"],"revision":reading["revision"],
+                "standing":"source","disclosure":"hen-disclosure","disclosed_via_ref":context_ref}),
+            );
+        }
+    }
+    if let Some(relation) = relation.filter(|relation| {
+        matches!(
+            relation["native_owner"].as_str(),
+            Some("ql" | "ql-mef" | "QL-MEF")
+        )
+    }) {
+        if relation_coordinates.len() != 2
+            || relation["relation"]["availability"] != "available"
+            || (relation["relation"]["revision"]
+                != containing_binding["rooted_world"]["registry_revision"]
+                && relation["relation"]["revision"] != selected_source_content["source_revision"])
+        {
+            return Err(
+                "The selected QL source relation lacks two current source-qualified endpoints"
+                    .into(),
+            );
+        }
+        selected_source_relation = selected_source_content["relations"].as_array()
+            .and_then(|rows| rows.iter().find(|row|
+                row["relation_ref"] == relation["relation"]["ref"]
+                    && row["orientation"] == "directed"
+                    && row["from_ref"] == relation_coordinates[0].0
+                    && row["to_ref"] == relation_coordinates[1].0))
+            .cloned().ok_or("The selected directed QL relation differs from its actual source or current endpoint readings")?;
+        if !disclosed
+            .iter()
+            .any(|row| row["ref_id"] == relation["relation"]["ref"])
+        {
+            disclosed.push(json!({"ref_id":relation["relation"]["ref"],"revision":relation["relation"]["revision"],
+                "standing":"source","disclosure":"hen-disclosure","disclosed_via_ref":context_ref}));
+        }
+    }
+    if source_basis.is_object()
+        && !disclosed
+            .iter()
+            .any(|row| row["ref_id"] == source_basis["ref"])
+    {
+        disclosed.push(
+            json!({"ref_id":source_basis["ref"],"revision":source_basis["revision"],
+            "standing":"source","disclosure":"hen-disclosure","disclosed_via_ref":context_ref}),
+        );
+    }
     let context = json!({"schema":"ql.nara-dialogue-context/v1","context_ref":context_ref,
         "nara_ref":request.nara_ref,"subject_ref":request.person_ref,"agent_session_ref":canonical.agent_session,
         "m4_branch":null,"coordinate_ref":coordinate,"bimba":null,
@@ -285,34 +571,27 @@ pub(crate) fn read_context_with_state(
     {
         return Err("QL returned a context outside the native Expression basis".into());
     }
-    if source_basis.is_object()
-        && (source_basis["revision"] != resolved["world"]["registry_revision"]
-            || profile["profile_ref"] != resolved["coordinate_binding"]["resolved_profile_ref"]
-            || profile["revision"] != resolved["coordinate_binding"]["profile_revision"])
+    if resolved["world"]["registry_revision"]
+        != containing_binding["rooted_world"]["registry_revision"]
     {
-        return Err("The adopted coordinate or profile changed at its source; explicitly review its current revision".into());
+        return Err(
+            "The selected and containing coordinates resolved different current source registries"
+                .into(),
+        );
     }
-    let projection = crate::nara_coordinate::project(resolved["coordinate_binding"].clone())?;
-    let expected: Vec<crate::expression_profile::ExpressionProfile> =
-        serde_json::from_value(projection["profiles"].clone())
-            .map_err(|e| format!("Native coordinate profile projection is invalid: {e}"))?;
-    if expected.len() != profile_basis.lineage.len()
-        || expected
-            .iter()
-            .any(|native| !profile_basis.lineage.iter().any(|stored| stored == native))
-        || expected
-            .last()
-            .and_then(|native| serde_json::to_value(native).ok())
-            .as_ref()
-            != Some(profile)
-    {
-        return Err("The stored coordinate profile or its inherited content differs from its native source projection".into());
-    }
+    let scene_native_basis = selected_scene_native_basis(
+        document,
+        request,
+        &containing_binding["rooted_world"]["registry_revision"],
+    )?;
     Ok(
         json!({"schema":"oi.nara-coordinate-context/v1","binding":request,"context":resolved["context"],
         "world":resolved["world"],"coordinate_binding":resolved["coordinate_binding"],"expression_revision":document["revision"],
         "identity_source":{"source_ref":request.source_ref,"revision":request.expected_revision},
-        "profile":profile,"personal_current_reading":state.personal_current_reading}),
+        "profile":profile,"containing_coordinate_binding":containing_binding,
+        "selected_source_content":selected_source_content,"selected_source_relation":selected_source_relation,
+        "selected_scene_native_basis":scene_native_basis,
+        "personal_current_reading":state.personal_current_reading}),
     )
 }
 

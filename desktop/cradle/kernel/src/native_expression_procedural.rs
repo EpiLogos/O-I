@@ -10,6 +10,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 const MAX_BYTES: usize = 1_048_576;
 static SEQUENCE: AtomicU64 = AtomicU64::new(0);
+#[path = "native_expression_procedural_authored_driver.rs"]
+pub mod authored_driver;
 #[path = "native_expression_procedural_bootstrap.rs"]
 pub mod bootstrap;
 #[path = "native_expression_procedural_conduct.rs"]

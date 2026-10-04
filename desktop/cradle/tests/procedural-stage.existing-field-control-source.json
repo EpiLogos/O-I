@@ -1,0 +1,68 @@
+{
+  "schema": "ta-onta-existing-field-control-source-fixture/v1",
+  "producer": "actual automationTargets/proceduralControls.takeOver/proceduralRetention.retention",
+  "scope": "Configuration only; no private Source grant/native ACK/body/audio",
+  "target": {
+    "path": "material.opacity",
+    "label": "Ink Opacity",
+    "group": "material",
+    "min": 0,
+    "max": 1,
+    "hardMin": 0,
+    "hardMax": 1,
+    "step": 0.01,
+    "key": "opacity",
+    "bind": "field.params.opacity",
+    "factor": 1,
+    "defaultValue": 0,
+    "target": "field.opacity",
+    "value": 0
+  },
+  "field_before": {
+    "background": "#111111",
+    "palette": [
+      "#d4cfbf",
+      "#9a92af"
+    ],
+    "material": "ink",
+    "params": {
+      "speed": 0.75
+    }
+  },
+  "field_after": {
+    "background": "#111111",
+    "palette": [
+      "#d4cfbf",
+      "#9a92af"
+    ],
+    "material": "ink",
+    "params": {
+      "speed": 0.75,
+      "opacity": 0.42
+    }
+  },
+  "control": {
+    "address": {
+      "expression_ref": "expression:acceptance",
+      "scene_ref": "expression:acceptance:scene:canonical",
+      "entity_ref": null,
+      "component": "field",
+      "constituent_ref": null,
+      "property": "params.opacity"
+    },
+    "target": "field.opacity",
+    "authored_base": 0,
+    "dormant_lanes": [],
+    "dormant_tracks": [],
+    "suspended_lanes": [],
+    "takeover": {
+      "value": 0.42,
+      "lifetime": "persistent",
+      "actor": "human:existing-field-author",
+      "operation_ref": "operation:actual-field-opacity"
+    },
+    "source_basis": [],
+    "dormant_overrides": []
+  },
+  "template_sha256": "7f8f810e8f6f2c000c306735cc39920ef79c2b27c0173826efe21f3ff7b49022"
+}

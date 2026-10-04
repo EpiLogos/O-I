@@ -15,6 +15,7 @@ pub(super) struct SourceIntake {
     lease: String,
     identity: Value,
     executable: std::path::PathBuf,
+    worker: std::path::PathBuf,
     binding: Value,
     ordinal: u64,
     original_request: Value,
@@ -52,6 +53,7 @@ impl SourceIntake {
             lease: lease.into(),
             identity: owner.identity.clone(),
             executable: owner.procedural_executable.clone(),
+            worker: owner.procedural_worker.clone(),
             binding: owner.procedural_source.clone(),
             ordinal,
             original_request: request["command"]["request"].clone(),
@@ -82,6 +84,7 @@ impl SourceIntake {
         if owner.lease != self.lease
             || owner.identity != self.identity
             || owner.procedural_executable != self.executable
+            || owner.procedural_worker != self.worker
             || owner.procedural_source != self.binding
             || owner.last_request_id != self.ordinal
             || reply["schema"] != "ql.field-host-receipt/v1"
@@ -200,6 +203,7 @@ pub(super) fn channel_refused(
                 "state":if native_receipt.is_some() || !inspect_error.is_null() {"reconciliation_required"} else {"source_refused"},
                 "channel_state":"source_channel_refused","reason":refusal.reason(),
                 "native_receipt":native_receipt,"native_source_channel":refusal.native_reply(),
+                "native_procedural_receipts":native_receipt.into_iter().collect::<Vec<_>>(),
                 "source_currentness":currentness,"inspect_error":inspect_error,
                 "preparation":null,"document":document,"source_current":false,"replayed":false}),
         },

@@ -2352,7 +2352,7 @@ impl Kernel {
                     "state":"expression_not_open",
                     "expression_ref":expression_ref,
                     "detail":"The addressed Expression is not open; the shared selection still moved",
-                }))
+                }));
             }
         };
         let document: expression::Document = serde_json::from_value(inspected["document"].clone())
@@ -3426,7 +3426,7 @@ impl Kernel {
                     _ => {
                         return Err(
                             "Native first text page restore did not confirm its selection".into(),
-                        )
+                        );
                     }
                 }
             }
@@ -4202,6 +4202,72 @@ impl Kernel {
         let current = self
             .native_act_delivery_lookup(act_ref)?
             .ok_or("selected native Act disappeared during consumer operation")?;
+        reader.verify_current(&current)?;
+        result
+    }
+
+    /// Private cold-source consumer aperture on the existing selected Act.
+    /// The actual attached store is read before AND after the consumer; callback
+    /// custody survives a refused final read. No request-carried source/receipt
+    /// can construct this reader, a live SceneOwner or an E Source grant.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub(crate) fn with_native_act_source_custody<T>(
+        &mut self,
+        act_ref: &str,
+        selection: &crate::expression_performance_delivery::Selection,
+        consumer: impl FnOnce(
+            &mut crate::native_expression::Manager,
+            &mut crate::expression_performance_reader::NativeActDeliveryReader,
+        ) -> Result<T, String>,
+    ) -> Result<crate::expression_performance_reader::NativeActSourceCustody<T>, String> {
+        text(act_ref)?;
+        let act = self
+            .native_act_delivery_lookup(act_ref)?
+            .ok_or("no native Act with this ref exists")?;
+        let mut reader =
+            crate::expression_performance_reader::NativeActDeliveryReader::from_native_act(
+                &act, selection,
+            )?;
+        let result = consumer(&mut self.native_expression, &mut reader);
+        let currentness = (|| -> Result<(), String> {
+            let current = self
+                .native_act_delivery_lookup(act_ref)?
+                .ok_or("selected native Act disappeared during cold Source operation")?;
+            reader.verify_current(&current)
+        })();
+        Ok(
+            crate::expression_performance_reader::NativeActSourceCustody {
+                result,
+                currentness,
+            },
+        )
+    }
+
+    /// Same actual store/lock/budget/selection as with_native_act_delivery.
+    /// This private form lends the already held Manager as well; it admits no
+    /// caller manifest and independently reads attached durable custody again.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub(crate) fn with_native_act_delivery_manager<T>(
+        &mut self,
+        act_ref: &str,
+        selection: &crate::expression_performance_delivery::Selection,
+        consumer: impl FnOnce(
+            &mut crate::native_expression::Manager,
+            &mut crate::expression_performance_reader::NativeActDeliveryReader,
+        ) -> Result<T, String>,
+    ) -> Result<T, String> {
+        text(act_ref)?;
+        let act = self
+            .native_act_delivery_lookup(act_ref)?
+            .ok_or("no native Act with this ref exists")?;
+        let mut reader =
+            crate::expression_performance_reader::NativeActDeliveryReader::from_native_act(
+                &act, selection,
+            )?;
+        let result = consumer(&mut self.native_expression, &mut reader);
+        let current = self
+            .native_act_delivery_lookup(act_ref)?
+            .ok_or("selected native Act disappeared during receiving continuation")?;
         reader.verify_current(&current)?;
         result
     }
@@ -6462,3 +6528,7 @@ mod tests {
         assert_ne!(a, fnv1a64("wiki:relation:b-a"));
     }
 }
+
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+#[path = "expression_native_act_source_custody_tests.rs"]
+mod native_act_source_custody_tests;

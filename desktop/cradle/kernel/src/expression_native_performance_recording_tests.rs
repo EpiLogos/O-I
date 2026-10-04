@@ -115,6 +115,7 @@ fn original() -> (Performance, CheckpointBinding, Value, Value) {
         native_sources: vec![],
         native_recordings: vec![],
         native_reservations: vec![],
+        contact_definitions: vec![],
         content_digest: String::new(),
     }
     .seal()
@@ -639,4 +640,97 @@ fn actual_native_cancelled_and_lost_epochs_cannot_be_reused_or_terminated_twice(
     );
     assert_eq!(complete["applications"].as_array().unwrap().len(), 2);
     assert_eq!(complete["input_history"].as_array().unwrap().len(), 4);
+}
+#[test]
+fn actual_queued_input_save_cut_preserves_native_queue_without_a_performed_note() {
+    let (p, _, _, _) = original();
+    let wire = read(artifacts().join("release.original-queued-checkpoint.json"));
+    let basis = &p.bases[0];
+    let receipt = CheckpointReceipt {
+        checkpoint_ref: "native:save-cut/pending-live-origin".into(),
+        identity: basis.identity.clone(),
+        sample: counter(&wire["native_pair"]["audio"]["cursor"]).unwrap(),
+        basis_digest: basis.content_digest.clone(),
+        event_prefix_digest: p.prefix_digest(0).unwrap(),
+        queued_events: vec![],
+        acknowledged_stopped: true,
+    };
+    assert!(CheckpointBinding::from_native_management(receipt.clone(), wire.clone()).is_err());
+    let captured =
+        CheckpointBinding::from_native_management_capturing_pending(receipt, wire.clone()).unwrap();
+    assert_eq!(captured.schema, PENDING_CHECKPOINT_SCHEMA);
+    assert_eq!(captured.unscored_queued_inputs.len(), 1);
+    assert_eq!(
+        captured.unscored_queued_inputs[0].native_sequence(),
+        Counter(1)
+    );
+    assert!(captured.unscored_queued_inputs[0].input().is_some());
+    assert_eq!(captured.native_pair_wire().unwrap(), wire["native_pair"]);
+    let saved = p
+        .clone()
+        .edited(vec![PerformanceOperation::Checkpoint {
+            checkpoint: Box::new(captured.clone()),
+        }])
+        .unwrap();
+    assert!(saved.pages.is_empty());
+    assert!(saved.native_recordings.is_empty());
+    assert_eq!(
+        saved.checkpoints[0], p.checkpoints[0],
+        "original born checkpoint was overwritten"
+    );
+    let reopened: Performance =
+        serde_json::from_slice(&serde_json::to_vec(&saved).unwrap()).unwrap();
+    reopened.validate().unwrap();
+    assert_eq!(reopened, saved);
+    assert_eq!(reopened.checkpoints[1], captured);
+    for mutation in ["drop", "input", "sample", "operation"] {
+        let mut changed = captured.clone();
+        match mutation {
+            "drop" => changed.unscored_queued_inputs.clear(),
+            "input" => {
+                let mut value = serde_json::to_value(&changed).unwrap();
+                value["unscored_queued_inputs"][0]["input"]["input_ref"] =
+                    json!("native-score:other-pointer/42");
+                changed = serde_json::from_value(value).unwrap();
+            }
+            "sample" => {
+                let mut value = serde_json::to_value(&changed).unwrap();
+                value["unscored_queued_inputs"][0]["effective_sample"] = json!("1");
+                changed = serde_json::from_value(value).unwrap();
+            }
+            _ => {
+                let mut value = serde_json::to_value(&changed).unwrap();
+                value["unscored_queued_inputs"][0]["operation"]["note"]["touch_ref"] =
+                    json!("native:other-touch");
+                changed = serde_json::from_value(value).unwrap();
+            }
+        }
+        assert!(changed.seal().is_err(), "{mutation}");
+    }
+}
+#[test]
+fn genuine_origin_v1_retains_its_exact_digest_and_bytes_under_pending_successor() {
+    let (p, _, _, _) = original();
+    let original = &p.checkpoints[0];
+    assert_eq!(original.schema, CHECKPOINT_SCHEMA);
+    assert!(original.unscored_queued_inputs.is_empty());
+    let wire = original.native_management_wire().unwrap();
+    let regenerated = CheckpointBinding::from_native_management_capturing_pending(
+        CheckpointReceipt {
+            checkpoint_ref: original.checkpoint_ref.clone(),
+            identity: original.identity.clone(),
+            sample: original.sample,
+            basis_digest: original.basis_digest.clone(),
+            event_prefix_digest: original.event_prefix_digest.clone(),
+            queued_events: original.queued_events.clone(),
+            acknowledged_stopped: true,
+        },
+        wire,
+    )
+    .unwrap();
+    assert_eq!(regenerated, *original);
+    assert_eq!(
+        serde_json::to_vec(&regenerated).unwrap(),
+        serde_json::to_vec(original).unwrap()
+    );
 }

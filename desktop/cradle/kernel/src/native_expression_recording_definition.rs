@@ -9,9 +9,7 @@ use crate::expression_procedural_scene_reader::{
     NativeDocumentSceneReader, NativeSceneSourceReader,
 };
 use serde::{Deserialize, Serialize};
-#[cfg(test)]
-use serde_json::json;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 /// Explicit authored score/material choices. Native rate, source/body, return,
 /// available pitches, original episode and parameter baselines come from the
@@ -182,6 +180,7 @@ fn compile_definition(
         native_sources: vec![native_source],
         native_recordings: vec![],
         native_reservations: vec![],
+        contact_definitions: vec![],
         content_digest: String::new(),
     }
     .seal()
@@ -430,22 +429,28 @@ mod tests {
     #[test]
     #[ignore = "requires actual native World Document and qualified host/worker"]
     fn actual_current_world_prepare_set_origin_and_cold_act_keep_the_source_owner() {
-        current_native_instrument_trial(None);
+        current_native_instrument_trial(None, false);
     }
 
     #[test]
     #[ignore = "requires actual native World Document and qualified host/worker"]
     fn actual_current_native_write_then_eof_holds_recording_without_any_reply() {
-        current_native_instrument_trial(Some(false));
+        current_native_instrument_trial(Some(false), false);
     }
 
     #[test]
     #[ignore = "requires actual native World Document and qualified host/worker"]
     fn actual_native_calibration_ack_lost_after_queue_cannot_be_reissued() {
-        current_native_instrument_trial(Some(true));
+        current_native_instrument_trial(Some(true), false);
     }
 
-    fn current_native_instrument_trial(lose_terminal: Option<bool>) {
+    #[test]
+    #[ignore = "requires actual native World Document and qualified Contact host/worker"]
+    fn actual_current_world_contact_pending_active_recorded_page_file_and_act() {
+        current_native_instrument_trial(None, true);
+    }
+
+    fn current_native_instrument_trial(lose_terminal: Option<bool>, contact_activity: bool) {
         use super::super::recording_channel::{
             NativeRecordingCommand, NativeSceneRecordingRequest,
         };
@@ -729,6 +734,75 @@ mod tests {
             before_command_id
         );
         assert_eq!(document(&mut kernel, &actual.expression_ref), no_origin);
+        let before_cut = kernel
+            .apply_native_scene_recording_request(NativeSceneRecordingRequest::SaveCut {
+                request_id: (before_command_id + 1).to_string(),
+                lease: lease.clone(),
+                expression_ref: no_origin.expression_ref.clone(),
+                document_revision: no_origin.revision,
+                scene_ref: scene_ref.clone(),
+                scene_revision: no_origin_scene.revision,
+                actor: "agent:current-instrument-proof".into(),
+                basis: 0,
+                layer: 0,
+                checkpoint_ref: "native:current-instrument/invalid-before-born".into(),
+            })
+            .unwrap();
+        let crate::KernelOpResult::NativeExpression { data: before_cut } = before_cut.result else {
+            panic!("unexpected save-cut preflight result")
+        };
+        assert_eq!(before_cut["accepted"], false);
+        assert_eq!(before_cut["delivery_attempted"], false);
+        assert!(before_cut["native_reply"].is_null());
+        assert!(kernel.native_expression.recording_cut.is_none());
+        assert_eq!(
+            kernel
+                .native_expression
+                .active
+                .as_ref()
+                .unwrap()
+                .last_request_id,
+            before_command_id
+        );
+        assert_eq!(document(&mut kernel, &actual.expression_ref), no_origin);
+        if contact_activity {
+            let refusal = kernel.apply(crate::KernelOp::NativeExpression {
+                request: super::super::Request::ContactSceneTrigger {
+                    request: super::super::native_scene_source::contact::ContactSceneTrigger {
+                        request_id: Counter(before_command_id + 1),
+                        lease: lease.clone(),
+                        expression_ref: no_origin.expression_ref.clone(),
+                        document_revision: no_origin.revision,
+                        scene_ref: scene_ref.clone(),
+                        scene_revision: no_origin_scene.revision,
+                        actor: "agent:current-instrument-proof".into(),
+                        basis: 0,
+                        layer: 0,
+                        declared_seed: Counter(1),
+                        contact_ref: "contact:current-native/plane".into(),
+                    },
+                },
+            });
+            assert!(
+                refusal.is_err(),
+                "Contact-before-Begin must refuse before delivery"
+            );
+            assert_eq!(
+                kernel
+                    .native_expression
+                    .active
+                    .as_ref()
+                    .unwrap()
+                    .last_request_id,
+                before_command_id
+            );
+            assert_eq!(
+                kernel.native_expression.active.as_ref().unwrap().child.id(),
+                pid
+            );
+            assert!(kernel.native_expression.contact_custody.is_none());
+            assert_eq!(document(&mut kernel, &actual.expression_ref), no_origin);
+        }
         let before_origin = document(&mut kernel, &actual.expression_ref);
         let scene = before_origin
             .scenes
@@ -809,6 +883,7 @@ mod tests {
                 .expect("normal native gate supplies bounded fresh Act custody"),
         )
         .join(match lose_terminal {
+            None if contact_activity => format!("native-current-contact-{}", std::process::id()),
             None => format!("native-current-instrument-{}", std::process::id()),
             Some(false) => format!("native-current-instrument-eof-{}", std::process::id()),
             Some(true) => format!("native-current-instrument-lost-ack-{}", std::process::id()),
@@ -1112,8 +1187,320 @@ mod tests {
                 .last_request_id,
             inspect_id
         );
-        // These are source/initial-origin and actual pulse custody operations;
-        // the separate native callback corpus proves nonempty apps/journals.
+        // Use the actual private current-Scene Command and SaveCut branches,
+        // after the original born0. The genuine native Force2 admission remains
+        // pending, not a performed score row or a manufactured callback.
+        let now = document(&mut kernel, &actual.expression_ref);
+        let scene = now
+            .scenes
+            .iter()
+            .find(|s| s.scene_ref == scene_ref)
+            .unwrap();
+        let born = scene.performance.as_ref().unwrap().checkpoints[0].clone();
+        let calibration_id = inspect_id + 1;
+        let calibration = kernel
+            .apply_native_scene_recording_request(NativeSceneRecordingRequest::Command {
+                request_id: calibration_id.to_string(),
+                lease: lease.clone(),
+                expression_ref: now.expression_ref.clone(),
+                document_revision: now.revision,
+                scene_ref: scene_ref.clone(),
+                scene_revision: scene.revision,
+                actor: "agent:current-instrument-proof".into(),
+                basis: 0,
+                layer: 0,
+                command: NativeRecordingCommand::CalibrateCurrent {},
+            })
+            .unwrap();
+        let crate::KernelOpResult::NativeExpression { data: calibration } = calibration.result
+        else {
+            panic!("actual calibration returned another operation")
+        };
+        assert_eq!(calibration["accepted"], true, "{calibration}");
+        let raw = &calibration["native_reply"]["result"]["native_pulse"];
+        assert_eq!(raw["payload"]["score_admission"]["queued"], true);
+        assert_eq!(raw["payload"]["score_admission"]["event"]["kind"], 5);
+        assert_eq!(raw["payload"]["score_admission"]["event"]["sequence"], "1");
+        assert_eq!(raw["payload"]["score_admission"]["event"]["sample"], "0");
+        assert!(raw["payload"]["score_admission"]["input_ref"].is_null());
+        assert_eq!(raw["applications"], json!([]));
+        let before_cut = document(&mut kernel, &actual.expression_ref);
+        let before_scene = before_cut
+            .scenes
+            .iter()
+            .find(|s| s.scene_ref == scene_ref)
+            .unwrap();
+        assert_eq!(
+            before_scene.performance.as_ref().unwrap().checkpoints[0],
+            born
+        );
+        let cut_id = calibration_id + 1;
+        let original_cut_request = NativeSceneRecordingRequest::SaveCut {
+            request_id: cut_id.to_string(),
+            lease: lease.clone(),
+            expression_ref: before_cut.expression_ref.clone(),
+            document_revision: before_cut.revision,
+            scene_ref: scene_ref.clone(),
+            scene_revision: before_scene.revision,
+            actor: "agent:current-instrument-proof".into(),
+            basis: 0,
+            layer: 0,
+            checkpoint_ref: "native:current-instrument/prearm-force-cut".into(),
+        };
+        let saved_cut_outcome = kernel
+            .apply(crate::KernelOp::NativePerformanceRecording {
+                request: original_cut_request.clone(),
+            })
+            .unwrap();
+        let crate::KernelOpResult::NativeExpression { data: saved_cut } = &saved_cut_outcome.result
+        else {
+            panic!("actual stopped SaveCut returned another operation")
+        };
+        assert_eq!(saved_cut["accepted"], true, "{saved_cut}");
+        assert_eq!(
+            saved_cut["recording_operations"],
+            json!([
+                "prepare_scene",
+                "begin",
+                "command",
+                "save_cut",
+                "continue_act"
+            ])
+        );
+        assert_eq!(
+            saved_cut["native_reply"]["result"]["host_receipt"]["request_id"],
+            cut_id.to_string()
+        );
+        let after_cut = document(&mut kernel, &actual.expression_ref);
+        let performance = after_cut
+            .scenes
+            .iter()
+            .find(|s| s.scene_ref == scene_ref)
+            .unwrap()
+            .performance
+            .as_ref()
+            .unwrap();
+        assert_eq!(
+            performance.checkpoints[0], born,
+            "born0 was overwritten by a later take"
+        );
+        let cut = performance.checkpoints.last().unwrap();
+        assert_eq!(cut.sample, Counter(0));
+        assert_eq!(
+            cut.schema,
+            crate::expression_performance::PENDING_CHECKPOINT_SCHEMA
+        );
+        assert_eq!(cut.unscored_queued_inputs.len(), 1);
+        let queued = &cut.unscored_queued_inputs[0];
+        assert_eq!(queued.native_sequence(), Counter(1));
+        assert_eq!(queued.effective_sample(), Counter(0));
+        assert_eq!(queued.operation()["kind"], 5);
+        assert!(queued.input().is_none());
+        assert!(performance.pages.is_empty());
+        assert!(performance.native_recordings.is_empty());
+        assert_eq!(
+            kernel.native_recording_cut_reply().unwrap(),
+            &saved_cut["native_reply"]
+        );
+        assert!(
+            kernel.release_native_recording_cut_custody(cut_id).is_err(),
+            "descriptor-only delivery discarded originals"
+        );
+        let reading = kernel.native_recording_cut_diagnostic_reading().unwrap();
+        let descriptors = reading["receipts"].as_array().unwrap();
+        assert_eq!(descriptors.len(), 2);
+        assert_eq!(
+            descriptors[0]["descriptor"]["kind"],
+            "recording.cut_observation"
+        );
+        assert_eq!(
+            descriptors[1]["descriptor"]["kind"],
+            "recording.cut_checkpoint"
+        );
+        let mut originals = Vec::new();
+        for (index, descriptor) in descriptors.iter().enumerate() {
+            assert_eq!(descriptor["complete"], true);
+            assert_eq!(descriptor["descriptor"]["original_index"], "0");
+            let ordinal =
+                super::super::cursor(&descriptor["descriptor"]["receipt_ordinal"]).unwrap();
+            let mut original_bytes = Vec::new();
+            kernel
+                .write_native_recording_cut_diagnostic(ordinal, &mut original_bytes)
+                .unwrap();
+            let original: Value = serde_json::from_slice(&original_bytes).unwrap();
+            if index == 1 {
+                assert_eq!(
+                    original["payload"]["checkpoint"],
+                    cut.native_management_wire().unwrap()
+                );
+            }
+            originals.push(original_bytes);
+            if index == 0 {
+                assert!(kernel.release_native_recording_cut_custody(cut_id).is_err());
+            }
+        }
+        assert!(kernel
+            .release_native_recording_cut_custody(cut_id + 1)
+            .is_err());
+        let invalid_destination = home.join("cut-original-destination-is-a-file");
+        std::fs::write(
+            &invalid_destination,
+            b"native export cannot use a file as a directory",
+        )
+        .unwrap();
+        assert!(
+            !saved_cut_outcome.receipts.is_empty(),
+            "the actual SaveCut committed ScenePerformanceEdit receipts"
+        );
+        let original_kernel_events = kernel.event_log().since(0).to_vec();
+        let mut refused_return = saved_cut_outcome.clone();
+        kernel.finish_native_recording_cut_return(&mut refused_return, Ok(invalid_destination));
+        let crate::KernelOpResult::NativeExpression {
+            data: refused_return,
+        } = refused_return.result
+        else {
+            panic!("cut refusal changed result family")
+        };
+        assert_eq!(refused_return["accepted"], false);
+        assert_eq!(refused_return["native_reply"], saved_cut["native_reply"]);
+        assert_eq!(refused_return["original_cut_files"]["available"], false);
+        assert_eq!(
+            refused_return["original_cut_files"]["document_committed"],
+            true
+        );
+        assert_eq!(
+            kernel.native_recording_cut_reply().unwrap(),
+            &saved_cut["native_reply"]
+        );
+        assert_eq!(document(&mut kernel, &actual.expression_ref), after_cut);
+        let original_owner_ordinal = kernel
+            .native_expression
+            .active
+            .as_ref()
+            .unwrap()
+            .last_request_id;
+        let original_owner_pid = kernel.native_expression.active.as_ref().unwrap().child.id();
+        let mut foreign_request = original_cut_request.clone();
+        let NativeSceneRecordingRequest::SaveCut { actor, .. } = &mut foreign_request else {
+            panic!("original cut request changed family")
+        };
+        *actor = "agent:foreign-export-retry".into();
+        assert!(kernel
+            .apply(crate::KernelOp::NativePerformanceRecording {
+                request: foreign_request,
+            })
+            .is_err());
+        assert_eq!(document(&mut kernel, &actual.expression_ref), after_cut);
+        let mut delivered_return = kernel
+            .apply(crate::KernelOp::NativePerformanceRecording {
+                request: original_cut_request.clone(),
+            })
+            .unwrap();
+        assert_eq!(delivered_return.result, saved_cut_outcome.result);
+        assert!(
+            delivered_return.receipts.is_empty(),
+            "exact recovery cannot re-publish the original committed events"
+        );
+        assert_eq!(
+            kernel.event_log().since(0),
+            original_kernel_events.as_slice()
+        );
+        assert_eq!(
+            kernel.native_recording_cut_reply().unwrap(),
+            &saved_cut["native_reply"]
+        );
+        let repeated_return = kernel
+            .apply(crate::KernelOp::NativePerformanceRecording {
+                request: original_cut_request.clone(),
+            })
+            .unwrap();
+        assert_eq!(repeated_return.result, saved_cut_outcome.result);
+        assert!(repeated_return.receipts.is_empty());
+        assert_eq!(
+            kernel.event_log().since(0),
+            original_kernel_events.as_slice()
+        );
+        assert_eq!(
+            kernel
+                .native_expression
+                .active
+                .as_ref()
+                .unwrap()
+                .last_request_id,
+            original_owner_ordinal
+        );
+        assert_eq!(
+            kernel.native_expression.active.as_ref().unwrap().child.id(),
+            original_owner_pid
+        );
+        assert_eq!(document(&mut kernel, &actual.expression_ref), after_cut);
+        kernel.finish_native_recording_cut_return(
+            &mut delivered_return,
+            Ok(home.join("native-return-originals")),
+        );
+        let crate::KernelOpResult::NativeExpression {
+            data: delivered_return,
+        } = delivered_return.result
+        else {
+            panic!("cut delivery changed result family")
+        };
+        assert_eq!(delivered_return["accepted"], true, "{delivered_return}");
+        assert_eq!(delivered_return["original_cut_files"]["available"], true);
+        let exported_dir = std::path::PathBuf::from(
+            delivered_return["original_cut_files"]["directory"]
+                .as_str()
+                .unwrap(),
+        );
+        assert_eq!(
+            serde_json::from_slice::<Value>(
+                &std::fs::read(exported_dir.join("manifest.json")).unwrap()
+            )
+            .unwrap(),
+            delivered_return["original_cut_files"]
+        );
+        for (index, file) in delivered_return["original_cut_files"]["files"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .enumerate()
+        {
+            assert_eq!(
+                std::fs::read(exported_dir.join(file["file"].as_str().unwrap())).unwrap(),
+                originals[index]
+            );
+        }
+        assert!(kernel.native_recording_cut_reply().is_none());
+        assert_eq!(document(&mut kernel, &actual.expression_ref), after_cut);
+        let encoded = crate::expression_file::encode(&after_cut).unwrap();
+        assert_eq!(crate::expression_file::decode(&encoded).unwrap(), after_cut);
+        // Optional original artifact export uses the SAME typed file writers.
+        // Positive functionality above always executes; no synthetic fallback.
+        if let Ok(path) = std::env::var("OI_NATIVE_CURRENT_SCENE_SAVE_CUT_ARTIFACT_DIRECTORY") {
+            let path = std::path::PathBuf::from(path);
+            std::fs::create_dir_all(&path).unwrap();
+            std::fs::write(path.join("cut-observation.json"), &originals[0]).unwrap();
+            std::fs::write(path.join("cut-checkpoint.json"), &originals[1]).unwrap();
+            std::fs::write(
+                path.join("cut-native-result.json"),
+                serde_json::to_vec(&saved_cut).unwrap(),
+            )
+            .unwrap();
+            std::fs::write(path.join("cut-document.expression.json"), encoded).unwrap();
+        }
+        if contact_activity {
+            super::super::native_scene_source::contact::tests::actual_recording_trial(
+                &mut kernel,
+                &after_cut,
+                &scene_ref,
+                &lease,
+                &home,
+                pid,
+                &born,
+            );
+        }
+        // The actual born0 and later pending-control cut have both passed the
+        // same native source/CAS/file return path. The separate native callback
+        // corpus proves nonempty applications, journals and audible output.
         kernel
             .native_expression
             .apply(

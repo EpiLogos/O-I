@@ -102,6 +102,7 @@ fn actual() -> (
         native_sources: vec![],
         native_recordings: vec![],
         native_reservations: vec![],
+        contact_definitions: vec![],
         content_digest: String::new(),
     }
     .seal()

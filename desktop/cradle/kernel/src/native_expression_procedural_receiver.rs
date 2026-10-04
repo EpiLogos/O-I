@@ -8,6 +8,12 @@ use serde_json::{json, Value};
 use std::collections::BTreeSet;
 
 use super::lifecycle::{CompletedSourceIntake, ReceivingBoundary};
+#[path = "native_expression_procedural_definition.rs"]
+mod definition;
+pub(crate) use definition::NativePendingDefinition;
+
+#[path = "native_expression_procedural_physical_map.rs"]
+mod physical_map;
 
 /// Wire configuration only. Its private custody below has no serde constructor.
 #[derive(Debug, Deserialize)]
@@ -63,6 +69,9 @@ pub(in crate::native_expression) struct RegisteredConsumers {
     contract: Value,
     requirements: Vec<Requirement>,
     source: Value,
+    physical_map: Option<physical_map::QualifiedPhysicalSourceMap>,
+    continued_definition: Option<Value>,
+    issued_scene: Option<definition::RegisteredDefinitionSceneRead>,
 }
 
 fn text(value: &Value) -> Result<&str, String> {
@@ -120,7 +129,11 @@ impl RegisteredConsumers {
     ) -> Result<Self, String> {
         application.require_procedural_scene_owner(&scene_owner, before)?;
         let reply = completion.reply();
-        let source = &reply["procedural"];
+        let source = if matches!(completion.source()["original_request"]["action"].as_str(), Some("source_continue" | "install_prepared")) {
+            &reply["procedural"]["definition_receipt"]["current_source"]
+        } else {
+            &reply["procedural"]
+        };
         let contract = &source["consumer_contract"];
         let scene_ref = text(&source["scene_ref"])?;
         let actual_scene = scene_owner.closed_constructor_fact(before, scene_ref)?;
@@ -203,12 +216,28 @@ impl RegisteredConsumers {
             completion.source(),
             completion.reply(),
         ))?;
+        let physical_map = if source["timing"]["domain"] == "native_samples" {
+            Some(
+                physical_map::QualifiedPhysicalSourceMap::from_registered_bootstrap(
+                    before,
+                    scene_ref,
+                    source,
+                    completion.source(),
+                    reply,
+                )?,
+            )
+        } else {
+            None
+        };
         Ok(Self {
             document_fingerprint: super::bootstrap::fingerprint(before)?,
             contract: contract.clone(),
             requirements,
             source: source.clone(),
             scene_owner,
+            physical_map,
+            continued_definition: None,
+            issued_scene: None,
             completion,
         })
     }
@@ -224,7 +253,12 @@ impl RegisteredConsumers {
             || self.contract["document_revision"].as_u64() != Some(before.revision)
             || definition["expression_ref"] != before.expression_ref
             || definition["document_revision"].as_u64() != Some(before.revision)
-            || definition["procedure"]["timing"] != self.contract["original_timing"]
+            || if let Some(continued) = &self.continued_definition {
+                definition != continued
+                    || !same_anchor(&definition["procedure"]["timing"], &self.contract["original_timing"])
+            } else {
+                definition["procedure"]["timing"] != self.contract["original_timing"]
+            }
             || ["source_composition", "currentness", "thread_plan"]
                 .iter()
                 .any(|key| definition[*key] != self.source[*key])
@@ -314,7 +348,12 @@ impl RegisteredConsumers {
             // must be the actual owner's graph, never supplied alternatives.
             application.require_procedural_scene_owner(&self.scene_owner, before)?;
             if super::bootstrap::fingerprint(before)? != self.document_fingerprint
-                || prepared["original_procedure"]["timing"] != self.contract["original_timing"]
+                || if let Some(continued) = &self.continued_definition {
+                    prepared["original_procedure"] != continued["procedure"]
+                        || prepared["required_consumers"] != continued["required_consumers"]
+                } else {
+                    prepared["original_procedure"]["timing"] != self.contract["original_timing"]
+                }
             {
                 return Err("First preparation has stale current bootstrap Document".into());
             }
@@ -695,6 +734,51 @@ fn validate_performance_roster(
 }
 
 impl crate::native_expression::Manager {
+    /// Current physical constituents on the SAME actual registered Source.
+    /// Returned data has no admission/ACK authority; the opaque completion and
+    /// constructor remain privately retained on this existing native owner.
+    pub(crate) fn registered_physical_source_read(
+        &mut self,
+        application: &Application,
+        before: &Document,
+        scene_ref: &str,
+    ) -> Result<Value, String> {
+        let registered = self
+            .active
+            .as_mut()
+            .ok_or("Actual native Source owner absent")?
+            .registered_consumers
+            .take()
+            .ok_or("Fresh actual registered Source context absent")?;
+        let result = (|| {
+            registered.completion.require_current(self)?;
+            application.require_procedural_scene_owner(&registered.scene_owner, before)?;
+            let actual_scene = registered
+                .scene_owner
+                .closed_constructor_fact(before, scene_ref)?;
+            if super::bootstrap::fingerprint(before)? != registered.document_fingerprint
+                || registered.contract["document_revision"].as_u64() != Some(before.revision)
+                || registered.contract["expression_ref"] != before.expression_ref
+                || registered.contract["scene_ref"] != scene_ref
+                || registered.source["native_scene_constructor_fact"] != actual_scene
+            {
+                return Err(
+                    "Physical inspection requires the actual current Document/Scene Source CAS"
+                        .into(),
+                );
+            }
+            registered
+                .physical_map
+                .as_ref()
+                .ok_or("Actual Source has no prepared numeric body")?
+                .read(before, scene_ref, registered.completion.reply())
+        })();
+        if let Some(owner) = self.active.as_mut() {
+            owner.registered_consumers = Some(registered);
+        }
+        result
+    }
+
     /// Borrow exactly the no-write current Source context for the normal
     /// Library factory. The opaque completion remains on this same owner.
     /// Returned graph/timing/contract projections never become private grants.
@@ -704,6 +788,18 @@ impl crate::native_expression::Manager {
         before: &Document,
         scene_ref: &str,
         read: impl FnOnce(&Value, &Value, &Value, &Value) -> Result<T, String>,
+    ) -> Result<T, String> {
+        self.with_registered_source_context_owner(application, before, scene_ref,
+            |_, source, provenance, reply, contract| read(source, provenance, reply, contract))
+    }
+    /// The same current Source custody with an immutable owner borrow lets
+    /// definition callers charge the complete tuple before copying any body.
+    pub(crate) fn with_registered_source_context_owner<T>(
+        &mut self,
+        application: &Application,
+        before: &Document,
+        scene_ref: &str,
+        read: impl FnOnce(&Self, &Value, &Value, &Value, &Value) -> Result<T, String>,
     ) -> Result<T, String> {
         let registered = self
             .active
@@ -733,6 +829,7 @@ impl crate::native_expression::Manager {
                 &registered.contract,
             ))?;
             read(
+                self,
                 &registered.source,
                 registered.completion.source(),
                 registered.completion.reply(),

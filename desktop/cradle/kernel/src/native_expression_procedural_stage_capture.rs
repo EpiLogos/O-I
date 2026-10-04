@@ -94,7 +94,8 @@ impl Reservation {
         self.id
     }
     /// Reserve necessary completion copies before allocating them, without a
-    /// second job/count slot or any Source authority. Never shrink while live.
+    /// second job/count slot or any Source authority. Worker extensions never
+    /// shrink; only a completed delivery may settle proven unused capacity.
     pub(super) fn extend(
         &mut self,
         additional: usize,
@@ -154,5 +155,28 @@ impl Drop for Reservation {
                 .checked_sub(bytes)
                 .expect("private capture accounting invariant");
         }
+    }
+}
+
+impl Reservation {
+    /// Once the original channel has returned its terminal outcome, retain its
+    /// complete measured custody and return only proven unused byte capacity.
+    /// No worker or capability is restored and the original count slot remains.
+    pub(super) fn settle_capacity(&mut self, retained: usize) -> Result<(), String> {
+        let mut state = self
+            .registry
+            .state
+            .lock()
+            .map_err(|_| "Native capture accounting unavailable")?;
+        if retained > self.bytes || state.live.get(&self.id) != Some(&self.bytes) {
+            return Err("Native terminal capture exceeds its original reservation".into());
+        }
+        state.bytes = state
+            .bytes
+            .checked_sub(self.bytes - retained)
+            .ok_or("Native capture accounting inconsistent")?;
+        state.live.insert(self.id, retained);
+        self.bytes = retained;
+        Ok(())
     }
 }

@@ -10,8 +10,8 @@ use crate::expression_performance_management::{
     InputHistoryEntry, NativeIdentity, NativeNoteTarget,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-use std::collections::BTreeSet;
+use serde_json::{Value, json};
+use std::collections::{BTreeMap, BTreeSet};
 
 pub const SCHEMA: &str = "oi.expression-native-recording/v2";
 const MAX_BATCH: usize = 256;
@@ -90,6 +90,21 @@ pub struct NativeApplication {
     pub determination: Option<Value>,
     pub late_admitted: bool,
     pub physical_manifest: PhysicalManifest,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "native_contact"
+    )]
+    pub contact: Option<crate::expression_performance_native_contact::NativeContactApplication>,
+}
+fn native_contact<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<crate::expression_performance_native_contact::NativeContactApplication>, D::Error>
+{
+    crate::expression_performance_native_contact::NativeContactApplication::deserialize(
+        deserializer,
+    )
+    .map(Some)
 }
 fn requested_sample<'de, D: serde::Deserializer<'de>>(
     deserializer: D,
@@ -116,6 +131,7 @@ fn operation(kind: u8) -> Result<&'static str, String> {
         "panic",
         "parameter",
         "determination",
+        "contact",
     ]
     .get(usize::from(kind))
     .copied()
@@ -129,7 +145,13 @@ impl NativeApplication {
     fn validate(&self, basis: &PerformanceBasis, state: &NativeRecordState) -> Result<(), String> {
         self.native_clock.validate()?;
         let identity = &basis.identity;
-        if self.schema != "ql.performance-applied-event/v2"
+        if self.schema
+            != if self.kind == 7 {
+                "ql.performance-applied-event/v3"
+            } else {
+                "ql.performance-applied-event/v2"
+            }
+            || self.contact.is_some() != (self.kind == 7)
             || self.operation != operation(self.kind)?
             || self.status != if self.applied { "applied" } else { "refused" }
             || self.sequence.0 == 0
@@ -156,6 +178,18 @@ impl NativeApplication {
             || basis.prepared_body["request"]["state_ref"] != self.state_ref
         {
             return Err("recording lost actual applied event/source/body/cursor".into());
+        }
+        if let Some(contact) = &self.contact {
+            contact.validate_basis(basis)?;
+            if self.has_note
+                || self.has_determination
+                || self.touch != Counter(0)
+                || self.requested_sample != Some(contact.operands.impact_sample)
+                || self.admitted_sample != contact.operands.impact_sample
+                || contact.operands.eigenbasis != self.physical_manifest.eigenbasis_identity
+            {
+                return Err("Contact application lost original programme/body/impact date".into());
+            }
         }
         let manifest = &self.physical_manifest;
         let physical = &state.physical;
@@ -225,7 +259,10 @@ impl NativeRecordState {
         if checkpoint.identity != basis.identity
             || checkpoint.basis_digest != basis.content_digest
             || management.recording_failed
-            || checkpoint.audio["schema"] != "ql.performance-checkpoint/v2"
+            || !matches!(
+                checkpoint.audio["schema"].as_str(),
+                Some("ql.performance-checkpoint/v2" | "ql.performance-checkpoint/v3")
+            )
         {
             return Err("native checkpoint is not this exact record source".into());
         }
@@ -560,6 +597,19 @@ fn performed_action(
             }
             EventAction::Parameter(binding.performance_parameter, app.value, None)
         }
+        7 => {
+            let contact = app
+                .contact
+                .as_ref()
+                .ok_or("actual committed Contact operands absent")?;
+            crate::expression_performance_native_contact::require_recorded_application(
+                original,
+                basis_index,
+                contact,
+                Some(app.sequence),
+            )?;
+            EventAction::Contact(contact.clone())
+        }
         6 => {
             return Err(
                 "applied determination requires the typed native held-state transition owner"
@@ -622,6 +672,9 @@ pub fn prepare_recording(
     }
     let mut applied_ordinal = admission.previous_applied_application_ordinal.0;
     let mut operation_ids = BTreeSet::new();
+    let continued_epochs = crate::expression_performance_reservation::reservation_epochs(original)?;
+    let continued_unscored =
+        crate::expression_performance_reservation::unscored_continuations(original)?;
     let mut recorded_sequence = original
         .events()
         .map(TimedEvent::sequence)
@@ -660,15 +713,48 @@ pub fn prepare_recording(
             }
             exact_ref(&target.touch_ref)?;
         }
+        let restored: Vec<_> = continued_unscored
+            .values()
+            .filter(|queued| {
+                queued.current_epoch == admission.state.transport_epoch
+                    && queued.input.native_sequence() == app.sequence
+            })
+            .collect();
+        if restored.len() > 1 {
+            return Err("native application has duplicate restored unscored origin".into());
+        }
+        if let Some(queued) = restored.first() {
+            crate::expression_performance_reservation::qualify_unscored_application(
+                queued,
+                admission.state.transport_epoch,
+                &app,
+                original_input,
+            )?;
+        }
         let reservation = original
             .native_reservations
             .iter()
             .find(|r| {
-                r.transport_epoch == admission.state.transport_epoch
+                continued_epochs
+                    .get(&(r.transport_epoch, r.native_sequence))
+                    .copied()
+                    .unwrap_or(r.transport_epoch)
+                    == admission.state.transport_epoch
                     && r.native_sequence == app.sequence
             })
             .map(|r| r.reconcile(&app))
             .transpose()?;
+        if reservation.is_none()
+            && original
+                .native_reservations
+                .iter()
+                .any(|r| r.native_sequence == app.sequence)
+        {
+            return Err(
+                "native restored operation needs its original reservation continuation proof"
+                    .into(),
+            );
+        }
         if !app.applied {
             receipts.push(RecordedApplication {
                 recorded_sequence: reservation
@@ -776,6 +862,7 @@ impl NativeRecordingBatch {
 enum NativeRecordingContent {
     Applied(Box<NativeRecordingBatch>),
     Terminated(Box<crate::expression_performance_reservation::NativeReservationTermination>),
+    Continued(Box<crate::expression_performance_reservation::NativeReservationContinuation>),
 }
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -791,6 +878,20 @@ impl NativeRecordingPage {
         &self,
     ) -> Result<(Counter, Counter, Counter, Counter, String), String> {
         self.validate()?;
+        if let Some(proof) = self.continuation()? {
+            let management = proof
+                .before
+                .management
+                .as_ref()
+                .ok_or("continuation BEFORE management absent")?;
+            return Ok((
+                management.transport_epoch,
+                decimal(&proof.before.audio["applied_application_ordinal"])?,
+                management.input_history.last_ordinal,
+                proof.before.sample,
+                proof.before.basis_digest,
+            ));
+        }
         if let Some(termination) = self.termination()? {
             let before = &termination.before;
             let management = before
@@ -820,6 +921,16 @@ impl NativeRecordingPage {
         &self,
     ) -> Result<(Counter, Counter, Counter, Counter, String), String> {
         self.validate()?;
+        if let Some(proof) = self.continuation()? {
+            let (applied, input) = proof.post_observer_stream()?;
+            return Ok((
+                proof.transport_ack.epoch,
+                applied,
+                input,
+                proof.after.sample,
+                proof.after.basis_digest,
+            ));
+        }
         if let Some(termination) = self.termination()? {
             let after = &termination.after;
             let management = after
@@ -869,7 +980,7 @@ impl NativeRecordingPage {
         }
         match self.encoded.read::<NativeRecordingContent>()? {
             NativeRecordingContent::Applied(batch) => Ok(*batch),
-            NativeRecordingContent::Terminated(_) => {
+            NativeRecordingContent::Terminated(_) | NativeRecordingContent::Continued(_) => {
                 Err("native page is a reservation termination".into())
             }
         }
@@ -879,7 +990,11 @@ impl NativeRecordingPage {
     /// Each application retains its original committed cursor/manifest/clock;
     /// periodic paired checkpoints retain full q/v/voices for bounded seeking.
     pub fn combined(&self, next: &Self) -> Result<Option<Self>, String> {
-        if self.termination()?.is_some() || next.termination()?.is_some() {
+        if self.termination()?.is_some()
+            || next.termination()?.is_some()
+            || self.continuation()?.is_some()
+            || next.continuation()?.is_some()
+        {
             return Ok(None);
         }
         let mut before = self.batch()?;
@@ -945,8 +1060,34 @@ impl NativeRecordingPage {
             return Err("unsupported native recording page".into());
         }
         match self.encoded.read::<NativeRecordingContent>()? {
-            NativeRecordingContent::Applied(_) => Ok(None),
+            NativeRecordingContent::Applied(_) | NativeRecordingContent::Continued(_) => Ok(None),
             NativeRecordingContent::Terminated(t) => Ok(Some(*t)),
+        }
+    }
+    pub fn from_continuation(
+        performance: &Performance,
+        continuation: crate::expression_performance_reservation::NativeReservationContinuation,
+    ) -> Result<Self, String> {
+        continuation.validate(performance)?;
+        Ok(Self {
+            schema: NATIVE_PAGE_SCHEMA.into(),
+            encoded: crate::expression_performance_codec::EncodedPage::from_value(
+                &NativeRecordingContent::Continued(Box::new(continuation)),
+            )?,
+        })
+    }
+    pub fn continuation(
+        &self,
+    ) -> Result<
+        Option<crate::expression_performance_reservation::NativeReservationContinuation>,
+        String,
+    > {
+        if self.schema != NATIVE_PAGE_SCHEMA {
+            return Err("unsupported native recording page".into());
+        }
+        match self.encoded.read::<NativeRecordingContent>()? {
+            NativeRecordingContent::Continued(proof) => Ok(Some(*proof)),
+            NativeRecordingContent::Applied(_) | NativeRecordingContent::Terminated(_) => Ok(None),
         }
     }
     pub fn reservation_updates(
@@ -958,6 +1099,9 @@ impl NativeRecordingPage {
         )>,
         String,
     > {
+        if self.continuation()?.is_some() {
+            return Ok(Vec::new());
+        }
         if let Some(termination) = self.termination()? {
             return Ok(termination
                 .reservations
@@ -976,7 +1120,7 @@ impl NativeRecordingPage {
             .collect())
     }
     pub fn validate(&self) -> Result<(), String> {
-        if self.termination()?.is_some() {
+        if self.termination()?.is_some() || self.continuation()?.is_some() {
             return Ok(());
         } // full source validated with containing Performance
         let b = self.batch()?;
@@ -1037,10 +1181,53 @@ pub fn validate_recording_pages(performance: &Performance) -> Result<(), String>
     let mut epochs = std::collections::BTreeMap::new();
     let mut ids = BTreeSet::new();
     let mut occurrences = BTreeSet::new();
+    let mut continued_epochs = BTreeMap::new();
+    let mut resolved_reservations = BTreeSet::new();
+    let mut continued_unscored: BTreeMap<
+        (Counter, Counter),
+        crate::expression_performance_reservation::ContinuedUnscoredInput,
+    > = BTreeMap::new();
+    let mut resolved_unscored = BTreeSet::new();
     for page in &performance.native_recordings {
         page.validate()?;
         if let Some(termination) = page.termination()? {
             termination.validate(performance)?;
+            for r in &termination.reservations {
+                if !resolved_reservations.insert((r.transport_epoch, r.native_sequence)) {
+                    return Err("native reserved operation terminated twice".into());
+                }
+            }
+            continue;
+        }
+        if let Some(proof) = page.continuation()? {
+            proof.validate(performance)?;
+            if proof
+                .reservations
+                .iter()
+                .any(|r| resolved_reservations.contains(&(r.transport_epoch, r.native_sequence)))
+            {
+                return Err(
+                    "resolved native reservation cannot be continued or applied twice".into(),
+                );
+            }
+            crate::expression_performance_reservation::apply_continuation_epochs(
+                &proof,
+                &mut continued_epochs,
+            )?;
+            // The original pending cut can be restored through another actual
+            // ACK. Prior applications stay in their own recorded epoch; they
+            // cannot consume or duplicate the new acknowledged application's
+            // identity. The full proof/source/queue was validated above.
+            crate::expression_performance_reservation::apply_unscored_continuation(
+                &proof,
+                &mut continued_unscored,
+            )?;
+            if epochs
+                .insert(proof.transport_ack.epoch, proof.post_observer_stream()?)
+                .is_some()
+            {
+                return Err("native continuation application epoch duplicated".into());
+            }
             continue;
         }
         let b = page.batch()?;
@@ -1069,7 +1256,18 @@ pub fn validate_recording_pages(performance: &Performance) -> Result<(), String>
             }
             if let Some(reserved) = &receipt.reservation {
                 reserved.reservation.validate(performance)?;
-                if reserved.reservation.transport_epoch != b.state.transport_epoch
+                if continued_epochs
+                    .get(&(
+                        reserved.reservation.transport_epoch,
+                        reserved.reservation.native_sequence,
+                    ))
+                    .copied()
+                    .unwrap_or(reserved.reservation.transport_epoch)
+                    != b.state.transport_epoch
+                    || !resolved_reservations.insert((
+                        reserved.reservation.transport_epoch,
+                        reserved.reservation.native_sequence,
+                    ))
                     || reserved.reservation.reconcile(app)? != *reserved
                 {
                     return Err("retained reservation resolution differs".into());
@@ -1078,6 +1276,27 @@ pub fn validate_recording_pages(performance: &Performance) -> Result<(), String>
             let original_input = input(app, &b.input_journal)?;
             if receipt.original_input.as_ref() != original_input {
                 return Err("native saved original input differs".into());
+            }
+            let restored: Vec<_> = continued_unscored
+                .values()
+                .filter(|queued| {
+                    queued.current_epoch == b.state.transport_epoch
+                        && queued.input.native_sequence() == app.sequence
+                })
+                .collect();
+            if restored.len() > 1 {
+                return Err("native page repeats restored unscored origin".into());
+            }
+            if let Some(queued) = restored.first() {
+                crate::expression_performance_reservation::qualify_unscored_application(
+                    queued,
+                    b.state.transport_epoch,
+                    app,
+                    original_input,
+                )?;
+                if !resolved_unscored.insert((queued.current_epoch, app.sequence)) {
+                    return Err("restored unscored native operation applied twice".into());
+                }
             }
             if let Some(event) = &receipt.performed_event {
                 if event.1 != app.applied_sample

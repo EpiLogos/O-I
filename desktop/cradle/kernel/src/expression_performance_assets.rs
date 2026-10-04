@@ -441,6 +441,7 @@ fn performance_fields(p: &Performance) -> Result<(PerformanceHeader, Value), Str
         native_sources,
         native_recordings,
         native_reservations,
+        contact_definitions,
         content_digest,
     } = p;
     let header = PerformanceHeader {
@@ -477,6 +478,12 @@ fn performance_fields(p: &Performance) -> Result<(PerformanceHeader, Value), Str
         fields.insert(
             "native_reservations".into(),
             serde_json::to_value(native_reservations).map_err(|e| e.to_string())?,
+        );
+    }
+    if !contact_definitions.is_empty() {
+        fields.insert(
+            "contact_definitions".into(),
+            serde_json::to_value(contact_definitions).map_err(|e| e.to_string())?,
         );
     }
     Ok((header, Value::Object(fields)))

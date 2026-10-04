@@ -15,6 +15,8 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
+#[path = "native_expression_procedural_definition_outcome.rs"]
+mod definition_outcome;
 #[path = "native_expression_procedural.rs"]
 pub mod procedural;
 #[path = "native_expression_selected_scene.rs"]
@@ -38,14 +40,21 @@ mod recording_definition;
 pub use recording::NativeSceneRecordingCommit;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub use recording_channel::{
-    CurrentSceneRecordingIntent, CurrentSceneRecordingOriginIntent, NativeCurrentRecordingRefusal,
-    NativeRecordingCommand, NativeSceneRecordingRequest, RecordingGesturePhase,
-    RecordingParameterAction,
+    CurrentSceneRecordingIntent, CurrentSceneRecordingOriginIntent,
+    CurrentSceneRecordingSaveCutIntent, NativeCurrentRecordingRefusal, NativeRecordingCommand,
+    NativeSceneRecordingRequest, RecordingGesturePhase, RecordingParameterAction,
 };
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub use recording_definition::{
     CurrentSceneRecordingDefinitionIntent, NativeSceneRecordingDefinition,
 };
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "native_expression_act_readmission.rs"]
+mod act_readmission;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "native_expression_scene_continuation.rs"]
+mod scene_continuation;
 
 const MAX_REQUEST: usize = 32 * 1024 * 1024;
 const MAX_REPLY: usize = 64 * 1024 * 1024;
@@ -54,6 +63,18 @@ const TIMEOUT: Duration = Duration::from_secs(20);
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    ContactSceneEdit {
+        request: native_scene_source::contact::ContactSceneEdit,
+    },
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    ContactSceneTrigger {
+        request: native_scene_source::contact::ContactSceneTrigger,
+    },
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    ContactSceneActivity {
+        request: native_scene_source::contact::ContactSceneActivity,
+    },
     RetainSelectedSceneSource {
         request: selected_scene::source::Request,
     },
@@ -80,6 +101,9 @@ pub enum Request {
     },
     ProceduralCompile {
         request: procedural::CompileRequest,
+    },
+    ProceduralDefinitionRetry {
+        request: procedural::conduct::Request,
     },
     ProceduralConduct {
         request: procedural::conduct::Request,
@@ -124,9 +148,19 @@ pub struct Manager {
     sequence: u64,
     composed: u64,
     procedural_manual_completion: Option<procedural::manual::Completed>,
+    procedural_authored_completion: Option<procedural::authored_driver::SealedEdit>,
+    procedural_authored_outcomes:
+        BTreeMap<String, std::sync::Arc<procedural::authored_driver::OriginalOutcome>>,
     selected_scene_opening: Option<selected_scene::SelectedOpening>,
+    // Evidence of one original delivery, retaining the same resource guard
+    // even when its Owner closes. It grants no new owner or replay authority.
+    definition_outcome: Option<definition_outcome::DefinitionOutcome>,
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     recording_failure: Option<recording_channel::NativeRecordingFailureCustody>,
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    contact_custody: Option<native_scene_source::contact::NativeSceneContactCustody>,
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    recording_cut: Option<recording_channel::NativeRecordingCutCustody>,
 }
 
 #[derive(Debug)]
@@ -148,6 +182,8 @@ struct Owner {
     procedural_executable: PathBuf,
     procedural_worker: PathBuf,
     procedural_definitions: BTreeMap<String, Value>,
+    // Call-local capacity reserved by the private definition delivery factory.
+    definition_reply_limit: Option<usize>,
     // Original private Source/constructor qualification; never restored from JSON.
     registered_consumers: Option<procedural::receiving::RegisteredConsumers>,
     procedural_checkpoints: BTreeMap<String, std::collections::BTreeSet<String>>,
@@ -174,6 +210,17 @@ fn cursor(v: &Value) -> Result<u64, String> {
     Ok(n)
 }
 fn line(reader: &mut impl BufRead) -> Result<Value, String> {
+    line_bounded(reader, MAX_REPLY)
+}
+fn line_bounded(reader: &mut impl BufRead, limit: usize) -> Result<Value, String> {
+    line_bounded_counted(reader, limit).map(|(value, _)| value)
+}
+/// Count actual ingress bytes before buffer growth. Definition delivery uses
+/// one aggregate allowance across queries, diagnostics and the terminal line.
+fn line_bounded_counted(reader: &mut impl BufRead, limit: usize) -> Result<(Value, usize), String> {
+    if limit == 0 || limit > MAX_REPLY {
+        return Err("Invalid private native reply limit".into());
+    }
     let mut bytes = Vec::new();
     loop {
         let available = reader.fill_buf().map_err(|e| e.to_string())?;
@@ -182,13 +229,19 @@ fn line(reader: &mut impl BufRead) -> Result<Value, String> {
         }
         let newline = available.iter().position(|b| *b == b'\n');
         let count = newline.map_or(available.len(), |i| i + 1);
-        if bytes.len() + count > MAX_REPLY {
-            return Err("native host reply exceeds 64 MiB".into());
+        if bytes.len().checked_add(count).is_none_or(|n| n > limit) {
+            return Err(if limit == MAX_REPLY {
+                "native host reply exceeds 64 MiB"
+            } else {
+                "native host reply exceeds its admitted private bound; original delivery unknown"
+            }
+            .into());
         }
         bytes.extend_from_slice(&available[..count]);
         reader.consume(count);
         if newline.is_some() {
             return serde_json::from_slice(&bytes)
+                .map(|value| (value, bytes.len()))
                 .map_err(|e| format!("malformed native acknowledgement: {e}"));
         }
     }
@@ -663,6 +716,8 @@ impl Drop for Owner {
 impl Manager {
     pub fn apply(&mut self, client: &CentralClient, request: Request) -> Result<Value, String> {
         match request {
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            Request::ContactSceneEdit { .. } | Request::ContactSceneTrigger { .. } | Request::ContactSceneActivity { .. } => Err("Contact source/recording requires the actual Kernel current-Scene owner; ordinary Manager exchange is not its grant".into()),
             Request::RetainSelectedSceneSource { .. }
             | Request::RecoverSelectedSceneSource { .. }
             | Request::OpenSelectedScene { .. }
@@ -679,6 +734,9 @@ impl Manager {
             Request::ProceduralCompile { request } => procedural::Prepared::new(request)?
                 .execute()
                 .map(|completed| completed.response),
+            Request::ProceduralDefinitionRetry { .. } => {
+                Err("Definition lookup requires the current native Kernel Document owner".into())
+            }
             Request::ProceduralConduct { .. } => {
                 Err("Procedural conduct requires the current native Kernel source intake".into())
             }
@@ -720,8 +778,12 @@ impl Manager {
             }
             Request::Exchange { lease, request } => {
                 #[cfg(any(target_os = "linux", target_os = "macos"))]
-                if self.recording_failure.is_some() {
+                if self.recording_failure.is_some() || self.contact_custody.is_some() {
                     return Err("original native recording failure remains held; ordinary Exchange cannot bypass its custody".into());
+                }
+                #[cfg(any(target_os = "linux", target_os = "macos"))]
+                if self.recording_cut.is_some() {
+                    return Err("original stopped cut files remain held; ordinary Exchange cannot bypass native return custody".into());
                 }
                 let owner = self
                     .active
@@ -965,6 +1027,7 @@ impl Manager {
             procedural_executable: host,
             procedural_worker: worker,
             procedural_definitions: BTreeMap::new(),
+            definition_reply_limit: None,
             registered_consumers: None,
             procedural_checkpoints: BTreeMap::new(),
             stage_library_replays: procedural::stage_library::Memos::default(),
@@ -1137,7 +1200,7 @@ fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
         .ok_or_else(|| fail("units_per_metre must be in (0, 1000000]"))?;
     let sky = match (obj.get("sky"), obj.get("sky_snapshot")) {
         (Some(_), Some(_)) | (None, None) => {
-            return Err(fail("exactly one sky selector or sky_snapshot is required"))
+            return Err(fail("exactly one sky selector or sky_snapshot is required"));
         }
         (None, Some(snapshot @ Value::Object(_))) => {
             if snapshot["schema"] != "ql.sky-snapshot/v1"
@@ -1156,7 +1219,7 @@ fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
         (None, Some(_)) => {
             return Err(fail(
                 "sky_snapshot must be one bounded ql.sky-snapshot/v1 owner reading",
-            ))
+            ));
         }
         (Some(Value::String(s)), None) if s == "none" => Sky::None,
         (Some(Value::String(s)), None) if s == "now" => Sky::Now,
@@ -1222,7 +1285,9 @@ fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
     if snapshot_purpose == crate::nara_identity::SnapshotPurpose::RetainedOccasion
         && world.is_none()
     {
-        return Err(fail("retained-occasion playback requires the qualified world contract; legacy scene binding admits requested snapshots"));
+        return Err(fail(
+            "retained-occasion playback requires the qualified world contract; legacy scene binding admits requested snapshots",
+        ));
     }
     if world.is_some() && sky == Sky::None {
         return Err(fail(
@@ -2114,6 +2179,7 @@ mod tests {
             procedural_executable: PathBuf::new(),
             procedural_worker: PathBuf::new(),
             procedural_definitions: BTreeMap::new(),
+            definition_reply_limit: None,
             registered_consumers: None,
             procedural_checkpoints: BTreeMap::new(),
             stage_library_replays: procedural::stage_library::Memos::default(),
@@ -3188,3 +3254,7 @@ for line in sys.stdin:
         assert!(manager.active.is_none());
     }
 }
+
+#[cfg(test)]
+#[path = "native_expression_source_delivery_tests.rs"]
+mod source_delivery_tests;

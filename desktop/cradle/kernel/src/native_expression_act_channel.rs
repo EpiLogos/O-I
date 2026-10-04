@@ -134,6 +134,10 @@ pub(super) struct NativeActChannelRefusal {
     delivery_attempted: bool,
 }
 impl NativeActChannelRefusal {
+    pub(super) fn reason(&self) -> &str {
+        &self.reason
+    }
+
     pub(super) fn delivery_attempted(&self) -> bool {
         self.delivery_attempted
     }
@@ -155,11 +159,23 @@ impl NativeActChannelRefusal {
     }
 }
 impl NativeActChannelReply {
+    pub(super) fn diagnostic_reading(&self) -> Value {
+        self.diagnostics.reading()
+    }
     pub(super) fn value(&self) -> &Value {
         &self.value
     }
     pub(super) fn qualification(&self) -> &Value {
         &self.qualification
+    }
+    /// Borrow one original from the actual received-file custody.
+    pub(super) fn with_original_receipt<T>(
+        &self,
+        kind: &str,
+        index: usize,
+        consumer: impl FnOnce(&Value) -> Result<T, String>,
+    ) -> Result<T, String> {
+        self.diagnostics.with_receipt(kind, index, consumer)
     }
     pub(super) fn into_custody(self) -> (Value, NativeDiagnosticReceipts) {
         (self.value, self.diagnostics)
@@ -183,8 +199,21 @@ impl ActChannel {
     pub(super) fn exchange_stream_custodied(
         &self,
         value: &Value,
+        answer: impl FnMut(&Value) -> Result<Option<Value>, String>,
+    ) -> Result<NativeActChannelReply, NativeActChannelRefusal> {
+        self.exchange_stream_custodied_bounded(value, super::MAX_REPLY, answer)
+    }
+    pub(super) fn exchange_stream_custodied_bounded(
+        &self,
+        value: &Value,
+        reply_limit: usize,
         mut answer: impl FnMut(&Value) -> Result<Option<Value>, String>,
     ) -> Result<NativeActChannelReply, NativeActChannelRefusal> {
+        if reply_limit == 0 || reply_limit > super::MAX_REPLY {
+            return Err(NativeActChannelRefusal::before(
+                "Invalid private native reply capacity".into(),
+            ));
+        }
         let instance = value["instance_ref"].as_str().ok_or_else(|| {
             NativeActChannelRefusal::before("native diagnostic instance absent".into())
         })?;
@@ -248,8 +277,18 @@ impl ActChannel {
                         .map_err(|e| e.to_string())?;
                 }
             }
+            let mut remaining = reply_limit;
             for _ in 0..=16384 {
-                let value = line(&mut *reader)?;
+                let value = if reply_limit == super::MAX_REPLY {
+                    // Ordinary protocol keeps its existing per-line limit.
+                    super::line(&mut *reader)?
+                } else {
+                    let (value, bytes) = super::line_bounded_counted(&mut *reader, remaining)?;
+                    remaining = remaining
+                        .checked_sub(bytes)
+                        .ok_or("Native private reply accounting overflow")?;
+                    value
+                };
                 if native_parent_image::unix_peer(reader.get_ref().as_raw_fd())? != (pid, uid) {
                     return Err("native held Act channel peer changed during reply".into());
                 }
@@ -273,7 +312,7 @@ impl ActChannel {
                             .get_ref()
                             .shutdown(std::net::Shutdown::Read)
                             .map_err(|e| e.to_string())?;
-                        return match line(&mut *reader) {
+                        return match super::line_bounded(&mut *reader, reply_limit) {
                             Err(reason) => Err(reason),
                             Ok(_) => {
                                 Err("native EOF fault unexpectedly received another frame".into())

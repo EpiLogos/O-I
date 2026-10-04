@@ -43,6 +43,23 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
             return oi_cradle_kernel::nara_coordinate::execute(request);
         }
         let host = app.state::<KernelHost>();
+        let authored = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_native_authored_driver(&op)?;
+        if let Some(prepared) = authored {
+            let completed = prepared.execute()?;
+            let outcome = host
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable")?
+                .finish_native_authored_driver(completed)?;
+            for receipt in &outcome.receipts {
+                let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+            }
+            return Ok(outcome);
+        }
         let selected_scene = host
             .0
             .lock()
@@ -383,6 +400,20 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
                 }
                 None => kernel.apply(op)?,
             };
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            let outcome = {
+                let mut outcome = outcome;
+                // Original stopped-cut receipts leave the private channel as
+                // two individually checked files before the next pulse.
+                kernel.finish_native_recording_cut_return(
+                    &mut outcome,
+                    app.path()
+                        .app_cache_dir()
+                        .map(|directory| directory.join("native-recording-originals"))
+                        .map_err(|error| error.to_string()),
+                );
+                outcome
+            };
             let receipts = outcome.receipts.clone();
             (outcome, receipts)
         };
@@ -546,6 +577,30 @@ fn main() {
                     &socket,
                     move |request| {
                         let host = handle.state::<KernelHost>();
+                        let authored = owner.prepare_native_authored_driver(
+                            &mut *host
+                                .0
+                                .lock()
+                                .map_err(|_| "native kernel lock unavailable")?,
+                            &request,
+                        )?;
+                        if let Some(prepared) = authored {
+                            let completed = prepared.execute()?;
+                            let value = owner.finish_native_authored_driver(
+                                &mut *host
+                                    .0
+                                    .lock()
+                                    .map_err(|_| "native kernel lock unavailable")?,
+                                request,
+                                completed,
+                            )?;
+                            if let Some(receipts) = value["outcome"]["receipts"].as_array() {
+                                for receipt in receipts {
+                                    let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt);
+                                }
+                            }
+                            return Ok(value);
+                        }
                         let prepared = owner.prepare_native_procedural_manual(
                             &*host
                                 .0
@@ -605,6 +660,23 @@ fn main() {
                             KernelOp::ExpressionWorld { request }
                         }
                     };
+                    let authored = host
+                        .0
+                        .lock()
+                        .map_err(|_| "kernel lock unavailable")?
+                        .prepare_native_authored_driver(&op)?;
+                    if let Some(prepared) = authored {
+                        let completed = prepared.execute()?;
+                        let outcome = host
+                            .0
+                            .lock()
+                            .map_err(|_| "kernel lock unavailable")?
+                            .finish_native_authored_driver(completed)?;
+                        for receipt in &outcome.receipts {
+                            let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt);
+                        }
+                        return serde_json::to_value(outcome).map_err(|e| e.to_string());
+                    }
                     let prepared = host
                         .0
                         .lock()
