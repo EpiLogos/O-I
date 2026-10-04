@@ -76,6 +76,8 @@ OI_SCOPE = [
     'desktop/cradle/kernel/src/nara_current_store.rs',
     'desktop/cradle/kernel/src/m3_reception.rs',
     'desktop/cradle/kernel/src/nara_dialogue.rs',
+    'desktop/cradle/kernel/src/flow.rs',
+    'desktop/cradle/kernel/tests/flow_return.rs',
     'desktop/cradle/src/nara/nativeCurrent.ts',
     'desktop/cradle/src/nara/instrumentProtocol.ts',
     'desktop/cradle/expressions-app/field-studies-journeys/src/naraInstrument.tsx',
@@ -1292,6 +1294,16 @@ class Replay:
             'OI_CENTRAL_CTRL_BIN', 'OI_CENTRAL_PROJECT_QUERY', 'OI_CRADLE_STATE', 'OI_EXPRESSION_SOCKET', 'QL_NARA_PROVIDER_CACHE',
             'OI_QL_BIN', 'OI_QL_SKY_BIN', 'OI_QL_FIELD_HOST_BIN', 'OI_QL_FIELD_WORKER_BIN', 'QL_NARA_UV', 'XDG_CACHE_HOME', 'UV_CACHE_DIR')}
         self.report['owned_environment']['PLAYWRIGHT_BROWSERS_PATH'] = self.env.get('PLAYWRIGHT_BROWSERS_PATH')
+        owner_refusal = self.command('actual-central-source-return-and-action-refusal',
+                     ['cargo', 'test', '--locked', '--manifest-path',
+                      self.repo / 'desktop/cradle/kernel/Cargo.toml', '--test', 'flow_return',
+                      'world_source_and_explicit_return_preserve_owner_identity_and_refusal',
+                      '--', '--exact', '--ignored', '--nocapture'], self.repo,
+                     {**self.env, 'CARGO_TARGET_DIR': kernel_env['CARGO_TARGET_DIR']}, timeout=180)
+        require(re.search(r'test result: ok\. 1 passed; 0 failed; 0 ignored;',
+                          Path(owner_refusal['stdout_ref']['path']).read_text()),
+                'The exact real Central source/refusal regression must execute before the encounter')
+        self.report['actual_central_owner_refusal'] = owner_refusal
         self.command('actual-complete-saved-confirmation-and-admission-races',
                      ['node', '--experimental-strip-types', '--import', './tests/ts-register.mjs', '--test',
                       'tests/native-saved-confirmation-native.test.mjs', 'tests/native-adoption-races-native.test.mjs'],

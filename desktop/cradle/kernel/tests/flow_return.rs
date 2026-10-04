@@ -120,7 +120,21 @@ fn world_source_and_explicit_return_preserve_owner_identity_and_refusal() {
         "human:test",
         "human",
     );
-    assert!(matches!(stale, Err(OwnerCallError::Refused { .. })));
+    assert!(matches!(stale, Err(OwnerCallError::Refused { ref message })
+        if message.starts_with("projectcentral.source.write: ")));
+    assert_eq!(
+        fs::read_to_string(&retained_path).unwrap(),
+        "human revision one\n"
+    );
+
+    // A real unavailable source retains the refusing Action, not the caller's
+    // input. This distinguishes a missing identity from an unrelated owner
+    // read that happens to return the same operating-system error.
+    fs::remove_file(&retained_path).unwrap();
+    let missing = client.source_read(Some("Editor"), &source_ref).unwrap_err();
+    assert!(matches!(missing, OwnerCallError::Refused { ref message }
+        if message.starts_with("projectcentral.source.read: ")));
+    fs::write(&retained_path, "human revision one\n").unwrap();
 
     let evidence = vec!["evidence:flow-return-test".to_owned()];
     let proposal = client

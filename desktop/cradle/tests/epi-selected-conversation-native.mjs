@@ -159,7 +159,11 @@ function installInitialChannelPhaseObserver(){
   const fromWorld=window.parent===window&&event.source===document.querySelector('#world')?.contentWindow;
   if(!fromParent&&!fromWorld)return;
   const base={at:Date.now(),monotonic_ms:performance.now(),side:fromParent?'application':'host',kind:tag(d.kind)};
-  if(fromWorld&&d.kind==='nara-instrument'&&Number.isSafeInteger(d.req)&&d.req>0&&
+  if(fromWorld&&d.kind==='nara-instrument'&&Number.isSafeInteger(d.req)&&d.req>0&&['identity','read'].includes(d.request?.operation)){
+   add({...base,phase:'identity-or-conversation-request-received-by-host',req:d.req,operation:d.request.operation,
+    identity_operation:tag(d.request.request?.operation),expression_ref:tag(d.request.basis?.expression_ref),
+    source_ref:tag(d.request.request?.source_ref??d.request.basis?.source?.source_ref),source_revision:tag(d.request.basis?.source?.revision)});
+  }else if(fromWorld&&d.kind==='nara-instrument'&&Number.isSafeInteger(d.req)&&d.req>0&&
    ['select_identity','release_identity','current_restore','current_read','current_pin'].includes(d.request?.operation)){
    add({...base,phase:'request-received-by-host',req:d.req,operation:d.request.operation,
     expression_ref:tag(d.request.basis?.expression_ref),source_ref:tag(d.request.basis?.source?.source_ref??d.request.source?.source_ref)});
@@ -170,16 +174,57 @@ function installInitialChannelPhaseObserver(){
    const data=d.data,doc=data?.document??data?.artifact?.document,file=data?.file??data?.artifact?.file;
    add({...base,phase:'file-reply-received-by-application',req:d.req,ok:d.ok===true,error:typeof d.error==='string'?d.error.slice(0,2048):null,
     expression_ref:tag(doc?.expression_ref),document_revision:Number.isSafeInteger(doc?.revision)?doc.revision:null,location_ref:tag(file?.location?.ref),file_revision:tag(file?.revision)});
+  }else if(fromParent&&d.kind==='nara-instrument-result'&&Number.isSafeInteger(d.req)&&d.req>0&&d.data?.schema==='oi.nara-identity/v1'){
+   const data=d.data;
+   add({...base,phase:'identity-reply-received-by-application',req:d.req,ok:d.ok===true,
+    source_ref:tag(data.source?.source_ref),source_revision:tag(data.source?.revision),
+    input_revision:tag(data.reading?.input_revision),person_ref:tag(data.reading?.person_ref),nara_ref:tag(data.reading?.nara_ref)});
   }else if(fromParent&&d.kind==='nara-instrument-result'&&Number.isSafeInteger(d.req)&&d.req>0){
    const data=d.data;
    if(d.ok===false||['oi.nara-instrument-state/v1','oi.nara-personal-current-context/v1'].includes(data?.schema))
     add({...base,phase:'reply-received-by-application',req:d.req,ok:d.ok===true,schema:tag(data?.schema),status:tag(data?.status),
      error:typeof d.error==='string'?d.error.slice(0,2048):null,person_ref:tag(data?.reading?.identity?.person_ref??data?.identity?.reading?.person_ref),
+     identity_source_ref:tag(data?.identity?.source?.source_ref),identity_source_revision:tag(data?.identity?.source?.revision),
+     identity_input_revision:tag(data?.identity?.reading?.input_revision),nara_ref:tag(data?.identity?.reading?.nara_ref),
+     expression_ref:tag(data?.expression?.expression_ref),document_revision:Number.isSafeInteger(data?.expression?.revision)?data.expression.revision:null,
+     scene_ref:tag(data?.expression?.selection?.scene_ref),entity_ref:tag(data?.expression?.selection?.entity_ref),relation_ref:tag(data?.expression?.selection?.relation_ref),
      event_ref:tag(data?.context?.event_ref),reading_ref:tag(data?.context?.reading_ref),reading_revision:tag(data?.context?.reading_revision),
      snapshot_ref:tag(data?.reading?.transit?.sky?.snapshot_ref)});
   }else if(fromParent&&d.kind==='oi-nara-identity-released')add({...base,phase:'identity-release-received-by-application'});
  });
 }
+
+// Passive receiving witness. Borrow only scalar native references and existing
+// channel/DOM state; no private reading, profile/draft body or native request.
+async function captureNaraReceiving(label){
+ const sampledAt=Date.now(),deadline=sampledAt+1000;
+ const observe=async operation=>{const remaining=deadline-Date.now();if(remaining<=0)throw Error('Nara receiving observation budget reached');let timer;
+  try{return await Promise.race([operation(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Nara receiving observation budget reached')),remaining);})]);}finally{clearTimeout(timer);}};
+ const witness={schema:'epi.actual-nara-receiving-witness/v1',sampled_at_unix_ms:sampledAt,observation_budget_ms:1000};
+ try{witness.application=await observe(()=>frame.evaluate(()=>{
+  const tag=value=>typeof value==='string'?value.slice(0,512):null;
+  const f=window.__FIELD_STUDIES__,w=f?.nativeWorking(),record=f?.epiWorld(),current=f?.epiCurrent();
+  const instrument=document.querySelector('.nara-personal'),conversation=instrument?.querySelector('.nara-conversation-layout'),content=instrument?.querySelector('.nara-personal-content');
+  const send=conversation?.querySelector('form button'),question=conversation?.querySelector('textarea');
+  const workDocument=window.__FIELD_STUDIES__?.getState(),selection=Array.isArray(workDocument?.selected)?workDocument.selected.slice(0,16):[];
+  return {captured_at_unix_ms:Date.now(),channel:window.__EPI_INITIAL_CHANNEL_PHASES__?.()??null,
+   working:{native_ref:tag(w?.native_ref),revision:Number.isSafeInteger(w?.revision)?w.revision:null,busy:!!w?.busy,pending:tag(w?.pending),failed:!!w?.failed},
+   world:{instance_ref:tag(record?.world?.instance_ref),person_ref:tag(record?.person_ref),nara_ref:tag(record?.nara_ref),source_ref:tag(record?.identity_source?.source_ref),source_revision:tag(record?.identity_source?.revision),input_revision:tag(record?.identity_input_revision),event_ref:tag(record?.world?.event_ref),snapshot_ref:tag(record?.world?.snapshot_ref),saved_current_ref:tag(record?.receiving?.personal?.current?.ref)},
+   current:{present:!!current,person_ref:tag(current?.reading?.identity?.person_ref),event_ref:tag(current?.context?.event_ref),reading_ref:tag(current?.context?.reading_ref),reading_revision:tag(current?.context?.reading_revision)},
+   dom:{instrument_visible:!!instrument?.getClientRects().length,busy:content?.getAttribute('aria-busy')??null,
+    identity_heading:tag(instrument?.querySelector('h1')?.textContent),source_ref:tag(instrument?.querySelector('select[aria-label="Saved profiles"]')?.value),
+    conversation_heading:tag(conversation?.querySelector('aside h2')?.textContent),subject_caption:tag(conversation?.querySelector('aside h2+p')?.textContent),
+    alerts:Array.from(instrument?.querySelectorAll('[role="alert"]')??[]).slice(0,8).map(node=>tag(node.textContent)),
+    question_present:!!question,question_characters:question?.value.length??0,send_disabled:send?.disabled??null,
+    actual_local_selection:selection.filter(value=>typeof value==='string').map(tag),chosen_body:tag(document.querySelector('[data-epi-body]')?.value)}};
+ }));}catch(error){witness.application_observation_error=shortError(error);}
+ try{witness.host_channel=await observe(()=>page.evaluate(()=>window.__EPI_INITIAL_CHANNEL_PHASES__?.()??null));}catch(error){witness.host_observation_error=shortError(error);}
+ witness.finished_at_unix_ms=Date.now();witness.limit='Exact observed channel/DOM scalars only; release reason, React draftDirty/restored/released refs and unobserved native reply values remain unknown. Ring drops are explicit. No provider question, voice or private payload is captured.';
+ const raw=JSON.stringify(witness,null,2)+'\n';assert.ok(Buffer.byteLength(raw)<=64*1024,'Nara receiving witness must fit its scalar evidence aperture');
+ const file=label+'.nara-receiving.json';await writeFile(resolve(cfg.output,file),raw);
+ return {path:file,bytes:Buffer.byteLength(raw),sha256:hash(raw)};
+}
+
 async function retainInitialResponsePhases(){
  const sampledAt=Date.now(),diagnosticDeadline=sampledAt+1000,rows=[];
  const observe=async operation=>{const remaining=diagnosticDeadline-Date.now();if(remaining<=0)throw Error('Failure-only phase observation budget reached');let timer;
@@ -347,6 +392,7 @@ try{
  if(selectionOnly)await qualifyHostedOwner();
  browser=selectionOnly?await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']}):await chromium.launch({headless:true});page=selectionOnly?await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}):await browser.newPage({viewport:{width:1440,height:900}});
  if(selectionOnly)await page.addInitScript(installInitialChannelPhaseObserver);
+ if(!selectionOnly)await page.addInitScript(installInitialChannelPhaseObserver);
  const errors=[];page.on('pageerror',e=>{errors.push(String(e));if(collectingInitialWitness){if(initialPageErrors.length<8)initialPageErrors.push(shortError(e));else initialPageErrorDrops++;}});
  page.on('request',request=>{if(!observedOpURL(request.url())||request.method()!=='POST')return;const text=request.postData();if(!text||Buffer.byteLength(text)>32*1024*1024)return;try{const v=JSON.parse(text);report.requests.push({op:v.op,operation:v.request?.operation,action:v.request?.action,...(v.op==='nara_coordinate'?{coordinate_ref:v.request?.coordinate_ref,face:v.request?.face,source_only:v.request?.source_only}:{}),sha256:hash(text),bytes:Buffer.byteLength(text)});if(collectingInitialWitness){const metadata={ordinal:report.requests.length-1,op:shortTag(v.op),operation:shortTag(v.request?.operation),started:Date.now()};initialRequestTimes.set(request,metadata);observeInitialCriticalRequest(request,v,metadata,text);}}catch{report.requests.push({unreadable:true});}});
  page.on('response',response=>{
@@ -703,6 +749,7 @@ try{
   const file=label+'.dom.json';await writeFile(resolve(cfg.output,file),bytes);return{...actual,file,bytes:Buffer.byteLength(bytes),sha256:hash(bytes)};
  };
  report.before_ask_dom=await captureDOM('before-ask');
+ report.nara_receiving_before_ask=await captureNaraReceiving('before-ask');
  if(expectedRefusal)assert.ok(!report.before_ask_dom.alert_visible||report.before_ask_dom.alert_text!==expectedRefusal,'The expected new refusal must not already be visible before Ask');
  assert.equal(report.before_ask_dom.ask_disabled,false,'Ordinary Ask must be available before this operation starts');
  assert.equal(report.before_ask_dom.native_working.busy,false,'Original native selection must be terminal before Ask starts');
@@ -710,7 +757,28 @@ try{
  const requestStart=report.requests.length;await frame.locator('[data-epi="ask"]').click();
  if(heldObserved){let timer;try{await Promise.race([heldObserved,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('The original current native inspect was not held in30s')),30000);})]);}finally{clearTimeout(timer);}await local(other);releaseHeld();releaseHeld=null;}
  if(cfg.selection_case==='positive'){
+  const naraWaitStarted=Date.now();report.nara_receiving_wait={started_at_unix_ms:naraWaitStarted,timeout_ms:30000};
+  try{
   await instrument.waitFor({state:'visible',timeout:30000});const after=await inspect();exactFocusOnly(expected,after.document,sceneRef,target);assert.equal(after.document.selection.relation_ref,undefined);report.checks.push('Actual ordinary With Nara/Epii opened only on exact acknowledged local/native personal hub focus');
+  const remaining=30000-(Date.now()-naraWaitStarted);assert.ok(remaining>0,'The conversation read must fit the original30s header receiving aperture');
+  await frame.waitForFunction(basis=>{
+   const panel=document.querySelector('.nara-personal'),conversation=panel?.querySelector('.nara-conversation-layout');
+   const rows=window.__EPI_INITIAL_CHANNEL_PHASES__?.().rows??[];
+   const ackIndex=rows.findLastIndex(row=>row.phase==='reply-received-by-application'&&row.schema==='oi.nara-instrument-state/v1'&&row.ok&&row.at>=basis.started
+    &&row.identity_source_ref===basis.source_ref&&row.identity_source_revision===basis.source_revision&&row.identity_input_revision===basis.input_revision
+    &&row.person_ref===basis.person_ref&&row.nara_ref===basis.nara_ref&&row.expression_ref===basis.expression_ref&&row.document_revision===basis.revision
+    &&row.scene_ref===basis.scene_ref&&row.entity_ref===basis.entity_ref&&!row.relation_ref);
+   return ackIndex>=0&&!rows.slice(ackIndex+1).some(row=>row.phase==='identity-release-received-by-application')&&panel?.getClientRects().length>0&&panel.querySelector('.nara-personal-content')?.getAttribute('aria-busy')==='false'
+    &&panel.querySelector('select[aria-label="Saved profiles"]')?.value===basis.source_ref
+    &&conversation?.querySelector('aside h2')?.textContent===panel.querySelector('h1')?.textContent
+    &&!!conversation&&conversation.querySelector('aside h2')?.textContent!=='Choose your identity'
+    &&conversation.querySelector('aside h2+p')?.textContent==='Selected: '+basis.title;
+  },{started:naraWaitStarted,source_ref:carrier.identity_source.source_ref,source_revision:carrier.identity_source.revision,input_revision:carrier.identity_input_revision,
+   person_ref:carrier.person_ref,nara_ref:carrier.nara_ref,expression_ref:cfg.expression_ref,revision:after.document.revision,scene_ref:sceneRef,entity_ref:target,title:document.entities[target].title},{timeout:remaining});
+  assert.ok(Date.now()-naraWaitStarted<30000,'A late channel or DOM reply cannot qualify the original header receiving aperture');
+  report.nara_receiving_wait.completed_at_unix_ms=Date.now();report.nara_receiving_after_ask=await captureNaraReceiving('after-ask');
+  report.checks.push('The same header aperture receives its actual saved-person and selected-body conversation read without sending a provider question');
+  }catch(error){report.nara_receiving_wait.failed_at_unix_ms=Date.now();throw error;}
  }else{
   await frame.waitForFunction(message=>{
    const bar=document.querySelector('.epi-world-entrance'),alert=bar?.querySelector('[role="alert"]'),ask=bar?.querySelector('[data-epi="ask"]');
@@ -741,6 +809,7 @@ try{
  assert.ok(!report.requests.slice(requestStart).some(v=>(v.op==='encounter'&&['prompt','draft'].includes(v.action))||['send','epii_delegate'].includes(v.operation)),'Selection qualification must not send a model question'); }
  assert.deepEqual(errors,[]);if(selectionOnly){await qualifyHostedDurable('after actual selection outcome');await qualifyHostedOwner();report.portable_custody_after=requalifyPortableCurrentCustody(hostedSourceExpectation,hostedSourceQualification);}report.passed=true;
 }catch(error){report.failure=String(error);
+ if(frame)try{report.failed_nara_receiving=await captureNaraReceiving('failed');}catch(diagnostic){report.failed_nara_receiving_diagnostic=shortError(diagnostic);}
  if(navigationCase){
   try{report.failed_navigation_request_channel=await page.evaluate(()=>window.__EPI_NAVIGATION_REQUEST_OBSERVER__?.snapshot()??null);}catch(diagnostic){report.failed_navigation_request_diagnostic=String(diagnostic);}
   try{report.failed_navigation_ack_channel=await frame.evaluate(()=>window.__EPI_NAVIGATION_ACK_OBSERVER__?.snapshot()??null);}catch(diagnostic){report.failed_navigation_ack_diagnostic=String(diagnostic);}

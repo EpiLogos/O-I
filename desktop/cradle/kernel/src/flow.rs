@@ -381,12 +381,14 @@ impl CentralClient {
         let value = self.run_envelope(action, input)?;
         if value["ok"] != true {
             return Err(OwnerCallError::Refused {
-                message: value
-                    .pointer("/error/message")
-                    .and_then(Value::as_str)
-                    .or_else(|| value.get("message").and_then(Value::as_str))
-                    .unwrap_or("Central owner Action failed")
-                    .to_owned(),
+                message: format!(
+                    "{action}: {}",
+                    value
+                        .pointer("/error/message")
+                        .and_then(Value::as_str)
+                        .or_else(|| value.get("message").and_then(Value::as_str))
+                        .unwrap_or("Central owner Action failed")
+                ),
             });
         }
         value

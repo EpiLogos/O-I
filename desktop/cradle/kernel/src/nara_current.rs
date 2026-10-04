@@ -175,7 +175,7 @@ fn saved_sky_number_basis(number: &serde_json::Number) -> Option<(bool, String, 
     let scale = exponent.checked_sub(fraction_len)?.checked_add(removed)?;
     Some((negative, significant.into(), scale, finite.to_bits()))
 }
-fn same_saved_sky(actual: &Value, expected: &Value) -> bool {
+pub(crate) fn same_saved_sky(actual: &Value, expected: &Value) -> bool {
     match (actual, expected) {
         (Value::Number(actual), Value::Number(expected)) => {
             match (saved_sky_number_basis(actual), saved_sky_number_basis(expected)) {

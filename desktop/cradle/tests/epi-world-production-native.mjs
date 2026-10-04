@@ -19,6 +19,7 @@ import {chromium} from 'playwright';
 import {runSceneDampingGate} from './epi-scene-damping-native-proof.mjs';
 import {runSceneAxisGate,runSceneAxisRestartGate} from './epi-scene-axis-native-proof.mjs';
 import {runPersonalModalConsumerProof,runSavedPersonalReleaseGate,runColdPersonalDraftGate} from './epi-personal-native-proof.mjs';
+import {runEpiPersonalBodyBindingGate} from './epi-personal-body-binding-native.mjs';
 import {qualifyPortableNativeSourceExpectation,qualifyPortableRuntimeExecution,requalifyPortableCurrentCustody} from './epi-world-portable-custody.mjs';
 
 assert.ok(process.argv[2],'Supply a JSON configuration with bridge, output and two identity_files');
@@ -924,6 +925,10 @@ try{
    await frame.evaluate(ref=>window.__FIELD_STUDIES__.selectEntity(ref),received.record.receiving.personal.locus_entity_ref);
    await action('save');received=await snapshot('first-construction-saved-personal',true);
   }
+  // Additive genuine same-world binding after the original first Save ACK.
+  // Foreign-person/current controls stay in the final two-world whole gate.
+  receipt.first_construction_body_binding=await runEpiPersonalBodyBindingGate({server,frame,world:received,foreignWorld:null,identities,op,nativeDocument,savedFile,action,snapshot,check,artifact});
+  received=await snapshot('first-construction-body-bound-personal',true);
   requirePartitions(received,received.document.scenes[received.state.sceneIndex].entities.map(e=>e.id),'First construction personal');
   requirePersonalDrivers(received,'First construction actual personal consumer');
   const document=await nativeDocument(received.working.native_ref);
@@ -1580,6 +1585,11 @@ try{
  phase='M3 ordinary independent axes, exact private hinge, native current file continuation';
  receipt.scene_axes=await runSceneAxisGate({frame,worldA:receipt.scene_damping,worldB:b,op,snapshot,action,sceneNavigate,exposeNativePanel,nativeFrames,nativeInspections,nativeM3,nativeDocument,savedFile,artifact,check,owners:projectionOwners});
  receipt.continuation={...receipt.continuation,file:receipt.scene_axes.saved_acknowledgement.working.file,scene_count:receipt.scene_axes.saved_acknowledgement.scene_count};
+ phase='actual ordinary seven-centre binding after original whole gates';
+ await sceneNavigate(`${receipt.scene_axes.saved_acknowledgement.working.native_ref}:scene:personal`);await action('save');
+ const bodyBindingWorld=await snapshot('13-personal-body-binding-basis',true);
+ receipt.personal_body_binding=await runEpiPersonalBodyBindingGate({server,frame,world:bodyBindingWorld,foreignWorld:b,identities,op,nativeDocument,savedFile,action,snapshot,check,artifact});
+ receipt.continuation={...receipt.continuation,file:receipt.personal_body_binding.file,scene_ref:receipt.personal_body_binding.document.selection.scene_ref,scene_count:receipt.personal_body_binding.document.scenes.length};
  receipt.passed=true;
 }catch(error){
  retainStage('failure: '+phase);

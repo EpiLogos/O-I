@@ -146,6 +146,19 @@ class ActualPublication(unittest.TestCase):
         self.receipt["fixtures"].append(copy.deepcopy(self.receipt["fixtures"][0]))
         self.refused("actual native fixture inventory membership differs")
 
+    def test_missing_actual_reservation_origins_refuse_publication(self) -> None:
+        original_fixtures = copy.deepcopy(self.receipt["fixtures"])
+        for kind in ("cancel", "lost"):
+            missing = "native-score-reservations/" + kind + ".origin.json"
+            with self.subTest(actual_native_member=missing):
+                self.assertEqual(sum(str(Path(row["path"]).relative_to(self.run)) == missing
+                    for row in original_fixtures), 1,
+                    "Counterproof requires this actual native reservation origin")
+                self.receipt["fixtures"] = [row for row in original_fixtures
+                    if str(Path(row["path"]).relative_to(self.run)) != missing]
+                self.refused("actual native fixture inventory membership differs")
+        self.receipt["fixtures"] = original_fixtures
+
     def test_changed_actual_native_bytes_are_refused(self) -> None:
         path = Path(self.receipt["fixtures"][0]["path"])
         body = path.read_bytes()

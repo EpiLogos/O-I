@@ -1575,7 +1575,7 @@ impl PreparedCompose {
             let instance_ref = owner_request["instance_ref"].clone();
             let basis = &world["basis"];
             if !basis.is_object()
-                || world["sky"] != owner_request["sky"]
+                || !crate::nara_current::same_saved_sky(&world["sky"], &owner_request["sky"])
                 || world["event_ref"] != event_ref
                 || world["snapshot_ref"] != event_ref
                 || world["subject_ref"] != subject_ref
@@ -1597,10 +1597,14 @@ impl PreparedCompose {
                 || world["scene"]["snapshot_ref"] != event_ref
                 || world["scene"]["subject_ref"] != subject_ref
             {
-                // Failure-only source diagnostics; admission above is exact.
+                // Sky uses the existing exact-decimal/finite-bit comparison;
+                // every other source join retains exact Value equality.
                 let failed = [
                     ("basis_object", !basis.is_object()),
-                    ("sky", world["sky"] != owner_request["sky"]),
+                    (
+                        "sky",
+                        !crate::nara_current::same_saved_sky(&world["sky"], &owner_request["sky"]),
+                    ),
                     ("world_event", world["event_ref"] != event_ref),
                     ("world_snapshot", world["snapshot_ref"] != event_ref),
                     ("world_subject", world["subject_ref"] != subject_ref),

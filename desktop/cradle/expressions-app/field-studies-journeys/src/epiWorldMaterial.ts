@@ -184,7 +184,7 @@ export function qualifyPersonalCurrent(personal:PersonalInstance,expressionRef:s
 /** Personal participation supplements the shared canonical subject. Private
  * owner values remain outside portable material; only admitted reading refs
  * enter its native binding. This one operation also serves later correction. */
-function bindPersonalParticipation(subject:SubjectBinding,previous:PersonalInstance|null,next:PersonalInstance,current:ReadingRef|null):SubjectBinding {
+export function bindPersonalParticipation(subject:SubjectBinding,previous:PersonalInstance|null,next:PersonalInstance,current:ReadingRef|null):SubjectBinding {
  const binding=clone(subject),oldRefs=new Set(previous?[previous.person.ref,previous.identity.ref,...(previous.current?[previous.current.ref]:[])]:[]);
  const retain=(readings:ReadingRef[])=>readings.filter(r=>!oldRefs.has(r.ref));
  const append=(readings:ReadingRef[],added:ReadingRef[])=>[...readings,...added.filter(r=>!readings.some(old=>equal(old,r)))].map(r=>clone(r));

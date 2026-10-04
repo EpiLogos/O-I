@@ -213,9 +213,9 @@ function NaraInstrument({host,close,visible,requestedView,viewRevision,hostRevis
   const sceneBinding=current?.bindings[host.sceneId()];
   if(!current||!material||!sceneBinding)throw Error('Open and save the retained seven-centre Expression first.');
   const saved=await identity({operation:'identity',request:{operation:'open',source_ref:selected.source.source_ref}});
-  if(saved.source?.revision!==selected.source.revision||saved.reading?.input_revision!==selected.reading.input_revision)throw Error('Your identity changed. Reopen it before binding the centres.');
+  if(saved.source?.revision!==selected.source.revision||saved.reading?.input_revision!==selected.reading.input_revision||saved.reading.person_ref!==selected.reading.person_ref||saved.reading.nara_ref!==selected.reading.nara_ref)throw Error('Your identity changed. Reopen it before binding the centres.');
   const calculated=await identity({operation:'identity',request:{operation:'calculate',profile:saved.reading.profile}});
-  if(calculated.reading?.input_revision!==selected.reading.input_revision||calculated.reading.person_ref!==selected.reading.person_ref)throw Error('The calculated body does not match your selected identity.');
+  if(calculated.reading?.input_revision!==selected.reading.input_revision||calculated.reading.person_ref!==selected.reading.person_ref||calculated.reading.nara_ref!==selected.reading.nara_ref)throw Error('The calculated body does not match your selected identity.');
   const basis=(await nativeExpressionRequest({operation:'inspect',expression_ref:current.document.expression_ref}) as ExpressionResult).document;
   if(!basis||basis.revision!==current.document.revision)throw Error('The Expression changed. Reopen its current revision before binding.');
   const template_bindings=material.entities.filter(entity=>entity.native?.chakraId).map(entity=>{
@@ -225,6 +225,7 @@ function NaraInstrument({host,close,visible,requestedView,viewRevision,hostRevis
   });
   const prepared=await preparePersonalBodyBindings(async request=>validateCoordinateExpression(await naraInstrumentRequest({operation:'coordinate',request})),{
    document:basis,scene_ref:sceneBinding.scene_ref,centre_evidence:calculated.reading.natal_composition?.centre_evidence??[],template_bindings,
+   personal_basis:{person_ref:selected.reading.person_ref,nara_ref:selected.reading.nara_ref,input_revision:selected.reading.input_revision,identity_source:saved.source},
    ...(includeEarth?{create_earth:{entity_ref:`${basis.expression_ref}:entity:occurrence-${crypto.randomUUID()}`}}:{}),
   });
   if(!mounted.current||epoch.current!==at||host.nativeView()?.document.expression_ref!==basis.expression_ref||host.sceneId()!==material.id)throw Error('The encounter changed while its sources were read. No bindings were applied.');
