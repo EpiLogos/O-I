@@ -110,6 +110,19 @@ revisions; a binary that failed its smoke check stayed linked anyway
    back; the receipts are written only after all flips landed, and a receipt
    write that fails puts them back too.
 
+### Implementation standing — 4 October 2026
+
+The whole-machine behavior above remains the governing contract. Source at
+`e16a64fc184b1801267ab7d9be3a94e1f1e5f285` implements prepare-all before
+selection, then sequential per-link atomic renames. It does not establish an
+indivisible multi-product swap. `restore_link` discards recovery errors;
+a composition failure after the active receipt was persisted invokes
+`undo_flips` without restoring that receipt. Complete rollback of links,
+receipts and composition is a missing implementation join, not a deliberate
+exception to the contract. [The architecture companion](architecture/upgrade-lifecycle.md)
+names the exact operation/source/test definitions and keeps installed
+failure/recovery acceptance open.
+
 ## Direction
 
 The plan names how each cut relates to what is installed: `upgrade`, `same`,
@@ -147,7 +160,7 @@ restarts.
 
 ```sh
 oi update                    # resolve cuts, plan, apply (the explicit command)
-oi update --check            # pure report; no file is touched. exit 0 current, 1 updates available
+oi update --check            # report without installation changes; may refresh Git refs. exit 0 current, 1 updates available
 oi update --check --json     # machine-readable report (for timers and other agents)
 oi update --apply [PRODUCT ...]   # explicit apply, optionally scoped
 oi update --apply --channel mainline [PRODUCT ...]   # apply origin/main cuts instead of the checkouts'
@@ -215,7 +228,9 @@ the disclosure that motivates the route: for every product whose planned cut
 predates origin/main it prints `N commit(s) behind origin/main`, and the
 JSON adds `origin_main_revision`, `behind_main`, `ahead_of_main` and a
 top-level `mainline_pending_count`. The origin/main read fetches
-best-effort; a failed fetch degrades to the last-known ref and is disclosed,
+best-effort; this can update remote-tracking refs and Git fetch metadata even
+for `--check`, while installation links, receipts and registrations stay
+unchanged. A failed fetch degrades to the last-known ref and is disclosed,
 never passed off as fresh. "The machine lacks X" is now one command away
 from "the machine's cut predates X" — including when the product code for X
 merged days ago.
