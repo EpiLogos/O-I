@@ -233,7 +233,14 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   if(instrument)for(const command of ['row','tick','transcription','damping'])query<HTMLButtonElement>(`[data-native="${command}"]`).disabled=true;
  };
  // Returned values replace the stage's status line, never a raw dump.
- const fail=(error:unknown)=>{controller.reason=controller.status==='following'||controller.status==='held'?controller.reason:String(error instanceof Error?error.message:error);};
+ const fail=(error:unknown)=>{
+  const reading=controller.reading;
+  // The uncertain native owner retains its literal refusal. UI cleanup must
+  // not replace it with a differently formatted copy of the rejected Error.
+  controller.reason=reading.status==='following'||reading.status==='held'||
+   (reading.status==='unavailable'&&reading.native?.available===false)
+   ?reading.reason:String(error instanceof Error?error.message:error);
+ };
  const run=async(action:()=>Promise<unknown>|unknown)=>{if(busy)return;busy=true;update();try{await action();}catch(error){fail(error);}finally{busy=false;update();}};
  const open=(sky:NativeSky)=>run(async()=>{composing=true;try{await controller.compose({sky});onResumeApplication();}finally{composing=false;}});
  const click=async(event:Event)=>{

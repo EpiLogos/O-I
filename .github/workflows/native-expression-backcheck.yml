@@ -30,6 +30,10 @@ on:
         description: Build exact committed Mac artifacts with the canonical packager
         type: boolean
         default: false
+      diagnostic_mac_candidate:
+        description: Build for installed diagnosis after a successful app build even if later embedded acceptance fails
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -148,6 +152,8 @@ jobs:
 
   embedded:
     runs-on: ubuntu-latest
+    outputs:
+      actual_build: ${{ steps.embedded-build.outcome }}
     # Full native regressions run in the separate mandatory exact-head job.
     # This job retains its own actual bridge and all receiving/effect gates.
     timeout-minutes: 35
@@ -207,6 +213,7 @@ jobs:
             desktop/cradle/kernel -> target
             .native-owner/QL-MEF -> target
       - name: Locked dependencies and actual embedded application build
+        id: embedded-build
         run: |
           mkdir -p /tmp/w5-checks
           npm ci --prefix desktop/cradle --no-audit --no-fund
@@ -555,10 +562,10 @@ jobs:
   epi-mac-candidate:
     name: Exact native Mac candidate / canonical managed bundle
     # Explicit candidate builds support installed diagnosis; native failures remain acceptance failures.
-    # Build the exact diagnostic candidate after the embedded source/build
-    # proof while mandatory native/whole gates run. Build success is never
-    # native, whole, installed or release acceptance; their failures remain red.
-    if: ${{ always() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.build_mac_candidate && needs.embedded.result == 'success' }}
+    # Ordinary builds require the complete embedded gate. Explicit installed
+    # diagnosis may use its successful real app build after a later failure;
+    # every original embedded/native/whole result remains an acceptance gate.
+    if: ${{ always() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.build_mac_candidate && (needs.embedded.result == 'success' || (inputs.diagnostic_mac_candidate && needs.embedded.outputs.actual_build == 'success')) }}
     needs: [embedded]
     runs-on: macos-15
     timeout-minutes: 90
@@ -567,6 +574,28 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+      - name: Retain exact build and acceptance standing
+        env:
+          EMBEDDED_RESULT: ${{ needs.embedded.result }}
+          ACTUAL_BUILD_RESULT: ${{ needs.embedded.outputs.actual_build }}
+          DIAGNOSTIC_REQUESTED: ${{ inputs.diagnostic_mac_candidate }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          assert os.environ['ACTUAL_BUILD_RESULT'] == 'success'
+          diagnostic = os.environ['EMBEDDED_RESULT'] != 'success'
+          assert not diagnostic or os.environ['DIAGNOSTIC_REQUESTED'] == 'true'
+          Path(os.environ['RUNNER_TEMP'], 'epi-mac-build-standing.json').write_text(json.dumps({
+              'schema': 'oi.epi-mac-build-standing/v1',
+              'source_cut': os.environ['GITHUB_SHA'],
+              'actual_app_build': os.environ['ACTUAL_BUILD_RESULT'],
+              'embedded_acceptance': os.environ['EMBEDDED_RESULT'],
+              'diagnostic_only': diagnostic,
+              'native_whole_installed_accepted': False,
+              'H': None,
+          }, indent=2) + '\n')
+          PY
       - name: Resolve the committed QL source required by this frontend
         id: mac-ql-source
         run: |
@@ -645,6 +674,7 @@ jobs:
             ${{ runner.temp }}/epi-mac-candidate/native/**
             ${{ runner.temp }}/epi-mac-candidate/bundle/**
             ${{ runner.temp }}/epi-mac-candidate/frontend/**
+            ${{ runner.temp }}/epi-mac-build-standing.json
             ${{ runner.temp }}/epi-mac-spacetime-version.txt
             ${{ runner.temp }}/epi-mac-spacetime-install.sh
             ${{ runner.temp }}/epi-mac-spacetime-install.sha256
