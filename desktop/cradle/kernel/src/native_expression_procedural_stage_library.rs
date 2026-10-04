@@ -203,7 +203,7 @@ impl Memos {
                 }
             }
             let (_, contribution, actual) = found.ok_or("Actual applied native constructor preparation is unavailable; restore its original native checkpoint before regenerating")?;
-            if membership.as_ref().is_some_and(|old| old != actual) {
+            if membership.as_ref().is_some_and(|old| *old != actual) {
                 return Err("Native original membership requires the actual continuing conductor checkpoint".into());
             }
             membership = Some(actual);
@@ -623,7 +623,7 @@ impl crate::Kernel {
             .rows
             .remove(operation_ref)
             .ok_or("Original native Library preparation absent")?;
-        let result = (|| {
+        let result: Result<Value, String> = (|| {
             let before = self.expressions.procedural_source_snapshot(
                 &memo.intent.basis.expression_ref,
                 memo.intent.basis.document_revision,
