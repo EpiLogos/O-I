@@ -5,7 +5,8 @@
  * then its content; verbatim material only behind "Show raw". A page opens
  * as a tab in the focused pane (Base) or in place with ← back (full-page
  * modes); ⌥-click or "Pop out" opens it in its own window with the SAME
- * identity. It is never a right-panel tab and never a drawer.
+ * identity. An explicit selected-subject sidebar request uses the existing
+ * Context pane canvas; ordinary object opens retain their current placement.
  *
  * Lane 3 registers the Factory kinds (run, unit, attempt, tool call,
  * candidate, check, agent, NOW record — 11-FACTORY §6) on this same API.
@@ -49,7 +50,15 @@ export interface ObjectReading {
  /** Verbatim owner material, shown only behind "Show raw". */
  raw?:unknown;
 }
-export interface ObjectContext {transport:KernelTransportStatus}
+/** Navigation lent by the owning frame; no grant or copied subject state. */
+export interface ObjectNavigation {
+ onOpenTask?:(row:import("../../encounter/EncounterList").EncounterRow)=>void|Promise<void>;
+ onOpenActivity?:()=>void;
+ onContinueAct?:(input:import("../../expression/crossModeAct").ActContinuationRequest)=>Promise<void>;
+ onComposeAddressed?:(candidate:import("../../encounter/AddressedComposer").AddressedCandidate,row:import("../../encounter/EncounterList").EncounterRow)=>void|Promise<void>;
+ onMessage?:(message:string)=>void;
+}
+export interface ObjectContext {transport:KernelTransportStatus;navigation?:ObjectNavigation}
 export interface ObjectKindDef {
  kind:string;
  /** Plain words for the kind ("Tool call", "Agent", "Run"). */
@@ -64,15 +73,30 @@ export const objectKindOf=(kind:string)=>kinds.get(kind);
 export const objectKinds=()=>[...kinds.values()];
 
 export const OPEN_OBJECT_EVENT="oi:open-object";
-export interface OpenObjectDetail {object:ObjectRef;popOut?:boolean}
-export function openObject(object:ObjectRef,options:{popOut?:boolean}={}):void {
- const detail={object,popOut:options.popOut===true};
+export interface OpenObjectDetail {object:ObjectRef;popOut?:boolean;placement?:"sidebar"}
+/** Typed subjects carried by the existing detached-window navigation channel.
+ * Addressed material is unsent composer input, never sender or authority. */
+export interface ObjectWindowNavigation {
+ object?:OpenObjectDetail;
+ encounter?:import("../../encounter/EncounterList").EncounterRow;
+ factoryActivity?:true;
+ continueAct?:import("../../expression/crossModeAct").ActContinuationRequest;
+ addressed?:import("../../encounter/AddressedComposer").AddressedCandidate;
+}
+export function openObject(object:ObjectRef,options:{popOut?:boolean;placement?:"sidebar"}={}):void {
+ const detail:OpenObjectDetail={object,popOut:options.popOut===true,...(options.placement?{placement:options.placement}:{})};
  // A narrow panel shows the page in place as a detail layer (P18); it
  // answers first and the frame is not asked.
- for(const intercept of [...interceptors].reverse())if(intercept(detail))return;
+ if(interceptObjectOpen(detail))return;
  window.dispatchEvent(new CustomEvent<OpenObjectDetail>(OPEN_OBJECT_EVENT,{detail}));
 }
 const interceptors=new Set<(detail:OpenObjectDetail)=>boolean>();
+/** Offer the same open to its current centre/panel owner before a frame route.
+ * The caller may flush the actual placement before acknowledging a window request. */
+export function interceptObjectOpen(detail:OpenObjectDetail):boolean {
+ for(const intercept of [...interceptors].reverse())if(intercept(detail))return true;
+ return false;
+}
 /** Answer object opens before the frame does (return true to take one). */
 export function interceptObjectOpens(intercept:(detail:OpenObjectDetail)=>boolean):()=>void {interceptors.add(intercept);return()=>{interceptors.delete(intercept);};}
 /** ⌥-click (Alt) is Pop out; a plain click opens in place. */

@@ -77,7 +77,10 @@ pub fn window_detach(
         if surface.kind != binding.kind || surface.source_ref != binding.reference {
             return Err("Detached binding differs from the kernel subject".into());
         }
-        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser" | "terminal" | "flow") {
+        if !matches!(
+            binding.kind.as_str(),
+            "source" | "knowledge" | "file" | "encounter" | "browser" | "terminal" | "flow" | "object"
+        ) {
             return Err("This surface has no native detached body".into());
         }
         if binding.kind == "file" {
@@ -100,7 +103,15 @@ pub fn window_detach(
         .lock()
         .map_err(|_| "Window state unavailable")?
         .iter()
-        .find(|(_, r)| r.binding.id == binding.id || (binding.reference.is_some() && r.binding.reference == binding.reference))
+        .find(|(_, r)| {
+            if binding.kind == "object" {
+                // Each object page has its own admitted Surface. A matching
+                // subject in another view is not this window's placement.
+                r.workspace_id == workspace_id && r.binding.id == binding.id
+            } else {
+                r.binding.id == binding.id || (binding.reference.is_some() && r.binding.reference == binding.reference)
+            }
+        })
         .map(|(label, _)| label.clone());
     if let Some(label) = existing {
         if let Some(existing) = app.get_window(&label) {

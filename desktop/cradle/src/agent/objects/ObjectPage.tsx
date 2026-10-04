@@ -1,7 +1,7 @@
 import {Fragment,useCallback,useEffect,useRef,useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {Glyph} from "../../workspace/Glyph";
-import {objectKindOf,openIntent,openObject,type ObjectReading,type ObjectRef,type ObjectKindDef} from "./registry";
+import {objectKindOf,openIntent,openObject,type ObjectReading,type ObjectRef,type ObjectKindDef,type ObjectNavigation} from "./registry";
 import {subjectLabel,isInternalReference} from "../../../../../shared-field/presentation-text.mjs";
 import "./objects.css";
 
@@ -13,7 +13,7 @@ import "./objects.css";
  * not be read and offers Retry. `onBack` shows ← back (full-page modes);
  * "Pop out" (or ⌥-click on a relation) asks the frame for its own window.
  */
-export function ObjectPage({object,onBack}:{object:ObjectRef;onBack?:()=>void}) {
+export function ObjectPage({object,onBack,navigation}:{object:ObjectRef;onBack?:()=>void;navigation?:ObjectNavigation}) {
  const kernel=useKernel();
  const def=objectKindOf(object.kind);
  const key=JSON.stringify([object.kind,object.ref,object.project]);
@@ -21,12 +21,13 @@ export function ObjectPage({object,onBack}:{object:ObjectRef;onBack?:()=>void}) 
  const reading=held?.key===key?held.reading:undefined;
  const error=held?.key===key?held.error:undefined;
  const epoch=useRef(0);
+ const navigationRef=useRef(navigation);navigationRef.current=navigation;
  const [loading,setLoading]=useState(false);
  const read=useCallback(async()=>{
   if(!def)return;
   const request=++epoch.current;
   setLoading(true);setHeld(current=>current?.key===key?{key,reading:current.reading}:undefined);
-  try{const next=await def.read(object,{transport:kernel.transport});if(epoch.current===request)setHeld({key,reading:next});}
+  try{const next=await def.read(object,{transport:kernel.transport,navigation:navigationRef.current});if(epoch.current===request)setHeld({key,reading:next});}
   catch(reason){if(epoch.current===request)setHeld({key,error:reason instanceof Error?reason.message:String(reason)});}
   finally{if(epoch.current===request)setLoading(false);}
  // eslint-disable-next-line react-hooks/exhaustive-deps

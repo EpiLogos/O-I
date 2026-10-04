@@ -622,15 +622,23 @@ export function resizeSplit(state: LayoutState, id: string, weights: number[]): 
 
 /** Keep the pane slot while its existing binding lives in a native window. */
 export function detachBinding(state: LayoutState, id: string): LayoutState {
-  const group=groupOf(state,id);
-  if (!group || !state.root) return state;
+  const side=state.sidePane?.tabs.includes(id)?state.sidePane:undefined;
+  const group=side??groupOf(state,id);
+  if (!group) return state;
   const entry={surfaceId:id,groupId:group.id,index:group.tabs.indexOf(id),pinned:group.pinned.includes(id)};
-  return {...state,root:mapPane(state.root,g=>g.id===group.id?removeTab(g,id):g),detached:[...state.detached??[],entry]};
+  return {...state,root:state.root?mapPane(state.root,g=>g.tabs.includes(id)?removeTab(g,id):g):state.root,
+    sidePane:side?removeTab(side,id):state.sidePane,
+    detached:[...(state.detached??[]).filter(previous=>previous.surfaceId!==id),entry]};
 }
 export function redockBinding(state: LayoutState, id: string): LayoutState {
   const entry=state.detached?.find(d=>d.surfaceId===id),binding=state.surfaces[id];
   if (!entry || !binding) return state;
   const base={...state,detached:state.detached?.filter(d=>d.surfaceId!==id)};
+  if (base.sidePane?.id===entry.groupId) {
+    const pane=base.sidePane,tabs=pane.tabs.filter(tab=>tab!==id);
+    tabs.splice(Math.min(entry.index,tabs.length),0,id);
+    return {...base,sidePane:{...pane,tabs,active:id,pinned:entry.pinned?[...pane.pinned.filter(pin=>pin!==id),id]:pane.pinned.filter(pin=>pin!==id)}};
+  }
   if (!base.root || !groupsOf(base.root).some(g=>g.id===entry.groupId)) return openBinding(base,binding);
   return {...base,root:mapPane(base.root,g=>{if(g.id!==entry.groupId)return g;const tabs=g.tabs.filter(t=>t!==id);tabs.splice(Math.min(entry.index,tabs.length),0,id);return {...g,tabs,active:id,pinned:entry.pinned?[...g.pinned,id]:g.pinned};}),focusedGroupId:entry.groupId};
 }

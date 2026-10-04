@@ -190,7 +190,7 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   const host=useRef<HTMLElement>(null);
   const [detail,setDetail]=useState<ObjectRef>();
   useEffect(()=>interceptObjectOpens(open=>{
-    if(open.popOut||window.innerWidth>760||!host.current?.offsetParent)return false;
+    if(open.popOut||open.placement==="sidebar"||window.innerWidth>760||!host.current?.offsetParent)return false;
     setDetail(open.object);return true;
   }),[]);
   useEffect(()=>{

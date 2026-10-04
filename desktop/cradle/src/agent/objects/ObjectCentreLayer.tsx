@@ -19,7 +19,7 @@ export function ObjectCentreLayer({fullPage,yields}:{fullPage:boolean;yields?:(o
  const [stack,setStack]=useState<ObjectRef[]>([]);
  useEffect(()=>{if(!fullPage)setStack([]);},[fullPage]);
  useEffect(()=>interceptObjectOpens(detail=>{
-  if(!fullPage||detail.popOut||yieldsRef.current?.(detail.object))return false;
+  if(!fullPage||detail.popOut||detail.placement==="sidebar"||yieldsRef.current?.(detail.object))return false;
   setStack(held=>[...held.filter(entry=>!(entry.kind===detail.object.kind&&entry.ref===detail.object.ref)),detail.object]);
   return true;
  }),[fullPage]);

@@ -6,7 +6,7 @@ import type {FlowInstanceOpen} from "../../flow/instances";
 import {Desk} from "./desk/Desk";
 import {RunPage, rememberRunTab, type FactoryObjectRef, type RunPageHost} from "./desk/RunPage";
 import {ObjectPage} from "../../agent/objects";
-import {OPEN_OBJECT_EVENT, isOpenObjectDetail} from "../../agent/objects/registry";
+import {OPEN_OBJECT_EVENT, isOpenObjectDetail, interceptObjectOpens, type OpenObjectDetail} from "../../agent/objects/registry";
 import {factoryObject} from "./desk/factoryObjects";
 import {publishCentreView, useCentreView} from "./desk/deskModel";
 import {closeRunPage, openRunPage, peekDeskReading, runEntry, runsForSession, selectRun, useDeskReading, useOpenRun} from "./desk/deskStore";
@@ -68,22 +68,27 @@ export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActi
   // kind (or a tape event) asked for without Pop out lands on the stack.
   // Pop out is the frame's (its own window, the same identity).
   useEffect(()=>{
-    const onOpen=(event:Event)=>{
-      const detail=(event as CustomEvent).detail;
-      // Only while this centre is the one presented (a retained, hidden
-      // Factory centre never takes another mode's opens).
-      if(!centre.current||centre.current.offsetParent===null)return;
-      if(!isOpenObjectDetail(detail)||detail.popOut||!FACTORY_KINDS.has(detail.object.kind))return;
+    const answer=(detail:OpenObjectDetail):boolean=>{
+      // Only the actually presented Factory centre owns this in-place route.
+      if(!centre.current||centre.current.offsetParent===null)return false;
+      if(detail.popOut||detail.placement==="sidebar"||!FACTORY_KINDS.has(detail.object.kind))return false;
       publishCentreView("desk");
       openObjectPage(detail.object);
+      return true;
     };
+    // Use the same interception as normal object opens. Main flushes the
+    // actual centre placement before returning the detached request's ACK.
+    const release=interceptObjectOpens(answer);
+    // Existing event callers retain their route; interception consumes a
+    // normal open before it reaches this legacy event, so it runs only once.
+    const onOpen=(event:Event)=>{const detail=(event as CustomEvent<unknown>).detail;if(isOpenObjectDetail(detail))answer(detail);};
     window.addEventListener(OPEN_OBJECT_EVENT,onOpen);
-    return()=>window.removeEventListener(OPEN_OBJECT_EVENT,onOpen);
+    return()=>{release();window.removeEventListener(OPEN_OBJECT_EVENT,onOpen);};
   },[]);
 
   const openConversation=(sessionRef:string,spaceRef?:string,runProject?:string)=>{
     const row:EncounterRow={ref:sessionRef,space:spaceRef??"",title:"Conversation",project:runProject??""};
-    void onOpenTask?.(row);
+    void Promise.resolve(onOpenTask?.(row)).catch(error=>onMessage?.(String(error)));
   };
   const host:RunPageHost={
     onOpenConversation:onOpenTask?(sessionRef=>{

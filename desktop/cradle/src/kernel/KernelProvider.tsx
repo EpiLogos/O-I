@@ -76,7 +76,10 @@ export interface KernelApi {
   lastOpError: () => string | null;
   /** The human's dismissal of the standing op error (footer status). */
   dismissOpError: () => void;
-  apply: (op: KernelOp) => Promise<KernelOutcome | null>;
+  /** A presentation can withdraw while its operation is still queued.
+   * The predicate is checked inside the existing serial queue, before any
+   * native effect; native receipts after execution remain authoritative. */
+  apply: (op: KernelOp, options?: {current: () => boolean}) => Promise<KernelOutcome | null>;
   refreshListing: () => Promise<void>;
   /** Typed conveniences the surfaces share. */
   openSource: (sourceRef: SourceRef, surfaceId: string) => Promise<void>;
@@ -216,10 +219,11 @@ export function KernelProvider(props: { children: ReactNode }) {
   }, [admitReceipts, publishSnapshot]);
 
   const apply = useCallback(
-    async (op: KernelOp): Promise<KernelOutcome | null> => {
+    async (op: KernelOp, options?: {current: () => boolean}): Promise<KernelOutcome | null> => {
       // Serialise ops through one queue so seq order and buffer state stay
       // deterministic under rapid typing.
       const run = applySerial.current.then(async () => {
+        if (options && !options.current()) return null;
         if (ownerReplaced.current) { reportOpError("This world's directory was replaced. Restart O:I to continue with its current owner."); return null; }
         // A delayed completion can clear only the owner under which it began.
         const draftScope = draftOwnerRef.current;

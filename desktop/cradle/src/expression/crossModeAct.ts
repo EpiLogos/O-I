@@ -70,7 +70,8 @@ async function route(to: ActMode, expressionRef: string, runKey: string | undefi
 /** Carry the act into another mode: the kernel records the continuation
  * (cast, subject and selection kept), then the desktop opens that mode's
  * working view on the same Expression. */
-export async function continueActInMode(transport: KernelTransportStatus, input: {act_ref: string; to: ActMode; expression_ref?: string; instrument_ref?: string; summary?: string; runKey?: string}): Promise<WorldAct | undefined> {
+export interface ActContinuationRequest {act_ref: string; to: ActMode; expression_ref?: string; instrument_ref?: string; summary?: string; runKey?: string}
+export async function continueActInMode(transport: KernelTransportStatus, input: ActContinuationRequest): Promise<WorldAct | undefined> {
   const outcome = await actContinue(transport, {act_ref: input.act_ref, actor: ACTOR, to: input.to, ...(input.instrument_ref ? {instrument_ref: input.instrument_ref} : {}), ...(input.expression_ref ? {expression_ref: input.expression_ref} : {}), ...(input.summary ? {summary: input.summary} : {})});
   if (outcome.state !== "act_continued" && !outcome.act) throw new Error(`The act could not continue: ${String(outcome.detail ?? outcome.state)}`);
   const act = outcome.act;

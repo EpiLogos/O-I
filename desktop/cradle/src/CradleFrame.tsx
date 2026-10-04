@@ -122,6 +122,7 @@ import type {
 } from "./surface/types";
 import { createPortal, flushSync } from "react-dom";
 import {OPEN_OBJECT_EVENT,ObjectCentreLayer,encodeObjectRef,isOpenObjectDetail} from "./agent/objects";
+import {interceptObjectOpen,type OpenObjectDetail} from "./agent/objects/registry";
 import {factoryCentreOwns} from "./contributions/factory/objectKinds";
 import {OPEN_AUTOMATIONS_EVENT, openAutomations} from "./contributions/automations/open";
 
@@ -220,6 +221,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // tab would otherwise render, with Retry re-running the same mount.
   const [surfaceErrors,setSurfaceErrors]=useState<Record<string,string>>({});
   const detachedRequests=useRef(new Set<string>());
+  const sidebarObjectEpoch=useRef(0);
+  const sidebarObjectTail=useRef<Promise<void>>(Promise.resolve());
+  const pendingSidebarObjects=useRef(new Set<string>());
   const [redockFocus,setRedockFocus]=useState<string>();
   // The workspace record still carries its legacy `writing`/`writingMode`
   // fields so no persisted workspace is destroyed on restore, but nothing
@@ -434,6 +438,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     for (const group of groupsOf(state.root)) for (const tab of group.tabs) demanded.add(tab);
     for(const tab of state.sidePane?.tabs??[]){openIds.add(tab);demanded.add(tab);}
     if(sourcePortalSurface.current)openIds.add(sourcePortalSurface.current);
+    // A native reply may reach React before its asking layout is committed.
+    // Protect only the freshly allocated operation IDs until that act settles.
+    for(const id of pendingSidebarObjects.current)openIds.add(id);
     for (const surfaceId of openIds) {
       const binding = bindings[surfaceId];
       if (!binding || binding.pending) continue;
@@ -476,15 +483,49 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, kernel.snapshot.surfaces]);
 
-  const detach = async (id:string) => {
-    const binding=stateRef.current.surfaces[id];
-    if(!binding) return;
+  const detach = async (id:string,reserved?:{workspaceId:string;binding:SurfaceBinding}):Promise<boolean> => {
+    ++sidebarObjectEpoch.current;
+    const binding=reserved?.binding??stateRef.current.surfaces[id];
+    if(!binding)return false;
+    const workspaceId=reserved?.workspaceId??workspaceRef.current.current.id,key=`${workspaceId}:${id}`;
+    if(!reserved&&detachedRequests.current.has(key))return false;
+    detachedRequests.current.add(key);
+    // A closed placement is withdrawn even when its binding remains in the
+    // layout's retained surface table. Ignore inactive snapshots of the
+    // current mode: they cannot bring a closed tab back into existence.
+    const ownsPlacement=(detachedOnly=false)=>{
+      const owner=workspaceRef.current.workspaces.find(row=>row.id===workspaceId);
+      if(!owner)return false;
+      const layouts=[owner.layout,...Object.entries(owner.modeLayouts??{})
+        .filter(([mode])=>mode!==(owner.layout.mode??"base")).map(([,layout])=>layout)];
+      return layouts.some(layout=>layout.surfaces[id]?.kind===binding.kind&&layout.surfaces[id]?.ref===binding.ref
+        &&((layout.detached??[]).some(row=>row.surfaceId===id)||(!detachedOnly
+          &&(groupsOf(layout.root).some(group=>group.tabs.includes(id))||layout.sidePane?.tabs.includes(id)))));
+    };
     try {
       const {invoke}=await import("@tauri-apps/api/core");
-      await invoke("window_detach",{workspaceId:workspaceRef.current.current.id,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
-      detachedRequests.current.add(`${workspaceRef.current.current.id}:${id}`);
-      setState(s=>detachBinding(s,id));setWindowError(undefined);
-    } catch(e) {setWindowError(String(e));}
+      if(!ownsPlacement()){detachedRequests.current.delete(key);return false;}
+      if(binding.kind==="object"){
+        // A freshly opened object is not admitted merely because its tab is
+        // visible. Use the existing serialized owner queue before the native
+        // window checks its exact Surface subject; no next-frame timing guess.
+        const admitted=await kernel.apply({op:"surface_open",surface_id:id,kind:binding.kind,
+          source_ref:binding.ref,title:binding.title},{current:ownsPlacement});
+        if(!ownsPlacement()){detachedRequests.current.delete(key);return false;}
+        if(admitted?.result!=="surface_opened")throw Error("The object page has no admitted native subject to detach");
+      }
+      await invoke("window_detach",{workspaceId,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
+      if(ownsPlacement()){
+        // Commit the original workspace's actual placement before confirming
+        // delivery. Focus may have moved while the native window opened.
+        flushSync(()=>workspaceRef.current.detachSurface(workspaceId,id));
+        if(ownsPlacement(true)){setWindowError(undefined);return true;}
+      }
+      // The native open has already happened. Retire that exact window through
+      // its owner when Close won the race; an epoch check cannot undo it.
+      await invoke("window_redock_surface",{workspaceId,surfaceId:id});
+      return false;
+    } catch(e) {detachedRequests.current.delete(key);setWindowError(String(e));return false;}
   };
   const execute = (ref: string, arg?: ActionArg) => {
     if(ref === "surface.detach") {void detach(arg?.surfaceId??activeBindingId(stateRef.current)??"");return;}
@@ -1378,20 +1419,128 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // Inspect opens the object (10-SIDEBARS §4.7, D1): in Base a page is a tab
   // in the focused pane (full-page modes answer in place first, through
   // ObjectCentreLayer); Pop out gives it its own window with the same identity.
+  const openObjectSidebar = (object:import("./agent/objects/registry").ObjectRef):Promise<boolean> => {
+    const epoch=++sidebarObjectEpoch.current,workspaceId=workspaceRef.current.current.id;
+    const originMode=stateRef.current.mode??"base",scopeEpoch=workspaceRef.current.currentNavigationEpoch();
+    const current=()=>epoch===sidebarObjectEpoch.current&&workspaceRef.current.current.id===workspaceId
+      &&workspaceRef.current.currentNavigationEpoch()===scopeEpoch&&(stateRef.current.mode??"base")===originMode;
+    const run=sidebarObjectTail.current.catch(()=>{}).then(async()=>{
+      if(!current())return false;
+      const context=MODE_CURATION[originMode].panel.planes.find(plane=>/context/i.test(plane));
+      if(!context)throw Error("This mode has no Context pane for the selected subject");
+      const ref=encodeObjectRef(object),at=stateRef.current;
+      const side=(at.sidePane?.tabs??[]).filter(id=>!at.detached?.some(entry=>entry.surfaceId===id)
+        &&!detachedRequests.current.has(`${workspaceId}:${id}`)).map(id=>at.surfaces[id]).filter(Boolean);
+      const previous=object.kind==="factory-live-subject"?side.find(binding=>binding.kind==="object"
+        &&binding.ref?.startsWith("oi-object:factory-live-subject|")):undefined;
+      // Never retarget a live binding while its native request is pending.
+      // A fresh operation ID lets withdrawal retire exactly its own effect.
+      const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"object",ref,title:object.title,project:object.project};
+      pendingSidebarObjects.current.add(binding.id);
+      let opened=false,placed=false;
+      try{
+        const outcome=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"object",source_ref:ref,title:binding.title},{current});
+        if(!outcome&&!current())return false;
+        if(outcome?.result!=="surface_opened")throw Error("The selected subject could not open in the sidebar");
+        opened=true;
+        if(!current())return false;
+        flushSync(()=>setState(s=>{
+          const old=previous&&s.sidePane?.tabs.includes(previous.id)&&s.surfaces[previous.id]?.ref===previous.ref
+            &&!s.detached?.some(entry=>entry.surfaceId===previous.id)?previous:undefined;
+          const surfaces={...s.surfaces};
+          if(old)delete surfaces[old.id];
+          const base=old&&s.sidePane?{...s,surfaces,closedStack:s.closedStack.filter(id=>id!==old.id),
+            sidePane:{...s.sidePane,tabs:s.sidePane.tabs.filter(id=>id!==old.id),pinned:s.sidePane.pinned.filter(id=>id!==old.id)}}:s;
+          return {...openInSidePlace(base,binding.id,binding),rightDepth:s.rightDepth==="full"?"full":"panel",
+            panelPlanes:{...s.panelPlanes,[originMode]:context}};
+        }));
+        // React may replay state transformers; confirmation comes from the
+        // actual committed placement, never a mutable flag in that transformer.
+        placed=workspaceRef.current.current.id===workspaceId&&(stateRef.current.mode??"base")===originMode
+          &&stateRef.current.sidePane?.tabs.includes(binding.id)===true&&stateRef.current.surfaces[binding.id]?.ref===ref;
+        return placed;
+      }finally{
+        try{
+          if(opened&&!placed){
+            // The producer already performed the open. Keep and reconcile its
+            // real receipt; checking an epoch alone cannot undo a native effect.
+            const retired=await kernel.apply({op:"surface_close",surface_id:binding.id});
+            if(retired?.result!=="surface_closed")throw Error("The withdrawn subject surface could not be retired by its native owner");
+          }
+        }finally{pendingSidebarObjects.current.delete(binding.id);}
+      }
+    });
+    sidebarObjectTail.current=run.then(()=>undefined,()=>undefined);
+    return run;
+  };
+  const openObjectSidebarRef=useRef(openObjectSidebar);openObjectSidebarRef.current=openObjectSidebar;
+  useEffect(()=>{
+    const withdraw=()=>{++sidebarObjectEpoch.current;};
+    window.addEventListener("pagehide",withdraw);
+    return()=>{withdraw();window.removeEventListener("pagehide",withdraw);};
+  },[]);
+  const openObjectInFrame=async(detail:OpenObjectDetail):Promise<boolean>=>{
+    if(detail.placement==="sidebar"&&!detail.popOut)return openObjectSidebarRef.current(detail.object);
+    if(!detail.popOut&&factoryCentreOwns(stateRef.current.mode,detail.object.kind))return false;
+    const ref=encodeObjectRef(detail.object),workspaceId=workspaceRef.current.current.id;
+    const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="object"&&binding.ref===ref);
+    const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"object",ref,title:detail.object.title,project:detail.object.project};
+    const key=`${workspaceId}:${binding.id}`;
+    const place=()=>setState(s=>groupsOf(s.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+    if(detail.popOut){
+      if(kernel.transport.kind!=="tauri")throw Error("Pop out opens the page in its own window in the desktop app.");
+      // A held window retains its placement. Its native owner focuses that
+      // exact workspace/surface; a repeated click must never mint a docked tab.
+      if(stateRef.current.detached?.some(row=>row.surfaceId===binding.id)){
+        const {invoke}=await import("@tauri-apps/api/core");
+        await invoke("window_detach",{workspaceId,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
+        return true;
+      }
+      // Reserve BEFORE any placement effect. A second pending request has no
+      // delivery receipt and cannot acknowledge a window that has not opened.
+      if(detachedRequests.current.has(key))return false;
+      detachedRequests.current.add(key);
+      ++sidebarObjectEpoch.current;
+      flushSync(place);
+      return new Promise<boolean>(resolve=>requestAnimationFrame(()=>void detach(binding.id,{workspaceId,binding}).then(resolve)));
+    }
+    const mode=stateRef.current.mode??"base",scopeEpoch=workspaceRef.current.currentNavigationEpoch();
+    const current=()=>workspaceRef.current.current.id===workspaceId&&(stateRef.current.mode??"base")===mode
+      &&workspaceRef.current.currentNavigationEpoch()===scopeEpoch;
+    const stillHeld=()=>workspaceRef.current.workspaces.some(owner=>[owner.layout,...Object.entries(owner.modeLayouts??{})
+      .filter(([name])=>name!==(owner.layout.mode??"base")).map(([,layout])=>layout)].some(layout=>
+        layout.surfaces[binding.id]?.kind==="object"&&layout.surfaces[binding.id]?.ref===ref
+        &&(groupsOf(layout.root).some(group=>group.tabs.includes(binding.id))||layout.sidePane?.tabs.includes(binding.id)
+          ||layout.detached?.some(row=>row.surfaceId===binding.id))));
+    pendingSidebarObjects.current.add(binding.id);
+    let opened=false,placed=false;
+    try{
+      const outcome=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"object",source_ref:ref,title:binding.title},{current});
+      if(!outcome&&!current())return false;
+      if(outcome?.result!=="surface_opened")throw Error("The subject's native page could not open");
+      opened=true;
+      if(!current())return false;
+      flushSync(place);
+      placed=current()&&groupsOf(stateRef.current.root).some(group=>group.tabs.includes(binding.id))
+        &&stateRef.current.surfaces[binding.id]?.ref===ref;
+      return placed;
+    }finally{
+      try{
+        if(opened&&!placed&&!stillHeld()){
+          const retired=await kernel.apply({op:"surface_close",surface_id:binding.id});
+          if(retired?.result!=="surface_closed")throw Error("The withdrawn subject page could not be retired by its native owner");
+        }
+      }finally{pendingSidebarObjects.current.delete(binding.id);}
+    }
+  };
+  const openObjectInFrameRef=useRef(openObjectInFrame);openObjectInFrameRef.current=openObjectInFrame;
   useEffect(()=>{
     const open=(event:Event)=>{
       const detail=(event as CustomEvent<unknown>).detail;
       if(!isOpenObjectDetail(detail))return;
-      if(!detail.popOut&&factoryCentreOwns(stateRef.current.mode,detail.object.kind))return;
-      const ref=encodeObjectRef(detail.object);
-      const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="object"&&binding.ref===ref);
-      const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"object",ref,title:detail.object.title,project:detail.object.project};
-      if(detail.popOut&&kernel.transport.kind!=="tauri"){setWindowError("Pop out opens the page in its own window in the desktop app.");return;}
-      setState(s=>groupsOf(s.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
-      if(detail.popOut)requestAnimationFrame(()=>void detach(binding.id));
+      void openObjectInFrameRef.current(detail).catch(error=>setWindowError(String(error)));
     };
     window.addEventListener(OPEN_OBJECT_EVENT,open);return()=>window.removeEventListener(OPEN_OBJECT_EVENT,open);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
   const openBrowser = async () => {
     const binding={id:crypto.randomUUID(),kind:"browser",title:"Browser",browser:{url:""}};
@@ -1458,6 +1607,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if(action==="surface.activate"&&surfaceId&&pane.tabs.includes(surfaceId)){setState(s=>s.sidePane?{...s,sidePane:{...s.sidePane,active:surfaceId}}:s);return;}
     if(action==="surface.open"){const b:SurfaceBinding={id:crypto.randomUUID(),kind:"blank",title:"New tab",project:workspaceRef.current.current.project};void openInSidePane(b,"none").catch(report);return;}
     if(action==="surface.close"&&surfaceId){
+      ++sidebarObjectEpoch.current;
       const id=surfaceId;if(!pane.tabs.includes(id))return;
       void kernel.apply({op:"surface_close",surface_id:id}).catch(()=>{});
       setState(s=>{
@@ -1614,6 +1764,12 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         detachedRequests.current.delete(`${e.payload.workspace_id}:${e.payload.binding.id}`);
         try { await kernel.apply({op:"state"}); }
         catch (reason) { setWindowError(`The view returned; its latest owner state could not be read: ${String(reason)}`); }
+        const owner=workspaceRef.current.workspaces.find(row=>row.id===e.payload.workspace_id);
+        const layouts=owner?[owner.layout,...Object.entries(owner.modeLayouts??{})
+          .filter(([mode])=>mode!==(owner.layout.mode??"base")).map(([,layout])=>layout)]:[];
+        // Destroying a withdrawn pending window has no placement to restore.
+        // It must neither recreate a tab nor pull the person into its world.
+        if(!layouts.some(layout=>layout.detached?.some(row=>row.surfaceId===e.payload.binding.id)))return;
         workspaceRef.current.activate(e.payload.workspace_id);
         workspaceRef.current.redock(e.payload.workspace_id,e.payload.binding.id);
         setRedockFocus(e.payload.binding.id);
@@ -1629,19 +1785,53 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         try { const {invoke}=await import("@tauri-apps/api/core"); await invoke("window_focus_main"); }
         catch (reason) { setWindowError(`The view returned; focus the main window to continue: ${String(reason)}`); }
       });
-      const b=await listen<{workspace_id:string;address?:KnowledgeAddress;presentation?:{ref:string;meta:PresentationMeta;sidebar?:boolean};title:string;project?:string;placement?:"tab"|"page"|"window";graphOrigin?:string;request_id?:string;origin?:string}>("oi:window-navigate",async e=>{
+      const b=await listen<{workspace_id:string;address?:KnowledgeAddress;presentation?:{ref:string;meta:PresentationMeta;sidebar?:boolean};title:string;project?:string;placement?:"tab"|"page"|"window";graphOrigin?:string;request_id?:string;origin?:string;objectNavigation?:import("./agent/objects/registry").ObjectWindowNavigation}>("oi:window-navigate",async e=>{
         workspaceRef.current.activate(e.payload.workspace_id);
         await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
         let error:string|undefined;
         try {
-          const {presentation,address}=e.payload;
-          if(presentation){
+          const {presentation,address,objectNavigation}=e.payload;
+          if(objectNavigation){
+            if(objectNavigation.object){
+              if(!isOpenObjectDetail(objectNavigation.object))throw Error("The detached object identity is invalid");
+              const detail=objectNavigation.object;
+              const workspaceId=workspaceRef.current.current.id,scopeEpoch=workspaceRef.current.currentNavigationEpoch();
+              // The existing centre/panel interceptors own in-place pages.
+              // Commit that placement before ACK; an event dispatch alone
+              // bypassed those owners and acknowledged asynchronous opens.
+              let handled=false;
+              flushSync(()=>{handled=interceptObjectOpen(detail);});
+              if(workspaceRef.current.current.id!==workspaceId||workspaceRef.current.currentNavigationEpoch()!==scopeEpoch)
+                throw Error("The subject's destination was withdrawn before opening");
+              if(!handled&&!await openObjectInFrameRef.current(detail))
+                throw Error("The subject opening was withdrawn or is already pending; no delivery was confirmed");
+            }else if(objectNavigation.encounter){
+              const row=objectNavigation.encounter;
+              if(!row.ref||!row.space||typeof row.project!=="string")throw Error("The detached conversation identity is incomplete");
+              const candidate=objectNavigation.addressed;
+              if(candidate){
+                if(candidate.agentSession!==row.ref||!candidate.sourceRef||typeof candidate.text!=="string")throw Error("The addressed source belongs to another conversation");
+                const {composeAddressed}=await import("./encounter/AddressedComposer");composeAddressed(candidate);
+              }
+              await factoryChooseRef.current(row,{propagateFailure:true});
+            }else if(objectNavigation.continueAct){
+              const input=objectNavigation.continueAct;
+              if(!input.act_ref||!["factory","expressions","techne"].includes(input.to))throw Error("The detached act continuation identity is incomplete");
+              const {continueActInMode}=await import("./expression/crossModeAct");
+              await continueActInMode(kernel.transport,input);
+            }else if(objectNavigation.factoryActivity){
+              setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}}));
+            }else throw Error("The detached object supplied no operation subject");
+          }else if(presentation){
             await (presentation.sidebar?openSubjectSidebarRef.current:openPresentationRef.current)(presentation.ref,e.payload.title,presentation.meta);
           }else if(address){
             await openKnowledgeRef.current(address,e.payload.title,e.payload.project,e.payload.placement,e.payload.graphOrigin);
           }else throw Error("The detached window supplied no navigation subject.");
           const {invoke}=await import("@tauri-apps/api/core");
-          if(!await invoke("window_focus_subject",{reference:presentation?.ref??address!.value}))await invoke("window_focus_main");
+          const reference=presentation?.ref??address?.value??objectNavigation?.encounter?.ref??objectNavigation?.continueAct?.expression_ref;
+          // A confirmed Pop out is already focused by its native window
+          // owner. Do not immediately pull focus back to Main after delivery.
+          if(!objectNavigation?.object?.popOut&&(!reference||!await invoke("window_focus_subject",{reference})))await invoke("window_focus_main");
         }catch(reason){error=String(reason);setWindowError(error);}
         if(e.payload.request_id&&e.payload.origin){const {emitTo}=await import("@tauri-apps/api/event");await emitTo(e.payload.origin,"oi:window-navigate-result",{request_id:e.payload.request_id,error});}
       });
@@ -1666,7 +1856,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   },[workspace.workspaces,kernel.snapshot.surfaces,kernel.transport]);
 
   useEffect(()=>{
-    if(!redockFocus || activeBindingId(state)!==redockFocus)return;
+    if(!redockFocus || (activeBindingId(state)!==redockFocus&&state.sidePane?.active!==redockFocus))return;
     const focus=()=>{
       const tab=Array.from(document.querySelectorAll<HTMLElement>(".tab")).find(el=>el.dataset.surfaceId===redockFocus);
       const pane=tab?.closest(".pane.group");
@@ -1734,7 +1924,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // centre IS the chat, no encounter tab, no second presenter.
   const factoryChatSession=useEncounterSession(state.accompanying?{project:state.accompanying.project,ref:state.accompanying.ref,space:state.accompanying.space}:undefined);
   const [factoryChoosing,setFactoryChoosing]=useState(false);
-  const factoryChoose=async(row:EncounterRow)=>{
+  const factoryChoose=async(row:EncounterRow,options?:{propagateFailure:true})=>{
     setFactoryChoosing(true);
     try{
       await encounter(kernel.transport,row.project,{action:"start"});
@@ -1744,13 +1934,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // conversation selected — the one task-open path, from the navigator,
       // the Run detail's carried conversations, or the chat's own chooser.
       publishCentreView("tasks");
-    }catch(error){setWindowError(String(error));}
+    }catch(error){setWindowError(String(error));if(options?.propagateFailure)throw error;}
     finally{setFactoryChoosing(false);}
   };
+  const factoryChooseRef=useRef(factoryChoose);factoryChooseRef.current=factoryChoose;
   const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onNewTask:()=>void;onOpenActivity:()=>void;onOpenFlow:(flow:FlowInstanceOpen)=>Promise<void>;onMessage:(message:string)=>void}={
     project:workspace.current.project??state.accompanying?.project,
     accompanying:state.accompanying??undefined,
-    onOpenTask:row=>factoryChoose(row),
+    onOpenTask:row=>factoryChoose(row,{propagateFailure:true}),
     onNewTask:()=>setState(s=>({...s,accompanying:undefined})),
     onOpenActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
     onOpenFlow:row=>openFlowInstance(row),

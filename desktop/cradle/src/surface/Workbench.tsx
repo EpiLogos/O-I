@@ -82,6 +82,7 @@ export interface WorkbenchProps {
     project?: string;
     accompanying?: {ref: string; project: string; space: string};
     onOpenTask?: (row: import("../encounter/EncounterList").EncounterRow) => void | Promise<void>;
+    onOpenActivity?: () => void;
     onMessage?: (message: string) => void;
   };
   /** The workspace world-context subject (the person's selected subject,
@@ -526,7 +527,7 @@ function SurfaceBodyImpl({
   if (binding.kind === "blank") return <FreshSurface binding={binding} />;
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={JSON.stringify([binding.id,binding.location?.schema,binding.location?.root,binding.location?.ref,binding.location?.path])} binding={binding}/>;
-  if (binding.kind === "object") return <ObjectSurface key={binding.id} binding={binding}/>;
+  if (binding.kind === "object") return <ObjectSurface key={binding.id} binding={binding} navigation={factoryTasks}/>;
   // The Expressions centre IS the application (owner ruling 2026-09-19):
   // the Point-Cloud-Demo workspace hosted as-is, full-screen, its own UI and
   // Library — served through the owner's oi-material:// file seam under

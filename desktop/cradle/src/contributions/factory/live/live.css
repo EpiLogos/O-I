@@ -1,19 +1,13 @@
 /* Factory Live — the Run performed through the Expressions engine: the hosted
-   application fills the stage; the object panel floats over it; the act's
+   application fills the stage; selected objects use the sidebar; the act's
    timeline and the legs table sit beneath. Tokens only. */
-.flx{display:flex;flex-direction:column;gap:10px;min-height:0}
-.flx-stage{position:relative;height:min(62vh,640px);min-height:320px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:10px;overflow:hidden;background:var(--oi-surface)}
+.flx{display:flex;flex-direction:column;gap:10px;min-height:0;flex:1}
+.flx-stage{position:relative;flex:1;min-height:min(76dvh,900px);overflow:hidden;background:var(--oi-surface)}
 .flx-stage .pcd-host{position:absolute;inset:0}
 .flx-strip{position:absolute;left:10px;bottom:8px;right:10px;margin:0;font:var(--oi-shell-type-ui);font-size:11px;color:var(--oi-muted-2);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .flx-strip-absent{color:var(--oi-status-warning)}
-.flx-panel{position:absolute;top:10px;right:10px;width:min(320px,calc(100% - 20px));max-height:calc(100% - 44px);overflow:auto;padding:10px 12px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:10px;background:var(--oi-surface);box-shadow:0 6px 24px color-mix(in srgb,var(--oi-foreground) 12%,transparent);font:var(--oi-shell-type-ui);font-size:12px;display:grid;gap:8px}
-.flx-panel header{display:flex;align-items:baseline;gap:8px}
-.flx-panel header strong{flex:1;min-width:0;overflow-wrap:anywhere}
-.flx-panel-kind{font-size:10px;letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
-.flx-panel-close{border:0;background:none;color:var(--oi-muted-2);font-size:16px;line-height:1;cursor:pointer}
-/* Long unbroken tokens (paths, refs, code) wrap inside the panel: grid items
-   default to min-width:auto and would otherwise run past its right edge. */
-.flx-panel>*{min-width:0}
+.flx-object-actions{display:grid;gap:12px;min-width:0;font:var(--oi-shell-type-ui)}
+.flx-object-actions>*{min-width:0}
 .flx-panel-line{margin:0;overflow-wrap:anywhere}
 .flx-panel-meta{margin:0;color:var(--oi-muted-2);font-size:11px;overflow-wrap:anywhere}
 .flx-panel-block h5{margin:0 0 4px;font-size:11px;font-weight:550;color:var(--oi-muted-2)}

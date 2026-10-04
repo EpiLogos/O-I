@@ -1,8 +1,8 @@
 import {publishArrangement} from "../visuals/observations";
 import {preservePresentation,latestRecovery} from "./recovery";
 import {commitCheckpoint,lastKnownGood,stageCheckpoint,decodeLayoutProgressive} from "./checkpoints";
-import { useEffect, useRef, useState, type SetStateAction } from "react";
-import { activateSurface, groupsOf, openBinding, redockBinding } from "../surface/engine";
+import { useEffect, useLayoutEffect, useRef, useState, type SetStateAction } from "react";
+import { activateSurface, detachBinding, groupsOf, openBinding, redockBinding } from "../surface/engine";
 import { decodeLayout } from "../surface/persist";
 import { freshLayout, type LayoutState } from "../surface/types";
 import {clampTabListWidth,upgradeTabPresentation,isWorkspaceMode,TREE_MODES,WORKSPACE_MODES,type WorkspaceMode} from "../workspace/mode";
@@ -364,6 +364,10 @@ export function useWorkspaces() {
   // The file tree's listing cache keys on the workspace: switching releases.
   useEffect(() => { setActiveListingWorkspace(current.id); }, [current.id]);
   const held = useRef(book); held.current = book;
+  // Ephemeral cancellation of pending presentations, not another persisted
+  // workspace/source revision. A leave-and-return invalidates the old ask.
+  const navigationEpoch = useRef(0);
+  const currentNavigationEpoch = () => navigationEpoch.current;
   // Durable persistence (workspace-continuity WF1): every change STAGES the
   // serialized candidate, writes it, and COMMITs it into the journal's
   // last-known-good slot — an interrupted write always leaves the previous
@@ -418,6 +422,15 @@ export function useWorkspaces() {
   }, []);
   const update = (change: (w: Workspace) => Workspace) => setBook(b => ({ ...b, workspaces: b.workspaces.map(w => w.id === b.active ? change(w) : w) }));
   const setLayout = (change: SetStateAction<LayoutState>) => update(w => ({ ...w, layout: typeof change === "function" ? change(w.layout) : change }));
+  const presented=useRef({workspace:current.id,layout:current.layout,project:current.project,world:current.context?.world});
+  useLayoutEffect(()=>{
+    const old=presented.current,next=current.layout,oldMode=old.layout.mode??"base",nextMode=next.mode??"base";
+    if(old.workspace!==current.id||old.project!==current.project||old.world!==current.context?.world||oldMode!==nextMode
+      ||(old.layout.rightDepth!=="collapsed"&&next.rightDepth==="collapsed")
+      ||old.layout.panelPlanes?.[oldMode]!==next.panelPlanes?.[nextMode]
+      ||old.layout.sidePane?.tabs.some(id=>!next.sidePane?.tabs.includes(id)))++navigationEpoch.current;
+    presented.current={workspace:current.id,layout:next,project:current.project,world:current.context?.world};
+  },[current]);
   useEffect(()=>subscribeFocusedInstrumentOpen(request=>{
     const source=focusedInstrumentSource(request.sourceRef);if(!source)return;
     const binding=focusedInstrumentBinding(request);
@@ -438,17 +451,21 @@ export function useWorkspaces() {
   }),[]);
   const setWritingMode = (writingMode: boolean) => update(w => ({ ...w, writingMode }));
   const setWriting = (writing: string) => update(w => ({ ...w, writing }));
-  const activate = (id: string) => setBook(b => b.workspaces.some(w => w.id === id) ? { ...b, active: id, workspaces: b.workspaces.map(w => w.id === id ? { ...w, lastVisitedAt: Date.now() } : w) } : b);
+  const activate = (id: string) => {
+    if (held.current.workspaces.some(w => w.id === id) && held.current.active !== id) ++navigationEpoch.current;
+    setBook(b => b.workspaces.some(w => w.id === id) ? { ...b, active: id, workspaces: b.workspaces.map(w => w.id === id ? { ...w, lastVisitedAt: Date.now() } : w) } : b);
+  };
   const create = (name: string) => {
     if (!name.trim() || (recovery && !recovery.key)) return;
+    ++navigationEpoch.current;
     setBook(b => { const w: Workspace = { id: crypto.randomUUID(), name: name.trim(), writing: "", layout: initialLayout() }; return { ...b, active: w.id, workspaces: [...b.workspaces, w] }; });
   };
   const rename = (name: string) => { if (name.trim()) update(w => ({ ...w, name: name.trim() })); };
   const setCentralFiles = (centralFiles:boolean) => update(w=>({...w,centralFiles}));
-  const browse = (project?: string) => update(w => ({ ...w, project, allProjects: undefined }));
+  const browse = (project?: string) => { ++navigationEpoch.current; update(w => ({ ...w, project, allProjects: undefined })); };
   /** The one scope's writer (scope.ts): Central, a project, or Factory's All projects. */
-  const browseAll = () => update(w => ({ ...w, allProjects: true }));
-  const switchMode = (next: WorkspaceMode) => update(w => switchWorkspaceMode(w, next));
+  const browseAll = () => { ++navigationEpoch.current; update(w => ({ ...w, allProjects: true })); };
+  const switchMode = (next: WorkspaceMode) => { ++navigationEpoch.current; update(w => switchWorkspaceMode(w, next)); };
   const moveSurface=(surfaceId:string,into:"tree"|"side")=>update(w=>moveWorkspaceSurface(w,surfaceId,into));
   /** The world-context layer's one writer. `trail` pushes are bounded. */
   const setContext = (change: (context: WorldContext) => WorldContext) => update(w => { const next = change(w.context ?? {}); return { ...w, context: { ...next, trail: next.trail?.slice(-TRAIL_LIMIT) } }; });
@@ -485,14 +502,31 @@ export function useWorkspaces() {
     const modeLayouts=Object.fromEntries(Object.entries(w.modeLayouts).map(([mode,layout])=>[mode,write(layout)])) as Workspace["modeLayouts"];
     return {...w,modeLayouts};
   })}));
-  const redock = (workspaceId:string,surfaceId:string) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>w.id===workspaceId?{...w,layout:redockBinding(w.layout,surfaceId)}:w)}));
+  const detachSurface = (workspaceId:string,surfaceId:string) => setBook(book=>({...book,workspaces:book.workspaces.map(w=>{
+    if(w.id!==workspaceId)return w;
+    if(w.layout.surfaces[surfaceId])return {...w,layout:detachBinding(w.layout,surfaceId)};
+    const modes={...w.modeLayouts};
+    for(const [mode,layout] of Object.entries(modes))if(layout?.surfaces[surfaceId])return {...w,modeLayouts:{...modes,[mode]:detachBinding(layout,surfaceId)}};
+    return w;
+  })}));
+  const redock = (workspaceId:string,surfaceId:string) => {
+    ++navigationEpoch.current;
+    setBook(book=>({...book,workspaces:book.workspaces.map(w=>{
+      if(w.id!==workspaceId)return w;
+      const owners=[w.layout,...Object.values(w.modeLayouts??{})].filter(layout=>layout.detached?.some(entry=>entry.surfaceId===surfaceId));
+      // A closed or already-returned native view cannot create a new tab.
+      if(owners.length!==1)return w;
+      const mode=owners[0].mode??"base",restored=switchWorkspaceMode(w,mode);
+      return {...restored,layout:redockBinding(restored.layout,surfaceId)};
+    })}));
+  };
   /** One click, one reload (owner ruling 2026-09-19): retry the load from
    * the protected storage; success clears the standing message, failure
    * re-reports through the same footer path. Pending coalesced state is
    * flushed FIRST — the retry must read what was actually done, not what
    * had been written when the timer last fired. */
-  const reload=()=>{flushNow();try{const outcome=load();setBook(outcome.book);setRecovery(null);setSaveError(null);if(outcome.quarantine.length){try{preservePresentation(KEY,outcome.quarantine.join(" "));}catch{}setQuarantine(outcome.quarantine.join(" "));}else setQuarantine(null);}catch(error){try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});}}};
-  const startFresh=()=>{if(recovery&&!recovery.key)return;setBook(stampActiveVisited({version:2,active:"root",workspaces:[{id:"root",name:"Central",writing:"",layout:initialLayout()}]}));setRecovery(null);};
+  const reload=()=>{++navigationEpoch.current;flushNow();try{const outcome=load();setBook(outcome.book);setRecovery(null);setSaveError(null);if(outcome.quarantine.length){try{preservePresentation(KEY,outcome.quarantine.join(" "));}catch{}setQuarantine(outcome.quarantine.join(" "));}else setQuarantine(null);}catch(error){try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});}}};
+  const startFresh=()=>{if(recovery&&!recovery.key)return;++navigationEpoch.current;setBook(stampActiveVisited({version:2,active:"root",workspaces:[{id:"root",name:"Central",writing:"",layout:initialLayout()}]}));setRecovery(null);};
   const recoverAvailable=()=>{
     const saved=latestRecovery();if(!saved)return;
     try {
@@ -508,5 +542,5 @@ export function useWorkspaces() {
   };
   const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError,notice].filter(Boolean).join(" ")||null;
-  return { switchMode, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
+  return { currentNavigationEpoch, detachSurface, switchMode, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
 }
