@@ -19,7 +19,7 @@
 import type {RunEntry} from "./deskStore";
 import type {TelemetryInspection} from "./factoryReads";
 import {gitBasisOf, type FactoryObjectRef, type RunPageHost} from "./RunPage";
-import {attemptsFor, firstSentence, initials, legStanding, refTail, unitOf, type RunAction, type RunMapNode} from "./runModel";
+import {attemptsForRun, firstSentence, initials, legFor, legStanding, refTail, unitOf, type RunAction, type RunMapNode} from "./runModel";
 import {useNowRecord} from "./nowRecord";
 import {currentAttemptOf} from "../inhabitation/model";
 import {RunPositions} from "./RunPositions";
@@ -36,10 +36,10 @@ export function RunLive({entry, runKey, host, primary, onPrimary, telemetry}: {e
   const rows = units.map(node => {
     const unitRef = node.semanticRef ?? undefined;
     const unit = unitOf(inspection, unitRef);
-    const attempts = attemptsFor(inspection, unitRef);
+    const attempts = unitRef ? attemptsForRun(run, inspection, unitRef) : [];
     const marked = currentAttemptOf(attempts);
     const current = marked.outcome === "one" ? marked.entries[0] : undefined;
-    const leg = unitRef ? inspection?.legs?.[unitRef] : undefined;
+    const leg = unitRef ? legFor(run, unitRef, inspection) : undefined;
     return {node, unitRef, unit, current, ambiguousCurrent: marked.outcome === "ambiguous" ? marked.entries.length : 0, pastAttempts: marked.outcome === "none" ? attempts.length : 0, leg, standing: legStanding(node, leg)};
   });
   const carried = rows.filter(row => row.current || row.ambiguousCurrent || row.leg?.status);

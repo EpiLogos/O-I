@@ -1,4 +1,13 @@
-import type { ExecutionTraceView, Status, TraceEvent, TraceSpan } from './types'
+import type { ExecutionTraceView, HumanRequestView, Status, TraceEvent, TraceSpan } from './types'
+
+/** Resolved and retired native unit decisions remain history. Legacy requests
+ * without an affected-unit basis remain open; absent fields are not an answer.
+ * This read-only filter mirrors Factory's pending unit-decision relation and
+ * does not validate or substitute the native human authority witness. */
+export function isOpenHumanRequest(request: Pick<HumanRequestView, 'unitDecisionBasis' | 'unitDecisionResponse' | 'unitDecisionRetirement'>): boolean {
+  return request.unitDecisionBasis == null
+    || (request.unitDecisionResponse == null && request.unitDecisionRetirement == null)
+}
 
 export interface WaterfallGeometry {
   spanRef: string

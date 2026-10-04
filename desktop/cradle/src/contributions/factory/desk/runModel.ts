@@ -18,6 +18,11 @@
  * request is open or a returned Return awaits Recognition.
  */
 
+import type {HumanRequestView} from "../types";
+import {isOpenHumanRequest} from "../read-model";
+import {ownerRunClosed, ownerRunComplete} from "../live/eventMap";
+import type {RunFlowAssociation} from "./runFlow";
+
 // ---------------------------------------------------------------------------
 // Owner reading shapes (only the fields this model reads)
 // ---------------------------------------------------------------------------
@@ -43,16 +48,36 @@ export interface RunMapEdge { from: string; to: string; relation: string }
 export interface RunAction { actionRef: string; label: string; subjectKinds?: string[]; currentlyApplicable?: boolean; applicableSubjectRefs?: string[]; requiredCapabilityRef?: string }
 export interface RunExecution { executionRef: string; status?: string; agencyRef?: string; agentRef?: string; harnessRef?: string; agentSessionRef?: string; sessionSpaceRef?: string | null; surfaceRefs?: string[]; workcellBindingRefs?: string[] }
 export interface RunAgency { agencyRef: string; agentRef?: string; label?: string }
-export interface RunHumanRequest { humanRequestRef: string; question?: string; whyHuman?: string; decisionRef?: string }
+export interface RunHumanRequest extends Pick<HumanRequestView, 'unitDecisionBasis' | 'unitDecisionResponse' | 'unitDecisionRetirement'> {
+  humanRequestRef: string; question?: string; whyHuman?: string; decisionRef?: string;
+}
 export interface RunReading {
   runRef: string; revision?: number; projectRef?: string; owningJourneyRefs?: string[];
+  provenance?: {owner?: string; factoryStateRevision?: number; subjectRevision?: number; source?: string};
+  /** Exact per-Run native relation; Journey navigation refs do not supply it. */
+  flowAssociations?: RunFlowAssociation[];
   lifecycle?: string; destination?: string;
   runMap?: {nodes?: Record<string, RunMapNode>; edges?: RunMapEdge[]};
   agencies?: RunAgency[]; executions?: RunExecution[]; humanRequests?: RunHumanRequest[];
   candidates?: {candidateRef: string; label?: string; status?: string}[];
   claims?: unknown[]; evidence?: unknown[];
   actions?: RunAction[];
+  nativeAttempts?: NativeAttemptReading | null;
 }
+export interface NativeAttemptReading {
+  runRef: string; revision?: number; lifecycle?: string; completionVerified?: boolean; archivedFrom?: string;
+  wholeRunState?: string; requiredUnits?: string[]; currentReturnedUnits?: string[];
+  legs?: Record<string, InspectionLeg>;
+  attempts?: NativeAttemptRecord[];
+}
+export interface NativeAttemptRecord {
+  attemptRef: string; taskRef?: string; workflowUnitRef: string; executionRef?: string | null; reservedExecutionRef?: string;
+  disposition?: {participant?: InspectionAttempt["participant"]; body?: InspectionAttempt["body"]};
+  verifications?: InspectionVerification[]; readableReturn?: InspectionAttempt["return"];
+  observations?: InspectionAttempt["ownerObservations"];
+}
+export const nativeAttemptsFor = (run: RunReading): NativeAttemptReading | undefined =>
+  run.nativeAttempts?.runRef === run.runRef ? run.nativeAttempts : undefined;
 export interface WorkflowUnit {
   workflowUnitRef: string; key?: string; developmentalConcern?: string; requiredDifference?: string;
   requiredReturn?: {contract?: string; address?: string}; requiredVerification?: string[];
@@ -132,21 +157,23 @@ export function projectName(projectKey: string | undefined, centralProject?: str
 // Run state
 // ---------------------------------------------------------------------------
 
-export type RunState = "queued" | "running" | "blocked" | "success" | "fail" | "cancelled";
-/** The owner's lifecycle word → the Desk's state (Factory's own run_status
- * mapping, build.rs). */
-export function runState(lifecycle: string | undefined): RunState {
-  switch (lifecycle) {
+export type RunState = "queued" | "running" | "blocked" | "success" | "fail" | "cancelled" | "archived";
+/** Lifecycle is retained history; successful closure requires the native
+ * owner admission carried in the same Run reading. */
+export function runState(run: RunReading): RunState {
+  const native = nativeAttemptsFor(run);
+  switch (run.lifecycle) {
     case "seeded": return "queued";
     case "active": case "finishing": return "running";
     case "waiting_human": case "waiting-human": case "suspended": return "blocked";
-    case "finished": case "archived": return "success";
+    case "finished": return ownerRunComplete(native, run.runRef) ? "success" : "blocked";
+    case "archived": return ownerRunComplete(native, run.runRef) ? "success" : ownerRunClosed(native, run.runRef) ? "fail" : "archived";
     case "aborted": return "fail";
     default: return "queued";
   }
 }
-export const RUN_STATE_WORD: Record<RunState, string> = {queued: "Queued", running: "Running", blocked: "Blocked", success: "Succeeded", fail: "Failed", cancelled: "Cancelled"};
-export const RUN_STATE_GLYPH: Record<RunState, string> = {queued: "○", running: "●", blocked: "!", success: "✓", fail: "×", cancelled: "×"};
+export const RUN_STATE_WORD: Record<RunState, string> = {queued: "Queued", running: "Running", blocked: "Blocked", success: "Succeeded", fail: "Failed", cancelled: "Cancelled", archived: "Archived"};
+export const RUN_STATE_GLYPH: Record<RunState, string> = {queued: "○", running: "●", blocked: "!", success: "✓", fail: "×", cancelled: "×", archived: "○"};
 
 /** The frontier node exactly as Factory materialises it: the first node in
  * the state order active, ready, blocked, waiting, returned. */
@@ -159,15 +186,23 @@ export function frontierNode(run: RunReading): RunMapNode | undefined {
   return undefined;
 }
 
-export type LegStanding = "not-started" | "active" | "returned" | "failed";
+export type LegStanding = "not-started" | "active" | "returned" | "failed" | "detached" | "cancel-requested" | "cancellation-accepted" | "process-terminated" | "quiescent" | "late-result";
 /** A unit's leg standing, from the inspection's leg when read, else the run
  * map node's own state. */
 export function legStanding(node: RunMapNode, leg?: InspectionLeg): LegStanding {
   const status = leg?.status ?? undefined;
   if (status) {
-    if (status === "returned" || status === "late_result" || status === "late-result") return "returned";
-    if (status === "failed") return "failed";
-    return "active";
+    switch (status.replaceAll("_", "-")) {
+      case "returned": return "returned";
+      case "failed": return "failed";
+      case "detached": return "detached";
+      case "cancel-requested": return "cancel-requested";
+      case "cancellation-accepted": return "cancellation-accepted";
+      case "process-terminated": return "process-terminated";
+      case "quiescent": return "quiescent";
+      case "late-result": return "late-result";
+      default: return "active";
+    }
   }
   switch (node.state) {
     case "active": return "active";
@@ -178,6 +213,11 @@ export function legStanding(node: RunMapNode, leg?: InspectionLeg): LegStanding 
 }
 
 export interface UnitSegment { id: string; label: string; standing: LegStanding; unitRef?: string }
+export function legFor(run: RunReading, unitRef: string, inspection?: WorkflowInspection): InspectionLeg | undefined {
+  const native = nativeAttemptsFor(run);
+  if (native) return native.legs?.[unitRef];
+  return !inspection?.runRef || inspection.runRef === run.runRef ? inspection?.legs?.[unitRef] : undefined;
+}
 /** One segment per work unit, in the map's own order, shaded by standing. */
 export function unitSegments(run: RunReading, inspection?: WorkflowInspection): UnitSegment[] {
   const order = mapOrder(run);
@@ -185,7 +225,7 @@ export function unitSegments(run: RunReading, inspection?: WorkflowInspection): 
     .map(id => run.runMap?.nodes?.[id])
     .filter((node): node is RunMapNode => !!node && node.kind === "work")
     .map(node => ({id: node.id, label: node.label, unitRef: node.semanticRef ?? undefined,
-      standing: legStanding(node, node.semanticRef ? inspection?.legs?.[node.semanticRef] : undefined)}));
+      standing: legStanding(node, node.semanticRef ? legFor(run, node.semanticRef, inspection) : undefined)}));
 }
 
 /** Returns on the journey that no Recognition names yet. */
@@ -230,11 +270,13 @@ export const DESK_COLUMNS: {key: DeskColumn; label: string}[] = [
 export const cardKey = (source: DeskSourceRef, runRef: string) => `${source.statePath}\u0000${source.projectRef}\u0000${runRef}`;
 
 export function deskCard(source: DeskSourceRef, run: RunReading, journey?: JourneyReading, inspection?: WorkflowInspection, inhabitation?: {owners: string[]; ambiguities: string[]}): DeskCard {
-  const state = runState(run.lifecycle);
+  const native = nativeAttemptsFor(run);
+  const state = runState(run);
   const frontier = frontierNode(run);
-  const needsYou = (run.humanRequests?.length ?? 0) + pendingRecognitions(journey, run.runRef).length;
+  const needsYou = (run.humanRequests ?? []).filter(isOpenHumanRequest).length + pendingRecognitions(journey, run.runRef).length;
   const agents = [...new Set([
     ...(run.agencies ?? []).map(agency => agency.label ?? "").filter(Boolean),
+    ...(native?.attempts ?? []).map(attempt => attempt.disposition?.participant?.agentRef ?? "").filter(Boolean),
   ])];
   return {
     key: cardKey(source, run.runRef),
@@ -366,11 +408,13 @@ export const EDGE_WORD: Record<string, string> = {
 
 export type CheckState = "passed" | "failed" | "outstanding";
 export interface CheckRow { text: string; state: CheckState; revision?: string }
-/** Each required check with its state from the unit's attempts' verification
- * receipts: failed wins over passed (a failed required check never disappears
- * into a green aggregate); no receipt naming it = outstanding. */
+/** Native checks use the selected execution's latest assessment, preserving
+ * earlier failures as history. Older inspections retain their aggregate read. */
 export function unitChecks(required: string[] | undefined, attempts: InspectionAttempt[]): CheckRow[] {
-  const receipts = attempts.flatMap(attempt => attempt.verification ?? []);
+  const selected = attempts.some(attempt => typeof attempt.currentAttempt === "boolean");
+  const receipts = attempts.flatMap(attempt => selected
+    ? attempt.currentAttempt ? (attempt.verification ?? []).slice(-1) : []
+    : attempt.verification ?? []);
   return (required ?? []).map(text => {
     const naming = receipts.filter(receipt => (receipt.obligations ?? []).includes(text));
     const failed = naming.find(receipt => receipt.outcome === "failed");
@@ -383,6 +427,24 @@ export function unitChecks(required: string[] | undefined, attempts: InspectionA
 export function attemptsFor(inspection: WorkflowInspection | undefined, unitRef: string | undefined): InspectionAttempt[] {
   if (!unitRef) return [];
   return (inspection?.attempts ?? []).filter(attempt => attempt.workflowUnitRef === unitRef);
+}
+
+/** The same Run's native leg selects the current execution. Separately read
+ * inspections cannot replace its participant, body, Return or verification. */
+export function attemptsForRun(run: RunReading, inspection?: WorkflowInspection, unitRef?: string): InspectionAttempt[] {
+  const native = nativeAttemptsFor(run);
+  if (!native) return !inspection?.runRef || inspection.runRef === run.runRef
+    ? unitRef ? attemptsFor(inspection, unitRef) : inspection?.attempts ?? [] : [];
+  return (native.attempts ?? []).filter(attempt => !unitRef || attempt.workflowUnitRef === unitRef).map(attempt => {
+    const leg = native.legs?.[attempt.workflowUnitRef];
+    const current = !!leg?.executionRef && (leg.executionRef === attempt.executionRef || leg.executionRef === attempt.reservedExecutionRef);
+    return {attemptRef: attempt.attemptRef, taskRef: attempt.taskRef, workflowUnitRef: attempt.workflowUnitRef,
+      executionRef: attempt.executionRef, reservedExecutionRef: attempt.reservedExecutionRef,
+      currentAttempt: current, status: current ? leg?.status : undefined,
+      participant: attempt.disposition?.participant, body: attempt.disposition?.body,
+      verification: attempt.verifications, totalVerifications: attempt.verifications?.length,
+      return: attempt.readableReturn, ownerObservations: attempt.observations};
+  });
 }
 
 export function unitOf(inspection: WorkflowInspection | undefined, unitRef: string | undefined): WorkflowUnit | undefined {

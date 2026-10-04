@@ -17,7 +17,7 @@ import {agentName, isGuardian, readRoster} from "../sidebar/FactoryAgentsTab";
 import {peekPopulation, readWhoami} from "../inhabitation/reads";
 import {currentWorkWords, facetNowRef, facetOf, facetWords, occupancyView, positionName, warningWords, workView, WHOAMI_FACETS} from "../inhabitation/model";
 import type {FactoryObjectRef} from "./RunPage";
-import {attemptsFor, firstSentence, frontierNode, legStanding, refTail, runState, RUN_STATE_WORD, runTitle, unitChecks, unitOf, type RunReading, type WorkflowInspection} from "./runModel";
+import {attemptsForRun, firstSentence, frontierNode, legFor, legStanding, refTail, runState, RUN_STATE_WORD, runTitle, unitChecks, unitOf, type RunReading, type WorkflowInspection} from "./runModel";
 
 const SEP = "|";
 const enc = (...parts: string[]) => parts.map(encodeURIComponent).join(SEP);
@@ -51,7 +51,7 @@ registerObjectKind({kind: "factory-run", label: "Run", glyph: "factory", read: a
   const [statePath, runRef] = dec(object.ref);
   const {run, inspection, partial} = await runAndInspection(transport, statePath, runRef);
   const journey = run.owningJourneyRefs?.[0] ? await readJourney(transport, statePath, run.owningJourneyRefs[0]).catch(() => undefined) : undefined;
-  const state = runState(run.lifecycle);
+  const state = runState(run);
   const frontier = frontierNode(run);
   return {kindLabel: "Run", title: runTitle(journey?.commission?.purpose, run.destination, run.runRef), state: RUN_STATE_WORD[state],
     fields: pick([["Purpose", journey?.commission?.purpose], ["Next", frontier?.kind === "destination" ? undefined : frontier?.label],
@@ -66,9 +66,9 @@ registerObjectKind({kind: "factory-unit", label: "Work unit", glyph: "factory", 
   const unit = unitOf(inspection, unitRef);
   const node = Object.values(run.runMap?.nodes ?? {}).find(item => item.semanticRef === unitRef);
   if (!unit && !node) throw new Error("The owner's run map no longer names this work unit.");
-  const attempts = attemptsFor(inspection, unitRef);
+  const attempts = attemptsForRun(run, inspection, unitRef);
   const checks = unitChecks(unit?.requiredVerification, attempts);
-  const leg = inspection?.legs?.[unitRef];
+  const leg = legFor(run, unitRef, inspection);
   const frontier = frontierNode(run);
   const barriers = (inspection?.barriers ?? []).filter(barrier => barrier.waitsFor?.includes(unitRef) || barrier.releases?.includes(unitRef));
   const legWords = node ? legStanding(node, leg).replace("-", " ") : undefined;
@@ -93,9 +93,9 @@ registerObjectKind({kind: "factory-unit", label: "Work unit", glyph: "factory", 
 
 registerObjectKind({kind: "factory-attempt", label: "Attempt", glyph: "activity", read: async (object, {transport}) => {
   const [statePath, runRef, attemptRef] = dec(object.ref);
-  const {inspection} = await runAndInspection(transport, statePath, runRef);
-  const attempt = inspection?.attempts?.find(item => item.attemptRef === attemptRef);
-  if (!attempt) throw new Error("The owner's workflow inspection does not name this attempt.");
+  const {run, inspection} = await runAndInspection(transport, statePath, runRef);
+  const attempt = attemptsForRun(run, inspection).find(item => item.attemptRef === attemptRef);
+  if (!attempt) throw new Error("The owner's Run does not name this attempt.");
   const unit = unitOf(inspection, attempt.workflowUnitRef);
   const body = attempt.body;
   return {kindLabel: "Attempt", title: `${refTail(attempt.participant?.agentRef) ?? "Agent"} · ${unit?.developmentalConcern ?? "attempt"}`, state: attempt.status ?? undefined,
@@ -114,9 +114,9 @@ registerObjectKind({kind: "factory-attempt", label: "Attempt", glyph: "activity"
 
 registerObjectKind({kind: "factory-check", label: "Check", glyph: "verify", read: async (object, {transport}) => {
   const [statePath, runRef, unitRef, check] = dec(object.ref);
-  const {inspection} = await runAndInspection(transport, statePath, runRef);
+  const {run, inspection} = await runAndInspection(transport, statePath, runRef);
   const unit = unitOf(inspection, unitRef);
-  const row = unitChecks(unit?.requiredVerification, attemptsFor(inspection, unitRef)).find(item => item.text === check);
+  const row = unitChecks(unit?.requiredVerification, attemptsForRun(run, inspection, unitRef)).find(item => item.text === check);
   if (!row) throw new Error("The unit no longer requires this check.");
   return {kindLabel: "Check", title: check, state: row.state,
     fields: pick([["Assertion", check], ["Basis", unit?.developmentalConcern], ["Tested state", row.revision ?? (row.state === "outstanding" ? "not yet tested" : undefined)], ["Result", row.state],

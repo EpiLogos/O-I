@@ -64,7 +64,9 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * auth login, HARNESS-SETTINGS-RESEARCH §2a) — the declared command argv
    * the session runs instead of the login shell. */
   terminal?: {cwd?:string;command?:string[]};
-  flow?: {flowRef:string;path:string};
+  /** Run-linked Flow surfaces retain the exact document identity admitted by
+   * their native Run relation. Ordinary navigator bindings remain unpinned. */
+  flow?: {flowRef:string;path:string;expectedDocumentId?:string};
   view?: {knowledgeEncounter?:import("../explore/navigate").KnowledgeEncounterView;constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   /** The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):
    * where the hosted application stands, written by its stage slot from the

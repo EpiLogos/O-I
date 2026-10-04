@@ -35,12 +35,13 @@ test("the project is a name from the project key", () => {
   assert.equal(M.projectName(undefined, undefined), undefined);
 });
 
-test("lifecycle → state follows Factory's own run_status mapping", () => {
-  assert.equal(M.runState("seeded"), "queued");
-  assert.equal(M.runState("active"), "running");
-  assert.equal(M.runState("waiting_human"), "blocked");
-  assert.equal(M.runState("finished"), "success");
-  assert.equal(M.runState("aborted"), "fail");
+test("lifecycle preserves archive and cannot manufacture admitted completion", () => {
+  assert.equal(M.runState({...conformanceRun,lifecycle:"seeded"}), "queued");
+  assert.equal(M.runState({...conformanceRun,lifecycle:"active"}), "running");
+  assert.equal(M.runState({...conformanceRun,lifecycle:"waiting_human"}), "blocked");
+  assert.equal(M.runState({...conformanceRun,lifecycle:"finished"}), "blocked");
+  assert.equal(M.runState({...conformanceRun,lifecycle:"archived"}), "archived");
+  assert.equal(M.runState({...conformanceRun,lifecycle:"aborted"}), "fail");
 });
 
 test("frontier: Factory's own selection order", () => {

@@ -1,0 +1,169 @@
+{
+  "contract": "factory.native-owner-projection-fixtures/v1",
+  "standing": "Exact source-native Factory owner readings over controlled isolated native Central effects and authority. No model body or actual human World reply is inferred.",
+  "sourceNative": true,
+  "installedDevelopmentRunCompletion": false,
+  "modelInvoked": false,
+  "actualHumanWorldReply": false,
+  "fixtures": {
+    "native-aborted-archived": {
+      "file": "native-aborted-archived.run.json",
+      "sha256": "c4892da66fbc6ba32a46ae2888c923a0c8ec30ad0111bf16bc0e2082341ebb85",
+      "nativeCapture": "/Users/admin/Central/Control/agents/now/clearings/83e643b2633b70cd6ad9307010f0e86148005761e95aa3e71b72bfbdf398cceb/T/verification/native-closure-owner-readings-20261001/native-aborted-archived-28245-1790817144684292000",
+      "factory": {
+        "path": "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "reportedVersion": "factory 0.1.0 (dd0765dd9596)",
+        "sha256": "dca7d00a34b4cbc565a508839d4eb80126a9c9f0aa21ca73c564625c0f580f06"
+      },
+      "central": {
+        "path": "/Users/admin/Library/Application Support/OI/products/central/5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042/bin/ctrl",
+        "reportedVersion": "ctrl 0.1.0 (2a604574774c)",
+        "sha256": "5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042"
+      },
+      "lifecycle": "archived",
+      "archivedFrom": "aborted",
+      "completionVerified": false,
+      "wholeRunState": "complete",
+      "buildStatus": "fail",
+      "frontierClosureState": "aborted"
+    },
+    "native-finished": {
+      "file": "native-finished.run.json",
+      "sha256": "5ad261103947eea853fa8d1851b8b46897bca27414d842ceafe8095e2211b5a9",
+      "nativeCapture": "/Users/admin/Central/Control/agents/now/clearings/83e643b2633b70cd6ad9307010f0e86148005761e95aa3e71b72bfbdf398cceb/T/verification/native-closure-owner-readings-20261001/native-finished-28245-1790817145045472000",
+      "factory": {
+        "path": "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "reportedVersion": "factory 0.1.0 (dd0765dd9596)",
+        "sha256": "dca7d00a34b4cbc565a508839d4eb80126a9c9f0aa21ca73c564625c0f580f06"
+      },
+      "central": {
+        "path": "/Users/admin/Library/Application Support/OI/products/central/5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042/bin/ctrl",
+        "reportedVersion": "ctrl 0.1.0 (2a604574774c)",
+        "sha256": "5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042"
+      },
+      "lifecycle": "finished",
+      "archivedFrom": null,
+      "completionVerified": true,
+      "wholeRunState": "complete",
+      "buildStatus": "success",
+      "frontierClosureState": "closed"
+    },
+    "native-finished-archived": {
+      "file": "native-finished-archived.run.json",
+      "sha256": "aa935245b2feef54f321eb38673adf316c98ffe907638e7ab10e207fa5bb7c16",
+      "nativeCapture": "/Users/admin/Central/Control/agents/now/clearings/83e643b2633b70cd6ad9307010f0e86148005761e95aa3e71b72bfbdf398cceb/T/verification/native-closure-owner-readings-20261001/native-finished-archived-28245-1790817146983573000",
+      "factory": {
+        "path": "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "reportedVersion": "factory 0.1.0 (dd0765dd9596)",
+        "sha256": "dca7d00a34b4cbc565a508839d4eb80126a9c9f0aa21ca73c564625c0f580f06"
+      },
+      "central": {
+        "path": "/Users/admin/Library/Application Support/OI/products/central/5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042/bin/ctrl",
+        "reportedVersion": "ctrl 0.1.0 (2a604574774c)",
+        "sha256": "5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042"
+      },
+      "lifecycle": "archived",
+      "archivedFrom": "finished",
+      "completionVerified": true,
+      "wholeRunState": "complete",
+      "buildStatus": "success",
+      "frontierClosureState": "closed"
+    },
+    "native-current-retry-failed": {
+      "file": "native-current-retry-failed.run.json",
+      "sha256": "b94cc37314013ff658844f1bb93487a545c793e3cf39e8f515a4d70318ca1643",
+      "nativeCapture": "/Users/admin/Central/Control/agents/now/clearings/83e643b2633b70cd6ad9307010f0e86148005761e95aa3e71b72bfbdf398cceb/T/verification/native-closure-owner-readings-retry-final-20261001/native-current-retry-failed-65911-1790818341684306000",
+      "factory": {
+        "path": "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "reportedVersion": "factory 0.1.0 (dd0765dd9596)",
+        "sha256": "dca7d00a34b4cbc565a508839d4eb80126a9c9f0aa21ca73c564625c0f580f06"
+      },
+      "central": {
+        "path": "/Users/admin/Library/Application Support/OI/products/central/5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042/bin/ctrl",
+        "reportedVersion": "ctrl 0.1.0 (2a604574774c)",
+        "sha256": "5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042"
+      },
+      "lifecycle": "active",
+      "completionVerified": false,
+      "wholeRunState": "failed",
+      "currentAttemptRef": "attempt:native-inspect-source-retry",
+      "currentExecutionRef": "execution:native-inspect-source-retry",
+      "latestOutcome": "failed",
+      "legStatus": "failed",
+      "buildStatus": "running",
+      "frontierClosureState": "open"
+    },
+    "native-current-retry-passed": {
+      "file": "native-current-retry-passed.run.json",
+      "sha256": "56cb7b9a946a88388ca5d124b521ffefa0486736447a35e986a40b25d9941e0b",
+      "nativeCapture": "/Users/admin/Central/Control/agents/now/clearings/83e643b2633b70cd6ad9307010f0e86148005761e95aa3e71b72bfbdf398cceb/T/verification/native-closure-owner-readings-retry-final-20261001/native-current-retry-passed-65911-1790818337555084000",
+      "factory": {
+        "path": "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "reportedVersion": "factory 0.1.0 (dd0765dd9596)",
+        "sha256": "dca7d00a34b4cbc565a508839d4eb80126a9c9f0aa21ca73c564625c0f580f06"
+      },
+      "central": {
+        "path": "/Users/admin/Library/Application Support/OI/products/central/5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042/bin/ctrl",
+        "reportedVersion": "ctrl 0.1.0 (2a604574774c)",
+        "sha256": "5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042"
+      },
+      "lifecycle": "active",
+      "completionVerified": false,
+      "wholeRunState": "complete",
+      "currentAttemptRef": "attempt:native-inspect-source-retry",
+      "currentExecutionRef": "execution:native-inspect-source-retry",
+      "latestOutcome": "passed",
+      "legStatus": "returned",
+      "buildStatus": "running",
+      "frontierClosureState": "open"
+    },
+    "native-current-retry-unknown": {
+      "file": "native-current-retry-unknown.run.json",
+      "sha256": "7fd5bcf6d3d997e40626d98163351e8a61d562ebabdf9087f0d9b2eaf3e1db89",
+      "nativeCapture": "/Users/admin/Central/Control/agents/now/clearings/83e643b2633b70cd6ad9307010f0e86148005761e95aa3e71b72bfbdf398cceb/T/verification/native-closure-owner-readings-retry-final-20261001/native-current-retry-unknown-65911-1790818339435418000",
+      "factory": {
+        "path": "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "reportedVersion": "factory 0.1.0 (dd0765dd9596)",
+        "sha256": "dca7d00a34b4cbc565a508839d4eb80126a9c9f0aa21ca73c564625c0f580f06"
+      },
+      "central": {
+        "path": "/Users/admin/Library/Application Support/OI/products/central/5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042/bin/ctrl",
+        "reportedVersion": "ctrl 0.1.0 (2a604574774c)",
+        "sha256": "5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042"
+      },
+      "lifecycle": "active",
+      "completionVerified": false,
+      "wholeRunState": "failed",
+      "currentAttemptRef": "attempt:native-inspect-source-retry",
+      "currentExecutionRef": "execution:native-inspect-source-retry",
+      "latestOutcome": "unknown",
+      "legStatus": "failed",
+      "buildStatus": "running",
+      "frontierClosureState": "open"
+    },
+    "native-old-attempt-failed": {
+      "file": "native-old-attempt-failed.run.json",
+      "sha256": "79128c0a04585b24b693cc87ee389390f530ad5df61e9201efb4b7676d44636f",
+      "nativeCapture": "/Users/admin/Central/Control/agents/now/clearings/83e643b2633b70cd6ad9307010f0e86148005761e95aa3e71b72bfbdf398cceb/T/verification/native-closure-owner-readings-retry-final-20261001/native-old-attempt-failed-65911-1790818335680594000",
+      "factory": {
+        "path": "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "reportedVersion": "factory 0.1.0 (dd0765dd9596)",
+        "sha256": "dca7d00a34b4cbc565a508839d4eb80126a9c9f0aa21ca73c564625c0f580f06"
+      },
+      "central": {
+        "path": "/Users/admin/Library/Application Support/OI/products/central/5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042/bin/ctrl",
+        "reportedVersion": "ctrl 0.1.0 (2a604574774c)",
+        "sha256": "5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042"
+      },
+      "lifecycle": "active",
+      "completionVerified": false,
+      "wholeRunState": "failed",
+      "currentAttemptRef": "attempt:native-inspect-source",
+      "currentExecutionRef": "execution:native-inspect-source",
+      "latestOutcome": "failed",
+      "legStatus": "failed",
+      "buildStatus": "running",
+      "frontierClosureState": "open"
+    }
+  }
+}

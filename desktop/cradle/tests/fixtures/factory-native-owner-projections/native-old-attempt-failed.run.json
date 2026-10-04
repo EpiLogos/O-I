@@ -1,0 +1,408 @@
+{
+  "contract": "factory.run-reading/v1",
+  "provenance": {
+    "owner": "factory",
+    "factoryStateRevision": 7,
+    "subjectRevision": 6,
+    "source": "canonical Factory Run/RunMap + Factory Build correlations"
+  },
+  "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+  "revision": 6,
+  "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "owningJourneyRefs": [],
+  "routineInvocationRefs": [],
+  "lifecycle": "active",
+  "destination": "Controlled native receiving regression",
+  "runMap": {
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+    "topologyRevision": 5,
+    "nodes": {
+      "destination": {
+        "id": "destination",
+        "kind": "destination",
+        "label": "Controlled native receiving regression",
+        "state": null,
+        "semanticRef": null
+      },
+      "work-inspect-source": {
+        "id": "work-inspect-source",
+        "kind": "work",
+        "label": "Recover the current Factory architecture and source obligations",
+        "state": "abandoned",
+        "semanticRef": "workflow-unit:689VV39WQ467MSV5CW691N5NPH"
+      }
+    },
+    "edges": [
+      {
+        "from": "destination",
+        "to": "work-inspect-source",
+        "relation": "branches_to"
+      }
+    ]
+  },
+  "thoughtAvailable": false,
+  "thoughtRefs": [],
+  "agencies": [],
+  "executions": [],
+  "evidence": [],
+  "candidates": [],
+  "humanRequests": [],
+  "actions": [
+    {
+      "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+      "label": "Request more evidence",
+      "subjectKinds": [
+        "candidate"
+      ],
+      "inputContract": "factory.action-projection/v1",
+      "resultContract": "factory.action-projection/v1",
+      "authorityOwner": "factory",
+      "requiredCapabilityRef": "capability/factory/request-evidence",
+      "currentlyApplicable": false,
+      "applicableSubjectRefs": []
+    }
+  ],
+  "nativeAttempts": {
+    "contract": "factory.attempt-reading/v1",
+    "revision": 7,
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+    "runRevision": 6,
+    "topologyRevision": 5,
+    "workflowKey": "agent-first-implementation",
+    "workflowSourceRef": "workflow-source:01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "workflowSourceRevision": "source-revision-7",
+    "workflowSourceDigest": "f827326d0f59c694fce4a1657b0c1a2000f022975c34f8e59fa582064f7d58c0",
+    "sourceCurrent": true,
+    "wholeRunState": "failed",
+    "lifecycle": "active",
+    "completionVerified": false,
+    "requiredUnits": [
+      "workflow-unit:689VV39WQ467MSV5CW691N5NPH"
+    ],
+    "currentReturnedUnits": [],
+    "legs": {
+      "workflow-unit:689VV39WQ467MSV5CW691N5NPH": {
+        "delegation": {
+          "parentJourneyRef": "journey:controlled-native-receiving",
+          "parentRunRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+          "executionUnitRef": "workflow-unit:689VV39WQ467MSV5CW691N5NPH",
+          "concern": "Recover the current Factory architecture and source obligations",
+          "requiredDifference": "The implementation basis is explicit and evidenced",
+          "returnContract": "Return the inspected seams and exact source basis",
+          "subjectRef": "subject:controlled-native-inspect-source",
+          "basisRevision": "947ce7a",
+          "agentRequirements": {
+            "agentRefs": [
+              "agent:controlled-native-receiving-producer"
+            ],
+            "agentSetRefs": [],
+            "agencyRefs": [
+              "agency:controlled-native-inspect-source"
+            ]
+          },
+          "permittedEffects": [
+            "read and submit bounded native Central receipt"
+          ],
+          "verificationObligations": [
+            "exact native Central receiving result reopens unchanged"
+          ],
+          "returnAddress": "return:01ARZ3NDEKTSV4RRFFQ69G5FB0",
+          "stopConditions": "Stop if the requested base is unavailable",
+          "retryGrant": {
+            "grantRef": "grant:native-inspect-source",
+            "attemptsAllowed": 2,
+            "attemptsSpent": 1,
+            "revoked": false
+          }
+        },
+        "executionRef": "execution:native-inspect-source",
+        "status": "failed",
+        "statusHistory": [
+          "active",
+          "returned",
+          "failed"
+        ],
+        "attempts": [
+          {
+            "executionRef": "execution:native-inspect-source",
+            "delegation": {
+              "parentJourneyRef": "journey:controlled-native-receiving",
+              "parentRunRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+              "executionUnitRef": "workflow-unit:689VV39WQ467MSV5CW691N5NPH",
+              "concern": "Recover the current Factory architecture and source obligations",
+              "requiredDifference": "The implementation basis is explicit and evidenced",
+              "returnContract": "Return the inspected seams and exact source basis",
+              "subjectRef": "subject:controlled-native-inspect-source",
+              "basisRevision": "947ce7a",
+              "agentRequirements": {
+                "agentRefs": [
+                  "agent:controlled-native-receiving-producer"
+                ],
+                "agentSetRefs": [],
+                "agencyRefs": [
+                  "agency:controlled-native-inspect-source"
+                ]
+              },
+              "permittedEffects": [
+                "read and submit bounded native Central receipt"
+              ],
+              "verificationObligations": [
+                "exact native Central receiving result reopens unchanged"
+              ],
+              "returnAddress": "return:01ARZ3NDEKTSV4RRFFQ69G5FB0",
+              "stopConditions": "Stop if the requested base is unavailable",
+              "retryGrant": {
+                "grantRef": "grant:native-inspect-source",
+                "attemptsAllowed": 2,
+                "attemptsSpent": 1,
+                "revoked": false
+              }
+            },
+            "status": "failed",
+            "statusHistory": [
+              "active",
+              "returned",
+              "failed"
+            ],
+            "artifacts": [
+              {
+                "artifactRef": "artifact:native:inspect-source",
+                "subjectRef": "subject:controlled-native-inspect-source",
+                "subjectRevision": "947ce7a",
+                "producingExecutionRef": "execution:native-inspect-source",
+                "evidenceRefs": [
+                  "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+                ],
+                "semanticDifference": "Native Central returned and independently reopened \"central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f\" on \"central.content-fnv1a64/v1:1585:ae322b88865e031f\""
+              }
+            ],
+            "lateArtifacts": [],
+            "failureReason": "current Return no longer verified: verification:native-rejected-original (Failed)"
+          }
+        ],
+        "artifacts": [
+          {
+            "artifactRef": "artifact:native:inspect-source",
+            "subjectRef": "subject:controlled-native-inspect-source",
+            "subjectRevision": "947ce7a",
+            "producingExecutionRef": "execution:native-inspect-source",
+            "evidenceRefs": [
+              "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+            ],
+            "semanticDifference": "Native Central returned and independently reopened \"central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f\" on \"central.content-fnv1a64/v1:1585:ae322b88865e031f\""
+          }
+        ],
+        "lateArtifacts": [],
+        "failureReason": "current Return no longer verified: verification:native-rejected-original (Failed)"
+      }
+    },
+    "attempts": [
+      {
+        "attemptRef": "attempt:native-inspect-source",
+        "attemptRecordedAt": "2026-10-01T01:32:15.470Z",
+        "taskRef": "task:native-inspect-source",
+        "workflowUnitRef": "workflow-unit:689VV39WQ467MSV5CW691N5NPH",
+        "reservedExecutionRef": "factory-attempt:attempt:native-inspect-source",
+        "executionRef": "execution:native-inspect-source",
+        "disposition": {
+          "selection": {
+            "schema_version": "factory.execution-intelligence/v1",
+            "demand": {
+              "project_ref": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+              "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+              "workflow_unit_ref": "workflow-unit:689VV39WQ467MSV5CW691N5NPH",
+              "agency_ref": "agency:controlled-native-inspect-source",
+              "profile_ref": null,
+              "use_type": "controlled-native-owner-contract",
+              "required_capabilities": [
+                "capability:01ARZ3NDEKTSV4RRFFQ69G5FAZ"
+              ],
+              "required_modalities": [
+                "text"
+              ],
+              "required_actions": [],
+              "required_tools": [],
+              "context_characteristics": [
+                "isolated-native-Central-contract"
+              ],
+              "independence_from": [],
+              "cost_ceiling_usd": null,
+              "latency_preference_ms": null,
+              "requires_local_materialisation": false
+            },
+            "selection": {
+              "roster_version": "aikit.model-roster/v1",
+              "model_ref": "model:controlled-owner-contract-not-invoked",
+              "provider_ref": "provider:controlled-owner-contract-not-invoked",
+              "ranking_policy": "controlled-native-contract",
+              "ranking_explanation": {
+                "modelInvoked": false
+              },
+              "provenance": [
+                "source:controlled-native-owner-contract"
+              ]
+            },
+            "decided_at": "2026-10-01T00:00:00Z"
+          },
+          "participant": {
+            "agentRef": "agent:controlled-native-receiving-producer",
+            "agencyRef": "agency:controlled-native-inspect-source",
+            "worldBindingRef": "world-binding:controlled-native-Central",
+            "sourceRef": "workflow-source:01ARZ3NDEKTSV4RRFFQ69G5FAV",
+            "sourceRevision": "source-revision-7",
+            "sourceDigest": "blake3:f827326d0f59c694fce4a1657b0c1a2000f022975c34f8e59fa582064f7d58c0"
+          },
+          "contextRefs": [
+            "context:controlled-native-owner"
+          ],
+          "praxisRefs": [
+            "skill:01ARZ3NDEKTSV4RRFFQ69G5FAY"
+          ],
+          "capabilityRefs": [
+            "capability:01ARZ3NDEKTSV4RRFFQ69G5FAZ"
+          ],
+          "body": {
+            "modelRef": "model:controlled-owner-contract-not-invoked",
+            "providerRef": "provider:controlled-owner-contract-not-invoked",
+            "routeRef": "route:controlled-native-contract",
+            "harnessRef": "harness:actual-ctrl-native-process",
+            "harnessCompositionRef": "composition:controlled-native-contract",
+            "agentSessionRef": "session:native-inspect-source",
+            "sessionSpaceRef": "session-space:controlled-native-contract"
+          },
+          "permittedEffects": [
+            "read and submit bounded native Central receipt"
+          ],
+          "verificationObligations": [
+            "exact native Central receiving result reopens unchanged"
+          ],
+          "returnAddress": "return:01ARZ3NDEKTSV4RRFFQ69G5FB0",
+          "stopConditions": "Stop if the requested base is unavailable",
+          "escalationConditions": "Escalate contradictory source contracts",
+          "budget": {
+            "wallClockTimeoutMs": 30000,
+            "retryGrantRef": "grant:native-inspect-source",
+            "maximumAttempts": 2
+          }
+        },
+        "dispatch": {
+          "ownerRef": "central",
+          "contract": "central.receiving-reading/v1",
+          "operationRef": "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f",
+          "receiptRef": "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f",
+          "sourceRevision": "central.content-fnv1a64/v1:1585:ae322b88865e031f",
+          "phase": "returned",
+          "evidenceRefs": [
+            "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+          ],
+          "partialEffectRefs": [],
+          "payload": {
+            "automatic_agent_or_model_invocation": false,
+            "included": false,
+            "record": {
+              "applied_source_revision": null,
+              "author": {
+                "actor_kind": "agent",
+                "principal_ref": "agent:controlled-native-receiving-producer"
+              },
+              "authority_ref": "central:source:control:root:Control/user/authority.json",
+              "authority_revision": "central.content-fnv1a64/v1:720:bea52ee9eadc7f85",
+              "day_ref": null,
+              "document_id": "flow:controlled-native-receiving",
+              "inclusion_request": null,
+              "kind": "contribution",
+              "last_error": null,
+              "now_ref": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+              "occurred_at_unix_seconds": null,
+              "proposal": {
+                "contribution_id": "native-effect:inspect-source:body",
+                "entry_id": "native-effect:inspect-source",
+                "html": "<p>Actual bounded native owner operation.</p>",
+                "operation": "entry.add"
+              },
+              "proposed_source_revision": "central.content-fnv1a64/v1:641:2a2cb71209e3faa4",
+              "received_at_unix_seconds": 1790818335,
+              "request_digest": "219b1ed97010553d852c36b5d8df23f90dcd1cbeb9f437438fa152095b1ed317",
+              "return_ref": "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f",
+              "review": null,
+              "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+              "schema": "central.received-contribution/v1",
+              "scope_ref": "control:root",
+              "sequence": 1,
+              "session_ref": "session:native-inspect-source",
+              "source_ref": "central:source:control:root:Control/agents/now/flows/21714339a962c218fcb637fb7708e0cb0d2a735ec52260fb1849cd65f7cb789f.json",
+              "stale_at_arrival": false,
+              "status": "pending",
+              "task_ref": "task:native-inspect-source"
+            },
+            "return_ref": "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f",
+            "revision": "central.content-fnv1a64/v1:1585:ae322b88865e031f",
+            "schema": "central.receiving-reading/v1",
+            "source_changed_by_arrival_or_review": false
+          }
+        },
+        "observations": [],
+        "verifications": [
+          {
+            "verificationRef": "verification:native:inspect-source",
+            "ownerRef": "factory/native-owner-readback",
+            "sourceRevision": "central.content-fnv1a64/v1:1585:ae322b88865e031f",
+            "outcome": "passed",
+            "obligations": [
+              "exact native Central receiving result reopens unchanged"
+            ],
+            "evidenceRefs": [
+              "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+            ]
+          },
+          {
+            "verificationRef": "verification:native-rejected-original",
+            "ownerRef": "factory/native-reviewed-result",
+            "sourceRevision": "central.content-fnv1a64/v1:1955:1f1eabf8210ed907",
+            "outcome": "failed",
+            "obligations": [
+              "exact native Central receiving result reopens unchanged"
+            ],
+            "evidenceRefs": [
+              "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+            ]
+          }
+        ],
+        "verificationRecordedAt": {
+          "verification:native-rejected-original": "2026-10-01T01:32:15.651Z",
+          "verification:native:inspect-source": "2026-10-01T01:32:15.578Z"
+        },
+        "tracking": [
+          {
+            "factRef": "fact:now:inspect-source",
+            "kind": "now",
+            "ownerRef": "central",
+            "subjectRef": "central:now:control:root:c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a",
+            "sourceRevision": "central.content-fnv1a64/v1:874:43ec942cc65f39f4",
+            "evidenceRefs": [
+              "central:source:control:root:Control/agents/now/clearings/c4a8c6878061057a8ab2e2d726e77b873246995d960973226d915070f922a71a/now.json"
+            ]
+          }
+        ],
+        "reresolutions": [],
+        "failureEvidenceRefs": [],
+        "readableReturn": {
+          "returnRef": "return:native:inspect-source",
+          "summary": "Native Central returned and independently reopened \"central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f\" on \"central.content-fnv1a64/v1:1585:ae322b88865e031f\"",
+          "artifactRefs": [
+            "artifact:native:inspect-source"
+          ],
+          "evidenceRefs": [
+            "central:return:control:root:c8b3f13a9df0a00238a01f9d2050d3eecabaac58761fb5ef1d04286a7cc49c6f"
+          ],
+          "archiveRefs": [],
+          "regressionObservationRefs": []
+        },
+        "returnRecordedAt": "2026-10-01T01:32:15.603Z",
+        "verificationCountAtReturn": 1
+      }
+    ],
+    "independentReviewers": {},
+    "syntheses": {}
+  }
+}

@@ -12,6 +12,7 @@ import {developmentRead, ownerRefusalText} from "../development";
 import type {Scope} from "../../../workspace/scope";
 import type {DeskSourceRef, JourneyReading, ProjectLocation, ProjectReading, RunReading} from "./runModel";
 import {followInspection, type InspectionPage, type WholeInspection} from "./inspectionPages";
+import {decodeRunFlowReading, observeRunFlow, type RunFlowAssociation, type RunFlowObservation} from "./runFlow";
 import {ownerReadFailure, snakeKeys, type FactoryCurrentWork, type FactoryInhabitationReading, type OwnerRead} from "../inhabitation/model";
 
 export type FactoryOwnerRequest =
@@ -82,8 +83,23 @@ export const readProject = (transport: KernelTransportStatus, source: DeskSource
   developmentRead<ProjectReading>(transport, source.statePath, "project", source.projectRef);
 export const readJourney = (transport: KernelTransportStatus, statePath: string, journeyRef: string) =>
   developmentRead<JourneyReading>(transport, statePath, "journey", journeyRef);
-export const readRun = (transport: KernelTransportStatus, statePath: string, runRef: string) =>
-  developmentRead<RunReading>(transport, statePath, "run", runRef);
+export async function readRun(transport: KernelTransportStatus, statePath: string, runRef: string): Promise<RunReading> {
+  return decodeRunFlowReading(await developmentRead(transport, statePath, "run", runRef), runRef);
+}
+/** Existing owner Action dispatcher, one bounded native read on show/refresh.
+ * No participant key or private collection is requested or retained. */
+export async function readAssociatedFlow(transport: KernelTransportStatus, retained: RunFlowAssociation): Promise<RunFlowObservation> {
+  const response = await kernelOp(transport, {op: "invoke_action", invocation: {
+    action: "central.flow.read", target_ref: retained.flow.location.ref,
+    input: {location: retained.flow.location, max_entries: 1},
+  }});
+  if (response.error || response.outcome?.result !== "action_dispatched")
+    throw new Error(response.error ? ownerRefusalText(response.error) : "Central did not answer the Flow read.");
+  const dispatch = response.outcome.dispatch;
+  if (dispatch.state !== "invoked")
+    throw new Error("message" in dispatch ? dispatch.message : "detail" in dispatch ? dispatch.detail : "Central Flow read is unavailable.");
+  return observeRunFlow(retained, dispatch.data);
+}
 /** The run's WHOLE workflow inspection: pages of the owner's maximum size,
  * the cursor followed to completion; `partial` names what could not be read
  * (inspectionPages.ts). */

@@ -1,0 +1,5 @@
+.frun-flow { display: flex; flex-direction: column; gap: 6px; margin-block: 12px; }
+.frun-flow-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.frun-flow details { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.frun-flow dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; }
+.frun-flow dd { margin: 0; overflow-wrap: anywhere; }

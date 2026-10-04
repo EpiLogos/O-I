@@ -26,6 +26,8 @@ import {RunLive} from "./RunLive";
 import {RunHandoff} from "./RunHandoff";
 import {RunTrajectory} from "./RunTrajectory";
 import {RunSignalLink} from "../sensing/RunSignalLink";
+import {RunFlowLinks} from "./RunFlowLink";
+import type {FlowInstanceOpen} from "../../../flow/instances";
 import {RunLiveExpression} from "../live/RunLiveExpression";
 
 const ComputerView=lazy(()=>import("../ComputerView").then(module=>({default:module.ComputerView})));
@@ -57,6 +59,8 @@ export interface RunPageHost {
   /** Open an object page in place (§6). */
   onOpenObject?: (object: FactoryObjectRef) => void;
   onOpenInExpressions?: (entry: RunEntry) => void;
+  /** The frame's ordinary native Flow opener, with exact document identity. */
+  onOpenFlow?: (flow: FlowInstanceOpen) => void | Promise<void>;
   onMessage?: (message: string) => void;
 }
 export type FactoryObjectRef =
@@ -144,6 +148,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
         <MenuButton ariaLabel="More run actions" className="oi-action frun-more" label={<Glyph name="more" size={14}/>} rows={menu}/>
       </div>
     </header>
+    <RunFlowLinks entry={entry} host={host}/>
     <RunSignalLink runKey={runKey} entry={entry} onBack={onBack}/>
     <IconTabStrip aria-label="Run views" items={TABS.map(entry=>({id:entry.key,label:entry.label,icon:entry.key==="map"?"graph":entry.key==="trajectory"?"history":entry.key==="live"?"factory":"file"}))} current={tab} onSelect={id=>setTab(id as typeof tab)}/>
     {reading === "reading" && !entry.inspection && !entry.inspectionError && <p className="frun-note" role="status">Reading this run…</p>}

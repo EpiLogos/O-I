@@ -4,7 +4,7 @@ import type { ActionInvocation, FactoryBuildView, ViewDepth } from './types'
 import { SessionCards } from './components/SessionCards'
 import { SpanDetail } from './components/SpanDetail'
 import { TraceWaterfall } from './components/TraceWaterfall'
-import { chronologicalSpans } from './read-model'
+import { chronologicalSpans, isOpenHumanRequest } from './read-model'
 import './styles.css'
 import './build-surface.css'
 
@@ -26,6 +26,8 @@ function ActionButton({ actionRef, subjectRef, label, onAction }: {
 
 export function BuildSurface({ view, initialDepth = 'semantic', onAction }: BuildSurfaceProps) {
   const [depth, setDepth] = useState<ViewDepth>(initialDepth)
+  const openHumanRequests = view.humanRequests.filter(isOpenHumanRequest)
+  const humanRequestHistory = view.humanRequests.filter((request) => !isOpenHumanRequest(request))
   const [executionRef, setExecutionRef] = useState(view.trajectories[0]?.executionRef)
   const trace = useMemo(() => view.trajectories.find((item) => item.executionRef === executionRef) ?? view.trajectories[0], [executionRef, view.trajectories])
   const [spanRef, setSpanRef] = useState<string | undefined>(trace ? chronologicalSpans(trace)[0]?.spanRef : undefined)
@@ -75,7 +77,8 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction }: Buil
           <div className="fb-claims">{view.claims.map((claim) => <article key={claim.claimRef}><span className={`fb-status fb-claim-${claim.status}`}>{claim.status}</span><p>{claim.statement}</p><Ref>{claim.claimRef}</Ref><div>{claim.evidenceRefs.map((ref) => <Ref key={ref}>{ref}</Ref>)}</div></article>)}</div>
         </section>
         <section><div className="fb-section-head"><h3>Human requests</h3><span>authorial, not protocol prompts</span></div>
-          {view.humanRequests.length ? view.humanRequests.map((request) => <article className="fb-human-request" key={request.humanRequestRef}><strong>{request.question}</strong><p>{request.whyHuman}</p><Ref>{request.decisionRef}</Ref></article>) : <p className="fb-muted">No durable human authorship request is open.</p>}
+          {openHumanRequests.length ? openHumanRequests.map((request) => <article className="fb-human-request" key={request.humanRequestRef}><strong>{request.question}</strong><p>{request.whyHuman}</p><Ref>{request.decisionRef}</Ref></article>) : <p className="fb-muted">No durable human authorship request is open.</p>}
+          {humanRequestHistory.length ? <details><summary>Decision history ({humanRequestHistory.length})</summary>{humanRequestHistory.map((request) => <article className="fb-human-request" key={request.humanRequestRef}><strong>{request.question}</strong><p>{request.whyHuman}</p><Ref>{request.decisionRef}</Ref><Ref>{request.humanRequestRef}</Ref>{request.unitDecisionResponse ? <p>Answer outcome: {request.unitDecisionResponse.outcome} · <Ref>{request.unitDecisionResponse.channelReceiptRef}</Ref></p> : null}{request.unitDecisionRetirement ? <p>Retirement: {request.unitDecisionRetirement.reason}</p> : null}</article>)}</details> : null}
         </section>
       </div>
       <div className="fb-actions fb-run-actions">{runActions.map((action) => <ActionButton key={action.actionRef} actionRef={action.actionRef} subjectRef={view.run.runRef} label={action.label} onAction={onAction} />)}</div>

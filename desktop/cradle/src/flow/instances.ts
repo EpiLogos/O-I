@@ -1,6 +1,7 @@
 import {listFiles,readFile,fileOperation,type FileMutation} from "../files/client";
-import type {CentralLocation,KernelTransportStatus,NativeDirectory} from "../kernel/types";
+import type {CentralLocation,KernelTransportStatus,NativeDirectory,NativeFileReading} from "../kernel/types";
 import {parseInstance,type QlDoc} from "./instance";
+import type {SurfaceBinding} from "../surface/types";
 /** The ratified flow carrier's owner routes: instances are ordinary files in
  * `Control/user/flows/` — listed through `central.files.list`, read through
  * `central.files.read`, created and saved through `central.files.write`
@@ -9,7 +10,30 @@ import {parseInstance,type QlDoc} from "./instance";
  * bytes). The desktop never invents a flow identity: it comes from the
  * document itself. */
 export const USER_FLOWS_DIR = "Control/user/flows";
-export interface FlowInstanceRow { name: string; location: CentralLocation; byte_len: number }
+export interface FlowInstanceOpen { name: string; location: CentralLocation; expectedDocumentId?: string }
+export interface FlowInstanceRow extends FlowInstanceOpen { byte_len: number }
+/** An exact Run link may not silently open a different document at its path.
+ * Check the same actual file read which registers the native surface open. */
+export class FlowDocumentIdentityError extends Error {
+  constructor() {
+    super("A different Flow now occupies this Run's retained location. Read the Run Flow basis again.");
+    this.name = "FlowDocumentIdentityError";
+  }
+}
+function assertDocumentIdentity(doc: QlDoc, expectedDocumentId?: string): void {
+  if (expectedDocumentId !== undefined && doc?.meta?.documentId !== expectedDocumentId)
+    throw new FlowDocumentIdentityError();
+}
+export function assertFlowInstanceIdentity(reading: NativeFileReading, expectedDocumentId?: string): void {
+  if (expectedDocumentId !== undefined) assertDocumentIdentity(parseInstance(reading.content), expectedDocumentId);
+}
+/** A retained surface and its draft belong to the same opening contract.
+ * A Run link cannot borrow a navigator surface, or a different document's
+ * concealed surface, merely because their file paths currently coincide. */
+export function matchesFlowInstanceOpen(binding: Pick<SurfaceBinding, "kind" | "location" | "flow">, row: FlowInstanceOpen): boolean {
+  return binding.kind === "flow" && binding.location?.ref === row.location.ref &&
+    binding.flow?.expectedDocumentId === row.expectedDocumentId;
+}
 export interface UserFlowsArea { root: string; baseRef: string; basePath: string }
 /** The user area's owner-canonical identity, taken from the owner's own
  * listing (the navigator's root string may be a non-canonical path; the
@@ -38,9 +62,16 @@ export interface FlowInstance {
   location: CentralLocation;
   doc: QlDoc;
 }
-export async function readFlowInstance(transport: KernelTransportStatus, location: CentralLocation): Promise<FlowInstance> {
-  const reading = await readFile(transport, location);
-  return { html: reading.content, revision: reading.revision, location, doc: parseInstance(reading.content) };
+/** The actual initial and subsequent surface reads share this boundary.
+ * Same-document changes remain readable; a path replacement cannot become
+ * this Run's bound Flow, even after the frame's earlier opening read. */
+export function flowInstanceFromReading(reading: NativeFileReading, location: CentralLocation, expectedDocumentId?: string): FlowInstance {
+  const doc = parseInstance(reading.content);
+  assertDocumentIdentity(doc, expectedDocumentId);
+  return { html: reading.content, revision: reading.revision, location, doc };
+}
+export async function readFlowInstance(transport: KernelTransportStatus, location: CentralLocation, expectedDocumentId?: string): Promise<FlowInstance> {
+  return flowInstanceFromReading(await readFile(transport, location), location, expectedDocumentId);
 }
 export type InstanceWrite = FileMutation;
 export async function writeFlowInstance(transport: KernelTransportStatus, location: CentralLocation, expectedRevision: string, html: string): Promise<InstanceWrite> {

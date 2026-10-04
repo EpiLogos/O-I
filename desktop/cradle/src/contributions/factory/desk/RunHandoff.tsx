@@ -18,7 +18,7 @@ import {errorWords, type RunEntry} from "./deskStore";
 import {recognise} from "./factoryReads";
 import type {RunPageHost} from "./RunPage";
 import {revisionWords} from "./RunMap";
-import {attemptsFor, frontierNode, pendingRecognitions, refTail, unitChecks, unitOf, type InspectionAttempt} from "./runModel";
+import {attemptsForRun, frontierNode, pendingRecognitions, refTail, unitChecks, unitOf, type InspectionAttempt} from "./runModel";
 
 export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: RunPageHost; onRecognised: () => void}) {
   const kernel = useKernel();
@@ -26,7 +26,7 @@ export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: 
   const [receipt, setReceipt] = useState<{status?: string; contract?: string}>();
   const [acting, setActing] = useState(false);
   const [error, setError] = useState<string>();
-  const returned = (inspection?.attempts ?? []).filter(attempt => attempt.return?.summary || attempt.status === "returned");
+  const returned = attemptsForRun(run, inspection).filter(attempt => attempt.return?.summary || attempt.status === "returned");
   const journeyReturns = (journey?.returns ?? []).filter(row => !(row.run_refs ?? row.runRefs)?.length || (row.run_refs ?? row.runRefs)!.includes(run.runRef));
   const pending = pendingRecognitions(journey, run.runRef);
   const recognitions = journey?.recognitions ?? [];
@@ -38,7 +38,7 @@ export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: 
   const unit = unitOf(inspection, unitRef);
   const agent = refTail(primaryAttempt?.participant?.agentRef);
   const outcome = primaryAttempt?.return?.summary ?? journeyReturns[journeyReturns.length - 1]?.summary;
-  const checks = unitChecks(unit?.requiredVerification, attemptsFor(inspection, unitRef));
+  const checks = unitChecks(unit?.requiredVerification, unitRef ? attemptsForRun(run, inspection, unitRef) : []);
   const testedAt = checks.find(check => check.revision)?.revision;
   const outstanding = checks.filter(check => check.state !== "passed");
   const next = frontierNode(run);

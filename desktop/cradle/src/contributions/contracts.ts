@@ -2,6 +2,7 @@ import type {ComponentType, ReactNode} from "react";
 import type {SurfaceBinding} from "../surface/types";
 import type {HostedAppState} from "../expressions/hostedApp";
 import type {EncounterRow} from "../encounter/EncounterList";
+import type {FlowInstanceOpen} from "../flow/instances";
 
 /** Code admission is compile-time. These identities describe presentation;
  * neither a descriptor nor a selected subject confers owner authority. */
@@ -22,6 +23,7 @@ export interface FactoryCentreContext {
   onOpenTask?: (row: EncounterRow) => void | Promise<void>;
   onNewTask?: () => void;
   onOpenActivity?: () => void;
+  onOpenFlow?: (flow: FlowInstanceOpen) => void | Promise<void>;
   onMessage?: (message: string) => void;
 }
 

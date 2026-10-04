@@ -145,6 +145,38 @@ export interface CandidateView {
   tradeoffs?: string[]
 }
 
+/** Factory's native HumanRequestRecord decision fields, retained verbatim.
+ * Their presence classifies an owner's record for presentation; it grants no
+ * human or execution authority and never constructs a native response. */
+export interface UnitDecisionBasisView {
+  workflowUnitRef: string
+  attemptRef: string
+  executionRef: string
+  subjectRef: string
+  subjectRevision: string
+  workflowSourceRef: string
+  workflowSourceRevision: string
+  workflowSourceDigest: string
+  resolverRef: string
+  controlled: boolean
+}
+
+export interface UnitDecisionResponseView {
+  responseRef: string
+  resolverRef: string
+  channelReceiptRef: string
+  sourceRevision: string
+  outcome: 'resume' | 'cancel'
+  evidenceRefs: string[]
+  controlled: boolean
+}
+
+export interface UnitDecisionRetirementView {
+  reason: string
+  replacementBasisRefs: string[]
+  observedProviderRevision: number
+}
+
 export interface HumanRequestView {
   humanRequestRef: string
   decisionRef: string
@@ -152,6 +184,9 @@ export interface HumanRequestView {
   whyHuman: string
   blockedExecutionRefs?: string[]
   evidenceRefs?: string[]
+  unitDecisionBasis?: UnitDecisionBasisView | null
+  unitDecisionResponse?: UnitDecisionResponseView | null
+  unitDecisionRetirement?: UnitDecisionRetirementView | null
 }
 
 export interface LiveAgencyView {

@@ -14,11 +14,11 @@
  */
 import {useMemo, useState} from "react";
 import {openRunPage, peekDeskReading, type RunEntry} from "./deskStore";
-import {EDGE_WORD, attemptsFor, layoutRunMap, legStanding, refTail, unitChecks, unitOf, type MapCell, type WorkflowUnit} from "./runModel";
+import {EDGE_WORD, attemptsForRun, layoutRunMap, legFor, legStanding, refTail, unitChecks, unitOf, type MapCell, type WorkflowUnit} from "./runModel";
 import type {RunPageHost} from "./RunPage";
 
 const CELL_W = 172, CELL_H = 84, GAP_X = 52, LANE_H = 108, PAD = 18, DEST_W = 118, GATE_W = 10;
-const STANDING_WORD: Record<string, string> = {"not-started": "not started", active: "active", returned: "returned", failed: "failed"};
+const STANDING_WORD: Record<string, string> = {"not-started": "not started", active: "active", returned: "returned", failed: "failed", detached: "detached", "cancel-requested": "cancel requested", "cancellation-accepted": "cancellation accepted", "process-terminated": "process ended", quiescent: "quiescent", "late-result": "late result"};
 /** A revision as a person reads it: a Git SHA shortened, anything else whole. */
 export const revisionWords = (revision: string) => /^[0-9a-f]{12,}$/i.test(revision) ? revision.slice(0, 7) : revision;
 
@@ -119,11 +119,12 @@ function MapNode({cell, box, entry, selected, onSelect}: {cell: MapCell; box: {x
   if (node.kind === "destination") return <button type="button" className="fmap-dest" style={style} aria-pressed={selected} onClick={onSelect}><strong>Destination</strong><span>{node.label}</span></button>;
   const unitRef = node.semanticRef ?? undefined;
   const unit = unitOf(entry.inspection, unitRef);
-  const attempts = attemptsFor(entry.inspection, unitRef);
-  const required = unit?.requiredVerification ?? (unitRef ? entry.inspection?.legs?.[unitRef]?.requiredVerification : undefined);
+  const attempts = unitRef ? attemptsForRun(entry.run, entry.inspection, unitRef) : [];
+  const leg = unitRef ? legFor(entry.run, unitRef, entry.inspection) : undefined;
+  const required = unit?.requiredVerification ?? leg?.requiredVerification;
   const checks = unitChecks(required, attempts);
   const passed = checks.filter(check => check.state === "passed").length;
-  const standing = legStanding(node, unitRef ? entry.inspection?.legs?.[unitRef] : undefined);
+  const standing = legStanding(node, leg);
   const needs = unit?.agentRequirements?.agentRefs?.map(refTail).filter(Boolean).join(", ");
   const nestedKey = node.kind === "nested_run" && node.semanticRef?.startsWith("run:") ? Object.keys(peekDeskReading()?.runs ?? {}).find(key => key.endsWith(`\u0000${node.semanticRef}`)) : undefined;
   return <div className="fmap-unit" style={style} data-frontier={cell.frontier ? "true" : undefined} data-selected={selected ? "true" : undefined} data-unit={unitRef ?? node.id} data-standing={standing}>
@@ -139,7 +140,7 @@ function MapNode({cell, box, entry, selected, onSelect}: {cell: MapCell; box: {x
 function UnitBand({cell, entry, runKey, host}: {cell: MapCell; entry: RunEntry; runKey: string; host: RunPageHost}) {
   const unitRef = cell.node.semanticRef ?? undefined;
   const unit: WorkflowUnit | undefined = unitOf(entry.inspection, unitRef);
-  const attempts = attemptsFor(entry.inspection, unitRef);
+  const attempts = unitRef ? attemptsForRun(entry.run, entry.inspection, unitRef) : [];
   const checks = unitChecks(unit?.requiredVerification, attempts);
   const sessions = [...new Set(attempts.map(attempt => attempt.body?.agentSessionRef).filter((ref): ref is string => !!ref))];
   const [choosing, setChoosing] = useState(false);

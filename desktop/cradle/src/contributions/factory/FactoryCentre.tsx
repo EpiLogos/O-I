@@ -2,6 +2,7 @@ import {useEffect, useRef, useState, type ReactNode} from "react";
 import {FACTORY_OBJECT_KINDS} from "./objectKinds";
 import {FactoryDevelopmentSurface} from "./FactoryDevelopmentSurface";
 import type {EncounterRow} from "../../encounter/EncounterList";
+import type {FlowInstanceOpen} from "../../flow/instances";
 import {Desk} from "./desk/Desk";
 import {RunPage, rememberRunTab, type FactoryObjectRef, type RunPageHost} from "./desk/RunPage";
 import {ObjectPage} from "../../agent/objects";
@@ -30,6 +31,7 @@ export interface FactoryCentreProps {
   onNewTask?:()=>void;
   /** Open the right panel's Run tape (Open activity). */
   onOpenActivity?:()=>void;
+  onOpenFlow?:(flow:FlowInstanceOpen)=>void|Promise<void>;
   onMessage?:(message:string)=>void;
 }
 
@@ -44,7 +46,7 @@ const FACTORY_KINDS = FACTORY_OBJECT_KINDS;
  * then object pages in place with ← back; Tasks is for talking about it — the
  * selected conversation at full size, with a Run chip only when its session
  * truly carried the run (F14), else "Direct conversation" once (F15). */
-export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActivity,onMessage}:FactoryCentreProps) {
+export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActivity,onOpenFlow,onMessage}:FactoryCentreProps) {
   const view=useCentreView();
   const openKey=useOpenRun();
   const object=useObjectPage();
@@ -92,6 +94,7 @@ export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActi
     onStartConversation:onNewTask?(()=>{onNewTask();publishCentreView("tasks");}):undefined,
     onOpenActivity:onOpenActivity?(()=>onOpenActivity()):undefined,
     onOpenObject:(ref:FactoryObjectRef)=>openObjectPage(factoryObject(ref,heldRuns())),
+    onOpenFlow,
     onMessage,
   };
 

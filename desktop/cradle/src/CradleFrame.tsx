@@ -9,7 +9,7 @@ import {CanvasStage,CanvasHUD} from "./workspace/primitives/CanvasHost";
 import {ExpressionLayout} from "./shared/Expression";
 import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./flow/instance";
 import {personParticipant} from "./flow/identity";
-import {userFlowsArea} from "./flow/instances";
+import {userFlowsArea,assertFlowInstanceIdentity,matchesFlowInstanceOpen,type FlowInstanceOpen} from "./flow/instances";
 import {fileOperation,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
 import {readUnplacedDraft} from "./flow/unplacedDrafts";
@@ -1311,13 +1311,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   },[]);
   /** Open one flow instance from the navigator's user-section list: the
    *  document surface reads the file the owner holds. */
-  const openFlowInstance=async(row:{name:string;location:import("./kernel/types").CentralLocation})=>{
-    const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="flow"&&binding.location?.ref===row.location.ref);
+  const openFlowInstance=async(row:FlowInstanceOpen)=>{
+    const existing=Object.values(stateRef.current.surfaces).find(binding=>matchesFlowInstanceOpen(binding,row));
     const title=row.name;
-    const binding=existing??{id:crypto.randomUUID(),kind:"flow",title,ref:row.location.ref,location:row.location,flow:{flowRef:row.name,path:row.location.path}};
+    const binding=existing??{id:crypto.randomUUID(),kind:"flow",title,ref:row.location.ref,location:row.location,flow:{flowRef:row.expectedDocumentId??row.name,path:row.location.path,...(row.expectedDocumentId===undefined?{}:{expectedDocumentId:row.expectedDocumentId})}};
     // The surface-open gate requires the ref be registered by a real
     // owner-mediated read; reading the instance is the open.
-    await readFile(kernel.transport,row.location);
+    const currentFile=await readFile(kernel.transport,row.location);
+    assertFlowInstanceIdentity(currentFile,row.expectedDocumentId);
     const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"flow",title,source_ref:binding.location!.ref});
     if(opened?.result!=="surface_opened")throw new Error("The flow document surface could not be opened");
     await kernel.apply({op:"surface_focus",surface_id:binding.id});
@@ -1746,12 +1747,13 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     }catch(error){setWindowError(String(error));}
     finally{setFactoryChoosing(false);}
   };
-  const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onNewTask:()=>void;onOpenActivity:()=>void;onMessage:(message:string)=>void}={
+  const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onNewTask:()=>void;onOpenActivity:()=>void;onOpenFlow:(flow:FlowInstanceOpen)=>Promise<void>;onMessage:(message:string)=>void}={
     project:workspace.current.project??state.accompanying?.project,
     accompanying:state.accompanying??undefined,
     onOpenTask:row=>factoryChoose(row),
     onNewTask:()=>setState(s=>({...s,accompanying:undefined})),
     onOpenActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
+    onOpenFlow:row=>openFlowInstance(row),
     onMessage:message=>setWindowError(message),
   };
   const [chosenAgentRef]=useChosenAgent(workspace.current.project);

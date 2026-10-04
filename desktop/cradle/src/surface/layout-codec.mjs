@@ -59,6 +59,9 @@ export function validBinding(raw) {
   // to read the file back.
   if (o.kind === 'flow' && (!flow || typeof flow.flowRef !== 'string' || !flow.flowRef || typeof flow.path !== 'string' || !flow.path || typeof o.ref !== 'string' || !o.ref || !o.ref.startsWith('central:path:'))) return null;
   if (o.kind === 'flow' && (!location || location.schema !== 'central.path-ref/v1' || typeof location.ref !== 'string' || location.ref !== o.ref || typeof location.root !== 'string' || typeof location.path !== 'string')) return null;
+  // An optional Run opening pin survives restore as part of this binding;
+  // malformed pins drop the binding instead of silently reopening unpinned.
+  if (o.kind === 'flow' && flow.expectedDocumentId !== undefined && (typeof flow.expectedDocumentId !== 'string' || !flow.expectedDocumentId.trim())) return null;
   // SF1: a pinned projected subject must name its hosted ref and its world;
   // the optional exact refs/revisions ride along only when well-typed.
   const presentationRaw = o.presentation;

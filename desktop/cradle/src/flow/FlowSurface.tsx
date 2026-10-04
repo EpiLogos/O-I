@@ -5,7 +5,7 @@ import {registerPageObservation,releaseObservation} from "../context/ComponentSe
 import {setContextCues,getContextCues} from "../context/selectionPresentation";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
-import {readFlowInstance,writeFlowInstance,type FlowInstance} from "./instances";
+import {readFlowInstance,writeFlowInstance,FlowDocumentIdentityError,type FlowInstance} from "./instances";
 import {appendEntry,embedDocument,textToHtml,type QlDoc,type QlDocParticipant} from "./instance";
 import {activeParticipants,isCurrentFormat,withSession,type PluralParticipant,type Relation} from "./plural";
 import {conversationReconcile,conversationSend,flowParticipantProvision,mintConversationRef,useFlowConversations} from "./conversation";
@@ -77,10 +77,11 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  const encounterSession=useEncounterSession(encounterBinding);
  useEffect(()=>{window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref??binding.location?.ref}}));},[text,instance?.revision,binding.ref]);
  const key=`oi-flow-instance-draft:${binding.id}`;
- useEffect(()=>{let live=true;setLoaded(false);setError(undefined);
+ const expectedDocumentId=binding.flow?.expectedDocumentId;
+ useEffect(()=>{let live=true;setLoaded(false);setInstance(undefined);setConflict(undefined);setError(undefined);
   void (async()=>{
    if(!binding.location)throw new Error("This flow surface has no document location to read.");
-   const next=await readFlowInstance(kernel.transport,binding.location);
+   const next=await readFlowInstance(kernel.transport,binding.location,expectedDocumentId);
    let composer="";let recoveryNotice:string|undefined;
    try{const raw=localStorage.getItem(key);if(raw){const parsed:unknown=JSON.parse(raw);if(parsed&&typeof parsed==="object"&&typeof (parsed as {text?:unknown}).text==="string")composer=(parsed as {text:string}).text;else recoveryNotice="The saved local draft has an unsupported shape. Its original recovery data was retained.";}}catch{recoveryNotice="The saved local draft could not be read. Its original recovery data was retained.";}
    if(!live)return;
@@ -88,7 +89,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    if(recoveryNotice)setError(recoveryNotice);
   })().catch(reason=>{if(live)setError(String(reason));}).finally(()=>{if(live)setLoaded(true);});
   return()=>{live=false;};
- },[binding.id]);
+ },[binding.id,expectedDocumentId]);
  const change=(value:string)=>{setText(value);try{localStorage.setItem(key,JSON.stringify({text:value}));}catch{setError("Draft recovery storage is unavailable; save your writing to Central.");}};
  const flowRef=binding.ref??binding.location?.ref;
  const conversations=useFlowConversations(kernel.transport,project||undefined,flowRef,requests=>{
@@ -97,7 +98,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   const current=liveSelection.current.instance;
   if(!current||!binding.location)return;
   const landed=requests.flatMap(request=>request.recipients).some(recipient=>recipient.inclusion.entry_id&&!current.doc.entries.some(entry=>entry.id===recipient.inclusion.entry_id));
-  if(landed)void readFlowInstance(kernel.transport,binding.location).then(next=>{if(next.revision!==liveSelection.current.instance?.revision)setInstance(next);}).catch(()=>{/* the next poll retries */});
+  if(landed)void readFlowInstance(kernel.transport,binding.location,expectedDocumentId).then(next=>{if(next.revision!==liveSelection.current.instance?.revision)setInstance(next);}).catch(reason=>{if(reason instanceof FlowDocumentIdentityError)setError(reason.message);/* transient owner failures retain the existing next-poll retry */});
  });
  const writeEntries=async(nextInstance:FlowInstance,html:string)=>writeFlowInstance(kernel.transport,nextInstance.location,nextInstance.revision,html);
  /** A membership or upgrade change to the document, through the same
@@ -107,8 +108,8 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   setBusy(true);setError(undefined);
   try{
    const result=await writeEntries(instance,embedDocument(instance.html,next));
-   if(result.outcome==="conflict"){setConflict({current:await readFlowInstance(kernel.transport,instance.location)});return;}
-   setInstance(await readFlowInstance(kernel.transport,instance.location));
+   if(result.outcome==="conflict"){setConflict({current:await readFlowInstance(kernel.transport,instance.location,expectedDocumentId)});return;}
+   setInstance(await readFlowInstance(kernel.transport,instance.location,expectedDocumentId));
   }catch(reason){setError(String(reason));}finally{setBusy(false);}
  };
  const openEntry=(entryId:string)=>{
@@ -129,8 +130,8 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   for(let attempt=0;attempt<2;attempt++){
    const {html}=appendEntry(basis.html,answerText,{participant});
    const result=await writeEntries(basis,html);
-   if(result.outcome!=="conflict"){const next=await readFlowInstance(kernel.transport,basis.location);setInstance(next);return;}
-   basis=await readFlowInstance(kernel.transport,basis.location);setInstance(basis);
+   if(result.outcome!=="conflict"){const next=await readFlowInstance(kernel.transport,basis.location,expectedDocumentId);setInstance(next);return;}
+   basis=await readFlowInstance(kernel.transport,basis.location,expectedDocumentId);setInstance(basis);
   }
   setError(`The agent answered, but the document moved twice under this surface. The answer, unlost:\n\n${answerText}`);
  };
@@ -148,7 +149,9 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   if(!answer)return;
   seenBaseline.current={ref:answerWith.ref,top};
   awaitingAnswer.current=false;
-  if(answer.text.trim())void appendAgentResponse(answer.text);
+  if(answer.text.trim())void appendAgentResponse(answer.text).catch(reason=>{
+   setError(`The agent answered, but the document could not accept it. The answer, unlost:\n\n${answer.text}\n\n${String(reason)}`);
+  });
  },[encounterSession?.state.reading,answerWith?.ref]);
  const save=async()=>{
   if(!loaded||!instance||busy||!text.trim())return;
@@ -159,10 +162,10 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    const {html}=appendEntry(instance.html,text,plural?{participant:writerOf(instance.doc),relations,addressees:addressees.length?addressees:undefined,basisRevision:instance.doc.meta.revision}:undefined);
    const result=await writeEntries(instance,html);
    if(result.outcome==="conflict"){
-    const current=await readFlowInstance(kernel.transport,instance.location);
+    const current=await readFlowInstance(kernel.transport,instance.location,expectedDocumentId);
     setConflict({current});return;
    }
-   const next=await readFlowInstance(kernel.transport,instance.location);
+   const next=await readFlowInstance(kernel.transport,instance.location,expectedDocumentId);
    setInstance(next);setText("");setReplyTarget("");setRelationType("reply");setAddressees([]);
    try{localStorage.removeItem(key);}catch{setError("Saved. Local draft recovery storage could not be cleared.");}
   }catch(reason){setError(String(reason));}finally{setBusy(false);}
@@ -179,10 +182,10 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    const {html}=appendEntry(instance.html,asked);
    const result=await writeEntries(instance,html);
    if(result.outcome==="conflict"){
-    const current=await readFlowInstance(kernel.transport,instance.location);
+    const current=await readFlowInstance(kernel.transport,instance.location,expectedDocumentId);
     setConflict({current});return;
    }
-   const next=await readFlowInstance(kernel.transport,instance.location);
+   const next=await readFlowInstance(kernel.transport,instance.location,expectedDocumentId);
    setInstance(next);setText("");
    try{localStorage.removeItem(key);}catch{/* the ground holds the writing now */}
    const handle=encounterSession;
@@ -218,8 +221,8 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
      // Remember the body this agent now answers from, through the ordinary CAS.
      const bound=withSession(basis.doc,target.key as string,session);
      const written=await writeEntries(basis,embedDocument(basis.html,bound));
-     if(written.outcome==="conflict"){setConflict({current:await readFlowInstance(kernel.transport,basis.location)});return;}
-     basis=await readFlowInstance(kernel.transport,basis.location);setInstance(basis);
+     if(written.outcome==="conflict"){setConflict({current:await readFlowInstance(kernel.transport,basis.location,expectedDocumentId)});return;}
+     basis=await readFlowInstance(kernel.transport,basis.location,expectedDocumentId);setInstance(basis);
     }
     sessions.push({participant_key:target.key as string,agent_session:session});
    }
@@ -229,7 +232,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
     entry:{author_key:writer.key as string,html:textToHtml(text),at:new Date().toISOString(),relations,addressees,basis_revision:basis.doc.meta.revision},
     recipients:sessions,
    });
-   setInstance(await readFlowInstance(kernel.transport,basis.location));
+   setInstance(await readFlowInstance(kernel.transport,basis.location,expectedDocumentId));
    setText("");setReplyTarget("");setRelationType("reply");setAddressees([]);
    try{localStorage.removeItem(key);}catch{/* the owner holds the entry now */}
    void conversations.refresh();
@@ -238,7 +241,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  const rebase=async()=>{
   if(!instance)return;
   setBusy(true);setError(undefined);
-  try{const current=await readFlowInstance(kernel.transport,instance.location);setInstance(current);setConflict(undefined);}catch(reason){setError(String(reason));}finally{setBusy(false);}
+  try{const current=await readFlowInstance(kernel.transport,instance.location,expectedDocumentId);setInstance(current);setConflict(undefined);}catch(reason){setError(String(reason));}finally{setBusy(false);}
  };
  const keepDraft=()=>setConflict(undefined);
  const attach=()=>{
@@ -251,7 +254,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   const observationKey=registerPageObservation(selected,async()=>{
    const current=liveSelection.current;
    if(!input.current||current.instance?.revision!==revision||current.text!==basis.text)return false;
-   const saved=await readFlowInstance(kernel.transport,basis.instance!.location);
+   const saved=await readFlowInstance(kernel.transport,basis.instance!.location,expectedDocumentId);
    return saved.revision===revision;
   },enabled=>{
    const others=getContextCues().filter(c=>c.id!==observationKey);

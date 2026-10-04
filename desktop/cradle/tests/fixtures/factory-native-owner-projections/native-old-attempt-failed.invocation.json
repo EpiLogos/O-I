@@ -1,0 +1,66 @@
+{
+  "actualHumanWorldReply": false,
+  "agentBodyLaunched": false,
+  "central": {
+    "path": "/Users/admin/Library/Application Support/OI/products/central/5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042/bin/ctrl",
+    "reportedVersion": "ctrl 0.1.0 (2a604574774c)",
+    "sha256": "5d0c59c66f051646d17458c61fea41c2a796612f7a1ae3b19b298720bc433042"
+  },
+  "commands": [
+    {
+      "argv": [
+        "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "attempt",
+        "read",
+        "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/.tmpgKPqc9/factory-development.json",
+        "--json"
+      ],
+      "exitCode": 0,
+      "stderr": "attempt-reading.stderr",
+      "stdout": "attempt-reading.json",
+      "stdoutSha256": "d8fa1172ac975a1838c2a9f3414e1821270b7584578567f44f8ffca30025b17e"
+    },
+    {
+      "argv": [
+        "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "development",
+        "run",
+        "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/.tmpgKPqc9/factory-development.json",
+        "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+        "--json"
+      ],
+      "exitCode": 0,
+      "stderr": "run-reading.stderr",
+      "stdout": "run-reading.json",
+      "stdoutSha256": "79128c0a04585b24b693cc87ee389390f530ad5df61e9201efb4b7676d44636f"
+    },
+    {
+      "argv": [
+        "/Users/admin/Central/Work/Factory/target/debug/factory",
+        "development",
+        "build",
+        "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/.tmpgKPqc9/factory-development.json",
+        "run:01ARZ3NDEKTSV4RRFFQ69G5FBD",
+        "--json"
+      ],
+      "exitCode": 0,
+      "stderr": "build-snapshot.stderr",
+      "stdout": "build-snapshot.json",
+      "stdoutSha256": "9d517d29d76e2a77203dd8bc9f0a49bd3d5c4d53ef8b8041594213344a16d786"
+    }
+  ],
+  "contract": "factory.native-lifecycle-receiving-evidence/v1",
+  "credentialsIncluded": false,
+  "declaredSourceCut": "uncommitted-native-lifecycle-final-20261001",
+  "factory": {
+    "path": "/Users/admin/Central/Work/Factory/target/debug/factory",
+    "reportedVersion": "factory 0.1.0 (dd0765dd9596)",
+    "sha256": "dca7d00a34b4cbc565a508839d4eb80126a9c9f0aa21ca73c564625c0f580f06"
+  },
+  "label": "native-old-attempt-failed",
+  "modelInvoked": false,
+  "nativeCentralRoot": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/.tmpgKPqc9",
+  "ownerStatePath": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/.tmpgKPqc9/factory-development.json",
+  "ownerStateSha256": "938245a65e7afc367e4ef7a08ec69492d2b06c64318a9fda2975c4c9bc27a353",
+  "standing": "controlled isolated native Factory effects and genuine Central authority"
+}
