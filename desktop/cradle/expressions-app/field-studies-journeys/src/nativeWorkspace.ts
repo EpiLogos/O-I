@@ -372,8 +372,11 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   idle:async()=>{while(busy)await ownerIdle;},
   /** `changes` may be computed from the flushed native view (after the
    * working draft commits) — e.g. a reuse block naming committed refs. */
-  edit:async(input:Record<string,unknown>[]|((view:KernelConversion)=>Record<string,unknown>[]))=>{
+  edit:async(input:Record<string,unknown>[]|((view:KernelConversion)=>Record<string,unknown>[]),mayAdopt?:()=>boolean)=>{
    if(Array.isArray(input)&&!input.length)return;
+   // A queued focus may report its own successful result when mutate releases
+   // the owner. Keep this edit's recipient refusal independently of that notice.
+   let adoptionRefusal:Error|undefined;
    const succeeded=await mutate(async()=>{
     let current=work.state?.view;
     if(!current)throw new Error('Open a native Expression before editing its connections.');
@@ -381,12 +384,17 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
     current=await flushDraft(current);
     const changes=typeof input==='function'?input(current):input;
     if(!changes.length)return;
+    if(mayAdopt&&!mayAdopt()){adoptionRefusal=new Error('The selected recipient changed before the native edit was sent. No edit was committed.');throw adoptionRefusal;}
     const view=await work.editConnections(changes);
+    // A commit and local adoption are different operations. Preserve the real
+    // native successor even when scene/selection/private intent changed while
+    // its genuine ACK was in flight; never load it over that changed recipient.
     if(host.version()!==version)throw new Error('The edit was saved natively; newer local edits remain in your working draft.');
+    if(mayAdopt&&!mayAdopt()){adoptionRefusal=new Error('The edit was saved natively; a changed selected recipient remains in your working draft. Inspect the saved native successor before adopting it.');throw adoptionRefusal;}
     restoreGeneration++;selections.cancel();
     host.load(view,true);update();
    });
-   if(!succeeded)throw new Error(notice||'The native edit was not acknowledged.');
+   if(!succeeded)throw adoptionRefusal??new Error(notice||'The native edit was not acknowledged.');
   },
   duplicateOccurrence:async(sceneId:string,entityId:string):Promise<void>=>{
    const succeeded=await mutate(async()=>{

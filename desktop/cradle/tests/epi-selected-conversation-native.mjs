@@ -292,6 +292,117 @@ async function retainInitialReceivingFailure(basis){
  report.initial_receiving_failure={path:name,bytes:Buffer.byteLength(bytes),sha256:hash(bytes)};
  try{await retainInitialResponsePhases();}catch(error){report.initial_current_response_phase_diagnostic_error=shortError(error);}
 }
+// This final protocol counterproof follows the original positive UI receiving
+// assertions. It deliberately ends in a genuine selection release; it claims
+// neither continuing UI admission nor a fresh answer. The exact controlled
+// native Source is restored and no Expression operation writes its Document.
+async function qualifyIdentityReadGeneration(){
+ const evidence={schema:'epi.actual-identity-read-generation/v1',passed:false,operations:[],
+  limits:['Real parent relay + unchanged native replies, controlled Source CAS only',
+   'No provider question, body/voice effect, continuing UI admission or installed/H acceptance']};
+ const beforeDocument=(await inspect()).document;
+ let req=2**40;
+ const instrumentRequest=(request,requestId=++req)=>frame.evaluate(({request,req})=>new Promise((resolve,reject)=>{
+  const listener=event=>{const d=event.data;if(event.source!==parent||d?.v!==1||d.kind!=='nara-instrument-result'||d.req!==req)return;
+   clearTimeout(timer);removeEventListener('message',listener);d.ok===true?resolve(d.data):reject(Error(d.error||'Actual Nara owner refused'));
+  };
+  const timer=setTimeout(()=>{removeEventListener('message',listener);reject(Error('Actual instrument request did not settle in its original90s channel aperture'));},90000);
+  addEventListener('message',listener);parent.postMessage({v:1,kind:'nara-instrument',req,request},'*');
+ }),{request,req:requestId});
+ const identityOp=async request=>{
+  const body=JSON.stringify({op:'nara_identity',request});assert.ok(Buffer.byteLength(body)<=2*1024*1024);
+  const bytes=await responseBytes(await fetch(cfg.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body}),16*1024*1024);
+  const value=JSON.parse(bytes);assert.equal(value.ok,true);assert.equal(value.outcome?.result,'nara_identity');
+  evidence.operations.push({operation:request.operation,request_sha256:hash(body),response_sha256:hash(bytes),response_bytes:bytes.length});return value.outcome.data;
+ };
+ const source=await identityOp({operation:'open',source_ref:cfg.identity_source_ref});
+ assert.match(source.reading.profile.person_ref,/^controlled:/,'Only the original controlled native profile may enter this CAS counterproof');
+ assert.equal(source.reading.person_ref,cfg.person_ref);assert.equal(source.source.source_ref,cfg.identity_source_ref);
+ const admitted=await frame.evaluate(()=>window.__EPI_INITIAL_CHANNEL_PHASES__().rows.findLast(row=>row.phase==='reply-received-by-application'&&row.schema==='oi.nara-instrument-state/v1'&&row.ok));
+ assert.ok(admitted);assert.equal(admitted.identity_source_ref,source.source.source_ref);assert.equal(admitted.identity_source_revision,source.source.revision);assert.equal(admitted.identity_input_revision,source.reading.input_revision);assert.equal(admitted.person_ref,source.reading.person_ref);
+ const panel=frame.locator('#nara-instrument');if(await panel.isVisible())await panel.press('Escape');
+ assert.equal(await panel.isVisible(),false,'Close the actual conversation before this controlled parent authority counterproof');
+ await frame.evaluate(()=>{window.__EPI_HELD_READ_RELEASES__=[];addEventListener('message',event=>{
+  if(event.source===parent&&event.data?.v===1&&event.data.kind==='oi-nara-identity-released'){
+   if(window.__EPI_HELD_READ_RELEASES__.length<16)window.__EPI_HELD_READ_RELEASES__.push(Date.now());
+  }
+ });});
+ let release,observed,rejectObserved,settledResolve,claimed=false,transportFailure,changedSource,primary;
+ const released=new Promise(resolve=>{release=resolve;}),seen=new Promise((resolve,reject)=>{observed=resolve;rejectObserved=reject;});void seen.catch(()=>{});
+ const settled=new Promise(resolve=>{settledResolve=resolve;});
+ const bounded=async(promise,label)=>{let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' in30s')),30000);})]);}finally{clearTimeout(timer);}};
+ const handler=async route=>{
+  let request;const raw=route.request().postData();try{request=raw&&JSON.parse(raw);}catch{}
+  if(claimed||request?.op!=='nara_identity'||request.request?.operation!=='open'||request.request.source_ref!==source.source.source_ref){await route.continue();return;}
+  claimed=true;
+  try{
+   assert.deepEqual(request,{op:'nara_identity',request:{operation:'open',source_ref:source.source.source_ref}});assert.ok(raw&&Buffer.byteLength(raw)<=64*1024);
+   const response=await route.fetch({timeout:30000});assert.equal(response.ok(),true);
+   const declared=response.headers()['content-length'];assert.match(declared??'',/^(0|[1-9][0-9]*)$/);assert.ok(Number(declared)<=16*1024*1024);
+   const bytes=await response.body();assert.equal(bytes.length,Number(declared));const value=JSON.parse(bytes);
+   assert.equal(value.ok,true);assert.equal(value.outcome?.result,'nara_identity');assert.deepEqual(value.outcome.data,source);
+   const request_file='identity-generation-old-open.request.json',response_file='identity-generation-old-open.response.json';
+   await writeFile(resolve(cfg.output,request_file),raw);await writeFile(resolve(cfg.output,response_file),bytes);
+   evidence.held={request_file,response_file,request_sha256:hash(raw),response_sha256:hash(bytes),response_bytes:bytes.length,held_at_unix_ms:Date.now(),unchanged_actual_response:true};
+   observed();await released;await route.fulfill({response});
+  }catch(error){transportFailure=error;rejectObserved(error);try{await route.abort();}catch{}}
+  finally{settledResolve();}
+ };
+ let observingOldOpen=true;const oldOpenRequests=[];
+ const observeOldOpen=request=>{
+  if(!observingOldOpen||request.method()!=='POST'||request.url()!==cfg.bridge+'/op')return;
+  let value;try{value=request.postDataJSON();}catch{return;}
+  if(value?.op==='nara_identity'&&value.request?.operation==='open'&&value.request.source_ref===source.source.source_ref)
+   oldOpenRequests.push({sha256:hash(request.postData()),at:Date.now()});
+ };
+ page.on('request',observeOldOpen);await page.route(cfg.bridge+'/op',handler);
+ let oldRead,oldReadSettled=false;const oldReadReq=++req;
+ try{
+  // The production channel owns this real request. Retain its promise without
+  // blocking the later actual native Source correction/selection transaction.
+  oldRead=instrumentRequest({operation:'identity',request:{operation:'open',source_ref:source.source.source_ref}},oldReadReq);void oldRead.then(()=>{oldReadSettled=true;},()=>{oldReadSettled=true;});
+  await bounded(seen,'The actual old native Open was not held');
+  const ownerRequest=await page.evaluate(req=>window.__EPI_INITIAL_CHANNEL_PHASES__().rows.filter(row=>row.phase==='identity-or-conversation-request-received-by-host'&&row.req===req),oldReadReq);
+  assert.equal(ownerRequest.length,1);assert.equal(ownerRequest[0].identity_operation,'open');assert.equal(ownerRequest[0].source_ref,source.source.source_ref);
+  assert.equal(oldOpenRequests.length,1,'Exactly this synchronous production identity dispatch must own the single held native Open');
+  assert.equal(oldOpenRequests[0].sha256,evidence.held.request_sha256);assert.equal(oldReadSettled,false);
+  evidence.held.channel_request={kind:'nara-instrument',req:oldReadReq,observed:ownerRequest[0],native_request:oldOpenRequests[0]};
+  observingOldOpen=false;
+  const profile=structuredClone(source.reading.profile);profile.name+=' · controlled held-read Source successor';
+  changedSource=await identityOp({operation:'save',profile,source_ref:source.source.source_ref,expected_revision:source.source.revision});
+  assert.notEqual(changedSource.source.revision,source.source.revision);assert.deepEqual(changedSource.reading.profile,profile);
+  const selected=await instrumentRequest({operation:'select_identity',source:changedSource.source,input_revision:changedSource.reading.input_revision});
+  assert.equal(selected.schema,'oi.nara-instrument-state/v1');assert.deepEqual(selected.identity.source,changedSource.source);
+  assert.deepEqual(selected.identity.reading.profile,profile);assert.equal(selected.identity.reading.input_revision,changedSource.reading.input_revision);
+  assert.equal(selected.identity.reading.person_ref,source.reading.person_ref);assert.equal(selected.identity.reading.nara_ref,source.reading.nara_ref);
+  const successor={source:selected.identity.source,input_revision:selected.identity.reading.input_revision,person_ref:selected.identity.reading.person_ref,nara_ref:selected.identity.reading.nara_ref};
+  const releasesBefore=await frame.evaluate(()=>[...window.__EPI_HELD_READ_RELEASES__]);assert.equal(oldReadSettled,false);
+  release();const old=await bounded(oldRead,'The unchanged held Open did not reach its actual requester');await bounded(settled,'Held native response did not settle');
+  assert.deepEqual(old,source);
+  assert.deepEqual(await frame.evaluate(()=>[...window.__EPI_HELD_READ_RELEASES__]),releasesBefore,'No identity-release event may arise from that obsolete read');
+  assert.deepEqual((await inspect()).document,beforeDocument,'Source/read selection lifecycle must preserve every native Expression value');
+  // A genuinely current request still releases on an actual current Source
+  // correction. Restore through the native CAS, never by replacing a reply.
+  const restored=await identityOp({operation:'save',profile:source.reading.profile,source_ref:changedSource.source.source_ref,expected_revision:changedSource.source.revision});
+  assert.deepEqual(restored,source);changedSource=null;
+  const currentRead=await instrumentRequest({operation:'identity',request:{operation:'open',source_ref:source.source.source_ref}});
+  assert.deepEqual(currentRead,source);
+  assert.equal((await frame.evaluate(()=>window.__EPI_HELD_READ_RELEASES__.length)),releasesBefore.length+1);
+  evidence.before={source:source.source,input_revision:source.reading.input_revision,person_ref:source.reading.person_ref,nara_ref:source.reading.nara_ref};evidence.acknowledged_successor=successor;evidence.genuine_current_source_release=true;
+ }catch(error){primary=error;}finally{
+  const failures=primary?[primary]:[];observingOldOpen=false;page.off('request',observeOldOpen);release();
+  try{if(claimed)await bounded(settled,'Owned held response cleanup did not settle');if(transportFailure)throw transportFailure;}catch(error){failures.push(error);}
+  try{await page.unroute(cfg.bridge+'/op',handler);}catch(error){failures.push(error);}
+  try{if(oldRead)await bounded(oldRead,'Owned instrument Open cleanup did not settle');}catch(error){failures.push(error);}
+  try{if(changedSource){const restored=await identityOp({operation:'save',profile:source.reading.profile,source_ref:changedSource.source.source_ref,expected_revision:changedSource.source.revision});assert.deepEqual(restored,source);}}catch(error){failures.push(error);}
+  try{assert.deepEqual(await identityOp({operation:'open',source_ref:source.source.source_ref}),source);assert.deepEqual((await inspect()).document,beforeDocument);}catch(error){failures.push(error);}
+  evidence.passed=failures.length===0;evidence.errors=failures.map(shortError);
+  const raw=JSON.stringify(evidence,null,2)+'\n';assert.ok(Buffer.byteLength(raw)<=64*1024);await writeFile(resolve(cfg.output,'identity-read-generation.json'),raw);
+  report.identity_read_generation={passed:evidence.passed,file:'identity-read-generation.json',bytes:Buffer.byteLength(raw),sha256:hash(raw)};
+  if(failures.length)throw new AggregateError(failures,'Actual identity read generation counterproof or owned cleanup failed',primary?{cause:primary}:undefined);
+ }
+}
+
 async function responseBytes(response,cap=64*1024*1024){assert.ok(response.ok,'Actual HTTP '+response.status);const reader=response.body.getReader(),parts=[];let size=0;try{for(;;){const r=await reader.read();if(r.done)break;size+=r.value.byteLength;if(size>cap)throw Error('Actual native reply exceeds its receiving bound');parts.push(Buffer.from(r.value));}}catch(e){await reader.cancel();throw e;}finally{reader.releaseLock();}return Buffer.concat(parts);}
 async function native(request){
  const body=JSON.stringify({op:'expression',request});const bytes=await responseBytes(await fetch(cfg.bridge+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body}));const value=JSON.parse(bytes);
@@ -807,6 +918,7 @@ try{
   report.checks.push('Actual '+cfg.selection_case+' preserved native source/person/occasion/material and refused ordinary conversation');
  }
  assert.ok(!report.requests.slice(requestStart).some(v=>(v.op==='encounter'&&['prompt','draft'].includes(v.action))||['send','epii_delegate'].includes(v.operation)),'Selection qualification must not send a model question'); }
+ if(cfg.selection_case==='positive')await qualifyIdentityReadGeneration();
  assert.deepEqual(errors,[]);if(selectionOnly){await qualifyHostedDurable('after actual selection outcome');await qualifyHostedOwner();report.portable_custody_after=requalifyPortableCurrentCustody(hostedSourceExpectation,hostedSourceQualification);}report.passed=true;
 }catch(error){report.failure=String(error);
  if(frame)try{report.failed_nara_receiving=await captureNaraReceiving('failed');}catch(diagnostic){report.failed_nara_receiving_diagnostic=shortError(diagnostic);}

@@ -21,8 +21,8 @@ function slice(s, id, key = 'targets') { const p = partition(s, id); assert.equa
 function personalFixed(s) { return { person: s.record.person_ref, nara: s.record.nara_ref, identity: s.record.identity_source, input: s.record.identity_input_revision, event: s.record.world.event_ref, world: s.record.world, identity_reading: s.current.reading.identity, transit: s.current.reading.transit, baseline: s.current.reading.q_identity_transit, activity: s.current.reading.q_activity, composed: s.current.reading.q_composed, activity_status: s.current.reading.activity_status }; }
 function currentField(rows, s) { const actual = rows.filter(row => row.lease === s.native.lease && row.field.generation===s.native.native.presented.generation && row.field.samples_elapsed===s.native.native.presented.samples_elapsed && row.field.event_ref===s.native.native.event_ref && row.field.subject_ref===s.native.native.subject_ref && JSON.stringify(row.field.clock)===JSON.stringify(s.native.presented_clock)).at(-1); assert.ok(actual, 'The rendered cursor must identify an actual native frame'); return actual; }
 function sourceAt(rows, lease, field) { const actual = rows.filter(row => row.lease === lease && row.field.generation === field.generation && row.field.samples_elapsed === field.samples_elapsed).at(-1); assert.ok(actual, 'Full actual native Inspect at this admission cursor is required'); return actual.sources; }
-function axisPrediction(before, axis, phase) { const clock = copy(before.clock); clock[phaseNames[axis]] = { ...phase, double_cover_half_degrees: Number((BigInt(phase.turns) % 2n + 2n) % 2n) * 720 + phase.half_degrees }; clock.generation = String(uint(clock.generation) + 1n); clock.rate_remainders[axis] = '0'; return clock; }
-function predictAllTargets(samples, field, clock) {
+export function axisPrediction(before, axis, phase) { const clock = copy(before.clock); clock[phaseNames[axis]] = { ...phase, double_cover_half_degrees: Number((BigInt(phase.turns) % 2n + 2n) % 2n) * 720 + phase.half_degrees }; clock.generation = String(uint(clock.generation) + 1n); clock.rate_remainders[axis] = '0'; return clock; }
+export function predictAllTargets(samples, field, clock) {
     assert.equal(samples.length, 4096);
     assert.equal(field.amplitudes_metres.length, 9);
     assert.ok(Number.isFinite(field.presentation_units_per_metre) && field.presentation_units_per_metre > 0);
@@ -41,7 +41,7 @@ function predictTorus(before, clock, axis) {
     assert.notEqual(Math.sin(next - old), 0, 'A non-degenerate inscription intervention is required');
     return null;
 }
-async function torusReceiving({ frame, snapshot, nativeFrames, artifact, record, label }) {
+export async function torusReceiving({ frame, snapshot, nativeFrames, artifact, record, label }) {
     await frame.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
     const s = await snapshot(label, true), targets = await frame.evaluate(() => { const t = window.__FIELD_STUDIES__.nativeTargets(); return t ? { native: t.native, scale: t.presentation_units_per_metre, admitted_a: Array.from(t.admitted_a), target_a: Array.from(t.target_a), target_b: Array.from(t.target_b) } : null; });
     assert.ok(targets?.native);

@@ -1550,6 +1550,26 @@ async function playEpiWorld(){
  }
  return controller;
 }
+/** World controls operate the same occasion without making a Play journey
+ * from the selected personal/branch recipient. Actual cosmic Play remains
+ * bound to its complete torus partition; this quiet result reaches it later. */
+async function applyEpiWorldControl(command:import('./native-field/controller').QuietWorldCommand){
+ const record=epiWorld,controller=nativeField?.controller,workspace=nativeWorkspace;
+ if(!record||!controller||!workspace)throw Error('Open the saved Epi world first.');
+ if(scene().id===record.receiving.scene_ref){const actual=await playEpiWorld();if(command.operation==='set-axis')await actual.setAxis(command.axis,command.phase);else if(command.operation==='set-damping')await actual.setDamping(command.per_second);else{await actual.m1Advance(command.ticks);await retainEpiNativeReading();}return;}
+ const basis=epiSceneAuthoringBasis(),selectedBasis=JSON.stringify([selected,nativeSelectedRelation]),currentKey=personalCurrentKey(epiPersonalCurrentAdmission?.current??null),admission=epiPersonalCurrentAdmission,intent=epiPersonalIntentGeneration,identity=epiIdentity,privatePresentation=privateEvidencePresentation,privateField=privateEvidenceField,version=store.revision;
+ const immutable=JSON.stringify([record.world,record.receiving,record.identity_source,record.identity_input_revision,record.source_basis]),continuing=JSON.stringify([record.native_readback,record.continuation_start,record.current_material_policy]);
+ const requireRecipient=()=>{const r=epiWorld;if(!r||JSON.stringify(epiSceneAuthoringBasis())!==JSON.stringify(basis)||JSON.stringify([selected,nativeSelectedRelation])!==selectedBasis||epiPersonalCurrentAdmission!==admission||epiPersonalIntentGeneration!==intent||epiIdentity!==identity||privateEvidencePresentation!==privatePresentation||privateEvidenceField!==privateField||personalCurrentKey(epiPersonalCurrentAdmission?.current??null)!==currentKey||JSON.stringify([r.world,r.receiving,r.identity_source,r.identity_input_revision,r.source_basis])!==immutable)throw Error('The selected body, person, private current or occasion changed while its world control was being acknowledged. No old recipient was adopted.');};
+ const requireCurrent=()=>{requireRecipient();if(store.revision!==version||JSON.stringify([epiWorld!.native_readback,epiWorld!.continuation_start,epiWorld!.current_material_policy])!==continuing)throw Error('The world continuation or local authored draft changed before its native control could be adopted.');};
+ const requireAdopted=(held:EpiWorldRecord)=>{requireRecipient();const view=workspace.nativeView();if(store.revision!==version+1||!view||!sameAnswerValue(readEpiWorldRecord(view.document as unknown as ExpressionDocument),held)||!sameAnswerValue(epiWorld,held))throw Error('The control was committed natively, but this changed local recipient did not acknowledge its exact saved successor. Inspect the native world before adopting it.');};
+ requireCurrent();
+ const received=await controller.operateWorldQuiet({world:{instance_ref:record.world.instance_ref,subject_ref:record.person_ref,...(record.continuation_start?{start:record.continuation_start}:{}),...(record.current_material_policy?{material:record.current_material_policy.material}:{})},snapshotPurpose:'retained-occasion',skySnapshot:record.world.sky as unknown as import('./native-field/controller').NativeSkySnapshot},command,()=>{try{requireCurrent();return true;}catch{return false;}});
+ requireCurrent();
+ if(received.closed.lease!==received.lease||received.closed.closed!==true)throw Error('The quiet world owner has not acknowledged its exact release.');
+ requireEpiNativeReadback(record,received.influence.native_readback,false);
+ await retainEpiNativeReading(false,{record,native:received.influence.native_readback,material:received.influence.material,requireCurrent,requireAdopted});
+ needsFrame=true;epiEncounter?.refresh();
+}
 /** Read the original owners on this iframe's current basis; never admit or
  * restore a reading as a side effect of inspection. */
 async function inspectEpiReceiving():Promise<EpiReceivingInspection>{
@@ -1733,13 +1753,13 @@ epiEncounter=installEpiWorldEncounter({
   if(reading?.lease){if(!['following','held'].includes(reading.status)||world?.instance_ref!==record.world.instance_ref||reading.native?.event_ref!==record.world.event_ref||reading.native?.subject_ref!==record.person_ref||!reading.native?.available)return null;try{return nativeSceneAxes(reading.presented_clock);}catch{return null;}}
   try{const readback=requireEpiNativeReadback(record,record.native_readback??record.world.native_readback,record.native_readback!==undefined);return nativeSceneAxes(readback.continuous_clock);}catch{return null;}
  },
- setAxis:async(axis,phase)=>{const admitted=nativeAxisRequest(axis,phase);const controller=await playEpiWorld();await controller.setAxis(admitted.axis,admitted.phase);needsFrame=true;epiEncounter?.refresh();},
+ setAxis:async(axis,phase)=>{const admitted=nativeAxisRequest(axis,phase);await applyEpiWorldControl({operation:'set-axis',...admitted});needsFrame=true;epiEncounter?.refresh();},
  form:()=>naraInstrument.open('form'),
- step:async()=>{await (await playEpiWorld()).m1Advance(1);await retainEpiNativeReading();},
+ step:async()=>{await applyEpiWorldControl({operation:'m1-advance',ticks:1});},
  damping:()=>{const i=nativeField?.controller.reading.instrument?.influence,r=epiWorld;return r&&i?.instance_ref===r.world.instance_ref&&i.event_ref===r.world.event_ref&&i.subject_ref===r.person_ref?i.material.damping_per_second:r?.current_material_policy?.material.damping_per_second??(r?epiOpeningMaterial(r).damping_per_second:0);},
  // The native edit keeps this lease alive. Save/departure retain its policy
  // through the existing acknowledged continuation path, never an auto strike.
- setDamping:async(perSecond)=>{if(!Number.isFinite(perSecond)||perSecond<0||perSecond>1e6)throw Error('Damping must be finite and in 0..1000000 per second');await (await playEpiWorld()).setDamping(perSecond);epiEncounter?.refresh();},
+ setDamping:async(perSecond)=>{if(!Number.isFinite(perSecond)||perSecond<0||perSecond>1e6)throw Error('Damping must be finite and in 0..1000000 per second');await applyEpiWorldControl({operation:'set-damping',per_second:perSecond});epiEncounter?.refresh();},
  sound:enabled=>{if(!nativeField||nativeField.controller.reading.status!=='following')throw Error('Advance the field once to open its native voices.');nativeField.controller.setMuted(!enabled);},
  quiet:enabled=>{fieldPaused=enabled;needsFrame=true;renderAll();},quietState:()=>fieldPaused,
  save:async()=>{const basis=epiSceneAuthoringBasis();if(epiDurationCommit)await epiDurationCommit;await prepareEpiSceneAuthoring(basis);await nativeWorkspace!.idle();requireEpiSceneAuthoring(basis);if(propertyTake)finishPropertyTake();const saved=await nativeWorkspace!.saveFile('Work/O-I/desktop/cradle/material/expressive-material/expression',`epi-world-${epiWorld!.world.instance_ref.slice('expression:epi-'.length)}.expression.json`);const state=nativeWorkspace!.inspect();if(!saved||!state.file)throw Error(state.notice||'The native material file was not acknowledged.');epiEncounter?.status('Saved and read back through the native material owner.');},
@@ -1761,10 +1781,11 @@ epiEncounter=installEpiWorldEncounter({
   await retainEpiNativeReading();
  },
 });
-async function retainEpiNativeReading(resume=true){
- const record=epiWorld,native=nativeField?.controller.reading.instrument?.influence?.native_readback;
+async function retainEpiNativeReading(resume=true,quiet?:{record:EpiWorldRecord;native:Record<string,unknown>;material:unknown;requireCurrent:()=>void;requireAdopted:(held:EpiWorldRecord)=>void}){
+ const record=quiet?.record??epiWorld,native=quiet?.native??nativeField?.controller.reading.instrument?.influence?.native_readback;
  if(!record||!native)return;
- const material=nativeField!.controller.reading.instrument!.influence.material;
+ const material=quiet?.material??nativeField!.controller.reading.instrument!.influence.material;
+ quiet?.requireCurrent();
  const key=JSON.stringify([native,material]);if(key===epiNativeRevision)return;
  // The process, current glyph and qualified reading advance together through
  // the existing native Expression CAS. Every other entity keeps its subject.
@@ -1774,10 +1795,12 @@ async function retainEpiNativeReading(resume=true){
  const continuation=(native as Record<string,unknown>).continuation_start;if(!continuation||typeof continuation!=='object'||Array.isArray(continuation))throw Error('The native owner omitted the actual continuation recipe.');
  const held={...record,native_readback:structuredClone(native) as EpiWorldRecord['native_readback'],continuation_start:structuredClone(continuation) as Record<string,unknown>};
  delete held.current_material_policy;Object.assign(held,epiMaterialContinuation(record,material));
- const controller=nativeField!.controller;await controller.release(false);
+ const controller=nativeField!.controller;if(!quiet)await controller.release(false);
  if(controller.reading.lifetime.close_error||controller.reading.reason?.startsWith('native release acknowledgement unknown:'))throw Error(controller.reading.reason??'The native close was not acknowledged.');
  const glyph=process.hexagram_glyph||process.triplet;if(!glyph)throw Error('The current native form has no actual symbolic material.');
  await nativeWorkspace!.edit(current=>{
+  quiet?.requireCurrent();
+  if(quiet&&!sameAnswerValue(readEpiWorldRecord(current.document as unknown as ExpressionDocument),record))throw Error('The native world changed while the working draft was flushed. No quiet continuation was adopted.');
   const changes:Record<string,unknown>[]=[];
   for(const suffix of ['current-form','current-form-hinge']){
    const ref=`${record.world.instance_ref}:entity:world-${suffix}`,entity=current.document.entities[ref];if(!entity?.subject)throw Error('The native form occurrence is absent.');
@@ -1797,7 +1820,8 @@ async function retainEpiNativeReading(resume=true){
   for(const step of formBody.sequence.steps)step.text=glyph;
   changes.push({change:'scene_material_set',scene_ref:record.receiving.scene_ref,presentation:{...presentation,scene:nativeScene,saved:epiAuthoredSceneSnapshot(nativeScene)}});
   return changes;
- });
+ },quiet?()=>{try{quiet.requireCurrent();return true;}catch{return false;}}:undefined);
+ quiet?.requireAdopted(held);
  epiWorld=held;epiNativeRevision=key;epiReceptionRevision++;needsFrame=true;epiEncounter?.refresh();if(resume)await playEpiWorld();
 }
 Object.assign(window.__FIELD_STUDIES__,{epiWorld:()=>epiWorld,epiCurrent:()=>epiCurrent,enterEpiWorld,epiSource:(ref?:string)=>epiEncounter?.source(ref)});

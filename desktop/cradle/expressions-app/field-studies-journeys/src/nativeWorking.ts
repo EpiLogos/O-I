@@ -245,6 +245,10 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
   const scenes=Object.fromEntries(Object.entries(view.bindings).map(([id,b])=>[b.scene_ref,id]));
   const pages=Object.fromEntries(Object.values(view.bindings).map(b=>[b.scene_ref,b.page]));
   value.view=kernelDocumentToJourney(view.document,{identity:{expression:journey.id,scenes,entities:view.entity_ids},pages});
+  // Re-validating the same acknowledged carrier is not an authored edit.
+  // Keep its held recency metadata; native projection normally initializes
+  // this field only when constructing a genuinely new Journey.
+  if(typeof view.journey.updatedAt==='string')value.view.journey.updatedAt=view.journey.updatedAt;
  }
  if(value.file){
   artifact({document:value.view?.document,file:value.file},value.file.expression_ref);

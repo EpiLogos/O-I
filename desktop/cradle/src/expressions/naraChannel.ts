@@ -247,10 +247,14 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
       return validateCoordinateExpression(response.outcome.data);
     }
     if (r.operation === 'identity') {
+      // A completed read may invalidate only the selection that owned its
+      // request. An older Open must not release a later acknowledged choice.
+      const selectionAtRequest = selectionGeneration, identityAtRequest = currentIdentity()?.selection_ref;
       const result = await naraIdentity(transport, r.request); requireEpoch();
       if (r.request.operation === 'calculate' && result.reading) remember(result.reading);
       const held = currentIdentity();
-      if (result.reading && held?.reading.person_ref === result.reading.person_ref
+      if (selectionGeneration === selectionAtRequest && held?.selection_ref === identityAtRequest
+          && result.reading && held?.reading.person_ref === result.reading.person_ref
           && (held.reading.input_revision !== result.reading.input_revision
               || (result.source && held.source.revision !== result.source.revision))) {
         release();

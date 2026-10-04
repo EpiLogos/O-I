@@ -1119,6 +1119,7 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
     let mut first = None;
     let mut last_act = None;
     for block in 1..=180u64 {
+        let prefix_started = std::time::Instant::now();
         let mut recorded = full.clone();
         let events: Vec<_> = all
             .iter()
@@ -1130,6 +1131,12 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
             .map(|e| EventPage { events: e.to_vec() })
             .collect();
         recorded = recorded.seal().unwrap();
+        if block == 1 || block % 30 == 0 {
+            eprintln!(
+                "native-history-cost path=act_perform stage=prefix block={block}/180 elapsed_ms={}",
+                prefix_started.elapsed().as_millis()
+            );
+        }
         let block_started = std::time::Instant::now();
         if block == 1 || block % 30 == 0 {
             eprintln!(
@@ -1145,16 +1152,28 @@ fn actual_fifteen_minute_act_cas_crash_reopen_undo_redo_and_continue_retains_450
             )
             .unwrap();
         }
+        if block == 1 || block % 30 == 0 {
+            eprintln!("native-history-cost path=act_perform stage=interrupt block={block}/180 cumulative_ms={}", block_started.elapsed().as_millis());
+        }
         let expected_act_revision = if block == 1 {
             None
         } else {
             Some(kernel_world(&mut kernel,json!({"operation":"act_retained_inspect","act_ref":"act:fifteen-minute-native"})).unwrap()["act"]["revision"].as_u64().unwrap())
         };
+        if block == 1 || block % 30 == 0 {
+            eprintln!("native-history-cost path=act_perform stage=retained_inspect block={block}/180 cumulative_ms={}", block_started.elapsed().as_millis());
+        }
         let revision = document(&mut kernel)["revision"].as_u64().unwrap();
+        if block == 1 || block % 30 == 0 {
+            eprintln!("native-history-cost path=act_perform stage=document_inspect block={block}/180 cumulative_ms={}", block_started.elapsed().as_millis());
+        }
         let result = kernel_world(&mut kernel,json!({"operation":"act_retained_perform","act_ref":"act:fifteen-minute-native",
             "expression_ref":"expression:retained-current","expected_revision":revision,"expected_act_revision":expected_act_revision,
             "summary":"Retain complete physical performance","actor":"agent:retained-performance-test",
             "changes":[{"change":"scene_performance_set","scene_ref":"expression:retained-current:scene:main","performance":recorded}]})).unwrap();
+        if block == 1 || block % 30 == 0 {
+            eprintln!("native-history-cost path=act_perform stage=retained_perform block={block}/180 cumulative_ms={}", block_started.elapsed().as_millis());
+        }
         assert_eq!(result["state"], "act_running");
         assert_eq!(
             result["act"]["sequence"].as_array().unwrap().len(),

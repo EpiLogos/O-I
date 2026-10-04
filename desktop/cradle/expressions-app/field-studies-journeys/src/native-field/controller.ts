@@ -20,6 +20,17 @@ export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
 export type NativeSky='none'|'now'|{epoch:string};
 export type NativeSkySnapshot=Readonly<{schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown}>;
 export type NativeWorldInput=Readonly<{instance_ref:string;subject_ref:string;start?:Readonly<Record<string,unknown>>;material?:Readonly<NativeSceneMaterial>}>;
+export type QuietWorldCommand=
+ |Readonly<{operation:'set-axis';axis:0|1;phase:NativeAxisPhase}>
+ |Readonly<{operation:'set-damping';per_second:number}>
+ |Readonly<{operation:'m1-advance';ticks:number}>;
+export interface QuietWorldControlReceipt {
+ readonly schema:'oi.quiet-world-control-receipt/v1';readonly lease:string;
+ readonly command:QuietWorldCommand;readonly request_id:string;
+ readonly source:unknown;readonly field:unknown;readonly influence:any;
+ readonly closed:{schema:'oi.native-expression-closed/v1';lease:string;closed:true};
+ readonly standing:'native determinant acknowledged and owner closed; GPU/audio reception not claimed';
+}
 export type EntityTargetBindings=(input:Readonly<{world:unknown;partition:unknown}>)=>NativeTargetMap|Promise<NativeTargetMap>;
 /** Presentation, not source: the M1 torus (|x|,|y| ≤ 25/9 m at QL's declared
  * 1 m per torus unit) spans ±333 engine units — 0.83 of the 400-unit stage
@@ -40,6 +51,7 @@ const TRANSIENT=/owner busy|held before the event|presentation capacity|requires
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
  beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
 class NativeCloseError extends Error{}
+class QuietWorldBasisChanged extends Error{}
 const sceneObject=(v:any)=>!!v&&typeof v==='object'&&!Array.isArray(v);
 const sceneNeed=(ok:unknown,reason:string):void=>{if(!ok)throw new Error(`native scene reading: ${reason}`);};
 const sceneInteger=(v:any,min:number,max:number)=>Number.isInteger(v)&&v>=min&&v<=max;
@@ -169,6 +181,8 @@ type NativeExchangeReceipt={serial:number;epoch:number;session:InstrumentSession
  */
 export class NativeFieldController {
  private session:InstrumentSession|null=null;private projection:NativeProjection|null=null;
+ private quietPending=false;
+ private lastQuiet:Readonly<{schema:'oi.quiet-world-control-reading/v1';operation:QuietWorldCommand['operation'];lease:string;instance_ref:string;event_ref:string;subject_ref:string;request_id:string;generation:string;samples_elapsed:string;closed:true;standing:QuietWorldControlReceipt['standing']}>|null=null;
  private context:AudioContext|null=null;private opened:any=null;private epoch=0;private dead=false;
  private recovery:(()=>void)|null=null;private checkpoint:any=null;private contextLost=false;
  private pending:Promise<unknown>=Promise.resolve();private muted=true;private serialDepth=0;
@@ -324,7 +338,8 @@ export class NativeFieldController {
    }:null;
   return{schema:'oi.native-expression-reading/v1',status:this.status,reason:this.reason,
   source:this.opened?.source??null,lease:this.opened?.lease??null,
-  lifetime:{admission_pending:!!this.admission,close_pending:!!this.closing,operation_pending:this.serialDepth+this.operating,close_error:this.closeFailure?.message??null,last_close:this.lastClose},
+  quiet_control:this.lastQuiet,
+  lifetime:{admission_pending:!!this.admission||this.quietPending,close_pending:!!this.closing,operation_pending:this.serialDepth+this.operating,close_error:this.closeFailure?.message??null,last_close:this.lastClose},
   playback_policy:{...this.playback,owner:'QL InstrumentSession / explicit application buffering; no sample-rate change'},
   renderer_requirements:this.renderer.retainedTopology?.()??null,
   presentation_mode:!this.projection?'manual':this.projection.scale===this.opened.presentation.units_per_metre?'domain-follow':'manual-presentation-override',
@@ -375,6 +390,108 @@ export class NativeFieldController {
   const request=this.composeRequest(topology,options);
   return this.admit(SCENE_SAMPLE_RATE,()=>this.port.request({operation:'compose',request}),options.entityTargetBindings);
  }
+ /** A policy/phase edit from another Scene has no authority to travel,
+  * reopen its private body, or borrow its particles as the cosmic torus.
+  * Use the SAME native constructor/host operations quietly, then close that
+  * exact owner before returning its receipt to the existing native CAS.
+  * This accepts native state only; ordinary cosmic entry proves receiving. */
+ operateWorldQuiet(options:{world:NativeWorldInput;skySnapshot:NativeSkySnapshot;snapshotPurpose:'retained-occasion'},submitted:QuietWorldCommand,isCurrent:()=>boolean):Promise<QuietWorldControlReceipt>{
+  if(this.quietPending)return Promise.reject(new Error('The current quiet world operation is still being acknowledged.'));
+  const command:QuietWorldCommand=submitted.operation==='set-axis'
+   ?{operation:'set-axis',...nativeAxisRequest(submitted.axis,submitted.phase)}
+   :submitted.operation==='m1-advance'?(()=>{if(!Number.isInteger(submitted.ticks)||submitted.ticks<1||submitted.ticks>1e6)throw Error('M1 ticks must be within 1–1000000');return{operation:'m1-advance' as const,ticks:submitted.ticks};})()
+   :(()=>{if(submitted.operation!=='set-damping'||!Number.isFinite(submitted.per_second)||submitted.per_second<0||submitted.per_second>1e6)throw Error('Damping must be finite and in 0..1000000 per second');return{operation:'set-damping' as const,per_second:submitted.per_second};})();
+  this.quietPending=true;this.lastQuiet=null;this.changed();
+  return this.serial(async()=>{
+   const epoch=this.epoch;
+   const requireCurrent=()=>{if(this.dead||this.epoch!==epoch||this.status!=='manual'||this.session||this.opened||this.projection||this.admission||this.closing||this.suspension||this.closeFailure||!isCurrent())throw new QuietWorldBasisChanged('The world, selected Scene or native lifetime changed before its quiet control completed. No continuation was adopted.');};
+   requireCurrent();
+   const topology=this.renderer.retainedTopology?.();
+   if(!topology)throw Error('The actual production field must be live before a quiet world control.');
+   let opened:any=null,result:Omit<QuietWorldControlReceipt,'closed'>|null=null;
+   let cursorField:any=null,sequence=0n,knownRefusal=false;
+   const reading=(field:any)=>({instance_ref:options.world.instance_ref,event_ref:options.skySnapshot.snapshot_ref,subject_ref:options.world.subject_ref,acknowledged:{generation:field?.generation,samples_elapsed:field?.samples_elapsed}});
+   // Complete native bodies are checked in place, not cloned into a private
+   // identity, renderer, or metadata store. No numerical quantity is solved.
+   const field=(value:any,previous?:any,shapeMayChange=false)=>{
+    const r=reading(value);
+    sceneNeed(sceneObject(value)&&value.schema==='ql.continuous-field/v1'&&value.event_ref===r.event_ref&&value.subject_ref===r.subject_ref&&value.sample_rate===SCENE_SAMPLE_RATE&&value.presentation_units_per_metre===1&&sceneU64(value.generation)&&sceneU64(value.samples_elapsed),'quiet owner field/identity/cursor unavailable');
+    for(const key of ['registry_revision','geometry_ref','material_ref','model_ref','shape_ref','standing'])sceneNeed(sceneText(value[key]),'quiet field source omitted '+key);
+    sceneNeed(Array.isArray(value.audio)&&value.audio.length===0,'quiet operation produced an unrequested audio interval');
+    sceneNeed(Array.isArray(value.amplitudes_metres)&&value.amplitudes_metres.length===9&&value.amplitudes_metres.every((z:any)=>Array.isArray(z)&&z.length===2&&z.every((v:any)=>Number.isFinite(v)&&Math.abs(v)<=3e38)),'quiet field omitted its complete nine amplitudes');
+    sceneNeed(Array.isArray(value.targets)&&value.targets.length>=16&&value.targets.length<=Math.floor(262144/9),'quiet field has an unsupported target domain');
+    for(let i=0;i<value.targets.length;i++){
+     const target=value.targets[i];
+     sceneNeed(sceneObject(target)&&Number.isSafeInteger(target.identity)&&target.identity>=0&&(i===0||target.identity>value.targets[i-1].identity)&&sceneText(target.constituent)&&Array.isArray(target.position)&&target.position.length===3&&target.position.every((v:any)=>Number.isFinite(v)&&Math.abs(v)<=3e38),'quiet field target identity/source/position unavailable');
+     if(previous)sceneNeed(target.identity===previous.targets[i]?.identity&&target.constituent===previous.targets[i]?.constituent,'quiet field changed sample identity or constituent');
+    }
+    if(previous){
+     sceneNeed(value.targets.length===previous.targets.length,'quiet field changed topology');
+     for(const key of ['event_ref','subject_ref','registry_revision','geometry_ref','material_ref','model_ref',...(shapeMayChange?[]:['shape_ref']),'sample_rate','presentation_units_per_metre','standing'])sceneNeed(sceneSame(value[key],previous[key]),'quiet field changed '+key);
+    }
+    return value;
+   };
+   const exchange=async(cmd:any)=>{
+    requireCurrent();sceneNeed(sequence+1n<(1n<<64n),'quiet native request sequence exhausted');
+    const request={schema:'ql.field-host-request/v1',instance_ref:options.world.instance_ref,event_ref:options.skySnapshot.snapshot_ref,subject_ref:options.world.subject_ref,request_id:(sequence+1n).toString(),expected_generation:cursorField.generation,expected_samples_elapsed:cursorField.samples_elapsed,command:cmd};
+    const reply=await this.port.request({operation:'exchange',lease:opened.lease,request});
+    sceneNeed(reply?.schema==='ql.field-host-receipt/v1'&&reply.instance_ref===request.instance_ref&&reply.request_id===request.request_id&&reply.last_request_id===request.request_id&&reply.available===true&&(reply.status==='ok'||reply.status==='refused'),'quiet acknowledgement differs from this exact request');
+    const next=field(reply.field,cursorField,cmd.operation==='m1-advance');sequence++;
+    if(reply.status==='refused'){
+     sceneNeed(sceneSame(next,cursorField),'refused quiet operation changed the complete native field');knownRefusal=true;
+     throw Error(sceneText(reply.error)?reply.error:'The native quiet operation was refused.');
+    }
+    const changing=cmd.operation==='set-axis'||cmd.operation==='set-damping'||cmd.operation==='m1-advance';
+    const delta=BigInt(next.generation)-BigInt(cursorField.generation);
+    sceneNeed((cmd.operation==='m1-advance'?(delta===2n||delta===3n):delta===(changing?1n:0n))&&next.samples_elapsed===cursorField.samples_elapsed,'quiet native operation changed an unrequested clock/interval');
+    if(!changing)sceneNeed(sceneSame(next,cursorField),'quiet Inspect/influence changed the complete native field');
+    cursorField=next;return reply;
+   };
+   const inspect=async()=>{
+    const reply=await exchange({operation:'inspect'}),r=reading(cursorField);
+    const domain=projectNativeSources(reply.sources,{event_ref:r.event_ref,subject_ref:r.subject_ref,generation:r.acknowledged.generation});
+    sceneNeed(isScene(reply.sources),'quiet Inspect did not return the complete Scene sources');
+    const influence=qualifySceneInfluence(copySceneMetadata(reply.influence,'influence'),cursorField,r,domain,reply.sources);
+    const event=copySceneMetadata(reply.event,'event');if(!Object.prototype.hasOwnProperty.call(event,'sky_frequency_bindings'))event.sky_frequency_bindings=[];
+    sceneNeed(sceneSame(event,eventFromSources(reply.sources)),'quiet Inspect event differs from its actual complete sources');
+    readScene(reply.sources,influence,opened.source);return influence;
+   };
+   try{
+    opened=await this.port.request({operation:'compose',request:this.composeRequest(topology,options)});
+    sceneNeed(opened?.schema==='oi.native-expression-open/v1'&&sceneText(opened.lease),'quiet compose omitted its exact owned lease');
+    requireCurrent();
+    sceneNeed(opened.receipt?.schema==='ql.field-host-receipt/v1'&&opened.receipt.status==='ready'&&opened.receipt.available===true&&opened.receipt.instance_ref===options.world.instance_ref&&sceneU64(opened.receipt.last_request_id),'quiet compose did not acknowledge this instance');
+    sceneNeed(opened.source?.schema==='oi.native-expression-composed-source/v1'&&opened.source.world?.schema==='ql.scene-world/v1'&&opened.source.world.instance_ref===options.world.instance_ref&&opened.source.world.subject_ref===options.world.subject_ref&&opened.source.world.event_ref===options.skySnapshot.snapshot_ref&&opened.source.world.snapshot_ref===options.skySnapshot.snapshot_ref,'quiet constructor returned another person or occasion');
+    cursorField=field(opened.receipt.field);sequence=BigInt(opened.receipt.last_request_id);
+    const beforeField=cursorField,beforeInfluence=await inspect();
+    const acknowledgement=await exchange(command),commandId=acknowledgement.request_id;
+    qualifySceneInfluence(copySceneMetadata(acknowledgement.influence,'influence'),cursorField,reading(cursorField));
+    const inspected=await inspect();
+    // M1 replaces the modes, optionally their actual shape, then advances the
+    // inscription axis (scene_field::m1_advance). Exact native receipts must
+    // account for every one of those admitted worker generations.
+    const increase=command.operation==='m1-advance'?2n+(!sceneSame(beforeInfluence.shape_ref,inspected.shape_ref)||!sceneSame(beforeInfluence.voices,inspected.voices)?1n:0n):1n;
+    sceneNeed(BigInt(cursorField.generation)===BigInt(beforeField.generation)+increase,'quiet native generation does not account for this exact determinant');
+    const fresh=await exchange({operation:'influence'});
+    const influence=qualifySceneInfluence(copySceneMetadata(fresh.influence,'influence'),cursorField,reading(cursorField));
+    sceneNeed(sceneSame(influence,inspected),'quiet influence differs from its fresh actual Inspect');
+    requireCurrent();
+    result={schema:'oi.quiet-world-control-receipt/v1',lease:opened.lease,command,request_id:commandId,source:opened.source,field:cursorField,influence,standing:'native determinant acknowledged and owner closed; GPU/audio reception not claimed'};
+   }catch(error){
+    // A known refusal is still a refused operation. An unknown reply cannot
+    // be retried or displayed as an accepted current reading.
+    if(this.epoch===epoch&&!this.dead){this.refusal={operation:'quiet '+command.operation,reason:String(error instanceof Error?error.message:error),at:Date.now()};if(!knownRefusal&&!(error instanceof QuietWorldBasisChanged)){this.status='unavailable';this.reason=this.refusal.reason;}this.changed();}
+    throw error;
+   }finally{
+    // A superseded UI basis may still receive its native open late. Close only
+    // the exact returned owned lease; never another manager lifetime.
+    if(opened){try{await this.closeOwner(opened);sceneNeed(opened.closed===true&&this.lastClose?.lease===opened.lease,'quiet owner close acknowledgement unavailable');}catch(error){if(this.epoch===epoch&&!this.dead){this.status='unavailable';this.reason='native quiet release acknowledgement unknown: '+String(error);this.changed();}throw error;}}
+   }
+   if(!result||!this.lastClose)throw Error('The quiet native operation has no complete closed receipt.');
+   this.lastQuiet={schema:'oi.quiet-world-control-reading/v1',operation:command.operation,lease:result.lease,instance_ref:options.world.instance_ref,event_ref:options.skySnapshot.snapshot_ref,subject_ref:options.world.subject_ref,request_id:result.request_id,generation:cursorField.generation,samples_elapsed:cursorField.samples_elapsed,closed:true,standing:result.standing};this.changed();
+   return{...result,closed:{...this.lastClose}};
+  }).finally(()=>{this.quietPending=false;this.changed();});
+ }
  /** Inspect depth: an explicit Central binding document. */
  async connect(path:string,revision:string,sampleRate:number){
   return this.admit(sampleRate,()=>this.port.request({operation:'open',path,expected_revision:revision}));
@@ -392,7 +509,7 @@ export class NativeFieldController {
  }
  private async admitOwner(sampleRate:number,open:()=>Promise<any>,entityTargetBindings?:EntityTargetBindings){
   if(this.closeFailure)throw new Error('native release acknowledgement unknown: '+this.closeFailure.message);
-  if(this.dead||this.status==='opening'||this.session||this.closing||this.suspension)throw new Error('release the current native owner and instrument suspension before opening another');
+  if(this.dead||this.status==='opening'||this.session||this.closing||this.suspension||this.quietPending)throw new Error('release the current native owner and instrument suspension before opening another');
   if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw new Error('native binding must supply its actual sample rate');
   const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.refusal=null;this.changed();
   let context:AudioContext|null=null;
