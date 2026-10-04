@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock, Weak};
 pub const MANIFEST_SCHEMA: &str = "oi.expression-performance-manifest/v1";
 pub const INDEX_SCHEMA: &str = "oi.expression-performance-part-index/v1";
 pub const CATALOG_SCHEMA: &str = "oi.expression-performance-parts/v1";
@@ -365,11 +365,27 @@ pub struct StoredPerformanceParts {
     pub manifests: Vec<PerformanceManifest>,
     pub parts: Vec<StoredPart>,
 }
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone)]
+struct QualifiedPartWeight {
+    // Metadata proves only the weight of this exact previously admitted native
+    // immutable part. It never retains an expanded value or admits selection.
+    part: Weak<PerformancePart>,
+    expanded_bytes: Option<usize>,
+}
+#[derive(Debug, Clone, Default)]
 pub struct PerformancePartCatalog {
     parts: BTreeMap<String, Arc<PerformancePart>>,
     manifests: Vec<PerformanceManifest>,
+    // Native-only scalar metadata. External reads construct an empty slot and
+    // perform the original complete qualification before issuing this proof.
+    qualified_part_weights: OnceLock<BTreeMap<String, QualifiedPartWeight>>,
 }
+impl PartialEq for PerformancePartCatalog {
+    fn eq(&self, other: &Self) -> bool {
+        self.parts == other.parts && self.manifests == other.manifests
+    }
+}
+impl Eq for PerformancePartCatalog {}
 impl Serialize for PerformancePartCatalog {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         use serde::ser::{SerializeMap, SerializeSeq};
@@ -725,7 +741,11 @@ impl PerformancePartCatalog {
                     .iter()
                     .any(NativePerformanceSourceAsset::requires_private_disclosure),
         });
-        next.validate_storage()?;
+        // The candidate still validates every actual current part digest and
+        // every manifest/index/source/privacy/budget. Only the scalar weights
+        // of physically unchanged native parts may avoid repeated expansion.
+        next.qualified_part_weights = OnceLock::new();
+        next.validate_storage_with(self.qualified_part_weights.get())?;
         Ok(next)
     }
     fn walk(
@@ -838,18 +858,43 @@ impl PerformancePartCatalog {
         Ok(result)
     }
     fn validate_storage(&self) -> Result<(), String> {
+        self.validate_storage_with(None)
+    }
+    fn validate_storage_with(
+        &self,
+        previous: Option<&BTreeMap<String, QualifiedPartWeight>>,
+    ) -> Result<(), String> {
         if self.parts.len() > MAX_PARTS || self.manifests.len() > MAX_MANIFESTS {
             return Err("native performance part/manifest budget exceeded".into());
         }
         let mut used = BTreeSet::new();
         let mut qualified_weights = BTreeMap::new();
+        let mut native_weights = BTreeMap::new();
         let mut bytes = 0usize;
         for (r, p) in &self.parts {
-            if let Some(value) = p.qualified_value()? {
-                // Borrowed references and scalar weights live only while this
-                // exact immutable catalog is being completely validated.
-                qualified_weights.insert(r.as_str(), encoded(&value)?);
+            let unchanged = previous
+                .and_then(|weights| weights.get(r))
+                .filter(|weight| {
+                    weight
+                        .part
+                        .upgrade()
+                        .is_some_and(|part| Arc::ptr_eq(&part, p))
+                });
+            let expanded_bytes = if let Some(weight) = unchanged {
+                weight.expanded_bytes
+            } else {
+                p.qualified_value()?.as_ref().map(encoded).transpose()?
+            };
+            if let Some(weight) = expanded_bytes {
+                qualified_weights.insert(r.as_str(), weight);
             }
+            native_weights.insert(
+                r.clone(),
+                QualifiedPartWeight {
+                    part: Arc::downgrade(p),
+                    expanded_bytes,
+                },
+            );
             if let PerformancePart::NativeSource(source) = p.as_ref() {
                 if source.reading()?.r#ref != *r {
                     return Err("native source leaf address differs".into());
@@ -936,6 +981,9 @@ impl PerformancePartCatalog {
         if self.encoded_bytes()? > MAX_ENCODED_BYTES {
             return Err("native performance file/Act part record exceeds 4 MiB".into());
         }
+        // Nothing is issued after a partial validation or refusal. A Weak
+        // identity cannot survive replacement or keep any retired part alive.
+        let _ = self.qualified_part_weights.set(native_weights);
         Ok(())
     }
     /// Restore only one selected edition. The ordinary complete validator and
@@ -1032,6 +1080,7 @@ impl PerformancePartCatalog {
         let result = Self {
             parts,
             manifests: stored.manifests,
+            qualified_part_weights: OnceLock::new(),
         };
         if schema != result.schema() {
             return Err("native source catalog version/content differs".into());
@@ -1050,5 +1099,231 @@ impl PerformancePartCatalog {
     }
     pub fn retained_references(&self, reference: &str) -> Option<usize> {
         self.parts.get(reference).map(Arc::strong_count)
+    }
+}
+
+#[cfg(test)]
+mod actual_captured_native_continuation {
+    use super::*;
+
+    // Both inputs are actual retained native records. The successor was produced
+    // by the original public native 170-to-171 operation, not a test recipe.
+    #[test]
+    #[ignore = "explicitly run with the exact captured native Act and original real producer fixture"]
+    fn actual_captured_prefix_170_to_original_171_preserves_parts_and_refusals() {
+        use crate::expression_performance::Counter;
+        let fixture_path = std::env::var("QL_RETAINED_PERFORMANCE_FIXTURE")
+            .expect("exact actual native producer fixture required; no fallback");
+        let fixture_bytes = std::fs::read(fixture_path).unwrap();
+        assert_eq!(
+            crate::expression_file::digest(&fixture_bytes),
+            "sha256:186da30c0024d3fc4025bb91ea841340d1c3c6a9e1d8a133222972de646c4a5b"
+        );
+        let path = std::env::var("OI_ACT_IMMUTABLE_NATIVE_RECORD")
+            .expect("exact captured 170-edition native Act required; no fallback");
+        let bytes = std::fs::read(path).unwrap();
+        assert!(bytes.len() as u64 <= crate::expression_act_store::MAX_RECORD_BYTES);
+        assert_eq!(
+            crate::expression_file::digest(&bytes),
+            "sha256:d66e49ac297f54a5839182cfba41e83546460db0e89f4755a3231bb0e447fafa"
+        );
+        let act = crate::expression_performance_act::decode_bytes(
+            &bytes,
+            crate::expression_act_storage::LIVE_BYTES,
+        )
+        .unwrap();
+        assert_eq!(act.sequence.len(), 170);
+        assert_eq!(act.revision, 340);
+        assert_eq!(act.phase, crate::expression_world::ActPhase::Held);
+        let custody = act.performance_custody.as_ref().unwrap();
+        let original_document = custody.restore(169).unwrap();
+        let performance = original_document.scenes[0].performance.as_ref().unwrap();
+        let successor_bytes = std::fs::read(std::env::var("OI_ACT_IMMUTABLE_NATIVE_SUCCESSOR").expect(
+            "exact previously produced and native-qualified 171-edition Act required; no fallback",
+        ))
+        .unwrap();
+        assert_eq!(
+            crate::expression_file::digest(&successor_bytes),
+            "sha256:144e39b300b3e9f9bbacc42267c723c3e476a06466f9029bd21a23c2502ac064"
+        );
+        let observed_successor = crate::expression_performance_act::decode_bytes(
+            &successor_bytes,
+            crate::expression_act_storage::LIVE_BYTES,
+        )
+        .unwrap();
+        assert_eq!(observed_successor.sequence.len(), 171);
+        assert_eq!(observed_successor.revision, 341);
+        assert_eq!(
+            observed_successor.phase,
+            crate::expression_world::ActPhase::Running
+        );
+        assert_eq!(&observed_successor.sequence[..170], act.sequence.as_slice());
+        let successor_custody = observed_successor.performance_custody.as_ref().unwrap();
+        assert_eq!(successor_custody.restore(169).unwrap(), original_document);
+        let observed_document = successor_custody.restore(170).unwrap();
+        let prefix170 = performance.clone();
+        let prefix171 = observed_document.scenes[0]
+            .performance
+            .as_ref()
+            .unwrap()
+            .clone();
+        assert_eq!(prefix170.duration_samples, Counter(43_200_000));
+        assert_eq!(prefix171.duration_samples, Counter(43_200_000));
+        assert_eq!(prefix170.event_count(), 42_500);
+        assert_eq!(prefix171.event_count(), 42_750);
+        let prior_events: Vec<_> = prefix170.events().cloned().collect();
+        let next_events: Vec<_> = prefix171.events().cloned().collect();
+        assert_eq!(&next_events[..42_500], prior_events.as_slice());
+        assert_eq!(next_events[42_500..].len(), 250);
+        assert!(next_events[42_500..]
+            .iter()
+            .all(|e| e.sample() >= 170 * 5 * 48_000 && e.sample() < 171 * 5 * 48_000));
+        // Every other native field retains its original meaning and data. Remove
+        // only the actual new page content and reseal with the same native owner.
+        let mut without_new_pages = prefix171.clone();
+        without_new_pages.pages = prefix170.pages.clone();
+        assert_eq!(without_new_pages.seal().unwrap(), prefix170);
+        let stored = custody
+            .snapshot()
+            .performance_catalogs
+            .into_values()
+            .next()
+            .unwrap();
+        let original = PerformancePartCatalog::read(stored).unwrap();
+        let original_wire = serde_json::to_vec(&original).unwrap();
+        assert_eq!(original.manifests.len(), 170);
+        assert_eq!(original.restore(169).unwrap(), prefix170);
+        let qualified = original.qualified_part_weights.get().unwrap();
+        assert_eq!(qualified.len(), original.parts.len());
+        for (reference, part) in &original.parts {
+            assert!(Arc::ptr_eq(
+                &qualified[reference].part.upgrade().unwrap(),
+                part
+            ));
+        }
+        let successor = original.appended(&prefix171).unwrap();
+        assert_eq!(successor.manifests.len(), 171);
+        assert_eq!(&successor.manifests[..170], original.manifests.as_slice());
+        assert_eq!(successor.restore(169).unwrap(), prefix170);
+        assert_eq!(successor.restore(170).unwrap(), prefix171);
+        assert_eq!(serde_json::to_vec(&original).unwrap(), original_wire);
+        for (reference, part) in &original.parts {
+            assert!(Arc::ptr_eq(part, &successor.parts[reference]));
+        }
+        let new_leaf = successor
+            .parts
+            .iter()
+            .find_map(|(reference, part)| {
+                (!original.parts.contains_key(reference)
+                    && matches!(part.as_ref(), PerformancePart::EncodedEventPage(_)))
+                .then_some(reference.clone())
+            })
+            .expect("the actual new 250-event material must produce a new native event leaf");
+        assert!(!qualified.contains_key(&new_leaf));
+        assert!(Arc::ptr_eq(
+            &successor.qualified_part_weights.get().unwrap()[&new_leaf]
+                .part
+                .upgrade()
+                .unwrap(),
+            &successor.parts[&new_leaf],
+        ));
+        // New material receives real type/decode qualification, even when every old
+        // actual Arc has a native weight proof. A changed new leaf cannot use it.
+        let mut bad_new_leaf = successor.clone();
+        let PerformancePart::EncodedEventPage(page) = bad_new_leaf.parts[&new_leaf].as_ref() else {
+            panic!("actual successor leaf is not an encoded event page")
+        };
+        let mut broken_page = serde_json::to_value(page).unwrap();
+        broken_page["decoded_sha256"] = Value::from(format!("sha256:{}", "0".repeat(64)));
+        bad_new_leaf.parts.insert(
+            new_leaf.clone(),
+            Arc::new(PerformancePart::EncodedEventPage(
+                serde_json::from_value(broken_page).unwrap(),
+            )),
+        );
+        bad_new_leaf.qualified_part_weights = OnceLock::new();
+        assert!(bad_new_leaf
+            .validate_storage_with(Some(qualified))
+            .unwrap_err()
+            .contains("decoded length/hash differs"));
+        assert!(bad_new_leaf.qualified_part_weights.get().is_none());
+        let successor_wire = serde_json::to_vec(&successor).unwrap();
+        let cold: PerformancePartCatalog = serde_json::from_slice(&successor_wire).unwrap();
+        assert_eq!(
+            cold, successor,
+            "private proof must not change semantic equality"
+        );
+        assert_eq!(serde_json::to_vec(&cold).unwrap(), successor_wire);
+        assert_eq!(cold.restore(169).unwrap(), prefix170);
+        assert_eq!(cold.restore(170).unwrap(), prefix171);
+        // Both prior and new manifests remain fully checked outside reused weights.
+        for index in [0, 170] {
+            let mut wrong_privacy = successor.clone();
+            wrong_privacy.manifests[index].private_context =
+                !successor.manifests[index].private_context;
+            assert!(wrong_privacy
+                .validate_storage_with(Some(qualified))
+                .unwrap_err()
+                .contains("weight/privacy differs"));
+            let mut wrong_weight = successor.clone();
+            wrong_weight.manifests[index].expanded_bytes += 1;
+            assert!(wrong_weight
+                .validate_storage_with(Some(qualified))
+                .unwrap_err()
+                .contains("weight/privacy differs"));
+        }
+        let old_leaf = original
+            .parts
+            .iter()
+            .find_map(|(reference, part)| {
+                matches!(part.as_ref(), PerformancePart::EncodedEventPage(_))
+                    .then_some(reference.clone())
+            })
+            .unwrap();
+        for leaf in [&old_leaf, &new_leaf] {
+            let mut missing = successor.clone();
+            missing.parts.remove(leaf);
+            assert!(missing.validate_storage_with(Some(qualified)).is_err());
+        }
+        let mut replaced = successor.clone();
+        let old = replaced.parts[&old_leaf].clone();
+        replaced
+            .parts
+            .insert(old_leaf.clone(), Arc::new(old.as_ref().clone()));
+        assert!(!Arc::ptr_eq(&old, &replaced.parts[&old_leaf]));
+        replaced.qualified_part_weights = OnceLock::new();
+        let mut retired_weights = qualified.clone();
+        retired_weights.get_mut(&old_leaf).unwrap().expanded_bytes = Some(usize::MAX);
+        replaced
+            .validate_storage_with(Some(&retired_weights))
+            .unwrap();
+        assert_eq!(serde_json::to_vec(&replaced).unwrap(), successor_wire);
+        assert!(Arc::ptr_eq(
+            &replaced.qualified_part_weights.get().unwrap()[&old_leaf]
+                .part
+                .upgrade()
+                .unwrap(),
+            &replaced.parts[&old_leaf],
+        ));
+        // Even an unchanged actual Arc and matching private metadata cannot waive
+        // fresh hashing against the current declared address.
+        let mut wrong_address = successor.clone();
+        let same_part = wrong_address.parts.remove(&old_leaf).unwrap();
+        let bad_ref = format!("sha256:{}", "0".repeat(64));
+        wrong_address.parts.insert(bad_ref.clone(), same_part);
+        let mut misplaced_weights = qualified.clone();
+        misplaced_weights.insert(bad_ref, qualified[&old_leaf].clone());
+        assert!(wrong_address
+            .validate_storage_with(Some(&misplaced_weights))
+            .unwrap_err()
+            .contains("performance asset digest differs"));
+        let mut foreign = serde_json::to_value(&successor).unwrap();
+        foreign["qualified_part_weights"] = serde_json::json!({"claimed": true});
+        assert!(PerformancePartCatalog::read_value(foreign).is_err());
+        assert_eq!(original.restore(169).unwrap(), *performance);
+        assert_eq!(custody.restore(169).unwrap(), original_document);
+        eprintln!("actual-native-successor-private-proof prefix170={} prefix171={} new_leaf={} original_wire={} successor_wire={} cases=positive,cold,old-and-new-privacy,old-and-new-weight,old-and-new-missing,new-leaf-codec,replacement-allocation,fresh-address-digest,external-injection",
+            prefix170.content_digest, prefix171.content_digest, new_leaf,
+            crate::expression_file::digest(&original_wire), crate::expression_file::digest(&successor_wire));
     }
 }

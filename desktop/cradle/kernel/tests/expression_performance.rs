@@ -1378,3 +1378,257 @@ fn legacy_full_history_budget_refuses_without_auto_handles_or_expression_mutatio
         "complete legacy history must reach its unchanged 8 MiB expanded Act bound"
     );
 }
+
+#[test]
+#[ignore = "explicitly run with the exact captured native Act and original real producer fixture"]
+fn actual_captured_prefix_170_to_original_171_public_native_cas_restart_and_selection() {
+    use oi_cradle_kernel::{
+        expression::Document,
+        expression_act_store::{ActStore, Written},
+        expression_file, expression_performance_act, Kernel,
+    };
+    let digest = |bytes: &[u8]| format!("sha256:{:x}", sha2::Sha256::digest(bytes));
+    let fixture_bytes = std::fs::read(
+        std::env::var("QL_RETAINED_PERFORMANCE_FIXTURE")
+            .expect("exact real producer fixture required; no fallback"),
+    )
+    .unwrap();
+    assert_eq!(
+        digest(&fixture_bytes),
+        "sha256:186da30c0024d3fc4025bb91ea841340d1c3c6a9e1d8a133222972de646c4a5b"
+    );
+    let source_record = std::path::PathBuf::from(
+        std::env::var("OI_ACT_IMMUTABLE_NATIVE_RECORD")
+            .expect("exact captured native 170-edition Act required; no fallback"),
+    );
+    let original_bytes = std::fs::read(&source_record).unwrap();
+    assert_eq!(
+        digest(&original_bytes),
+        "sha256:d66e49ac297f54a5839182cfba41e83546460db0e89f4755a3231bb0e447fafa"
+    );
+    let original_act =
+        expression_performance_act::decode_bytes(&original_bytes, 64 * 1024 * 1024).unwrap();
+    assert_eq!(original_act.sequence.len(), 170);
+    assert_eq!(original_act.revision, 340);
+    assert_eq!(
+        original_act.phase,
+        oi_cradle_kernel::expression_world::ActPhase::Held
+    );
+    let original_document = original_act
+        .performance_custody
+        .as_ref()
+        .unwrap()
+        .restore(169)
+        .unwrap();
+    let prior_successor_bytes = std::fs::read(
+        std::env::var("OI_ACT_IMMUTABLE_NATIVE_SUCCESSOR")
+            .expect("exact prior successful native successor required; no fallback"),
+    )
+    .unwrap();
+    assert_eq!(
+        digest(&prior_successor_bytes),
+        "sha256:144e39b300b3e9f9bbacc42267c723c3e476a06466f9029bd21a23c2502ac064"
+    );
+    let prior_successor =
+        expression_performance_act::decode_bytes(&prior_successor_bytes, 64 * 1024 * 1024).unwrap();
+    assert_eq!(prior_successor.sequence.len(), 171);
+    assert_eq!(prior_successor.revision, 341);
+    let prior_successor_document = prior_successor
+        .performance_custody
+        .as_ref()
+        .unwrap()
+        .restore(170)
+        .unwrap();
+    let full = fifteen_minute_work();
+    assert_eq!(full.duration_samples, Counter(43_200_000));
+    assert_eq!(full.event_count(), 45_000);
+    let all: Vec<_> = full.events().cloned().collect();
+    // The exact construction in the original full test, applied to its next
+    // block. No alternative notes, force, automation, phase or numerical basis.
+    let prefix = |block: u64| {
+        let mut recorded = full.clone();
+        let events: Vec<_> = all
+            .iter()
+            .filter(|e| e.sample() < block * 5 * 48_000)
+            .cloned()
+            .collect();
+        recorded.pages = events
+            .chunks(RETAINED_PAGE_EVENTS)
+            .map(|e| EventPage { events: e.to_vec() })
+            .collect();
+        recorded.seal().unwrap()
+    };
+    let prefix170 = prefix(170);
+    let prefix171 = prefix(171);
+    assert_eq!(
+        original_document.scenes[0].performance.as_ref().unwrap(),
+        &prefix170
+    );
+    assert_eq!(prefix170.event_count(), 42_500);
+    assert_eq!(prefix171.event_count(), 42_750);
+    let prior_events: Vec<_> = prefix170.events().cloned().collect();
+    let next_events: Vec<_> = prefix171.events().cloned().collect();
+    assert_eq!(&next_events[..42_500], prior_events.as_slice());
+    assert_eq!(next_events[42_500..].len(), 250);
+    assert_eq!(
+        &next_events[42_500..],
+        all.iter()
+            .filter(|e| e.sample() >= 170 * 5 * 48_000 && e.sample() < 171 * 5 * 48_000)
+            .cloned()
+            .collect::<Vec<_>>()
+            .as_slice()
+    );
+    assert!(next_events[42_500..]
+        .iter()
+        .all(|e| e.sample() >= 170 * 5 * 48_000 && e.sample() < 171 * 5 * 48_000));
+    let changes = json!([{"change":"scene_performance_set",
+        "scene_ref":original_document.scenes[0].scene_ref,"performance":prefix171}]);
+    // Independent native Expression owner establishes the complete expected
+    // Document, separately from the retained Act/custody transaction.
+    let mut pure = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
+    kernel_expression(
+        &mut pure,
+        json!({"operation":"open","document":original_document,
+        "actor":"agent:retained-performance-test"}),
+    )
+    .unwrap();
+    kernel_expression(&mut pure, json!({"operation":"edit",
+        "expression_ref":original_document.expression_ref,"expected_revision":original_document.revision,
+        "actor":"agent:retained-performance-test","changes":changes})).unwrap();
+    let expected_document: Document = serde_json::from_value(document(&mut pure)).unwrap();
+    assert_eq!(
+        expected_document.scenes[0].performance.as_ref().unwrap(),
+        &prefix171
+    );
+    assert_eq!(
+        prior_successor_document, expected_document,
+        "the original real producer successor and prior public native output must agree fully"
+    );
+    let home = std::path::PathBuf::from(
+        std::env::var("OI_RETAINED_PERFORMANCE_TEST_HOME")
+            .expect("explicit admitted native test custody required; no system-store fallback"),
+    )
+    .join(format!(
+        "actual-captured-prefix-170-to-171-{}",
+        std::process::id()
+    ));
+    assert!(!home.exists(), "preserve existing native evidence");
+    let store = ActStore::at_home(&home);
+    std::fs::create_dir_all(store.root()).unwrap();
+    let record_name = source_record.file_name().unwrap();
+    let saved_path = store.root().join(record_name);
+    std::fs::write(&saved_path, &original_bytes).unwrap();
+    let cold_original = store.read_retained(&original_act.act_ref).unwrap().unwrap();
+    assert_eq!(cold_original, original_act);
+    let mut kernel = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
+    kernel.attach_act_store(&home).unwrap();
+    kernel_expression(
+        &mut kernel,
+        json!({"operation":"open","document":original_document,
+        "actor":"agent:retained-performance-test"}),
+    )
+    .unwrap();
+    let result = kernel_world(
+        &mut kernel,
+        json!({"operation":"act_retained_perform",
+        "act_ref":original_act.act_ref,"expression_ref":original_document.expression_ref,
+        "expected_revision":original_document.revision,"expected_act_revision":340,
+        "summary":"Retain complete physical performance","actor":"agent:retained-performance-test",
+        "changes":changes}),
+    )
+    .unwrap();
+    assert_eq!(result["state"], "act_running");
+    assert_eq!(result["act"]["sequence"].as_array().unwrap().len(), 171);
+    assert_eq!(result["act"]["revision"], 341);
+    let actual_document: Document = serde_json::from_value(document(&mut kernel)).unwrap();
+    assert_eq!(actual_document, expected_document);
+    assert_eq!(
+        serde_json::to_vec(&actual_document).unwrap(),
+        serde_json::to_vec(&expected_document).unwrap()
+    );
+    let committed = store.read_retained(&original_act.act_ref).unwrap().unwrap();
+    assert_eq!(serde_json::to_value(&committed).unwrap(), result["act"]);
+    assert_eq!(&committed.sequence[..170], original_act.sequence.as_slice());
+    assert_eq!(
+        committed
+            .performance_custody
+            .as_ref()
+            .unwrap()
+            .restore(169)
+            .unwrap(),
+        original_document
+    );
+    assert_eq!(
+        committed
+            .performance_custody
+            .as_ref()
+            .unwrap()
+            .restore(170)
+            .unwrap(),
+        expected_document
+    );
+    let committed_bytes = std::fs::read(&saved_path).unwrap();
+    assert!(matches!(
+        store.write(&original_act, Some(340)).unwrap(),
+        Written::Conflict { current: Some(341) }
+    ));
+    assert_eq!(std::fs::read(&saved_path).unwrap(), committed_bytes);
+    let encoded = expression_file::encode(&actual_document).unwrap();
+    assert_eq!(
+        expression_file::decode(&encoded).unwrap(),
+        expected_document
+    );
+    drop(kernel);
+    // A fresh Kernel and cold native Store must reconstruct the same complete
+    // saved Documents. This is kernel restart, not installed process acceptance.
+    let mut restarted = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
+    restarted.attach_act_store(&home).unwrap();
+    kernel_expression(
+        &mut restarted,
+        json!({"operation":"open",
+        "document":expression_file::decode(&encoded).unwrap(),
+        "actor":"agent:retained-performance-test"}),
+    )
+    .unwrap();
+    assert_eq!(
+        serde_json::from_value::<Document>(document(&mut restarted)).unwrap(),
+        expected_document
+    );
+    for (index, expected) in [(169, &original_document), (170, &expected_document)] {
+        let selected = kernel_world(
+            &mut restarted,
+            json!({"operation":"act_retained_edition",
+            "act_ref":original_act.act_ref,"expected_act_revision":341,"position":index}),
+        )
+        .unwrap();
+        assert_eq!(selected["state"], "act_retained_edition");
+        assert_eq!(
+            serde_json::from_value::<Document>(selected["document"].clone()).unwrap(),
+            *expected
+        );
+    }
+    for (index, expected) in [(169, &prefix170), (170, &prefix171)] {
+        let sought = kernel_world(
+            &mut restarted,
+            json!({"operation":"act_seek",
+            "act_ref":original_act.act_ref,"position":index,
+            "actor":"agent:retained-performance-test"}),
+        )
+        .unwrap();
+        assert_eq!(sought["state"], "act_sought");
+        let current: Document = serde_json::from_value(document(&mut restarted)).unwrap();
+        assert_eq!(current.scenes[0].performance.as_ref().unwrap(), expected);
+    }
+    assert_eq!(
+        std::fs::read(&source_record).unwrap(),
+        original_bytes,
+        "the captured input is immutable evidence, never a test store"
+    );
+    eprintln!("actual-native-successor-public-proof prefix170={} prefix171={} prior_events={} successor_events={} exact_native_document={} committed_record={} editions=171 revision=341 old_events=42500 new_events=250 selected,reopen,seek,CAS=complete",
+        prefix170.content_digest, prefix171.content_digest,
+        digest(&serde_json::to_vec(&prior_events).unwrap()),
+        digest(&serde_json::to_vec(&next_events).unwrap()),
+        digest(&serde_json::to_vec(&actual_document).unwrap()),
+        digest(&committed_bytes));
+    std::fs::remove_dir_all(home).unwrap();
+}
