@@ -62,6 +62,7 @@ def controls(page, base, prefix, width, label):
         button = page.locator(f'[data-essay-panel="{name}"]')
         expect(button).to_be_visible()
         expect(button).to_have_attribute('aria-expanded', 'true' if width >= 1280 else 'false')
+    if width >= 1280: live_canvas(page)
     page.screenshot(path=str(OUT / f'{label}-entrance.png'))
 
     pages = page.locator('#essay-pages')
