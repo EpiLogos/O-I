@@ -42,6 +42,9 @@ def dist_guards():
     index = (DIST / 'essay' / 'index.html').read_text()
     assert '<title>' in index, 'essay/index.html has no title'
     assert 'graph-container' in index, 'essay/index.html missing the Quartz graph'
+    manuscript = (DIST / 'essay' / 'THE-RETURN-OF-ZERO.html').read_text()
+    assert 'class="article-title"' in manuscript, 'a vault alias overwrote the manuscript reading address'
+    assert 'http-equiv="refresh"' not in manuscript, 'manuscript address became an alias redirect'
     stamp = json.loads((DIST / 'essay' / 'quartz-source.json').read_text())
     assert stamp.get('vault_commit'), 'quartz-source.json missing vault commit'
     assert not (DIST / 'essay.html').exists(), 'the stood-down shell stub must not ship'
@@ -147,7 +150,8 @@ def main():
         vercel = f'http://127.0.0.1:{vercel_port}'
         from playwright.sync_api import sync_playwright, expect
         with sync_playwright() as p:
-            browser = p.chromium.launch(executable_path=os.environ.get('CHROMIUM_EXECUTABLE') or None)
+            browser = p.chromium.launch(executable_path=os.environ.get('CHROMIUM_EXECUTABLE') or None,
+                                        args=['--enable-unsafe-swiftshader', '--use-gl=angle', '--use-angle=swiftshader'])
             ctx = browser.new_context(viewport={'width': 1280, 'height': 800})
             cases = [
                 (f'{vercel}/essay', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
@@ -173,6 +177,7 @@ def main():
                     assert response is not None and response.status == status, f'status {None if response is None else response.status}'
                     if status == 200:
                         expect(page.locator('.graph-container').first).to_be_attached(timeout=20000)
+                        expect(page.locator('.graph-container canvas').first).to_be_visible(timeout=20000)
                         expect(page.locator('.explorer').first).to_be_visible(timeout=20000)
                         expect(page.locator('nav[aria-label="Essay reading routes"]')).to_be_visible(timeout=20000)
                         if '/ROOM-00-integral-threshold' not in page.url:
