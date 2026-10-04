@@ -1,5 +1,6 @@
 //! Private socket owned by the existing native-expression Manager lifetime.
 //! Only selected-Act methods borrow it; public Exchange keeps the original pipe.
+use super::act_diagnostics::{NativeDiagnosticReceipts, NativeDiagnosticReceiver};
 use super::{line, MAX_REQUEST, TIMEOUT};
 use crate::native_parent_image;
 use serde_json::Value;
@@ -23,6 +24,16 @@ pub(super) struct ActChannel {
     reader: Mutex<BufReader<UnixStream>>,
     path: PathBuf,
     qualification: Value,
+    #[cfg(test)]
+    reply_loss: Mutex<Option<NativeReplyLoss>>,
+}
+/// Fault injection uses only the existing actually qualified socket. It never
+/// supplies a producer, receipt, source selection or native authority.
+#[cfg(test)]
+#[derive(Debug)]
+enum NativeReplyLoss {
+    AfterWrite,
+    Terminal(std::sync::Arc<Mutex<Option<Value>>>),
 }
 impl PendingActChannel {
     pub(super) fn prepare(host: &Path, config: &Path) -> Result<Option<Self>, String> {
@@ -97,6 +108,8 @@ impl PendingActChannel {
             reader: Mutex::new(reader),
             path: self.path.clone(),
             qualification: qualification.clone(),
+            #[cfg(test)]
+            reply_loss: Mutex::new(None),
         })
     }
 }
@@ -110,6 +123,39 @@ impl Drop for PendingActChannel {
 pub(super) struct NativeActChannelReply {
     value: Value,
     qualification: Value,
+    diagnostics: NativeDiagnosticReceipts,
+}
+/// Actual received bytes remain held even if a final acknowledgement is lost
+/// or refuses. Pre-exchange failures have no manufactured receipt.
+pub(super) struct NativeActChannelRefusal {
+    reason: String,
+    native_reply: Option<Value>,
+    diagnostics: NativeDiagnosticReceipts,
+    delivery_attempted: bool,
+}
+impl NativeActChannelRefusal {
+    pub(super) fn reason(&self) -> &str {
+        &self.reason
+    }
+    pub(super) fn delivery_attempted(&self) -> bool {
+        self.delivery_attempted
+    }
+    pub(super) fn into_custody(self) -> (String, Option<Value>, NativeDiagnosticReceipts, bool) {
+        (
+            self.reason,
+            self.native_reply,
+            self.diagnostics,
+            self.delivery_attempted,
+        )
+    }
+    fn before(reason: String) -> Self {
+        Self {
+            reason,
+            native_reply: None,
+            diagnostics: NativeDiagnosticReceipts::empty(),
+            delivery_attempted: false,
+        }
+    }
 }
 impl NativeActChannelReply {
     pub(super) fn value(&self) -> &Value {
@@ -121,8 +167,21 @@ impl NativeActChannelReply {
     pub(super) fn into_value(self) -> Value {
         self.value
     }
+    pub(super) fn into_custody(self) -> (Value, NativeDiagnosticReceipts) {
+        (self.value, self.diagnostics)
+    }
 }
 impl ActChannel {
+    #[cfg(test)]
+    pub(super) fn lose_reply_after_actual_write(&self) {
+        *self.reply_loss.lock().unwrap() = Some(NativeReplyLoss::AfterWrite);
+    }
+    #[cfg(test)]
+    pub(super) fn lose_actual_terminal_reply(&self) -> std::sync::Arc<Mutex<Option<Value>>> {
+        let original = std::sync::Arc::new(Mutex::new(None));
+        *self.reply_loss.lock().unwrap() = Some(NativeReplyLoss::Terminal(original.clone()));
+        original
+    }
     pub(super) fn exchange(&self, value: &Value) -> Result<Value, String> {
         self.exchange_qualified(value)
             .map(NativeActChannelReply::into_value)
@@ -141,57 +200,151 @@ impl ActChannel {
         value: &Value,
         mut answer: impl FnMut(&Value) -> Result<Option<Value>, String>,
     ) -> Result<NativeActChannelReply, String> {
-        let bytes = serde_json::to_vec(value).map_err(|e| e.to_string())?;
-        if bytes.len() > MAX_REQUEST {
-            return Err("native selected Act message exceeds existing 32 MiB control bound".into());
+        if value["mode"] == "render" || value["schema"] == "oi.native-act-owner-control/v1" {
+            return Err("native render operation must retain typed diagnostic custody".into());
         }
-        let mut reader = self
-            .reader
-            .lock()
-            .map_err(|_| "native private Act channel poisoned")?;
-        let (pid, uid) = native_parent_image::unix_peer(reader.get_ref().as_raw_fd())?;
-        if u64::from(pid)
-            != self.qualification["ql_host"]["process"]["pid"]
-                .as_u64()
-                .ok_or("native qualified QL PID lost")?
-            || u64::from(uid)
-                != self.qualification["ql_host"]["process"]["uid"]
-                    .as_u64()
-                    .ok_or("native qualified QL UID lost")?
-        {
-            return Err("native held Act channel peer changed".into());
-        }
-        reader
-            .get_mut()
-            .write_all(&bytes)
-            .and_then(|_| reader.get_mut().write_all(b"\n"))
-            .and_then(|_| reader.get_mut().flush())
-            .map_err(|e| e.to_string())?;
-        for _ in 0..=16384 {
-            let value = line(&mut *reader)?;
-            if native_parent_image::unix_peer(reader.get_ref().as_raw_fd())? != (pid, uid) {
-                return Err("native held Act channel peer changed during reply".into());
-            }
-            let Some(next) = answer(&value)? else {
-                return Ok(NativeActChannelReply {
-                    value,
-                    qualification: self.qualification.clone(),
-                });
-            };
-            let bytes = serde_json::to_vec(&next).map_err(|e| e.to_string())?;
+        self.exchange_stream_custodied(value, &mut answer)
+            .map_err(|refusal| refusal.reason().to_owned())
+    }
+    pub(super) fn exchange_stream_custodied(
+        &self,
+        value: &Value,
+        mut answer: impl FnMut(&Value) -> Result<Option<Value>, String>,
+    ) -> Result<NativeActChannelReply, NativeActChannelRefusal> {
+        let instance = value["instance_ref"].as_str().ok_or_else(|| {
+            NativeActChannelRefusal::before("native diagnostic instance absent".into())
+        })?;
+        let request = value["request_id"].as_str().ok_or_else(|| {
+            NativeActChannelRefusal::before("native diagnostic request ordinal absent".into())
+        })?;
+        let mut diagnostics = NativeDiagnosticReceiver::new(instance, request)
+            .map_err(NativeActChannelRefusal::before)?;
+        let mut native_reply = None;
+        let mut delivery_attempted = false;
+        let outcome = (|| -> Result<NativeActChannelReply, String> {
+            let bytes = serde_json::to_vec(value).map_err(|e| e.to_string())?;
             if bytes.len() > MAX_REQUEST {
                 return Err(
                     "native selected Act message exceeds existing 32 MiB control bound".into(),
                 );
             }
+            let mut reader = self
+                .reader
+                .lock()
+                .map_err(|_| "native private Act channel poisoned")?;
+            let (pid, uid) = native_parent_image::unix_peer(reader.get_ref().as_raw_fd())?;
+            if u64::from(pid)
+                != self.qualification["ql_host"]["process"]["pid"]
+                    .as_u64()
+                    .ok_or("native qualified QL PID lost")?
+                || u64::from(uid)
+                    != self.qualification["ql_host"]["process"]["uid"]
+                        .as_u64()
+                        .ok_or("native qualified QL UID lost")?
+            {
+                return Err("native held Act channel peer changed".into());
+            }
+            // Even a partial first write may be acted on. This fact is set
+            // before the write, not inferred from a reply or write success.
+            delivery_attempted = true;
             reader
                 .get_mut()
                 .write_all(&bytes)
                 .and_then(|_| reader.get_mut().write_all(b"\n"))
                 .and_then(|_| reader.get_mut().flush())
                 .map_err(|e| e.to_string())?;
-        }
-        Err("native closed-reader callback exceeds existing finite custody".into())
+            #[cfg(test)]
+            {
+                let lose = {
+                    let mut loss = self
+                        .reply_loss
+                        .lock()
+                        .map_err(|_| "native reply loss lock poisoned")?;
+                    if matches!(loss.as_ref(), Some(NativeReplyLoss::AfterWrite)) {
+                        loss.take();
+                        true
+                    } else {
+                        false
+                    }
+                };
+                if lose {
+                    reader
+                        .get_ref()
+                        .shutdown(std::net::Shutdown::Read)
+                        .map_err(|e| e.to_string())?;
+                }
+            }
+            for _ in 0..=16384 {
+                let value = line(&mut *reader)?;
+                if native_parent_image::unix_peer(reader.get_ref().as_raw_fd())? != (pid, uid) {
+                    return Err("native held Act channel peer changed during reply".into());
+                }
+                #[cfg(test)]
+                if !NativeDiagnosticReceiver::is_part(&value)
+                    && value["schema"] != "ql.native-act-owner-query/v1"
+                {
+                    let loss = self
+                        .reply_loss
+                        .lock()
+                        .map_err(|_| "native reply loss lock poisoned")?
+                        .take();
+                    if let Some(NativeReplyLoss::Terminal(original)) = loss {
+                        // The genuine child has produced this full original
+                        // response. Hold it for the test, then cause actual OS
+                        // EOF before the caller can capture the acknowledgement.
+                        *original
+                            .lock()
+                            .map_err(|_| "native original reply lock poisoned")? = Some(value);
+                        reader
+                            .get_ref()
+                            .shutdown(std::net::Shutdown::Read)
+                            .map_err(|e| e.to_string())?;
+                        return match line(&mut *reader) {
+                            Err(reason) => Err(reason),
+                            Ok(_) => {
+                                Err("native EOF fault unexpectedly received another frame".into())
+                            }
+                        };
+                    }
+                }
+                let next = if NativeDiagnosticReceiver::is_part(&value) {
+                    Some(diagnostics.accept(&value)?)
+                } else {
+                    native_reply = Some(value.clone());
+                    match answer(&value)? {
+                        Some(next) => Some(next),
+                        None => {
+                            let retained = diagnostics.finish(value.get("diagnostics"))?;
+                            return Ok(NativeActChannelReply {
+                                value,
+                                qualification: self.qualification.clone(),
+                                diagnostics: retained,
+                            });
+                        }
+                    }
+                }
+                .ok_or("native private diagnostic acknowledgement absent")?;
+                let bytes = serde_json::to_vec(&next).map_err(|e| e.to_string())?;
+                if bytes.len() > MAX_REQUEST {
+                    return Err(
+                        "native selected Act message exceeds existing 32 MiB control bound".into(),
+                    );
+                }
+                reader
+                    .get_mut()
+                    .write_all(&bytes)
+                    .and_then(|_| reader.get_mut().write_all(b"\n"))
+                    .and_then(|_| reader.get_mut().flush())
+                    .map_err(|e| e.to_string())?;
+            }
+            Err("native closed-reader callback exceeds existing finite custody".into())
+        })();
+        outcome.map_err(|reason| NativeActChannelRefusal {
+            reason,
+            native_reply,
+            diagnostics: diagnostics.into_partial(),
+            delivery_attempted,
+        })
     }
 }
 impl Drop for ActChannel {

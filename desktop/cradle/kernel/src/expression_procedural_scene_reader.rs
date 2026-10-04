@@ -13,6 +13,22 @@ pub struct NativeDocumentSceneReader {
     document_digest: String,
 }
 impl NativeDocumentSceneReader {
+    /// Recording borrows the actual registered Scene constructor and THIS
+    /// complete current Document. Neither a readback nor a wire can mint it.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub(crate) fn from_native_scene_owner(
+        application: &crate::expression::Application,
+        owner: &crate::expression::procedural::scene_receiver::SceneOwner,
+        document: Document,
+        scene_ref: &str,
+        expected_scene_revision: u64,
+    ) -> Result<Self, String> {
+        application.require_procedural_scene_owner(owner, &document)?;
+        owner.closed_constructor_fact(&document, scene_ref)?;
+        let reader = Self::from_current_document(document, scene_ref, expected_scene_revision)?;
+        application.require_procedural_scene_owner(owner, reader.document())?;
+        Ok(reader)
+    }
     fn from_current_document(
         document: Document,
         scene_ref: &str,
@@ -54,6 +70,35 @@ impl NativeDocumentSceneReader {
         }
         Ok(())
     }
+    /// FIELD custody belongs to the sole World carrier in this SAME complete
+    /// Document. The selected/generated Scene keeps its own CAS; no World or
+    /// source asset is copied onto it and no first-Scene fallback is allowed.
+    fn field_source(
+        &self,
+    ) -> Result<Option<&crate::expression_procedural_field_source::NativeFieldSource>, String> {
+        let mut carriers = self.document.scenes.iter().filter(|scene| {
+            scene
+                .presentation
+                .as_ref()
+                .is_some_and(|p| p.scene["epiWorld"].is_object())
+        });
+        let carrier = carriers.next();
+        if carriers.next().is_some() {
+            return Err("complete native Document has ambiguous World source carriers".into());
+        }
+        match carrier {
+            Some(scene) => Ok(scene.native_field_source.as_ref()),
+            None if self
+                .document
+                .scenes
+                .iter()
+                .any(|s| s.native_field_source.is_some()) =>
+            {
+                Err("native FIELD asset has no original World carrier in this Document".into())
+            }
+            None => Ok(None), // A plain authored Scene has no FIELD grant.
+        }
+    }
     pub(crate) fn native_manifest(&self) -> Result<Value, String> {
         // Existing expanded Document and 32MiB delivery bounds are preflighted
         // before constructing transport strings/Value copies. No cap increase.
@@ -68,9 +113,7 @@ impl NativeDocumentSceneReader {
         let canonical_scene_bytes =
             String::from_utf8(scene_bytes.clone()).map_err(|e| e.to_string())?;
         let field_source_manifest = self
-            .scene()
-            .native_field_source
-            .as_ref()
+            .field_source()?
             .map(|source| source.manifest())
             .transpose()?;
         #[derive(serde::Serialize)]
@@ -107,11 +150,9 @@ impl NativeDocumentSceneReader {
         serde_json::to_value(delivery).map_err(|e| e.to_string())
     }
     pub(crate) fn field_source_part(&self, index: usize) -> Result<Value, String> {
-        let source = self
-            .scene()
-            .native_field_source
-            .as_ref()
-            .ok_or("current Scene lacks full original/current native FIELD source custody")?;
+        let source = self.field_source()?.ok_or(
+            "current Document World lacks full original/current native FIELD source custody",
+        )?;
         let mut part = source.sample_part(index)?;
         part["selection"] = json!({"expression_ref":self.document.expression_ref,
             "expression_revision":self.document.revision,
@@ -191,6 +232,97 @@ impl crate::Kernel {
             currentness,
         })
     }
+}
+
+/// Called by the genuine selected-Scene native operation test only after its
+/// actual FieldHost source observation and ordinary Scene source retention.
+/// Mutant Documents test this data reader; they mint no OS/source/clock lease.
+#[cfg(test)]
+pub(crate) fn verify_actual_field_carrier_contract(document: &Document) {
+    document.validate().unwrap();
+    let carrier = document
+        .scenes
+        .iter()
+        .position(|scene| {
+            scene
+                .presentation
+                .as_ref()
+                .is_some_and(|p| p.scene["epiWorld"].is_object())
+        })
+        .expect("actual native World carrier");
+    let source = document.scenes[carrier]
+        .native_field_source
+        .as_ref()
+        .expect("actual retained native source");
+    let selected = document
+        .scenes
+        .iter()
+        .position(|scene| {
+            scene.presentation.is_some() && scene.scene_ref != document.scenes[carrier].scene_ref
+        })
+        .unwrap_or(carrier);
+    let reader = NativeDocumentSceneReader::from_current_document(
+        document.clone(),
+        &document.scenes[selected].scene_ref,
+        document.scenes[selected].revision,
+    )
+    .unwrap();
+    let manifest = reader.native_manifest().unwrap();
+    assert_eq!(
+        manifest["field_source_manifest"],
+        source.manifest().unwrap()
+    );
+    assert_eq!(manifest["scene_ref"], document.scenes[selected].scene_ref);
+    for index in 0..source.part_count() {
+        let part = reader.field_source_part(index).unwrap();
+        let mut original = source.sample_part(index).unwrap();
+        original["selection"] = part["selection"].clone();
+        assert_eq!(part, original);
+        assert_eq!(
+            part["selection"]["scene_ref"],
+            document.scenes[selected].scene_ref
+        );
+        assert_eq!(part["selection"]["source_digest"], source.source_digest());
+    }
+    let mut changed = document.clone();
+    changed.title.push_str(" changed");
+    assert!(reader.verify_current(&changed).is_err());
+    let mut absent = document.clone();
+    for scene in &mut absent.scenes {
+        if let Some(presentation) = scene.presentation.as_mut() {
+            presentation
+                .scene
+                .as_object_mut()
+                .unwrap()
+                .remove("epiWorld");
+        }
+    }
+    let absent = NativeDocumentSceneReader::from_current_document(
+        absent,
+        &document.scenes[selected].scene_ref,
+        document.scenes[selected].revision,
+    )
+    .unwrap();
+    assert!(absent.native_manifest().is_err());
+    assert!(absent.field_source_part(0).is_err());
+    let mut duplicate = document.clone();
+    let mut second = duplicate.scenes[carrier].clone();
+    second.scene_ref = format!("{}:scene:duplicate-world", document.expression_ref);
+    second.title.push_str(" duplicate");
+    second.native_field_source = None;
+    second.performance = None;
+    if let Some(presentation) = second.presentation.as_mut() {
+        presentation.scene["id"] = json!(second.scene_ref);
+    }
+    duplicate.scenes.push(second);
+    let duplicate = NativeDocumentSceneReader::from_current_document(
+        duplicate,
+        &document.scenes[selected].scene_ref,
+        document.scenes[selected].revision,
+    )
+    .unwrap();
+    assert!(duplicate.native_manifest().is_err());
+    assert!(duplicate.field_source_part(0).is_err());
 }
 
 #[cfg(test)]

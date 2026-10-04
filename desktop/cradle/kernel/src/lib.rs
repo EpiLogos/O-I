@@ -338,6 +338,11 @@ pub enum KernelOp {
     NativeExpression {
         request: native_expression::Request,
     },
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[serde(rename = "native-performance-recording")]
+    NativePerformanceRecording {
+        request: native_expression::NativeSceneRecordingRequest,
+    },
     NaraCoordinate {
         request: nara_coordinate::Request,
     },
@@ -2422,6 +2427,10 @@ impl Kernel {
                     receipts,
                     result: KernelOpResult::NaraDecisionRecorded { decision },
                 })
+            }
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            KernelOp::NativePerformanceRecording { request } => {
+                self.apply_native_scene_recording_request(request)
             }
             KernelOp::NativeExpression { request } => {
                 let data = match request {

@@ -15,6 +15,9 @@ use serde_json::{json, Value};
 pub(crate) struct NativeSceneOperationRefusal {
     reason: String,
     native_reply: Option<Value>,
+    delivery_attempted: bool,
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    diagnostics: super::act_diagnostics::NativeDiagnosticReceipts,
 }
 impl NativeSceneOperationRefusal {
     pub(crate) fn reason(&self) -> &str {
@@ -23,22 +26,72 @@ impl NativeSceneOperationRefusal {
     pub(crate) fn native_reply(&self) -> Option<&Value> {
         self.native_reply.as_ref()
     }
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub(super) fn into_recording_custody(
+        self,
+    ) -> (
+        String,
+        Option<Value>,
+        super::act_diagnostics::NativeDiagnosticReceipts,
+        bool,
+    ) {
+        (
+            self.reason,
+            self.native_reply,
+            self.diagnostics,
+            self.delivery_attempted,
+        )
+    }
     fn retained_channel_result(self) -> Result<Value, String> {
         match self.native_reply {
             Some(original) => Ok(json!({"schema":"oi.native-scene-source-channel-refusal/v1",
-                "accepted":false,"reason":self.reason,"native_reply":original})),
+                "accepted":false,"reason":self.reason,"native_reply":original,
+                "delivery_attempted":self.delivery_attempted})),
             None => Err(self.reason),
+        }
+    }
+    // Used only after this private native route has returned an actual reply.
+    // Shared physical/acoustic children use the same constructor on their
+    // post-reply qualification failure; caller JSON cannot reach it.
+    fn after_reply(reason: String, native_reply: Value) -> Self {
+        Self {
+            reason,
+            native_reply: Some(native_reply),
+            delivery_attempted: true,
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            diagnostics: super::act_diagnostics::NativeDiagnosticReceipts::empty(),
         }
     }
     fn before(reason: String) -> Self {
         Self {
             reason,
             native_reply: None,
+            delivery_attempted: false,
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            diagnostics: super::act_diagnostics::NativeDiagnosticReceipts::empty(),
         }
     }
 }
 
 impl Manager {
+    /// Explicit declared Return seed through the same qualified current source
+    /// operation; the caller cannot supply a source artifact or clock.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub(crate) fn read_native_scene_performance(
+        &mut self,
+        lease: &str,
+        reader: &NativeSceneSourceReader<'_>,
+        declared_seed: u64,
+    ) -> Result<Value, NativeSceneOperationRefusal> {
+        self.closed_native_scene_operation(
+            lease,
+            reader,
+            "performance-source",
+            None,
+            None,
+            Some(declared_seed),
+        )
+    }
     /// Actual privately borrowed current Document/Scene; the existing QL
     /// field-source operation replays the complete original/current source.
     /// This wrapper does not compose, invent a first Act or install source.
@@ -73,10 +126,10 @@ impl Manager {
         )?;
         let receipt = reply["result"]["native_receipt"].clone();
         if !receipt.is_object() {
-            return Err(NativeSceneOperationRefusal {
-                reason: "source bootstrap consumed no complete original native receipt".into(),
-                native_reply: Some(reply),
-            });
+            return Err(NativeSceneOperationRefusal::after_reply(
+                "source bootstrap consumed no complete original native receipt".into(),
+                reply,
+            ));
         }
         Ok((receipt, reply))
     }
@@ -103,10 +156,10 @@ impl Manager {
         )?;
         let receipt = reply["result"]["native_receipt"].clone();
         if !receipt.is_object() {
-            return Err(NativeSceneOperationRefusal {
-                reason: "source lifecycle consumed no complete original native receipt".into(),
-                native_reply: Some(reply),
-            });
+            return Err(NativeSceneOperationRefusal::after_reply(
+                "source lifecycle consumed no complete original native receipt".into(),
+                reply,
+            ));
         }
         Ok((receipt, reply))
     }
@@ -134,8 +187,13 @@ impl Manager {
         }
         #[cfg(any(target_os = "linux", target_os = "macos"))]
         {
+            if self.recording_failure.is_some() {
+                return Err(NativeSceneOperationRefusal::before(
+                    "original native recording failure remains held; closed source operation cannot bypass its custody".into()));
+            }
             let mut native_reply = None;
             let mut delivery_started = false;
+            let mut diagnostics = super::act_diagnostics::NativeDiagnosticReceipts::empty();
             let outcome = (|| -> Result<Value, String> {
                 let owner = self
                     .active
@@ -247,8 +305,7 @@ impl Manager {
                     request["procedural_request"] = original;
                 }
                 let mut query = 0_u64;
-                delivery_started = true;
-                let reply=channel.exchange_stream(&request,|value| {
+                let exchanged=channel.exchange_stream_custodied(&request,|value| {
                 if value["schema"]!="ql.native-act-owner-query/v1" {return Ok(None);}
                 query=query.checked_add(1).ok_or("native Scene part ordinal exhausted")?;
                 if !matches!(mode,"source-bootstrap"|"source-lifecycle"|"field-descriptor"|"performance-source"|"acoustic-install") || query>128
@@ -263,9 +320,25 @@ impl Manager {
                 Ok(Some(json!({"schema":"oi.native-act-owner-answer/v1","instance_ref":owner.identity["instance_ref"],
                     "request_id":id.to_string(),"query_ordinal":query.to_string(),"kind":"field-part","index":index,
                     "available":part.is_ok(),"value":part.as_ref().ok(),"error":part.as_ref().err()})))
-            })?;
-                native_reply = Some(reply.value().clone());
-                let value = reply.value();
+            });
+                let reply = match exchanged {
+                    Ok(reply) => {
+                        delivery_started = true;
+                        reply
+                    }
+                    Err(refusal) => {
+                        let (reason, original, retained, attempted) = refusal.into_custody();
+                        delivery_started = attempted;
+                        native_reply = original;
+                        diagnostics = retained;
+                        return Err(reason);
+                    }
+                };
+                let qualification = reply.qualification().clone();
+                let (value, retained) = reply.into_custody();
+                diagnostics = retained;
+                native_reply = Some(value.clone());
+                let value = &value;
                 if value["schema"] != "ql.native-act-owner-result/v1"
                     || value["instance_ref"] != owner.identity["instance_ref"]
                     || cursor(&value["request_id"])? != id
@@ -279,7 +352,7 @@ impl Manager {
                 owner.last_request_id = id;
                 if value["status"] == "ok" {
                     let evidence = &value["result"]["selection"];
-                    if evidence["native_parent_qualification"] != *reply.qualification()
+                    if evidence["native_parent_qualification"] != qualification
                         || evidence["field_registration"] != registration
                         || evidence["source_kind"] != "field"
                     {
@@ -349,6 +422,8 @@ impl Manager {
             outcome.map_err(|reason| NativeSceneOperationRefusal {
                 reason,
                 native_reply,
+                delivery_attempted: delivery_started,
+                diagnostics,
             })
         }
     }

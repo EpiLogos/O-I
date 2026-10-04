@@ -761,6 +761,11 @@ pub struct NativeRecordingBatch {
     receipts: Vec<RecordedApplication>,
     input_journal: Vec<InputHistoryEntry>,
 }
+impl NativeRecordingBatch {
+    pub fn entries(&self) -> &[RecordedApplication] {
+        &self.receipts
+    }
+}
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(
     tag = "kind",
@@ -779,6 +784,68 @@ pub struct NativeRecordingPage {
     encoded: crate::expression_performance_codec::EncodedPage,
 }
 impl NativeRecordingPage {
+    /// Original typed page counters before this page. The native owner exposes
+    /// these alongside the validated after boundary so a consumer can prove
+    /// the FIRST page follows its retained native origin, not just a suffix.
+    pub fn recording_stream_before(
+        &self,
+    ) -> Result<(Counter, Counter, Counter, Counter, String), String> {
+        self.validate()?;
+        if let Some(termination) = self.termination()? {
+            let before = &termination.before;
+            let management = before
+                .management
+                .as_ref()
+                .ok_or("native termination management absent")?;
+            return Ok((
+                management.transport_epoch,
+                decimal(&before.audio["applied_application_ordinal"])?,
+                management.input_history.last_ordinal,
+                before.sample,
+                before.basis_digest.clone(),
+            ));
+        }
+        let batch = self.batch()?;
+        Ok((
+            batch.state.transport_epoch,
+            batch.previous_applied_application_ordinal,
+            batch.previous_input_ordinal,
+            batch.state.committed_cursor,
+            batch.state.basis_digest,
+        ))
+    }
+    /// Same existing typed codec owner exposes its complete validated stream
+    /// boundary. No caller watermark or second decoder is introduced.
+    pub fn recording_stream_after(
+        &self,
+    ) -> Result<(Counter, Counter, Counter, Counter, String), String> {
+        self.validate()?;
+        if let Some(termination) = self.termination()? {
+            let after = &termination.after;
+            let management = after
+                .management
+                .as_ref()
+                .ok_or("native termination management absent")?;
+            return Ok((
+                management.transport_epoch,
+                decimal(&after.audio["applied_application_ordinal"])?,
+                management.input_history.last_ordinal,
+                after.sample,
+                after.basis_digest.clone(),
+            ));
+        }
+        let batch = self.batch()?;
+        Ok((
+            batch.state.transport_epoch,
+            batch.state.applied_high_water,
+            batch
+                .input_journal
+                .last()
+                .map_or(batch.previous_input_ordinal, |row| row.ordinal),
+            batch.state.committed_cursor,
+            batch.state.basis_digest,
+        ))
+    }
     /// Exact original canonical bytes from the existing codec, for another
     /// native consumer. The codec and private typed content validate before
     /// delivery; rebuilding a Value cannot replace this byte-order custody.

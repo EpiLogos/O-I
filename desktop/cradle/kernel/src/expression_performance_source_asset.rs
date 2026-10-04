@@ -9,6 +9,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
+#[path = "expression_performance_acoustic_source.rs"]
+mod acoustic_source;
+#[path = "expression_performance_physical_source.rs"]
+mod physical_source;
+
 pub const SCHEMA: &str = "oi.expression-performance-source-asset/v1";
 
 /// This native producer uses `constructor` as a literal source-route tag,
@@ -26,7 +31,11 @@ pub(crate) fn native_constructor_metadata(object: &serde_json::Map<String, Value
         "calibration",
         "return_context",
     ];
-    object.len() == KEYS.len()
+    (object.len() == KEYS.len()
+        || (object.len() == KEYS.len() + 1
+            && object
+                .get("acoustic_receiving")
+                .is_some_and(Value::is_object)))
         && KEYS.iter().all(|key| object.contains_key(*key))
         && object["schema"] == "ql.native-performance-receiving-source-inputs/v1"
         && object["constructor"].as_str().is_some_and(|tag| {
@@ -47,12 +56,66 @@ pub struct NativePerformanceSourceAsset {
     identity: Identity,
     context: ContextBinding,
     native_bundle: Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    native_physical_source_history: Option<Vec<Value>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    native_acoustic_source_history: Option<Vec<Value>>,
 }
 impl NativePerformanceSourceAsset {
     /// The existing native worker lease passes the ACTUAL PerformanceOwner
     /// output and its independently bound Return. A browser receipt is not
     /// qualified by this structural constructor or a content hash.
     pub fn from_native(basis: &PerformanceBasis, native_bundle: Value) -> Result<Self, String> {
+        Self::from_native_with_physical_history(basis, native_bundle, None)
+    }
+    /// Complete actual owner artifact, reached by the existing qualified source
+    /// channel. This structural constructor alone confers no native authority.
+    pub(crate) fn from_native_artifact(
+        basis: &PerformanceBasis,
+        artifact: &Value,
+    ) -> Result<Self, String> {
+        if artifact["schema"] != "ql.retained-source-performance-fixture/v1" {
+            return Err("actual native source artifact contract absent".into());
+        }
+        let bundle = artifact
+            .get("source_assets")
+            .filter(|v| v.is_object())
+            .ok_or("actual complete native source bundle absent")?;
+        let history = artifact.get("native_physical_source_history");
+        let acoustic = artifact.get("native_acoustic_source_history");
+        // Count both borrowed payloads before any potentially large clone.
+        crate::expression_act_storage::measure(
+            &(bundle, history, acoustic),
+            MAX_PERFORMANCE_BYTES,
+        )?;
+        let history = history
+            .map(|v| serde_json::from_value::<Vec<Value>>(v.clone()).map_err(|e| e.to_string()))
+            .transpose()?;
+        let acoustic = acoustic
+            .map(|v| serde_json::from_value::<Vec<Value>>(v.clone()).map_err(|e| e.to_string()))
+            .transpose()?;
+        Self::from_native_with_source_histories(basis, bundle.clone(), history, acoustic)
+    }
+    pub fn from_native_with_physical_history(
+        basis: &PerformanceBasis,
+        native_bundle: Value,
+        native_physical_source_history: Option<Vec<Value>>,
+    ) -> Result<Self, String> {
+        Self::from_native_with_source_histories(
+            basis,
+            native_bundle,
+            native_physical_source_history,
+            None,
+        )
+    }
+    /// Complete separate original stopped body and acoustic applications.
+    /// Structural retention is not native admission or currentness authority.
+    pub fn from_native_with_source_histories(
+        basis: &PerformanceBasis,
+        native_bundle: Value,
+        native_physical_source_history: Option<Vec<Value>>,
+        native_acoustic_source_history: Option<Vec<Value>>,
+    ) -> Result<Self, String> {
         basis.validate()?;
         let asset = Self {
             schema: SCHEMA.into(),
@@ -60,12 +123,20 @@ impl NativePerformanceSourceAsset {
             identity: basis.identity.clone(),
             context: basis.context.clone(),
             native_bundle,
+            native_physical_source_history,
+            native_acoustic_source_history,
         };
         asset.validate_basis(basis)?;
         Ok(asset)
     }
     pub fn native_bundle(&self) -> &Value {
         &self.native_bundle
+    }
+    pub fn native_physical_source_history(&self) -> Option<&[Value]> {
+        self.native_physical_source_history.as_deref()
+    }
+    pub fn native_acoustic_source_history(&self) -> Option<&[Value]> {
+        self.native_acoustic_source_history.as_deref()
     }
     pub fn basis_digest(&self) -> &str {
         &self.basis_digest
@@ -77,6 +148,18 @@ impl NativePerformanceSourceAsset {
         self.context.private
             || self.native_bundle["source_context"]["availability"] != "available"
             || self.validate_source_payload().is_err()
+            || physical_source::validate_history(
+                &self.native_bundle,
+                self.native_physical_source_history.as_deref(),
+                true,
+            )
+            .is_err()
+            || acoustic_source::validate_history(
+                &self.native_bundle,
+                self.native_acoustic_source_history.as_deref(),
+                true,
+            )
+            .is_err()
     }
     pub fn reading(&self) -> Result<ReadingRef, String> {
         self.validate()?;
@@ -105,6 +188,16 @@ impl NativePerformanceSourceAsset {
         self.identity.validate()?;
         self.context.validate()?;
         crate::expression_performance::safe(&self.native_bundle, 0)?;
+        if let Some(history) = &self.native_physical_source_history {
+            for original in history {
+                crate::expression_performance::safe(original, 0)?;
+            }
+        }
+        if let Some(history) = &self.native_acoustic_source_history {
+            for original in history {
+                crate::expression_performance::safe(original, 0)?;
+            }
+        }
         if !self.basis_digest.strip_prefix("sha256:").is_some_and(|s| {
             s.len() == 64
                 && s.bytes()
@@ -156,60 +249,17 @@ impl NativePerformanceSourceAsset {
                 "native source lost explicit consumer roles or sparse source preparation".into(),
             );
         }
-        let original = &bundle["original_native_input"];
-        let projection = &bundle["physical_consumer_projection"];
-        if projection["schema"] != "ql.retained-physical-consumer-projection/v1"
-            || projection["original_native_input"] != *original
-            || projection["projection_ref"] != bundle["configuration"]["projection_ref"]
-            || projection["policy"] != "excitation pitches do not retune physical eigenmodes"
-        {
-            return Err("native original/projection source relation lost".into());
-        }
-        let input = &bundle["native_basis"]["input"];
-        // This retires only legacy eigenmode-frequency remapping. The exact
-        // original driver arrays remain; these checks confer no forcing role.
-        for key in [
-            "frequency_bindings",
-            "condition_frequency_bindings",
-            "sky_frequency_bindings",
-        ] {
-            // The actual CoupledInput serde contract omits the two optional
-            // empty successor vectors. Preserve that absence in original bytes;
-            // the explicit projection receipt retains their typed empty arrays.
-            let optional = key != "frequency_bindings";
-            let original_entries = match original.get(key) {
-                Some(Value::Array(entries)) => entries.as_slice(),
-                None if optional => &[],
-                _ => return Err("native original bindings have no typed array contract".into()),
-            };
-            let retired = projection["legacy_mode_frequency_bindings"][key]
-                .as_array()
-                .ok_or("native projection lost explicit retired binding array")?;
-            let cleared = match input.get(key) {
-                Some(Value::Array(entries)) => entries.is_empty(),
-                None if optional => true,
-                _ => false,
-            };
-            if retired.as_slice() != original_entries || !cleared {
-                return Err("native source lost original bindings or remapped body modes".into());
-            }
-        }
-        for key in ["schema", "m1", "m3", "m3_commands", "harmonic_source"] {
-            if input[key] != original[key] {
-                return Err(format!(
-                    "physical projection changed original source: {key}"
-                ));
-            }
-        }
-        let original_receipts = original["source_receipts"]
-            .as_array()
-            .ok_or("original source receipts absent")?;
-        let receipts = input["source_receipts"]
-            .as_array()
-            .ok_or("projected source receipts absent")?;
-        if !receipts.starts_with(original_receipts) || !receipts.contains(projection) {
-            return Err("physical projection lost original receipts/occasion".into());
-        }
+        physical_source::validate_bundle_projection(bundle)?;
+        physical_source::validate_history(
+            bundle,
+            self.native_physical_source_history.as_deref(),
+            false,
+        )?;
+        acoustic_source::validate_history(
+            &self.native_bundle,
+            self.native_acoustic_source_history.as_deref(),
+            false,
+        )?;
         Ok(())
     }
     /// Retention of unclassified opaque source is not public disclosure or
@@ -218,6 +268,16 @@ impl NativePerformanceSourceAsset {
     pub fn require_source_context(&self, basis: &PerformanceBasis) -> Result<(), String> {
         self.validate_basis(basis)?;
         self.validate_source_payload()?;
+        physical_source::validate_history(
+            &self.native_bundle,
+            self.native_physical_source_history.as_deref(),
+            true,
+        )?;
+        acoustic_source::validate_history(
+            &self.native_bundle,
+            self.native_acoustic_source_history.as_deref(),
+            true,
+        )?;
         let witness = &self.native_bundle["source_context"];
         if witness["schema"] != "ql.retained-performance-source-context/v1"
             || witness["availability"] != "available"
@@ -302,6 +362,11 @@ impl NativePerformanceSourceAsset {
             "receiving_source_inputs",
             "receiving_definition",
             "current_receiving",
+            "acoustic_receiving",
+            "operative_native_input",
+            "operative_physical_consumer_projection",
+            "physical_transition_history",
+            "acoustic_transition_history",
         ];
         if bundle.keys().any(|key| !known.contains(&key.as_str())) {
             return Err(
@@ -327,76 +392,14 @@ impl NativePerformanceSourceAsset {
         }
         let current = &bundle["current_receiving"];
         let inputs = &bundle["receiving_source_inputs"];
-        let witness = &current["source_payload_context"];
-        let admission = &current["native_admission"];
-        let exact_keys = |value: &Value, names: &[&str]| {
-            value.as_object().is_some_and(|object| {
-                object.len() == names.len() && names.iter().all(|name| object.contains_key(*name))
-            })
-        };
-        if !exact_keys(
+        validate_receiving_snapshot(
             current,
-            &[
-                "schema",
-                "source_inputs",
-                "source_context",
-                "source_payload_context",
-                "receiving_definition",
-                "native_admission",
-            ],
-        ) || !exact_keys(
             inputs,
-            &[
-                "schema",
-                "constructor",
-                "world_request",
-                "identity_profile",
-                "natal",
-                "sky",
-                "original_occasion",
-                "calibration",
-                "return_context",
-            ],
-        ) || current["schema"] != "ql.current-performance-receiving/v1"
-            || inputs["schema"] != "ql.native-performance-receiving-source-inputs/v1"
-            || witness["schema"] != "ql.native-receiving-source-payload-context/v1"
-            || current["source_inputs"] != *inputs
-            || current["source_context"] != bundle["source_context"]
-            || current["receiving_definition"] != bundle["receiving_definition"]
-            || admission["schema"] != "ql.performance-receiving-admission/v1"
-            || admission["receiving_definition"] != bundle["receiving_definition"]
-            || admission["native_basis"] != bundle["native_basis"]
-            || witness["private"].as_bool() != Some(self.context.private)
-            || !admission["native_preparation"].is_object()
-        {
-            return Err("native receiving source payload/context/admission lost or changed".into());
-        }
-        for (name, value) in [
-            ("source_inputs_sha256", inputs),
-            ("source_context_sha256", &current["source_context"]),
-            ("native_admission_sha256", admission),
-        ] {
-            let actual = format!(
-                "sha256:{:x}",
-                Sha256::digest(serde_json::to_vec(value).map_err(|e| e.to_string())?)
-            );
-            if witness[name] != actual {
-                return Err("native receiving complete payload binding differs".into());
-            }
-        }
-        let owner: ReadingRef =
-            serde_json::from_value(witness["owner"].clone()).map_err(|e| e.to_string())?;
-        if owner.availability != Availability::Available
-            || owner.r#ref != "crates/ql-mef/src/continuous/performance_receiving.rs"
-            || !owner.revision.strip_prefix("sha256:").is_some_and(|v| {
-                v.len() == 64
-                    && v.bytes()
-                        .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
-            })
-            || witness["standing"].as_str().is_none_or(str::is_empty)
-        {
-            return Err("native receiving source payload owner unavailable".into());
-        }
+            &bundle["source_context"],
+            &bundle["receiving_definition"],
+            &bundle["native_basis"],
+            self.context.private,
+        )?;
         if self.context.kind == crate::expression_performance::ContextKind::World
             && [
                 "identity_profile",
@@ -410,6 +413,7 @@ impl NativePerformanceSourceAsset {
         {
             return Err("neutral World cannot disclose protected native receiving inputs".into());
         }
+        physical_source::validate_acoustic_payload(&self.native_bundle, self.context.private)?;
         Ok(())
     }
     pub(crate) fn context_readings(
@@ -426,6 +430,16 @@ impl NativePerformanceSourceAsset {
         // Full producer assets include receiving inputs and native owner sidecars.
         // An original-input-only guard cannot cover a protected occasion elsewhere.
         reject_episode_transfer(&self.native_bundle, basis)?;
+        if let Some(history) = &self.native_physical_source_history {
+            for original in history {
+                reject_episode_transfer(original, basis)?;
+            }
+        }
+        if let Some(history) = &self.native_acoustic_source_history {
+            for original in history {
+                reject_episode_transfer(original, basis)?;
+            }
+        }
         let native = &self.native_bundle["native_basis"];
         if self.basis_digest != basis.content_digest
             || self.identity != basis.identity
@@ -458,6 +472,77 @@ impl NativePerformanceSourceAsset {
         }
         Ok(())
     }
+}
+
+// Shared retained-integrity check for body admission and receiver birth/segment.
+// Each retains its own exact operation and payload hashes; dates are not merged.
+fn validate_receiving_snapshot(
+    current: &Value,
+    inputs: &Value,
+    source_context: &Value,
+    definition: &Value,
+    native_basis: &Value,
+    private: bool,
+) -> Result<(), String> {
+    let witness = &current["source_payload_context"];
+    let admission = &current["native_admission"];
+    let exact_keys = |value: &Value, names: &[&str]| {
+        value.as_object().is_some_and(|object| {
+            object.len() == names.len() && names.iter().all(|name| object.contains_key(*name))
+        })
+    };
+    if !exact_keys(
+        current,
+        &[
+            "schema",
+            "source_inputs",
+            "source_context",
+            "source_payload_context",
+            "receiving_definition",
+            "native_admission",
+        ],
+    ) || !inputs.as_object().is_some_and(native_constructor_metadata)
+        || current["schema"] != "ql.current-performance-receiving/v1"
+        || inputs["schema"] != "ql.native-performance-receiving-source-inputs/v1"
+        || witness["schema"] != "ql.native-receiving-source-payload-context/v1"
+        || current["source_inputs"] != *inputs
+        || current["source_context"] != *source_context
+        || current["receiving_definition"] != *definition
+        || admission["schema"] != "ql.performance-receiving-admission/v1"
+        || admission["receiving_definition"] != *definition
+        || admission["native_basis"] != *native_basis
+        || witness["private"].as_bool() != Some(private)
+        || !admission["native_preparation"].is_object()
+    {
+        return Err("native receiving source payload/context/admission lost or changed".into());
+    }
+    for (name, value) in [
+        ("source_inputs_sha256", inputs),
+        ("source_context_sha256", &current["source_context"]),
+        ("native_admission_sha256", admission),
+    ] {
+        let actual = format!(
+            "sha256:{:x}",
+            Sha256::digest(serde_json::to_vec(value).map_err(|e| e.to_string())?)
+        );
+        if witness[name] != actual {
+            return Err("native receiving complete payload binding differs".into());
+        }
+    }
+    let owner: ReadingRef =
+        serde_json::from_value(witness["owner"].clone()).map_err(|e| e.to_string())?;
+    if owner.availability != Availability::Available
+        || owner.r#ref != "crates/ql-mef/src/continuous/performance_receiving.rs"
+        || !owner.revision.strip_prefix("sha256:").is_some_and(|v| {
+            v.len() == 64
+                && v.bytes()
+                    .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+        })
+        || witness["standing"].as_str().is_none_or(str::is_empty)
+    {
+        return Err("native receiving source payload owner unavailable".into());
+    }
+    Ok(())
 }
 
 // This identifies the native occasion structure by its complete required

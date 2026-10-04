@@ -195,7 +195,18 @@ impl SelectedPerformance {
     /// Existing source/receiving lease must independently rebuild every full
     /// native source bundle; a retained digest is not replay authority.
     pub fn verify_native_sources(&self, actual: &[Value]) -> Result<(), String> {
-        self.performance().verify_native_source_replay(actual)
+        let performance = self.performance();
+        let mut musical_digests = std::collections::BTreeSet::new();
+        let per_basis = performance.native_sources.len() == performance.bases.len()
+            && performance.bases.iter().all(|basis| {
+                musical_digests.insert(&basis.content_digest)
+                    && performance.native_sources.iter().filter(|source| source.basis_digest() == basis.content_digest).count() == 1
+            });
+        if per_basis {
+            self.performance().verify_native_source_replay(actual)
+        } else {
+            self.performance().verify_native_source_epoch_replay(actual)
+        }
     }
     fn payload(&self) -> Result<Payload<'_>, String> {
         let performance = self.performance();

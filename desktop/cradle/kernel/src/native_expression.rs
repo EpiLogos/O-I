@@ -20,6 +20,33 @@ pub mod procedural;
 #[path = "native_expression_selected_scene.rs"]
 pub mod selected_scene;
 
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+use native_act_channel as act_channel;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "native_expression_act_diagnostics.rs"]
+mod act_diagnostics;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "expression_native_performance_recording.rs"]
+mod recording;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "native_expression_recording_channel.rs"]
+mod recording_channel;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[path = "native_expression_recording_definition.rs"]
+mod recording_definition;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub use recording::NativeSceneRecordingCommit;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub use recording_channel::{
+    CurrentSceneRecordingIntent, CurrentSceneRecordingOriginIntent, NativeCurrentRecordingRefusal,
+    NativeRecordingCommand, NativeSceneRecordingRequest, RecordingGesturePhase,
+    RecordingParameterAction,
+};
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub use recording_definition::{
+    CurrentSceneRecordingDefinitionIntent, NativeSceneRecordingDefinition,
+};
+
 const MAX_REQUEST: usize = 32 * 1024 * 1024;
 const MAX_REPLY: usize = 64 * 1024 * 1024;
 const TIMEOUT: Duration = Duration::from_secs(20);
@@ -98,6 +125,8 @@ pub struct Manager {
     composed: u64,
     procedural_manual_completion: Option<procedural::manual::Completed>,
     selected_scene_opening: Option<selected_scene::SelectedOpening>,
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    recording_failure: Option<recording_channel::NativeRecordingFailureCustody>,
 }
 
 #[derive(Debug)]
@@ -690,6 +719,10 @@ impl Manager {
                 )
             }
             Request::Exchange { lease, request } => {
+                #[cfg(any(target_os = "linux", target_os = "macos"))]
+                if self.recording_failure.is_some() {
+                    return Err("original native recording failure remains held; ordinary Exchange cannot bypass its custody".into());
+                }
                 let owner = self
                     .active
                     .as_mut()

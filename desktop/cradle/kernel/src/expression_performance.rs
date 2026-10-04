@@ -1273,12 +1273,40 @@ impl Performance {
         if self.native_sources.len() != self.bases.len() || actual.len() != self.bases.len() {
             return Err("complete retained native source replay unavailable".into());
         }
+        let mut musical_digests = BTreeSet::new();
+        if self.bases.iter().any(|basis| {
+            !musical_digests.insert(&basis.content_digest)
+                || self.native_sources.iter().filter(|source| source.basis_digest() == basis.content_digest).count() != 1
+        }) {
+            return Err("per-basis replay requires unique one-to-one musical sources".into());
+        }
         for (basis, replayed) in self.bases.iter().zip(actual) {
             let source = self
                 .native_sources
                 .iter()
                 .find(|s| s.basis_digest() == basis.content_digest)
                 .ok_or("retained native source basis missing")?;
+            source.verify_native_replay(basis, replayed)?;
+        }
+        Ok(())
+    }
+    /// Explicit full source-epoch replay through the SAME native selection.
+    /// Musical bases remain unique; acoustic epochs have separate complete
+    /// immutable source parts. Original per-basis replay stays unchanged.
+    pub fn verify_native_source_epoch_replay(&self, actual: &[Value]) -> Result<(), String> {
+        self.validate()?;
+        if self.native_sources.is_empty() || actual.len() != self.native_sources.len() {
+            return Err("complete retained native source epoch replay unavailable".into());
+        }
+        for (source, replayed) in self.native_sources.iter().zip(actual) {
+            let mut bases = self
+                .bases
+                .iter()
+                .filter(|b| b.content_digest == source.basis_digest());
+            let basis = bases.next().ok_or("source epoch musical basis missing")?;
+            if bases.any(|other| other != basis) {
+                return Err("source epoch musical basis ambiguous".into());
+            }
             source.verify_native_replay(basis, replayed)?;
         }
         Ok(())
@@ -1339,11 +1367,10 @@ impl Performance {
         let mut source_bases = BTreeSet::new();
         for source in &self.native_sources {
             let reading = source.reading()?;
-            if !source_refs.insert(reading.r#ref.clone())
-                || !source_bases.insert(source.basis_digest())
-            {
+            if !source_refs.insert(reading.r#ref.clone()) {
                 return Err("duplicate retained native source asset".into());
             }
+            source_bases.insert(source.basis_digest());
             let mut used = false;
             for basis in &self.bases {
                 if basis.content_digest == source.basis_digest() {
@@ -1865,13 +1892,13 @@ impl Performance {
         }
         for b in &self.bases {
             let mut source_context_refs = Vec::new();
-            if let Some(source) = self
+            for source in self
                 .native_sources
                 .iter()
-                .find(|s| s.basis_digest() == b.content_digest)
+                .filter(|s| s.basis_digest() == b.content_digest)
             {
                 if let Ok(refs) = source.context_readings(b) {
-                    source_context_refs = refs;
+                    source_context_refs.extend(refs);
                 } else {
                     issues.push(ReadinessIssue {
                         reference: b.context.context.r#ref.clone(),

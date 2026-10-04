@@ -330,6 +330,15 @@ fn same_json(left: &Value, right: &Value) -> bool {
 // Ordinary JavaScript portable metadata additionally loses the sign of zero;
 // this comparison is confined to the final portable World, never native seals.
 fn same_portable_world_json(left: &Value, right: &Value) -> bool {
+    portable_world_json(left, right)
+}
+/// Same existing pure portable codec, shared by the genuine recording test;
+/// this has no Scene constructor, source/currentness or native channel grant.
+#[cfg(test)]
+pub(crate) fn same_retained_portable_basis(left: &Value, right: &Value) -> bool {
+    portable_world_json(left, right)
+}
+fn portable_world_json(left: &Value, right: &Value) -> bool {
     json_equal(left, right, true)
 }
 fn json_equal(left: &Value, right: &Value, portable_metadata: bool) -> bool {
