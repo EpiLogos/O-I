@@ -164,7 +164,36 @@ function firePointerClick(p:Vec3){const s=effectiveScene(store.document,scene())
 function error(err:unknown){console.error(err);toast(err instanceof Error?err.message:String(err),6500);}
 const deletedLibraryIds=new Set<string>();
 const sessionPresence=installSessionPresence();
-function saveSession(origin:'ordinary'|'interval'='ordinary'){if((startupRecoveryPending&&store.revision===0&&journeyNavigation===0)||awaitingNativeBoot||!sessionPresence.isVisible()){sessionPresence.recordSuppressed(origin==='interval');return;}try{const session:SessionState={version:1,journeyId:store.document.id,sceneId:scene().id,selected,stepIndex,sceneElapsed,simTime,playing:scenePlaying,scenePlaying,journeyPlaying,fieldPaused,camera:{...camera},transport:engine.transportState?.()};localStorage.setItem(SESSION_KEY,JSON.stringify(session));localStorage.setItem('oi.field-studies.last',store.document.id);sessionPresence.recordWrite(origin==='interval');}catch{}}
+// Visibility suspends presentation, never the mounted document/renderer. A
+// cold hidden host also retains transport until its first actual GL receipt.
+let concealedAt:number|null=null,zeroPresentationFrame=true,presentationRenders=0,concealedFrames=0;
+let pendingBootTransport:{transport:NonNullable<SessionState['transport']>;current:()=>boolean}|null=null;
+function requirePresented(operation:string){if(!sessionPresence.isVisible())throw Error(operation+' requires the presented Expression. Return to this world before continuing.');}
+function renderPresentedFrame(delta:number){
+ requirePresented('Rendering');
+ if(pendingBootTransport&&!pendingBootTransport.current())pendingBootTransport=null;
+ const restore=pendingBootTransport;
+ engine.render(frameData(zeroPresentationFrame||restore?0:delta));presentationRenders++;zeroPresentationFrame=false;
+ if(restore){pendingBootTransport=null;if(restore.current())engine.restoreTransport?.(restore.transport);}
+}
+function presentationChanged(visible:boolean){
+ const now=performance.now();lastTime=now;
+ if(!visible){
+  if(concealedAt!==null)return;concealedAt=now;
+  nativeField?.controller.frame(0,true);engine.releasePrivateSound?.();
+  // The production adapter's public voice bank also holds portable object
+  // sound. Stop voices without destroying its field or changing its Scene.
+  (engine as FieldEngineAdapter&{entitySound?:{clear():void}}).entitySound?.clear();
+  pointer.active=false;
+  if(recorder.active){recorder.stop();toast('Recording stopped because this Expression was concealed.');}
+ }else{
+  if(concealedAt!==null&&propertyTake)propertyTake.armed+=now-concealedAt;
+  concealedAt=null;zeroPresentationFrame=true;needsFrame=true;overlayDirty=true;
+  // No native Play/resume here: the owner's hidden-surface hold remains held.
+  resize();
+ }
+}
+function saveSession(origin:'ordinary'|'interval'='ordinary'){if((startupRecoveryPending&&store.revision===0&&journeyNavigation===0)||awaitingNativeBoot||!sessionPresence.isVisible()){sessionPresence.recordSuppressed(origin==='interval');return;}try{const session:SessionState={version:1,journeyId:store.document.id,sceneId:scene().id,selected,stepIndex,sceneElapsed,simTime,playing:scenePlaying,scenePlaying,journeyPlaying,fieldPaused,camera:{...camera},transport:engine.transportState?.()??(pendingBootTransport?.current()?pendingBootTransport.transport:undefined)};localStorage.setItem(SESSION_KEY,JSON.stringify(session));localStorage.setItem('oi.field-studies.last',store.document.id);sessionPresence.recordWrite(origin==='interval');}catch{}}
 let draftBackupBusy=false;
 async function flushDraft(){
  clearTimeout(saveTimeout);saveTimeout=0;
@@ -484,7 +513,7 @@ function commitNumeric(el:HTMLInputElement,path:string){
 }
 function preset(value:string){return value==='seven-centres'?nativeSeven():value==='small-language'?smallLanguage():fieldStudies();}
 function hasLegacyLibrary(){try{return !!localStorage.getItem('typographic_pointcloud_saved_states');}catch{return false;}}
-function rememberCover(){try{engine.render(frameData(0));if(!engine.capture)return;const out=document.createElement('canvas');out.width=560;out.height=350;paintNativeCapture(out,engine.capture(560,350),scene(),{...captureSettings,transparent:false,includeText:true},width,height);covers.set(store.document.id,out.toDataURL('image/webp',.8));}catch{/* Gallery fallback is a static composition preview, not a substitute engine. */}}
+function rememberCover(){if(!sessionPresence.isVisible())return;try{renderPresentedFrame(0);if(!engine.capture)return;const out=document.createElement('canvas');out.width=560;out.height=350;paintNativeCapture(out,engine.capture(560,350),scene(),{...captureSettings,transparent:false,includeText:true},width,height);covers.set(store.document.id,out.toDataURL('image/webp',.8));}catch{/* Gallery fallback is a static composition preview, not a substitute engine. */}}
 let coverObserver:IntersectionObserver|null=null;
 function renderLibrary(){coverObserver?.disconnect();const library=readLibraryDetailed(),scroll=$('library-page').scrollTop;const saved=Array.from(new Map([...library.journeys,...sessionExpressions.values()].map(j=>[j.id,j])).values());
  $('library-page').innerHTML=libraryHTML({current:store.document,saved,featured,starters,section:librarySection,errors:library.blocked?['Browser storage is unavailable here. Export an expression to keep a portable copy.']:library.errors,legacy:hasLegacyLibrary(),cover:j=>covers.get(j.id)});$('library-page').scrollTop=scroll;
@@ -575,8 +604,8 @@ async function exportArtifact(){let style=document.getElementById('shell-style')
  const j=JSON.stringify(store.document).replace(/</g,'\\u003c');const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="A living, editable O:I expression."><title>${esc(store.document.name)} · O:I Expressions</title><style id="shell-style">${style}</style></head><body><div id="app"></div><script>window.__JOURNEY__=${j};window.__START_PRESENTATION__=true;<\/script><script id="app-bundle">${bundle.replace(/<\/script/gi,'<\\/script')}<\/script></body></html>`;
  download(new Blob([html],{type:'text/html'}),slug(store.document.name)+'.html');toast('A self-contained expression: open the HTML file in a browser.');}
 function captureTransition():CaptureTransition|undefined{if(engine.capabilities.kind==='production')return undefined;return transitionDuration>0?{canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1-clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1),background:transitionBackground}:undefined;}
-async function captureImage(){readCapture();engine.render(frameData(0));const out=createOutput(captureSettings,width,height);if(!engine.capture)throw new Error('This renderer does not support native-resolution capture.');const pixels=engine.capture(out.width,out.height);paintNativeCapture(out,pixels,{...scene(),field:{...scene().field,background:engine.telemetry?.()?.background??scene().field.background,palette:engine.telemetry?.()?.palette??scene().field.palette,params:{...scene().field.params,...engine.telemetry?.()?.params}}},captureSettings,width,height);const blob=await png(out),name=slug(scene().name)+'.png';if(await saveDesktopCapture(blob,name,desktopSource(),{...captureSettings,width:out.width,height:out.height}))toast('Image saved to the Physis library.');else{download(blob,name);toast(`Captured ${out.width} × ${out.height} native pixels, without resetting the field.`);}}
-function startRecording(){if(recorder.active){recorder.stop();return;}recordingSource=desktopSource();readCapture();captureSettings.width=Math.min(captureSettings.width,engine.canvas.width,1920);recordingSettings={...captureSettings};recordPerformanceWarned=false;if(fieldPaused){fieldPaused=false;renderAll();}const start=()=>recorder.start(engine.canvas,scene(),captureSettings,width,height,captureTransition());if(engine.withCleanFrame)engine.withCleanFrame(start);else start();closeDialogs();captureOpen=false;renderAll();$('recording-badge').hidden=false;$('record-size').textContent=`${captureSettings.width}px · 30 fps target`;toast('Recording the clean scene. Perform, play the expression, then stop.',3300);}
+async function captureImage(){requirePresented('Image capture');readCapture();renderPresentedFrame(0);const out=createOutput(captureSettings,width,height);if(!engine.capture)throw new Error('This renderer does not support native-resolution capture.');const pixels=engine.capture(out.width,out.height);paintNativeCapture(out,pixels,{...scene(),field:{...scene().field,background:engine.telemetry?.()?.background??scene().field.background,palette:engine.telemetry?.()?.palette??scene().field.palette,params:{...scene().field.params,...engine.telemetry?.()?.params}}},captureSettings,width,height);const blob=await png(out),name=slug(scene().name)+'.png';if(await saveDesktopCapture(blob,name,desktopSource(),{...captureSettings,width:out.width,height:out.height}))toast('Image saved to the Physis library.');else{download(blob,name);toast(`Captured ${out.width} × ${out.height} native pixels, without resetting the field.`);}}
+function startRecording(){if(recorder.active){recorder.stop();return;}requirePresented('Recording');recordingSource=desktopSource();readCapture();captureSettings.width=Math.min(captureSettings.width,engine.canvas.width,1920);recordingSettings={...captureSettings};recordPerformanceWarned=false;if(fieldPaused){fieldPaused=false;renderAll();}const start=()=>recorder.start(engine.canvas,scene(),captureSettings,width,height,captureTransition());if(engine.withCleanFrame)engine.withCleanFrame(start);else start();closeDialogs();captureOpen=false;renderAll();$('recording-badge').hidden=false;$('record-size').textContent=`${captureSettings.width}px · 30 fps target`;toast('Recording the clean scene. Perform, play the expression, then stop.',3300);}
 recorder.onStop=(blob,mime)=>{transportUI();$('recording-badge').hidden=true;if(currentVideo)URL.revokeObjectURL(currentVideo.url);currentVideo={blob,mime,url:URL.createObjectURL(blob),source:recordingSource??desktopSource(),settings:recordingSettings??captureSettings};$('video-dialog').innerHTML=`${modalCloseButton()}<p class="eyebrow">A PERFORMANCE, KEPT</p><h2>Let it play<br><em>once more.</em></h2><video id="recording-review" preload="auto" controls playsinline style="width:100%;border-radius:8px" src="${currentVideo.url}"></video><p class="capture-footnote">${mime.split(';')[0]} · ${(blob.size/1024/1024).toFixed(1)} MB · silent live capture</p><div class="button-row"><button class="primary" data-action="save-video">${icon('download')} Save recording</button><button class="secondary" data-action="close-dialog">Return to the field</button></div>`;$<HTMLDialogElement>('video-dialog').showModal();};recorder.onError=err=>{transportUI();$('recording-badge').hidden=true;error(err);};recorder.onLimit=m=>toast(m,6500);
 function addLane(target='field.dispersion',syncWith?:string){if(!target.startsWith('field.')&&!target.startsWith('entity:'))target='field.'+target;const p=automationTarget(scene(),target);if(!p||!Number.isFinite(p.value))return;editing=true;inspectorOpen=true;tab='motion';motionTab='automation';if(scene().automation.some(l=>l.target===target)){renderAll();return;}
  const newId=uid('lane');detailState.set('automation-'+(syncWith??newId),true);const span=(p.max-p.min)*.1,low=clamp(p.value-span,p.hardMin,p.hardMax),high=clamp(p.value+span,p.hardMin,p.hardMax);
@@ -992,8 +1021,8 @@ function recordableTracks(){return workspace.entries.flatMap(entry=>{const subje
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);});takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
 let frames=0,lastFpsTime=performance.now(),fps=0,rafId=0;
-function tick(now:number){if(researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=scene().field.params.timeScale;simTime+=delta;}
- if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{engine.render(frameData(delta));needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
+function tick(now:number){if(!sessionPresence.isVisible()){concealedFrames++;nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}if(researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=zeroPresentationFrame?0:Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=scene().field.params.timeScale;simTime+=delta;}
+ if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{renderPresentedFrame(delta);needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
  const native=engine.telemetry?.();if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
  // A finished property preview holds its recorded end values; the field itself
  // keeps breathing. The playhead runs only while the scene plays, and reaching
@@ -1011,7 +1040,7 @@ function tick(now:number){if(researchInstruments?.active()&&!researchPreview){na
  }
  rafId=requestAnimationFrame(tick);
 }
-window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast('Recording stopped to preserve its established frame after a window resize.');}resize();});document.addEventListener('visibilitychange',()=>{lastTime=performance.now();if(document.hidden)void flushDraft();if(document.hidden&&propertyTake)finishPropertyTake();if(document.hidden&&recorder.active){recorder.stop();toast('Recording stopped because this tab became hidden.');}});
+window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast('Recording stopped to preserve its established frame after a window resize.');}resize();});document.addEventListener('visibilitychange',()=>{lastTime=performance.now();if(document.hidden)void flushDraft();if(document.hidden&&recorder.active){recorder.stop();toast('Recording stopped because this tab became hidden.');}});
 // The desktop shell's window-corner cutout geometry, when hosted (owner
 // addendum 2026-09-19): the host posts the live cutout width/height so the
 // masthead aligns with the shell's traffic-lights corner cutout. Standalone,
@@ -1119,10 +1148,10 @@ const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=tr
 // Without a retaining engine there is no native producer to present; the
 // Studio nav offers no dead "Live instrument" entry for it.
 if(!nativeField)document.querySelector('[data-action="studio-section"][data-value="native"]')?.remove();
-window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},sessionPresence:()=>sessionPresence.inspect(),native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
+window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},sessionPresence:()=>sessionPresence.inspect(),presentation:()=>({visible:sessionPresence.isVisible(),renders:presentationRenders,concealedFrames,initialFramePending:zeroPresentationFrame,transportPending:!!pendingBootTransport}),native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
  // Acceptance probe: advance resident particle mechanics by fixed steps against
  // the targets already presented. No native request, clock or target write.
- probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{sessionPresence.dispose();researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
+ probeSteps:(frames:number,dt:number)=>{requirePresented('Particle probe');if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)renderPresentedFrame(dt);needsFrame=true;return frames;},dispose:()=>{sessionPresence.dispose();researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>{requirePresented('Image capture');return engine.capture?.(w,h);}};
 function applyNativeView(view:KernelConversion,preservePosition=false){
  nativeKeptReadings=[];
  // The returned conversion may carry a local unsaved Journey. Qualify only
@@ -1437,7 +1466,7 @@ async function enterEpiWorld(identity:InstrumentIdentity,retainedOpening?:import
   const produced=await epiProducer.construct(identity,'now',sky);requireEpiPersonalAdmission();epiIdentity=identity;epiWorld=produced.record;
  }catch(error){epiEncounter?.fail(error instanceof Error?error.message:String(error));throw error;}
  finally{epiConstructing=false;epiPersonalAdmissionIntent=null;}
- await receiveEpiWorld(true);epiEncounter?.refresh();
+ await receiveEpiWorld(true,'acquire');epiEncounter?.refresh();
 }
 async function receiveEpiPersonal(){
  if(!epiWorld||!epiIdentity||!epiCurrent)return;
@@ -1465,7 +1494,7 @@ async function receiveEpiPersonal(){
  }
  catch(e){clearPrivateEvidence();epiEncounter?.fail('Personal reception: '+String(e));naraInstrument.refresh();}
 }
-async function receiveEpiWorld(explicitAdmission=false){
+async function receiveEpiWorld(explicitAdmission=false,currentIntent:'acquire'|'restore'='restore'){
  if(epiReceiving||!epiWorld)return;
  if(epiReleasedPersonalBasis&&!explicitAdmission){naraInstrument.refresh();return;}
  const record=epiWorld,key=[record.world.instance_ref,record.person_ref,record.identity_source.revision,record.world.snapshot_ref].join('|');
@@ -1474,7 +1503,7 @@ async function receiveEpiWorld(explicitAdmission=false){
  try{
   const selected=await epiAdmissionNaraRequest({operation:'select_identity',source:record.identity_source,input_revision:record.identity_input_revision});
   requireEpiPersonalAdmission();if(selected.schema!=='oi.nara-instrument-state/v1'||!selected.identity)throw Error('The saved world cannot recover its particular person.');
-  const rebound=await epiProducer.rebind(record,selected.identity);requireEpiPersonalAdmission();epiIdentity=selected.identity;epiWorld=rebound.record;epiCurrent=rebound.current;epiPersonalKey=key;admitEpiPersonalBasis();
+  const rebound=await epiProducer.rebind(record,selected.identity,currentIntent);requireEpiPersonalAdmission();epiIdentity=selected.identity;epiWorld=rebound.record;epiCurrent=rebound.current;epiPersonalKey=key;admitEpiPersonalBasis();
   await receiveEpiPersonal();
   // The authored field is visible at rest. Native play opens only on a human
   // act; quiet owner preparation and the protected personal pin need no audio.
@@ -1482,6 +1511,7 @@ async function receiveEpiWorld(explicitAdmission=false){
  }catch(e){
   epiReleasedPersonalBasis=epiPersonalBasisKey(record);epiPersonalCurrentAdmission=null;clearPrivateEvidence();needsFrame=true;
   if(intent!==epiPersonalIntentGeneration)epiEncounter?.status('Your pending identity edit was retained.');else epiEncounter?.fail(String(e));
+  if(currentIntent==='acquire')throw e;
  }finally{epiReceiving=false;epiPersonalAdmissionIntent=null;naraInstrument.refresh();}
 }
 /** Native admission must see the complete actual authored scene partition.
@@ -1490,7 +1520,7 @@ async function receiveEpiCosmicPartition(record:EpiWorldRecord){
  const sceneId=scene().id,documentId=store.document.id,deadline=performance.now()+30000;
  for(;;){
   if(epiWorld?.world.instance_ref!==record.world.instance_ref||store.document.id!==documentId||scene().id!==sceneId)throw Error('The cosmic scene changed before its native receiving material was ready.');
-  engine.render(frameData(0));
+  requirePresented('Cosmic material reception');renderPresentedFrame(0);
   const actual=engine.inspect?.() as {partitions?:{entityId:string;start:number;end:number}[]}|undefined;
   const sources=engine.telemetry?.()?.sourceStatus??{};
   const required=scene().entities.filter(e=>e.enabled!==false);
@@ -1858,7 +1888,8 @@ async function startWorkspace(){
   // unchanged. An explicit opening or a newer local view always wins.
   if(ownedVersion!==undefined&&store.revision===ownedVersion&&store.document.id===id&&journeyNavigation===navigation&&(nativeWorkspace?.intentGeneration()??0)===intent&&position()===viewPosition)recapture();
  }
- resize();engine.render(frameData(0));if(current()&&recovered?.transport)engine.restoreTransport?.(recovered.transport);
+ if(current()&&recovered?.transport)pendingBootTransport={transport:recovered.transport,current};
+ resize();if(sessionPresence.isVisible())renderPresentedFrame(0);
  if(current())trackPreview=!!scene().propertyTracks?.length;
  resize();renderAll();if(location.hash.startsWith('#library'))openLibrary(location.hash.includes('about')?'about':'collection',false);rafId=requestAnimationFrame(tick);
  if(startupError)toast(startupError,7000);else if(workspaceStorageError)toast('Saved toolbelt could not be read. Starter controls are available for this session.',7000);
@@ -1868,7 +1899,7 @@ async function startWorkspace(){
   if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies.last'),store.document.name);
   if(qsExpression?.startsWith('expression:')){const open=()=>{if(current())void nativeWorkspace?.follow(qsExpression);};if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
  }
- setInterval(()=>{saveSession('interval');if(propertyTake&&propertyTake.elapsed>0)void flushDraft();},1000);
+ setInterval(()=>{saveSession('interval');if(sessionPresence.isVisible()&&propertyTake&&propertyTake.elapsed>0)void flushDraft();},1000);
 }
 function openEntryGate(hasContinue:boolean,continueLabel?:string){
  if(worldLens==='epi-logos'||nativeWorkspace?.nativeView())return; // Epi entry is its personal-world entrance; an opened native Expression already supplies its subject.
@@ -1878,6 +1909,7 @@ function closeEntryGate(){const gate=$('entry-gate');gate.hidden=true;gate.inner
 window.addEventListener('physis-quality',(ev=>{const s=(ev as CustomEvent).detail??{};if(Number(s.fps)>0)physisFpsCap=Number(s.fps);if(Number(s.pixelRatio)>0){physisPixelRatio=Number(s.pixelRatio);if(physisPixelRatio!==physisRatioApplied){physisRatioApplied=physisPixelRatio;resize();}}if(Number(s.particleLimit)>0)physisParticleCap=Number(s.particleLimit);needsFrame=true;}) as EventListener);
 function desktopSource():DesktopScene{return {expression:clone(store.document),sceneIndex,camera:{...camera},viewport:{width,height},name:scene().name+' · '+store.document.name};}
 installPhysis(desktopSource,async source=>{await loadJourney(validateJourney(source.expression));await setScene(source.sceneIndex??0);camera={...defaultCamera(),...source.camera};if(source.viewport){camera.panX*=width/source.viewport.width;camera.panY*=height/source.viewport.height;}overlayDirty=true;needsFrame=true;renderAll();},toast);
+sessionPresence.subscribe(presentationChanged);presentationChanged(sessionPresence.isVisible());
 const workspaceStarted=startWorkspace();
 // Read-only acceptance barrier over actual boot, not a delay or a native reply.
 Object.assign(window.__FIELD_STUDIES__,{workspaceReady:()=>workspaceStarted});

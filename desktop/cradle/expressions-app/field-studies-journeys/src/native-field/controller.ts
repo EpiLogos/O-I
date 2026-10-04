@@ -479,7 +479,7 @@ export class NativeFieldController {
  }
  /** Called by the actual app frame. A hidden/paused app cannot leave audio running. */
  frame(delta:number,paused:boolean){
-  if(paused&&!this.suspension&&this.status==='opening')this.hold('application paused during native admission');
+  if(paused&&!this.suspension&&this.status==='opening'&&!this.openingHold)this.hold('application paused during native admission');
   if(paused&&!this.suspension&&this.session&&this.status==='following')this.hold('application paused or hidden');
   if(this.session){
    const reading=this.session.reading;
