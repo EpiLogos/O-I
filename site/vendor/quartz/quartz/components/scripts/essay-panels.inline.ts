@@ -66,6 +66,20 @@ document.addEventListener("nav", () => {
       close(i)
     }
     const nestedEscape = (event: KeyboardEvent) => {
+      if (event.key === "Tab" && panel.matches(":modal")) {
+        const scope = panel.querySelector<HTMLElement>(".global-graph-outer.active, .search-container.active") ?? panel
+        const targets = [...scope.querySelectorAll<HTMLElement>('a[href], button, input, select, textarea, [tabindex]')].filter((target) => {
+          const css = getComputedStyle(target)
+          const rect = target.getBoundingClientRect()
+          return target.tabIndex >= 0 && !target.hasAttribute("disabled") && css.visibility === "visible" && rect.width > 0 && rect.height > 0
+        })
+        const first = targets[0], last = targets[targets.length - 1]
+        if (first && last && (event.shiftKey ? document.activeElement === first || !scope.contains(document.activeElement) : document.activeElement === last || !scope.contains(document.activeElement))) {
+          event.preventDefault()
+          ;(event.shiftKey ? last : first).focus()
+        }
+        return
+      }
       if (event.key !== "Escape") return
       if (panel.querySelector(".global-graph-outer.active, .search-container.active")) {
         event.preventDefault()

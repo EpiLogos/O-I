@@ -87,7 +87,7 @@ article {
   }
   .page-header { margin-top: 0; }
   footer { min-width: 0; box-sizing: border-box; padding: 1rem 2rem; }
-  dialog.sidebar {
+  dialog.sidebar:is(.left, .right) {
     color: var(--darkgray);
     background: var(--light);
     border: 0;
@@ -211,7 +211,7 @@ body[data-slug="index"] article > ul:first-of-type {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "grid-center" "grid-footer";
     .center { padding-top: 4.5rem; }
-    dialog.sidebar, dialog.sidebar.left:has(.explorer) {
+    dialog.sidebar:is(.left, .right), dialog.sidebar.left:has(.explorer) {
       position: fixed;
       inset: 0 auto 0 0;
       margin: 0;

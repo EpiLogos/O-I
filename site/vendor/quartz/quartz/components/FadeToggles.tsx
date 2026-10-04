@@ -9,7 +9,7 @@ export default (() => {
     return (
       <nav class="essay-reader-toolbar" aria-label="Reading tools">
         <button type="button" class="fade-toggle fade-left" data-essay-panel="pages" aria-controls="essay-pages" aria-expanded="true">Pages</button>
-        <a href={`${pathToRoot(fileData.slug!)}/../`} class="essay-site-home">O:I</a>
+        <a href={`${pathToRoot(fileData.slug!)}/../`} class="essay-site-home" data-router-ignore="true">O:I</a>
         <button type="button" class="fade-toggle fade-right" data-essay-panel="connections" aria-controls="essay-connections" aria-expanded="true">Connections</button>
       </nav>
     )

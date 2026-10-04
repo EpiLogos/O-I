@@ -21,7 +21,7 @@ export default ((opts?: Options) => {
         <ul>
           {Object.entries(links).map(([text, link]) => (
             <li>
-              <a href={link === "/" ? `${pathToRoot(fileData.slug!)}/../` : link}>{text}</a>
+              <a href={link === "/" ? `${pathToRoot(fileData.slug!)}/../` : link} data-router-ignore={link === "/" ? "true" : undefined}>{text}</a>
             </li>
           ))}
         </ul>
