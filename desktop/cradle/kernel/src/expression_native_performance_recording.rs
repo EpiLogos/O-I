@@ -525,7 +525,7 @@ impl NativeSceneRecordingCommit {
     pub fn currentness(&self) -> Result<(), &str> {
         self.currentness
             .as_ref()
-            .map(|()| ())
+            .copied()
             .map_err(String::as_str)
     }
     pub fn native_reply(&self) -> &Value {

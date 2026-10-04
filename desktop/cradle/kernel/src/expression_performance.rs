@@ -1276,7 +1276,12 @@ impl Performance {
         let mut musical_digests = BTreeSet::new();
         if self.bases.iter().any(|basis| {
             !musical_digests.insert(&basis.content_digest)
-                || self.native_sources.iter().filter(|source| source.basis_digest() == basis.content_digest).count() != 1
+                || self
+                    .native_sources
+                    .iter()
+                    .filter(|source| source.basis_digest() == basis.content_digest)
+                    .count()
+                    != 1
         }) {
             return Err("per-basis replay requires unique one-to-one musical sources".into());
         }

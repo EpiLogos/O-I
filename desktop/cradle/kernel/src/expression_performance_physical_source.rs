@@ -355,7 +355,8 @@ pub(super) fn validate_acoustic_payload(bundle: &Value, private: bool) -> Result
         || packet["configuration"] != *config
         || packet["context"] != inputs["return_context"]
         || packet["source_body"]
-            != bundle["current_receiving"]["native_admission"]["native_preparation"]["physical_body"]
+            != bundle["current_receiving"]["native_admission"]["native_preparation"]
+                ["physical_body"]
         || !retained["current_receiving"].is_object()
         || retained["current_receiving"]["source_inputs"] != *inputs
         || retained["current_receiving"]["source_context"] != bundle["source_context"]

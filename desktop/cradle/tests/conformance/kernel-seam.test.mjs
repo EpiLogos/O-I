@@ -17,3 +17,19 @@ test('variant parser ignores comments and nested request fields, preserves acron
  assert.deepEqual(rustVariants('pub enum KernelOp { // IgnoreThis,\n State, A2aExchange { request: X }, NativeExpression { value: Option<X> }, }','KernelOp'),['a2a_exchange','native_expression','state']);
  assert.deepEqual(tsOps('export type KernelOp = {op:"state"} | {op:"native_expression";request:{operation:"open"}};'),['native_expression','state']);
 });
+
+test('the actual native recording wire tag comes from its Serde rename',()=>{
+ const actual=read('kernel/src/lib.rs'),tags=rustVariants(actual,'KernelOp');
+ assert.ok(tags.includes('native-performance-recording'));
+ assert.ok(!tags.includes('native_performance_recording'));
+ const comment='// #[serde(rename="forged-comment-tag")]\n';
+ assert.deepEqual(rustVariants(actual.replace('pub enum KernelOp {','pub enum KernelOp {\n'+comment),'KernelOp'),tags);
+ const nested=actual.replace('request: native_expression::NativeSceneRecordingRequest,','#[serde(rename="forged-field-tag")]\n        request: native_expression::NativeSceneRecordingRequest,');
+ assert.notEqual(nested,actual,'exercise the actual native recording request field');
+ assert.deepEqual(rustVariants(nested,'KernelOp'),tags);
+ const renamed=actual.replace('#[serde(rename = "native-performance-recording")]','#[serde(rename = "changed-native-recording")]');
+ assert.notEqual(renamed,actual,'exercise the actual explicit native rename');
+ const changed=rustVariants(renamed,'KernelOp');
+ assert.ok(changed.includes('changed-native-recording'));
+ assert.ok(!changed.includes('native-performance-recording'));
+});

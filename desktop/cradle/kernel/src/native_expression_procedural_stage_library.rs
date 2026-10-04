@@ -230,10 +230,14 @@ impl Memos {
         // a subsequently opened owner whose local counter would restart.
         let mut observed = COMPILATION_SEQUENCE.load(Ordering::Relaxed);
         let serial = loop {
-            let next = observed.checked_add(1)
+            let next = observed
+                .checked_add(1)
                 .ok_or("Original native compilation sequence exhausted")?;
             match COMPILATION_SEQUENCE.compare_exchange_weak(
-                observed, next, Ordering::Relaxed, Ordering::Relaxed,
+                observed,
+                next,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
             ) {
                 Ok(_) => break next,
                 Err(current) => observed = current,
@@ -463,20 +467,25 @@ impl Memos {
         operation_ref: &str,
         document: Option<&Document>,
     ) -> Result<capture::Reservation, String> {
-        let original = self.rows.get(operation_ref)
+        let original = self
+            .rows
+            .get(operation_ref)
             .ok_or("Original native Library preparation absent")?;
         let mut retained = crate::expression::procedural::budget::Budget::new();
         self.charge_retained(&mut retained, None)?;
         let mut original_size = crate::expression::procedural::budget::Budget::new();
         original_size.value(original)?;
-        let retained_without_original = retained.charged_bytes()
+        let retained_without_original = retained
+            .charged_bytes()
             .checked_sub(original_size.charged_bytes())
             .ok_or("Original native Library retained row accounting differs")?;
         let mut copies = crate::expression::procedural::budget::Budget::new();
         copies.value(original)?;
         copies.value(&original.intent)?;
         copies.value(&original.preview)?;
-        for _ in 0..4 { copies.value(&original.admission)?; }
+        for _ in 0..4 {
+            copies.value(&original.admission)?;
+        }
         copies.value(&original.intent.scope)?;
         // Accounting reads actual resident material without granting current
         // CAS. Missing/stale actual material is still refused normally below.
@@ -485,7 +494,8 @@ impl Memos {
             copies.value(document)?;
         }
         copies.reserve(FAILURE_ROOM + 4096)?;
-        self.captures.reserve(copies.charged_bytes(), retained_without_original)
+        self.captures
+            .reserve(copies.charged_bytes(), retained_without_original)
     }
     fn reserve_completion(&self, memo: &Memo, envelope: &Envelope) -> Result<(), String> {
         let mut budget = crate::expression::procedural::budget::Budget::new();
@@ -609,7 +619,7 @@ fn context_fingerprint(
 #[derive(Debug)]
 pub struct FailedCompilation {
     reason: String,
-    captured: Prepared,
+    captured: Box<Prepared>,
 }
 impl Prepared {
     pub fn execute(self) -> Result<Completed, FailedCompilation> {
@@ -620,7 +630,7 @@ impl Prepared {
                 prepared,
             }),
             Err(reason) => Err(FailedCompilation {
-                captured: self,
+                captured: Box::new(self),
                 reason,
             }),
         }
@@ -931,10 +941,9 @@ impl crate::Kernel {
         } = completed;
         // Check the actual current Document by reference. The captured full
         // snapshot already owns these bytes; completion must not copy it again.
-        let current = self.expressions.procedural_source_borrow(
-            &captured.before.expression_ref,
-            captured.before.revision,
-        )?;
+        let current = self
+            .expressions
+            .procedural_source_borrow(&captured.before.expression_ref, captured.before.revision)?;
         if current != &captured.before {
             return Err("The complete native Document changed during Library compilation; original intent remains retained".into());
         }
@@ -962,19 +971,24 @@ impl crate::Kernel {
             .require_compiling(&captured)?;
         // Precharge completion's actual copies against the same private
         // process lease. This adds no second job slot or Source authority.
-        let owner = self.native_expression.active.as_ref()
+        let owner = self
+            .native_expression
+            .active
+            .as_ref()
             .ok_or("Actual native Library owner closed before admission precharge")?;
         let mut retained = crate::expression::procedural::budget::Budget::new();
-        owner.stage_library_replays.charge_retained(&mut retained, None)?;
+        owner
+            .stage_library_replays
+            .charge_retained(&mut retained, None)?;
         let mut copies = crate::expression::procedural::budget::Budget::new();
         if prepared.is_null() {
             copies.value(&response)?;
             copies.value(&captured.intent)?;
         } else {
             copies.value(current)?; // Document.edited's genuine candidate.
-            // Receipt inheritance copies matching protected Scene journals,
-            // clipped from Source/prepared input. A second borrowed full-Doc
-            // charge conservatively bounds those original journal copies.
+                                    // Receipt inheritance copies matching protected Scene journals,
+                                    // clipped from Source/prepared input. A second borrowed full-Doc
+                                    // charge conservatively bounds those original journal copies.
             copies.value(current)?;
             for _ in 0..4 {
                 copies.value(&prepared)?;
@@ -983,7 +997,9 @@ impl crate::Kernel {
         }
         copies.value(&captured.intent)?;
         copies.reserve(4096)?;
-        captured.resource.extend(copies.charged_bytes(), retained.charged_bytes())?;
+        captured
+            .resource
+            .extend(copies.charged_bytes(), retained.charged_bytes())?;
         if prepared.is_null() {
             validate_no_change(&captured, &response)?;
             let original = &response["source"]["original_request"]["procedure"];
@@ -1078,12 +1094,23 @@ impl crate::Kernel {
         // Charge the actual borrowed original row and either outward failure
         // or receiving copies BEFORE removal and every CAS/Source check. A
         // budget refusal leaves that original row intact; no full reply copies.
-        let owner = self.native_expression.active.as_ref()
+        let owner = self
+            .native_expression
+            .active
+            .as_ref()
             .ok_or("Original native Library owner absent")?;
-        let original = owner.stage_library_replays.rows.get(operation_ref)
+        let original = owner
+            .stage_library_replays
+            .rows
+            .get(operation_ref)
             .ok_or("Original native Library preparation absent")?;
-        let document = self.expressions.procedural_current_receiver_document(&original.intent.basis.expression_ref).ok();
-        let receiving_resource = owner.stage_library_replays.reserve_reception(operation_ref, document)?;
+        let document = self
+            .expressions
+            .procedural_current_receiver_document(&original.intent.basis.expression_ref)
+            .ok();
+        let receiving_resource = owner
+            .stage_library_replays
+            .reserve_reception(operation_ref, document)?;
         // Declaring the removed material after its guard also guarantees its
         // destruction precedes resource retirement on an early error unwind.
         let mut memo = self
@@ -1148,7 +1175,9 @@ impl crate::Kernel {
                 &envelope,
                 &memo.preview,
             ))?;
-            let before = self.expressions.procedural_source_borrow(&expression_ref, revision)?;
+            let before = self
+                .expressions
+                .procedural_source_borrow(&expression_ref, revision)?;
             self.expressions
                 .stage_library_check_envelope(before, envelope.clone())?;
             memo.envelope = Some(envelope);

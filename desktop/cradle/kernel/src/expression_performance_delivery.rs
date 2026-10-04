@@ -200,7 +200,12 @@ impl SelectedPerformance {
         let per_basis = performance.native_sources.len() == performance.bases.len()
             && performance.bases.iter().all(|basis| {
                 musical_digests.insert(&basis.content_digest)
-                    && performance.native_sources.iter().filter(|source| source.basis_digest() == basis.content_digest).count() == 1
+                    && performance
+                        .native_sources
+                        .iter()
+                        .filter(|source| source.basis_digest() == basis.content_digest)
+                        .count()
+                        == 1
             });
         if per_basis {
             self.performance().verify_native_source_replay(actual)

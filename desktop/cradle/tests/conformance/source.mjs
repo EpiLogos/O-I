@@ -39,7 +39,47 @@ export function rustCode(text){return text.replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\/|
 /** Test fixtures can create/delete scratch files; they confer no shipped host authority. */
 export function rustRuntime(text){let code=rustCode(text);const marker=/#\[cfg\(test\)\]\s*(?:pub\s+)?mod\s+\w+\s*\{/g;let match;while((match=marker.exec(code))){let depth=1,end=marker.lastIndex;while(depth&&end<code.length){if(code[end]==='{')depth++;else if(code[end]==='}')depth--;end++;}code=code.slice(0,match.index)+' '.repeat(end-match.index)+code.slice(end);marker.lastIndex=end;}return code;}
 
-export function rustVariants(text,name){const code=rustCode(text),start=code.indexOf(`pub enum ${name} {`);if(start<0)throw Error(`missing enum ${name}`);const body=code.slice(start+`pub enum ${name} {`.length);let depth=0,expect=true,out=[];for(let i=0;i<body.length;i++){const ch=body[i];if(ch==='}'&&depth===0)break;if(expect&&depth===0){const match=body.slice(i).match(/^\s*([A-Z][A-Za-z0-9_]*)\s*(?:\{|\(|,)/);if(match){out.push(match[1].replace(/([a-z0-9])([A-Z])/g,'$1_$2').toLowerCase());i+=match[0].indexOf(match[1])+match[1].length-1;expect=false;continue;}}if(ch==='{'||ch==='('||ch==='[')depth++;if(ch==='}'||ch===')'||ch===']')depth--;if(ch===','&&depth===0)expect=true;}return out.sort();}
+/** Read an explicit variant wire tag from its actual Serde attribute.
+ * The masked source locates code; the aligned original supplies string bytes.
+ * Comment examples and attributes on nested request fields cannot change a tag. */
+function rustVariantWireName(text,code,start,end,fallback){
+ const prefix=code.slice(start,end),attributes=/#\s*\[\s*serde\s*\(/g;
+ let attribute,wire=fallback;
+ while((attribute=attributes.exec(prefix))){
+  const bracket=prefix.indexOf('[',attribute.index);let depth=1,finish=bracket+1;
+  while(depth&&finish<prefix.length){if(prefix[finish]==='[')depth++;else if(prefix[finish]===']')depth--;finish++;}
+  if(depth)throw Error('unterminated Serde variant attribute');
+  const masked=prefix.slice(bracket,finish),rename=/\brename\s*=/.exec(masked);
+  if(rename){
+   const actual=text.slice(start+bracket+rename.index,start+finish),literal=/^rename\s*=\s*("(?:\\.|[^"\\])*")/.exec(actual);
+   if(!literal)throw Error('unsupported explicit Serde variant rename');
+   wire=JSON.parse(literal[1]);
+   if(typeof wire!=='string'||!wire.length)throw Error('empty Serde variant wire tag');
+  }else if(/\brename\s*\(/.test(masked))throw Error('split Serde variant rename requires an explicit wire check');
+  attributes.lastIndex=finish;
+ }
+ return wire;
+}
+export function rustVariants(text,name){
+ const code=rustCode(text),declaration=`pub enum ${name} {`,start=code.indexOf(declaration);
+ if(start<0)throw Error(`missing enum ${name}`);
+ const offset=start+declaration.length,body=code.slice(offset);let depth=0,expect=true,variantStart=offset,out=[];
+ for(let i=0;i<body.length;i++){
+  const ch=body[i];if(ch==='}'&&depth===0)break;
+  if(expect&&depth===0){
+   const match=body.slice(i).match(/^\s*([A-Z][A-Za-z0-9_]*)\s*(?:\{|\(|,)/);
+   if(match){
+    const identifier=i+match[0].indexOf(match[1]),fallback=match[1].replace(/([a-z0-9])([A-Z])/g,'$1_$2').toLowerCase();
+    out.push(rustVariantWireName(text,code,variantStart,offset+identifier,fallback));
+    i=identifier+match[1].length-1;expect=false;continue;
+   }
+  }
+  if(ch==='{'||ch==='('||ch==='[')depth++;
+  if(ch==='}'||ch===')'||ch===']')depth--;
+  if(ch===','&&depth===0){expect=true;variantStart=offset+i+1;}
+ }
+ return out.sort();
+}
 export function tsOps(text=read('src/kernel/types.ts')){let result=[];visit(source('types.ts',text),n=>{if(ts.isTypeAliasDeclaration(n)&&n.name.text==='KernelOp')visit(n.type,p=>{if(ts.isPropertySignature(p)&&p.name.getText()==='op'&&p.type&&ts.isLiteralTypeNode(p.type)&&ts.isStringLiteral(p.type.literal))result.push(p.type.literal.text);});});return result.sort();}
 
 export function keyLiterals(file,text=read(file)){const values=[];visit(source(file,text),n=>{if(ts.isStringLiteralLike(n)&&/^oi[.:-]/.test(n.text))values.push(n.text);if(ts.isTemplateHead(n)&&/^oi[.:-]/.test(n.text))values.push(n.text+'${…}');});return [...new Set(values)].sort();}

@@ -9,7 +9,9 @@ use crate::expression_procedural_scene_reader::{
     NativeDocumentSceneReader, NativeSceneSourceReader,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+#[cfg(test)]
+use serde_json::json;
+use serde_json::Value;
 
 /// Explicit authored score/material choices. Native rate, source/body, return,
 /// available pitches, original episode and parameter baselines come from the

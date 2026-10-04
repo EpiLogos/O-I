@@ -4,8 +4,8 @@ use oi_cradle_kernel::expression_performance::*;
 use oi_cradle_kernel::expression_performance_assets::PerformancePartCatalog;
 use oi_cradle_kernel::expression_performance_source_asset::NativePerformanceSourceAsset;
 use oi_cradle_kernel::expression_performance_storage::ActPerformanceCustody;
-use oi_cradle_kernel::{Kernel, expression::Document, expression_file};
-use serde_json::{Value, json};
+use oi_cradle_kernel::{expression::Document, expression_file, Kernel};
+use serde_json::{json, Value};
 
 fn corpus() -> Value {
     let path = std::env::var("QL_NATIVE_PHYSICAL_SOURCE_REPLAY_ARTIFACT")
@@ -279,12 +279,10 @@ fn actual_physical_history_loss_reorder_context_and_prepared_only_never_qualify_
     }
     // Original no-transition source remains byte-compatible and has no new field.
     let original_asset = serde_json::to_vec(&assets[0]).unwrap();
-    assert!(
-        serde_json::from_slice::<Value>(&original_asset)
-            .unwrap()
-            .get("native_physical_source_history")
-            .is_none()
-    );
+    assert!(serde_json::from_slice::<Value>(&original_asset)
+        .unwrap()
+        .get("native_physical_source_history")
+        .is_none());
     assert_eq!(
         serde_json::to_vec(
             &serde_json::from_slice::<NativePerformanceSourceAsset>(&original_asset).unwrap()

@@ -134,9 +134,6 @@ pub(super) struct NativeActChannelRefusal {
     delivery_attempted: bool,
 }
 impl NativeActChannelRefusal {
-    pub(super) fn reason(&self) -> &str {
-        &self.reason
-    }
     pub(super) fn delivery_attempted(&self) -> bool {
         self.delivery_attempted
     }
@@ -164,9 +161,6 @@ impl NativeActChannelReply {
     pub(super) fn qualification(&self) -> &Value {
         &self.qualification
     }
-    pub(super) fn into_value(self) -> Value {
-        self.value
-    }
     pub(super) fn into_custody(self) -> (Value, NativeDiagnosticReceipts) {
         (self.value, self.diagnostics)
     }
@@ -182,30 +176,10 @@ impl ActChannel {
         *self.reply_loss.lock().unwrap() = Some(NativeReplyLoss::Terminal(original.clone()));
         original
     }
-    pub(super) fn exchange(&self, value: &Value) -> Result<Value, String> {
-        self.exchange_qualified(value)
-            .map(NativeActChannelReply::into_value)
-    }
-    pub(super) fn exchange_qualified(
-        &self,
-        value: &Value,
-    ) -> Result<NativeActChannelReply, String> {
-        self.exchange_stream(value, |_| Ok(None))
-    }
     /// One held native transaction, including private closed-reader part pulls.
-    /// Each frame rechecks the actual connected QL peer. The channel and its
-    /// reply carrier have no public/Serde constructor.
-    pub(super) fn exchange_stream(
-        &self,
-        value: &Value,
-        mut answer: impl FnMut(&Value) -> Result<Option<Value>, String>,
-    ) -> Result<NativeActChannelReply, String> {
-        if value["mode"] == "render" || value["schema"] == "oi.native-act-owner-control/v1" {
-            return Err("native render operation must retain typed diagnostic custody".into());
-        }
-        self.exchange_stream_custodied(value, &mut answer)
-            .map_err(|refusal| refusal.reason().to_owned())
-    }
+    /// Every result keeps original received bytes and delivery state in custody.
+    /// Each frame rechecks the actual connected QL peer; no public/Serde
+    /// constructor can turn imported JSON into its private reply carrier.
     pub(super) fn exchange_stream_custodied(
         &self,
         value: &Value,

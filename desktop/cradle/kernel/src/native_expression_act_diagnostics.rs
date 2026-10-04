@@ -246,12 +246,13 @@ impl NativeDiagnosticReceipts {
         index: usize,
         consumer: impl FnOnce(&Value) -> Result<T, String>,
     ) -> Result<T, String> {
+        let index_text = index.to_string();
         let receipt = self
             .receipts
             .iter()
             .find(|receipt| {
                 receipt.descriptor["kind"] == field
-                    && receipt.descriptor["original_index"] == index.to_string()
+                    && receipt.descriptor["original_index"].as_str() == Some(index_text.as_str())
             })
             .ok_or("original native receipt absent")?;
         if !receipt.complete {
@@ -266,10 +267,11 @@ impl NativeDiagnosticReceipts {
         ordinal: u64,
         output: &mut impl Write,
     ) -> Result<(), String> {
+        let ordinal_text = ordinal.to_string();
         let receipt = self
             .receipts
             .iter()
-            .find(|r| r.descriptor["receipt_ordinal"] == ordinal.to_string())
+            .find(|r| r.descriptor["receipt_ordinal"].as_str() == Some(ordinal_text.as_str()))
             .ok_or("native retained diagnostic ordinal absent")?;
         output
             .write_all(&receipt.bytes()?)
@@ -344,12 +346,13 @@ impl NativeDiagnosticReceiver {
             return Err("native diagnostic byte/final receipt bounds changed".into());
         }
         if self.pending.is_none() {
+            let index_text = index.to_string();
             if ordinal != self.receipts.receipts.len() as u64 + 1
                 || part != 0
                 || offset != 0
                 || self.receipts.receipts.iter().any(|r| {
                     r.descriptor["kind"] == field
-                        && r.descriptor["original_index"] == index.to_string()
+                        && r.descriptor["original_index"].as_str() == Some(index_text.as_str())
                 })
             {
                 return Err("native diagnostic original receipt missing/repeated/reordered".into());

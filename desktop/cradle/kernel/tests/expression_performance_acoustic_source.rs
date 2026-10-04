@@ -4,8 +4,8 @@ use oi_cradle_kernel::expression_performance::*;
 use oi_cradle_kernel::expression_performance_assets::PerformancePartCatalog;
 use oi_cradle_kernel::expression_performance_source_asset::NativePerformanceSourceAsset;
 use oi_cradle_kernel::expression_performance_storage::ActPerformanceCustody;
-use oi_cradle_kernel::{Kernel, expression::Document, expression_file};
-use serde_json::{Value, json};
+use oi_cradle_kernel::{expression::Document, expression_file, Kernel};
+use serde_json::{json, Value};
 
 fn original() -> Value {
     let path = std::env::var("QL_NATIVE_ACOUSTIC_SOURCE_REPLAY_ARTIFACT")
@@ -34,7 +34,11 @@ fn original() -> Value {
 }
 fn history(frame: &Value, name: &str) -> Option<Vec<Value>> {
     let rows: Vec<Value> = serde_json::from_value(frame[name].clone()).unwrap();
-    if rows.is_empty() { None } else { Some(rows) }
+    if rows.is_empty() {
+        None
+    } else {
+        Some(rows)
+    }
 }
 fn performance(actual: &Value) -> Performance {
     let mut bases = Vec::<PerformanceBasis>::new();
@@ -329,37 +333,100 @@ fn actual_mixed_source_missing_reordered_cross_epoch_context_and_ack_never_quali
 #[test]
 #[ignore = "requires actual complete R5 corpus; no rebuilt source or ACK"]
 fn actual_equal_count_repeated_basis_cannot_replay_the_first_epoch_twice() {
-    use oi_cradle_kernel::expression_performance_delivery::{SelectedPerformance, Selection};
     use oi_cradle_kernel::expression_act_store::ActStore;
+    use oi_cradle_kernel::expression_performance_delivery::{SelectedPerformance, Selection};
     let actual = original();
     let original = performance(&actual);
     let mut repeated = original.clone();
     repeated.bases = vec![original.bases[2].clone(), original.bases[2].clone()];
-    repeated.pitches = original.pitches.iter().filter(|pitch| pitch.basis == 2).cloned().map(|mut pitch| { pitch.basis = 0; pitch }).collect();
+    repeated.pitches = original
+        .pitches
+        .iter()
+        .filter(|pitch| pitch.basis == 2)
+        .cloned()
+        .map(|mut pitch| {
+            pitch.basis = 0;
+            pitch
+        })
+        .collect();
     repeated.native_sources = original.native_sources[4..6].to_vec();
     repeated = repeated.seal().unwrap();
-    let complete = vec![actual["frames"][4]["source_assets"].clone(), actual["frames"][5]["source_assets"].clone()];
+    let complete = vec![
+        actual["frames"][4]["source_assets"].clone(),
+        actual["frames"][5]["source_assets"].clone(),
+    ];
     let omitted = vec![complete[0].clone(), complete[0].clone()];
     assert_eq!(repeated.bases.len(), repeated.native_sources.len());
     assert_eq!(repeated.bases[0], repeated.bases[1]);
     assert_ne!(complete[0], complete[1]);
     assert!(repeated.verify_native_source_replay(&omitted).is_err());
-    repeated.verify_native_source_epoch_replay(&complete).unwrap();
-    assert!(repeated.verify_native_source_epoch_replay(&omitted).is_err());
+    repeated
+        .verify_native_source_epoch_replay(&complete)
+        .unwrap();
+    assert!(repeated
+        .verify_native_source_epoch_replay(&omitted)
+        .is_err());
     let mut kernel = Kernel::new(oi_cradle_kernel::flow::CentralClient::discover());
-    expression(&mut kernel,json!({"operation":"create","expression_ref":"expression:equal-count-source-epochs","title":"Original native epochs","actor":"agent:source-epochs"}));
-    let before:Document=serde_json::from_value(expression(&mut kernel,json!({"operation":"inspect","expression_ref":"expression:equal-count-source-epochs"}))["document"].clone()).unwrap();
-    expression(&mut kernel,json!({"operation":"edit","expression_ref":before.expression_ref,"expected_revision":before.revision,"actor":"agent:source-epochs","changes":[{"change":"scene_performance_set","scene_ref":before.scenes[0].scene_ref,"performance":repeated}]}));
-    let document:Document=serde_json::from_value(expression(&mut kernel,json!({"operation":"inspect","expression_ref":"expression:equal-count-source-epochs"}))["document"].clone()).unwrap();
-    let performance=document.scenes[0].performance.as_ref().unwrap();
-    let home=std::path::PathBuf::from(std::env::var("OI_RETAINED_PERFORMANCE_TEST_HOME").expect("normal native same-store fixture home required")).join(format!("equal-count-source-epochs-{}",std::process::id()));
-    assert!(!home.exists(),"preserve previous genuine test custody");
+    expression(
+        &mut kernel,
+        json!({"operation":"create","expression_ref":"expression:equal-count-source-epochs","title":"Original native epochs","actor":"agent:source-epochs"}),
+    );
+    let before: Document = serde_json::from_value(
+        expression(
+            &mut kernel,
+            json!({"operation":"inspect","expression_ref":"expression:equal-count-source-epochs"}),
+        )["document"]
+            .clone(),
+    )
+    .unwrap();
+    expression(
+        &mut kernel,
+        json!({"operation":"edit","expression_ref":before.expression_ref,"expected_revision":before.revision,"actor":"agent:source-epochs","changes":[{"change":"scene_performance_set","scene_ref":before.scenes[0].scene_ref,"performance":repeated}]}),
+    );
+    let document: Document = serde_json::from_value(
+        expression(
+            &mut kernel,
+            json!({"operation":"inspect","expression_ref":"expression:equal-count-source-epochs"}),
+        )["document"]
+            .clone(),
+    )
+    .unwrap();
+    let performance = document.scenes[0].performance.as_ref().unwrap();
+    let home = std::path::PathBuf::from(
+        std::env::var("OI_RETAINED_PERFORMANCE_TEST_HOME")
+            .expect("normal native same-store fixture home required"),
+    )
+    .join(format!("equal-count-source-epochs-{}", std::process::id()));
+    assert!(!home.exists(), "preserve previous genuine test custody");
     kernel.attach_act_store(&home).unwrap();
-    let request=json!({"operation":"act_retained_perform","act_ref":"act:equal-count-source-epochs","expression_ref":document.expression_ref,"expected_revision":document.revision,"expected_act_revision":null,"actor":"agent:source-epochs","summary":"Retain exact genuine equal-count epochs","changes":[{"change":"scene_performance_set","scene_ref":document.scenes[0].scene_ref,"performance":performance}]});
-    let outcome=kernel.apply(oi_cradle_kernel::KernelOp::ExpressionWorld{request:serde_json::from_value(request).unwrap()}).unwrap();
-    match outcome.result { oi_cradle_kernel::KernelOpResult::ExpressionWorld{data}=>assert_eq!(data["state"],"act_running"),other=>panic!("actual native Act receipt absent:{other:?}") };
-    let act=ActStore::at_home(&home).read_retained("act:equal-count-source-epochs").unwrap().unwrap();
-    let selected=SelectedPerformance::from_act(&act,&Selection{expected_act_revision:act.revision,edition_position:0,scene_ref:document.scenes[0].scene_ref.clone(),expected_expression_revision:document.revision,expected_scene_revision:document.scenes[0].revision,performance_digest:performance.content_digest.clone()}).unwrap();
+    let request = json!({"operation":"act_retained_perform","act_ref":"act:equal-count-source-epochs","expression_ref":document.expression_ref,"expected_revision":document.revision,"expected_act_revision":null,"actor":"agent:source-epochs","summary":"Retain exact genuine equal-count epochs","changes":[{"change":"scene_performance_set","scene_ref":document.scenes[0].scene_ref,"performance":performance}]});
+    let outcome = kernel
+        .apply(oi_cradle_kernel::KernelOp::ExpressionWorld {
+            request: serde_json::from_value(request).unwrap(),
+        })
+        .unwrap();
+    match outcome.result {
+        oi_cradle_kernel::KernelOpResult::ExpressionWorld { data } => {
+            assert_eq!(data["state"], "act_running")
+        }
+        other => panic!("actual native Act receipt absent:{other:?}"),
+    };
+    let act = ActStore::at_home(&home)
+        .read_retained("act:equal-count-source-epochs")
+        .unwrap()
+        .unwrap();
+    let selected = SelectedPerformance::from_act(
+        &act,
+        &Selection {
+            expected_act_revision: act.revision,
+            edition_position: 0,
+            scene_ref: document.scenes[0].scene_ref.clone(),
+            expected_expression_revision: document.revision,
+            expected_scene_revision: document.scenes[0].revision,
+            performance_digest: performance.content_digest.clone(),
+        },
+    )
+    .unwrap();
     selected.verify_native_sources(&complete).unwrap();
     assert!(selected.verify_native_sources(&omitted).is_err());
 }

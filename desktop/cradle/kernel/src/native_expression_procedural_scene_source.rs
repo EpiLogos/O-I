@@ -42,14 +42,6 @@ impl NativeSceneOperationRefusal {
             self.delivery_attempted,
         )
     }
-    fn retained_channel_result(self) -> Result<Value, String> {
-        match self.native_reply {
-            Some(original) => Ok(json!({"schema":"oi.native-scene-source-channel-refusal/v1",
-                "accepted":false,"reason":self.reason,"native_reply":original,
-                "delivery_attempted":self.delivery_attempted})),
-            None => Err(self.reason),
-        }
-    }
     // Used only after this private native route has returned an actual reply.
     // Shared physical/acoustic children use the same constructor on their
     // post-reply qualification failure; caller JSON cannot reach it.

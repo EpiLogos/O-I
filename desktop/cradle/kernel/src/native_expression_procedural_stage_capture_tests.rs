@@ -117,14 +117,18 @@ fn completion_candidate_copy_is_refused_before_large_background_document_allocat
     assert!(lease.extend(1024, 3 * 1024 * 1024).is_err());
     let mut after_retained_refusal = crate::expression::procedural::budget::Budget::new();
     original.charge(&mut after_retained_refusal, None).unwrap();
-    assert_eq!(after_retained_refusal.charged_bytes(), unchanged.charged_bytes());
+    assert_eq!(
+        after_retained_refusal.charged_bytes(),
+        unchanged.charged_bytes()
+    );
 }
 
 #[test]
 fn completion_extension_keeps_same_job_slot_when_all_capture_slots_are_live() {
     let registry = Arc::new(capture::Registry::default());
     let mut leases = (0..MAX_MEMOS)
-        .map(|_| registry.reserve(1, 0).unwrap()).collect::<Vec<_>>();
+        .map(|_| registry.reserve(1, 0).unwrap())
+        .collect::<Vec<_>>();
     let identity = leases[0].id();
     leases[0].extend(4096, 0).unwrap();
     assert_eq!(leases[0].id(), identity);
@@ -160,8 +164,12 @@ fn completion_copy_charge_survives_owner_retirement_and_blocks_new_capture() {
 // Their row material is ordinary Value data, never a qualified Source or ACK.
 fn retention_row(reference: &str, admission: Value) -> Memo {
     Memo {
-        intent: intent(reference), envelope: None, preview: json!({}),
-        admission, no_change: None, document_fingerprint: "retained-basis".into(),
+        intent: intent(reference),
+        envelope: None,
+        preview: json!({}),
+        admission,
+        no_change: None,
+        document_fingerprint: "retained-basis".into(),
         context_fingerprint: "retained-context".into(),
     }
 }
@@ -171,11 +179,19 @@ fn actual_reception_budget_refusal_preserves_original_stored_row_before_removal(
     let registry = Arc::new(capture::Registry::default());
     let mut current = owner(&registry);
     let reference = "operation:large-retained-reception";
-    current.rows.insert(reference.into(), retention_row(reference,
-        json!({"retained_material":"x".repeat(2 * 1024 * 1024)})));
+    current.rows.insert(
+        reference.into(),
+        retention_row(
+            reference,
+            json!({"retained_material":"x".repeat(2 * 1024 * 1024)}),
+        ),
+    );
     let original = serde_json::to_vec(&current.rows[reference]).unwrap();
     assert!(current.reserve_reception(reference, None).is_err());
-    assert_eq!(serde_json::to_vec(&current.rows[reference]).unwrap(), original);
+    assert_eq!(
+        serde_json::to_vec(&current.rows[reference]).unwrap(),
+        original
+    );
     assert!(current.compiling.is_empty());
     let mut budget = crate::expression::procedural::budget::Budget::new();
     registry.charge(&mut budget, None).unwrap();
@@ -187,8 +203,13 @@ fn actual_reception_guard_covers_removed_row_and_failure_copies_until_material_r
     let registry = Arc::new(capture::Registry::default());
     let mut current = owner(&registry);
     let reference = "operation:retained-error-path";
-    current.rows.insert(reference.into(), retention_row(reference,
-        json!({"retained_material":"x".repeat(256 * 1024)})));
+    current.rows.insert(
+        reference.into(),
+        retention_row(
+            reference,
+            json!({"retained_material":"x".repeat(256 * 1024)}),
+        ),
+    );
     let guard = current.reserve_reception(reference, None).unwrap();
     let removed = current.rows.remove(reference).unwrap();
     let original = serde_json::to_vec(&removed).unwrap();

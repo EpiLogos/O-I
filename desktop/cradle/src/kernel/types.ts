@@ -92,6 +92,13 @@ import type {CentralLocation} from "./location";
 /** QL composes the K² binding; the consumer names only texture, scale, sky and an optional event. */
 export interface NativeComposeRequest { texture: [number, number]; units_per_metre: number; sky: "none" | "now" | {epoch: string}; event?: Record<string, unknown> }
 export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string};
+/** The actual current native recording owner receives authored choices and CAS only.
+ * Source, clock, participant authority and private native receipts stay native. */
+export interface NativeSceneRecordingCas {request_id:string;lease:string;expression_ref:string;document_revision:number;scene_ref:string;scene_revision:number;actor:string}
+export type NativeSceneRecordingRequest = NativeSceneRecordingCas & (
+  | {operation:'prepare_scene';definition:{declared_seed:string;performance_ref:string;layer_ref:string;title:string;duration_samples:string;ppq:number;micros_per_quarter:number;max_reconstruction_samples:string}}
+  | {operation:'begin';basis:number;checkpoint_ref:string}
+  | {operation:'command';basis:number;layer:number;command:Record<string,unknown>});
 /** Provenance of a composed open (`source` in `oi.native-expression-open/v1`). */
 export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
 export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }
@@ -369,7 +376,8 @@ export type KernelOp =
   // ES1/ES4 expression-world operations (kernel `expression_world.rs`):
   // shared selection/deictic context, Surface portals, ExpressiveActs and
   // bounded local-whole bindings over exact native refs.
-  | { op: "expression_world"; request: import("../expression/world").WorldRequest };
+  | { op: "expression_world"; request: import("../expression/world").WorldRequest }
+  | {op: "native-performance-recording"; request: NativeSceneRecordingRequest};
 
 /** The outcome payloads (the Rust `KernelOpResult`, tagged snake_case).
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on

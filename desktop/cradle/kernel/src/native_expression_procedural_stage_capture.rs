@@ -95,18 +95,31 @@ impl Reservation {
     }
     /// Reserve necessary completion copies before allocating them, without a
     /// second job/count slot or any Source authority. Never shrink while live.
-    pub(super) fn extend(&mut self, additional: usize, retained_bytes: usize) -> Result<(), String> {
-        let mut state = self.registry.state.lock()
+    pub(super) fn extend(
+        &mut self,
+        additional: usize,
+        retained_bytes: usize,
+    ) -> Result<(), String> {
+        let mut state = self
+            .registry
+            .state
+            .lock()
             .map_err(|_| "Native capture accounting unavailable")?;
         if state.live.get(&self.id) != Some(&self.bytes) {
             return Err("Original native capture reservation differs from its live charge".into());
         }
-        let total = state.bytes.checked_add(additional)
+        let total = state
+            .bytes
+            .checked_add(additional)
             .ok_or("Native capture byte accounting overflow")?;
-        let capacity = self.bytes.checked_add(additional)
+        let capacity = self
+            .bytes
+            .checked_add(additional)
             .ok_or("Native capture reservation byte accounting overflow")?;
-        if total.checked_add(retained_bytes)
-            .is_none_or(|total| total > super::COMPILER_BYTES) {
+        if total
+            .checked_add(retained_bytes)
+            .is_none_or(|total| total > super::COMPILER_BYTES)
+        {
             return Err("Native completion capture budget exceeded before admission copy".into());
         }
         state.bytes = total;
