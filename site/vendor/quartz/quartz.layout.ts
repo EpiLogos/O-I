@@ -12,7 +12,7 @@ const readingExplorer = () => Component.Explorer({
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
   head: Component.Head(),
-  header: [],
+  header: [Component.FadeToggles()],
   afterBody: [],
   footer: Component.Footer({
     links: {
@@ -24,7 +24,6 @@ export const sharedPageComponents: SharedLayout = {
 // components for pages that display a single page (e.g. a single note)
 export const defaultContentPageLayout: PageLayout = {
   beforeBody: [
-    Component.FadeToggles(),
     Component.ConditionalRender({
       component: Component.Breadcrumbs({ rootName: "Essay", showCurrentPage: false }),
       condition: (page) => page.fileData.slug !== "index",
@@ -57,7 +56,7 @@ export const defaultContentPageLayout: PageLayout = {
 
 // components for pages that display lists of pages  (e.g. tags or folders)
 export const defaultListPageLayout: PageLayout = {
-  beforeBody: [Component.FadeToggles(), Component.Breadcrumbs({ rootName: "Essay", showCurrentPage: false }), Component.EssayAnchor(), Component.ArticleTitle()],
+  beforeBody: [Component.Breadcrumbs({ rootName: "Essay", showCurrentPage: false }), Component.EssayAnchor(), Component.ArticleTitle()],
   left: [
     Component.PageTitle(),
     Component.MobileOnly(Component.Spacer()),

@@ -208,6 +208,9 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
   }
 
   const enablePreview = searchLayout.dataset.preview === "true"
+  let disposed = false
+  let queryVersion = 0
+  let previewVersion = 0
   let preview: HTMLDivElement | undefined = undefined
   let previewInner: HTMLDivElement | undefined = undefined
   const results = document.createElement("div")
@@ -222,6 +225,8 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
 
   function hideSearch() {
     if (!container.classList.contains("active")) return
+    queryVersion++
+    previewVersion++
     container.classList.remove("active")
     searchBar.value = "" // clear the input when we dismiss the search
     if (sidebar) sidebar.style.zIndex = ""
@@ -235,8 +240,12 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
   }
 
   function showSearch(searchTypeNew: SearchType) {
+    if (disposed || !searchElement.isConnected) return
     searchType = searchTypeNew
-    if (sidebar) sidebar.style.zIndex = "1"
+    if (sidebar instanceof HTMLDialogElement && !sidebar.open) {
+      document.querySelector<HTMLButtonElement>('[data-essay-panel="pages"]')?.click()
+    }
+    if (sidebar) sidebar.style.zIndex = "40"
     container.classList.add("active")
     searchBar.focus()
   }
@@ -350,11 +359,6 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
       ${htmlTags}
       <p class="card-description">${content}</p>
     `
-    itemTile.addEventListener("click", (event) => {
-      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
-      hideSearch()
-    })
-
     const handler = (event: MouseEvent) => {
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
       hideSearch()
@@ -375,6 +379,7 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
   }
 
   async function displayResults(finalResults: Item[]) {
+    if (disposed || !results.isConnected) return
     removeAllChildren(results)
     if (finalResults.length === 0) {
       results.innerHTML = `<a class="result-card no-match">
@@ -419,11 +424,14 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
   }
 
   async function displayPreview(el: HTMLElement | null) {
-    if (!searchLayout || !enablePreview || !el || !preview) return
+    if (disposed || !enablePreview || !el || !preview) return
+    const version = ++previewVersion
+    const term = currentSearchTerm
     const slug = el.id as FullSlug
     const innerDiv = await fetchContent(slug).then((contents) =>
-      contents.flatMap((el) => [...highlightHTML(currentSearchTerm, el as HTMLElement).children]),
+      contents.flatMap((el) => [...highlightHTML(term, el as HTMLElement).children]),
     )
+    if (disposed || version !== previewVersion || !preview.isConnected) return
     previewInner = document.createElement("div")
     previewInner.classList.add("preview-inner")
     previewInner.append(...innerDiv)
@@ -437,10 +445,13 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
   }
 
   async function onType(e: HTMLElementEventMap["input"]) {
-    if (!searchLayout || !index) return
+    if (disposed || !searchLayout.isConnected) return
+    const version = ++queryVersion
     currentSearchTerm = (e.target as HTMLInputElement).value
     searchLayout.classList.toggle("display-results", currentSearchTerm !== "")
     searchType = currentSearchTerm.startsWith("#") ? "tags" : "basic"
+    await fillDocument(data)
+    if (disposed || version !== queryVersion) return
 
     let searchResults: DefaultDocumentSearchResults<Item>
     if (searchType === "tags") {
@@ -479,6 +490,7 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
       })
     }
 
+    if (disposed || version !== queryVersion) return
     const getByField = (field: string): number[] => {
       const results = searchResults.filter((x) => x.field === field)
       return results.length === 0 ? [] : ([...results[0].result] as number[])
@@ -494,12 +506,23 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
     await displayResults(finalResults)
   }
 
+  const handleSearchOpen = () => showSearch("basic")
   document.addEventListener("keydown", shortcutHandler)
-  window.addCleanup(() => document.removeEventListener("keydown", shortcutHandler))
-  searchButton.addEventListener("click", () => showSearch("basic"))
-  window.addCleanup(() => searchButton.removeEventListener("click", () => showSearch("basic")))
+  searchButton.addEventListener("click", handleSearchOpen)
   searchBar.addEventListener("input", onType)
-  window.addCleanup(() => searchBar.removeEventListener("input", onType))
+  window.addCleanup(() => {
+    disposed = true
+    queryVersion++
+    previewVersion++
+    document.removeEventListener("keydown", shortcutHandler)
+    searchButton.removeEventListener("click", handleSearchOpen)
+    searchBar.removeEventListener("input", onType)
+    container.classList.remove("active")
+    searchBar.value = ""
+    if (sidebar) sidebar.style.zIndex = ""
+    results.remove()
+    preview?.remove()
+  })
 
   registerEscapeHandler(container, hideSearch)
   await fillDocument(data)
@@ -510,9 +533,12 @@ async function setupSearch(searchElement: Element, currentSlug: FullSlug, data: 
  * @param index index to fill
  * @param data data to fill index with
  */
-let indexPopulated = false
-async function fillDocument(data: ContentIndex) {
-  if (indexPopulated) return
+let indexPopulation: Promise<void> | undefined
+function fillDocument(data: ContentIndex): Promise<void> {
+  return (indexPopulation ??= populateDocument(data))
+}
+
+async function populateDocument(data: ContentIndex) {
   let id = 0
   const promises: Array<Promise<unknown>> = []
   for (const [slug, fileData] of Object.entries<ContentDetails>(data)) {
@@ -528,14 +554,18 @@ async function fillDocument(data: ContentIndex) {
   }
 
   await Promise.all(promises)
-  indexPopulated = true
 }
 
+let searchGeneration = 0
+document.addEventListener("prenav", () => { searchGeneration++ })
 document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
+  const generation = ++searchGeneration
   const currentSlug = e.detail.url
   const data = await fetchData
+  if (generation !== searchGeneration) return
   const searchElement = document.getElementsByClassName("search")
   for (const element of searchElement) {
+    if (generation !== searchGeneration) return
     await setupSearch(element, currentSlug, data)
   }
 })
