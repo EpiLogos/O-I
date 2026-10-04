@@ -277,7 +277,7 @@ impl crate::Kernel {
             .and_then(|()| issued.require_scene_owner(&self.expressions, &before));
         let (data, changed) = if reply["status"] == "ok" {
             let admitted = source_currentness
-                .and_then(|()| completion)
+                .and(completion)
                 .and_then(|completion| {
                     let scene_owner = self
                         .expressions
