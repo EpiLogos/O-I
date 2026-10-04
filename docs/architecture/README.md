@@ -3,7 +3,7 @@ role: architecture
 standing: agent-inference
 scope: O:I composed World; native ownership and current operation routes
 design_refs: ["../positions/FOUNDING-POSITIONS.md", "../experience/PLURAL-FLOW-SPEC.md", "../experience/SHARED-FIELD-DESKTOP.md", "../../.wayfinder/maps/agent-praxis-document-world.md"]
-updated: 2026-10-01
+updated: 2026-10-04
 ---
 
 # Architecture navigation and current joins
@@ -36,6 +36,24 @@ inspected revisions and source hashes are in [source-basis.json](source-basis.js
 Every arrow is indexed in [relations.json](relations.json). Use a later
 owner return only after reading the source it cites; a branch name is not an
 evidence revision.
+
+Current publication standing, checked 4 October 2026: the native Central and
+Factory architecture companions are present on their canonical `main` trees.
+Factory's reviewed corrections landed through [Factory #277](https://github.com/EpiLogos/Factory/pull/277)
+on 2 October at `24ea8944b40c177362e59ef446b1a87658ac8af3`.
+AIKit's companion is published in [AIKit #483](https://github.com/EpiLogos/ai-kit/pull/483)
+at `0a8a742563eee48ef3c2ecae4c8f588335d14173`,
+and Actuation's six document corrections are published in
+[Actuation #130](https://github.com/EpiLogos/Actuation/pull/130) at
+`e62839bb73e9ea6a8156e80f15131a31f6b6c18a`; both integration PRs remain open.
+Central's later native-operation documentation correction is published in
+[Central #257](https://github.com/EpiLogos/Central/pull/257), which also remains open.
+Those later source cuts need their corresponding verification; the older
+checks below retain their original evidence basis. Publication, primary
+refresh, installed replay and whole-programme acceptance remain distinct.
+
+Historical publication snapshot — 1 October 2026. The following paragraph
+records the then-current custody and is retained as history:
 
 Publication standing on 1 October: O:I, Workcell and QL-MEF navigation has
 landed. The native `ARCHITECTURE-NAVIGATION.md` companions in Central, AIKit,

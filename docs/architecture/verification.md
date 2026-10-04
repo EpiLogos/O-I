@@ -2,7 +2,7 @@
 role: evidence
 standing: agent-inference
 scope: O:I 65/220 architecture reconciliation and independent navigation
-updated: 2026-10-01
+updated: 2026-10-04
 ---
 # Architecture verification and navigation
 
@@ -16,6 +16,24 @@ Committed inspected sources are bound to their immutable Git blobs. Four
 uncommitted O:I source cuts and the consumed Epi audit have retained verification
 copies with exact hashes; those copies preserve inspection evidence and confer
 no source authority or implementation publication.
+
+Current publication standing, checked 4 October 2026: the native Central and
+Factory architecture companions are present on their canonical `main` trees.
+Factory's reviewed corrections landed through [Factory #277](https://github.com/EpiLogos/Factory/pull/277)
+on 2 October at `24ea8944b40c177362e59ef446b1a87658ac8af3`.
+AIKit's companion is published in [AIKit #483](https://github.com/EpiLogos/ai-kit/pull/483)
+at `0a8a742563eee48ef3c2ecae4c8f588335d14173`,
+and Actuation's six document corrections are published in
+[Actuation #130](https://github.com/EpiLogos/Actuation/pull/130) at
+`e62839bb73e9ea6a8156e80f15131a31f6b6c18a`; both integration PRs remain open.
+Central's later native-operation documentation correction is published in
+[Central #257](https://github.com/EpiLogos/Central/pull/257), which also remains open.
+Those later source cuts need their corresponding verification; the older
+checks below retain their original evidence basis. Publication, primary
+refresh, installed replay and whole-programme acceptance remain distinct.
+
+Historical publication snapshot — 1 October 2026. The following paragraph
+records the then-current custody and is retained as history:
 
 O:I #567, Workcell #108 and QL-MEF #277 have landed. Central, AIKit, Actuation
 and Factory native companion corrections remain reviewed candidates under
@@ -163,6 +181,34 @@ fresh Nara/Epii, managed installed replay, physical audio and H remain open.
 No diagram arrow or numerical/domain mapping is changed by this consumption;
 the diagram basis retains its exact earlier cut.
 
+## Current Epi audit consumed — 4 October 2026
+
+The [ongoing fidelity audit at QL-MEF `75beacb6`](https://github.com/EpiLogos/QL-MEF/blob/75beacb64f50ffabb9e312c4f390616c8d651df7/docs/kernel-rebuild/EPI-WORLD-FIDELITY-AUDIT-2026-09-30.md)
+now supplies the current whole and native-owner recovery route. This paragraph
+consumes that owner's findings; it makes no new numerical or domain mapping.
+Personal Pratibimba remains the source-defined M4 → M4.4 → M4.4.4 → M4.4.4.4
+hub, distinct from the private person/current, occasion and Expression instance.
+The audit reports source-specific disposition complete at its consequential
+aperture and all 185 runtime obligations still unaccepted.
+
+At O:I `ccc425ca`, actual native caption and two confirmation/admission tests
+pass, while ordinary setup passes seven checks then misses the original
+30-second personal Pin acknowledgement. The native continuation successor
+has a separately qualified captured 170→171 prefix; its complete original
+workload and cold restart remain gates. These are bounded receiving results,
+not the installed whole. The earlier FULL28 parser refusal above remains its
+dated result, rather than the latest general entry diagnosis.
+
+Managed episode 1018 has separately qualified payload/image bytes. Original
+installed episode 1019 stops under its 2 GiB budget before entry; separate
+finite 3 GiB observation 1021 reaches personal material but retains missing
+admitted current, acknowledgement timeout, disabled controls and unsaved
+state. Payload bytes, visible material, personal causal receiving, durable
+Save/reopen and complete Return therefore have distinct standing. The existing
+scene-lifecycle/selected-recovery owner repairs and fresh Nara/Epii/whole
+installed proof remain open. No arrow in the six dated diagrams is redrawn
+from these newer findings, and no person-owned H/Recognition is inferred.
+
 ## Exact questions still owned by the programme
 
 - Which native ProjectMap/World bindings make the product sources and O:I
@@ -188,14 +234,26 @@ the diagram basis retains its exact earlier cut.
 - What are the accepted Bimba/Expression mappings and Personal Pratibimba
   bindings at the ongoing audit's actual cut? This lane consumes that audit;
   it determines no numerical or domain mapping independently.
+- Which actual native and installed results establish ordinary Save, Library,
+  same-file reopen/restart and restored personal-current admission after
+  Expression CAS? The current owner audit separates the bounded native caption
+  and confirmation passes from installed episode 1021's missing admitted
+  personal-current, acknowledgement timeout, disabled controls and unsaved state.
+  Its scene-lifecycle/selected-recovery repairs require their own consumer and
+  installed proof; returned JSON alone is not the joined personal world.
+- Where are the historical recovery-mirror sources now recoverable through
+  the native documentation programme? Preserve their dated citations while
+  using repaired canonical entry routes for current work.
+
+Historical open question — 1 October 2026. The earlier diagnosis is retained
+below as its dated question; the current Save and lifecycle question above
+follows the 4 October owner audit rather than treating this refusal as current.
+
 - Which native file owner supplies ordinary save/Library/restart acknowledgement
   after Expression CAS? The fidelity audit's run 15 proves bounded native
   loading but then records `files_list` refusing with `No such file or directory`.
   Published native journey operations also need their actual O:I/Central
   receivers; returned JSON alone is not the joined personal world.
-- Where are the historical recovery-mirror sources now recoverable through
-  the native documentation programme? Preserve their dated citations while
-  using repaired canonical entry routes for current work.
 
 Runtime tests named in the companions were inspected as definitions unless a
 separately linked owner return records their execution. No new live provider,
