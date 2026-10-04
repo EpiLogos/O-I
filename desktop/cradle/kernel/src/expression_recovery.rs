@@ -389,7 +389,7 @@ fn validate(kind: Kind, id: &str, value: &Value) -> Result<(), String> {
 
 /// Measure serialized UTF8 through a borrowed writer. This allocates neither
 /// a serialized payload nor a cloned Value/image String.
-fn serialized_size(value: &Value) -> Result<usize, String> {
+fn serialized_size<T: Serialize + ?Sized>(value: &T) -> Result<usize, String> {
     #[derive(Default)]
     struct Counter(usize);
     impl std::io::Write for Counter {
@@ -447,7 +447,24 @@ fn component_budgets(
 }
 
 fn preflight_components(kind: Kind, value: &Value) -> Result<(), String> {
-    component_budgets(kind, value, serialized_size)
+    if kind != Kind::Checkpoint {
+        return component_budgets(kind, value, serialized_size);
+    }
+    for path in COMPONENT_ROOTS {
+        if let Some(component) = value.pointer(path) {
+            if serialized_size(component)? > MAX_RECORD_BYTES {
+                return Err(COMPONENT_SIZE_MESSAGE.into());
+            }
+        }
+    }
+    // The existing borrowed serializer replaces precisely these four roots
+    // with null. Measure the actual remainder without walking each complete
+    // component a second time inside the whole public value.
+    let remainder = serialized_size(&RecoveryRemainder { value, location: 0 })?;
+    if remainder > MAX_RECORD_BYTES {
+        return Err(COMPONENT_SIZE_MESSAGE.into());
+    }
+    Ok(())
 }
 
 fn expanded_size(value: &Value, images: &BTreeMap<String, String>) -> Result<usize, String> {
@@ -3562,6 +3579,151 @@ mod tests {
             "revision_conflict"
         );
     }
+    #[test]
+    fn borrowed_checkpoint_preflight_preserves_exact_old_component_boundaries() {
+        // The complete native Document is actually created by its owner.
+        // The following one-variable edits are declared capacity faults,
+        // not admitted numerical/source/world fixtures.
+        let original = two_basis_checkpoint("borrowed-preflight-boundaries", 1024, false);
+        let same_law = |value: &Value| {
+            assert_eq!(
+                preflight_components(Kind::Checkpoint, value),
+                component_budgets(Kind::Checkpoint, value, serialized_size)
+            );
+            let mut copied = value.clone();
+            for path in COMPONENT_ROOTS {
+                if let Some(component) = copied.pointer_mut(path) {
+                    *component = Value::Null;
+                }
+            }
+            assert_eq!(
+                serde_json::to_vec(&RecoveryRemainder { value, location: 0 }).unwrap(),
+                serde_json::to_vec(&copied).unwrap()
+            );
+        };
+        same_law(&original);
+        for path in COMPONENT_ROOTS {
+            for bytes in [MAX_RECORD_BYTES, MAX_RECORD_BYTES + 1] {
+                let mut value = original.clone();
+                *value.pointer_mut(path).unwrap() = json!("x".repeat(bytes - 2));
+                assert_eq!(
+                    serialized_size(value.pointer(path).unwrap()).unwrap(),
+                    bytes
+                );
+                same_law(&value);
+                assert_eq!(
+                    preflight_components(Kind::Checkpoint, &value).is_ok(),
+                    bytes == MAX_RECORD_BYTES
+                );
+            }
+        }
+        for extra in [0, 1] {
+            let mut value = original.clone();
+            // A literal slash key is remainder, never a component pointer.
+            value["view"]["document/journey"] = json!("");
+            let base = serialized_size(&RecoveryRemainder {
+                value: &value,
+                location: 0,
+            })
+            .unwrap();
+            value["view"]["document/journey"] = json!("x".repeat(MAX_RECORD_BYTES - base + extra));
+            same_law(&value);
+            assert_eq!(
+                preflight_components(Kind::Checkpoint, &value).is_ok(),
+                extra == 0
+            );
+        }
+    }
+
+    #[test]
+    fn actual_png_checkpoint_borrowed_preflight_keeps_cold_body_and_last_good_cas() {
+        use base64::Engine as _;
+        let png = format!(
+            "data:image/png;base64,{}",
+            base64::engine::general_purpose::STANDARD
+                .encode(include_bytes!("../../src-tauri/icons/32x32.png"))
+        );
+        let home = Home::new();
+        let id = "borrowed-preflight-png";
+        let mut value = two_basis_checkpoint(id, 64 * 1024, false);
+        for path in ["/view/journey", "/pending/submitted/journey"] {
+            value.pointer_mut(path).unwrap()["retained_image"] = json!({"dataUrl": png});
+        }
+        assert_eq!(
+            preflight_components(Kind::Checkpoint, &value),
+            component_budgets(Kind::Checkpoint, &value, serialized_size)
+        );
+        let written = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                value.clone(),
+            ))
+            .unwrap();
+        let path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let bytes = fs::read(&path).unwrap();
+        assert_eq!(
+            serde_json::from_slice::<Value>(&bytes).unwrap()["schema"],
+            STORAGE_SCHEMA
+        );
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            written["record"]
+        );
+        assert_eq!(
+            home.store()
+                .apply(Request::FindCheckpoint {
+                    scope: Scope::Expressions,
+                    expression_ref: "expression:recovery-test".into()
+                })
+                .unwrap()["record"],
+            written["record"]
+        );
+        let sequence = fs::read(home.root().join(".sequence")).unwrap();
+        assert_eq!(
+            home.store()
+                .apply(write(
+                    Scope::Expressions,
+                    Kind::Checkpoint,
+                    id,
+                    None,
+                    value.clone()
+                ))
+                .unwrap()["state"],
+            "revision_conflict"
+        );
+        let mut oversized = value.clone();
+        oversized["view"]["journey"]["retained_text"] = json!("x".repeat(MAX_RECORD_BYTES + 1));
+        let refusal = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&written)),
+                oversized,
+            ))
+            .unwrap_err();
+        let metadata = refusal_metadata(&refusal, COMPONENT_SIZE_MESSAGE);
+        assert_eq!(
+            metadata["cas_guard"],
+            "not_reached_inbound_validation_refused"
+        );
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        assert_eq!(fs::read(home.root().join(".sequence")).unwrap(), sequence);
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"]["value"],
+            value
+        );
+    }
+
     #[test]
     fn complete_shared_bases_and_genuine_png_dictionary_cold_read_and_find() {
         use base64::Engine as _;

@@ -4,6 +4,7 @@ import type {BlueprintIntent} from './nativeBlueprint.js';
  * recover and file-save through the owner. It has no panel of its own; its
  * standing reaches the app's Save control and Studio footer via host.status. */
 import {clone,type Journey} from './model.js';
+import {sameSceneData} from './sceneCorrespondence.js';
 import {NativeWorking,nativeOwnerSnapshot,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest} from './kernelExpressions.js';
 import {readWorkingCheckpoint,readWorkingDraft,writeWorkingCheckpoint,writeDraft} from './recovery.js';
@@ -188,7 +189,14 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   // against) the new Expression while it still showed the previous document.
   const performing=await actPerforms(reference);
   requireAdoption(current);
-  const view=await work.adopt(raw,native.file,current);
+  // Re-admit an exact clean checkpoint through the owner. Rewriting the same
+  // complete basis delays opening and needlessly replaces its authored ID.
+  const retained=recovered?.record;
+  const exactClean=!!retained?.view&&!retained.pending
+   &&sameSceneData(retained.view.document,raw)&&sameSceneData(retained.file??null,native.file??null)
+   &&prepareCompositionEdit(retained.view,recovered!.journey).changes.length===0;
+  const view=exactClean?await work.reopenCheckpoint(retained,recovered!.journey,current):await work.adopt(raw,native.file,current);
+  requireAdoption(current);
   readThrough=performing?reference:null;
   restoreGeneration++;selections.cancel();host.load(view);markLoaded();host.followed?.(reference,!!readThrough);
   status(`${readThrough?'Following':'Opened'} ${raw.title} at revision ${raw.revision}.${readThrough?' An act is performing it: this view reads through and never commits into it.':''}`);update();
@@ -301,6 +309,15 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   retryFile:()=>guarded(async()=>{const file=await work.retryFile();status(`Verified the retained file save: ${file.location.path}.`);}),
   /** Page the loaded members of a Scene larger than the render budget. */
   page:(delta:number)=>guarded(()=>changePage(delta)),
+  /** Read and qualify a complete unchanged saved basis without rewriting it. */
+  confirmSaved:async():Promise<NativeFile|undefined>=>{
+   const snapshot=clone(host.snapshot()),captured=captureNativeAdoption(host,()=>restoreGeneration);
+   const current=()=>captured()&&host.snapshot().sceneId===snapshot.sceneId&&host.snapshot().entityId===snapshot.entityId;
+   let file:NativeFile|undefined;
+   const succeeded=await mutate(async()=>{file=await work.confirmSaved(snapshot,current);});
+   if(!succeeded)throw Error(notice||'The existing saved file was not qualified');
+   return file;
+  },
   /** Write the working composition to a Central file and read it back. */
   saveFile:(folder:string,name:string)=>{const snapshot=clone(host.snapshot()),version=host.version();return guarded(async()=>{
    await retainSubmitted(snapshot);

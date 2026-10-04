@@ -529,6 +529,30 @@ export class NativeWorking {
    return view;
   }finally{this.inFlight=false;}
  }
+ /** Re-admit an already saved, unchanged basis by reading its actual file and
+  * then its current native head. This never writes a file or checkpoint. */
+ async confirmSaved(snapshot:WorkingSnapshot,accept:()=>boolean=()=>true):Promise<NativeFile|undefined>{
+  const epoch=this.begin(),basis=this.record;
+  const current=()=>epoch===this.epoch&&this.record===basis&&accept();
+  try{
+   if(!current())throw Error('The selected work changed before its saved file was read');
+   if(!basis?.view||!basis.file||basis.pending)return;
+   const {view,file}=basis;
+   if(file.document_revision!==view.document.revision)return;
+   if(basis.draft_id!==snapshot.journey.id||prepareCompositionEdit(view,snapshot.journey,{sceneId:snapshot.sceneId,entityId:snapshot.entityId}).changes.length)return;
+   const durable=await this.ports.expression({operation:'inspect_file',location:file.location,expected_file_revision:file.revision});
+   if(!current())throw Error('The selected work changed while its saved file was read');
+   const decoded=readDocument(durable,view.document.expression_ref),received=artifact(durable,view.document.expression_ref);
+   if(!same(decoded,view.document)||!same(received,file))throw Error('The saved file differs from this complete native basis; reconcile it before saving');
+   const inspected=await this.ports.expression({operation:'inspect',expression_ref:view.document.expression_ref});
+   if(!current())throw Error('The selected work changed while its saved native head was read');
+   const head=nativeOwnerSnapshot(inspected,view.document.expression_ref);
+   if(!same(head.document,view.document)||!same(head.file,file))throw Error('The native head or file binding changed while its saved file was read');
+   const standing=inspected as {dirty?:boolean;saved_revision?:number};
+   if(standing.dirty!==false||standing.saved_revision!==view.document.revision)return;
+   return clone(file);
+  }finally{this.inFlight=false;}
+ }
  async saveFile(snapshot:WorkingSnapshot,destination:SaveDestination):Promise<NativeFile>{
   const document=await this.commit(snapshot),epoch=this.begin();
   try{

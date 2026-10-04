@@ -30,6 +30,12 @@ MAX_JSON = 24 * 1024 * 1024
 MAX_PACKAGE = 64 * 1024 * 1024
 ROLES = ('ql', 'ql-field-host', 'ql-field-worker', 'ql-focused-host', 'ql-sky')
 PERSONS = ('person:controlled-world-a', 'person:controlled-world-b')
+OWNED_PHASES = ('selection-setup', 'selected-conversation-positive',
+    'selected-conversation-native-refusal', 'selected-conversation-native-changed',
+    'selected-conversation-local-changed', 'selected-conversation-navigation-choose-positive',
+    'selected-conversation-navigation-return-positive', 'selected-conversation-navigation-native-refusal',
+    'selected-conversation-navigation-local-changed', 'selected-conversation-required-cosmic-body-disabled',
+    'whole', 'restart')
 D30_TEMPLATE_PATH = 'desktop/cradle/tests/fixtures/epi-world-hosted/expectation-template-d30-6a81fc44.json'
 D30_TEMPLATE_SHA256 = 'd16c3ee6f757cff878939c2c5cd768a8412c20ae6e43b59cfe87364b2dad3c60'
 D30_SUCCESSION_SHA256 = '2c36eb34c388903d7d6dd97c3a36f2b399c164d0974680f09bfe9d0958fabd8f'
@@ -48,10 +54,13 @@ OI_SCOPE = [
     'desktop/cradle/tests/fixtures/epi-world-hosted/source-succession-d30-6a81fc44.json',
     'desktop/cradle/tests/epi-world-hosted-native.py',
     'desktop/cradle/tests/current-manifest-artifact-guards.mjs',
+    'desktop/cradle/tests/native-saved-confirmation-native.test.mjs',
+    'desktop/cradle/tests/epi-owned-processes-native.py',
     'desktop/cradle/expressions-app/field-studies-journeys/src/app.ts',
     'desktop/cradle/expressions-app/field-studies-journeys/src/epiWorldProduction.ts',
     'desktop/cradle/expressions-app/field-studies-journeys/src/epiWorldMaterial.ts',
     'desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts',
+    'desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts',
     'desktop/cradle/src/expressions/hostedApp.ts',
     'desktop/cradle/src/expressions/naraChannel.ts',
     'desktop/cradle/src/expressions/nativeChannel.ts',
@@ -140,26 +149,114 @@ class OwnedProcesses:
         self.lock = threading.RLock()
         self.quit = threading.Event()
         self.phase = 'build'
+        self.archives = []
+        self.sealed_phase = None
+        self.cleanups = []
         self.expected = {}
         self.monitor = threading.Thread(target=self.loop, daemon=True)
         self.monitor.start()
 
+    def verify_archives(self):
+        require(len(self.archives) <= len(OWNED_PHASES), 'Owned phase archive count exceeds declared whole')
+        require(len(json.dumps(self.archives).encode()) <= 64 * 1024, 'Owned archive index exceeds bound')
+        total = 0
+        for row in self.archives:
+            path = Path(row['archive']['path'])
+            require(path.is_file() and not path.is_symlink(), 'Sealed owned image evidence is not a regular file')
+            with path.open('rb') as stream:
+                raw = stream.read(2 * 1024 * 1024 + 1)
+            require(len(raw) <= 2 * 1024 * 1024 and len(raw) == row['archive']['bytes']
+                    and hashlib.sha256(raw).hexdigest() == row['archive']['sha256'], 'Sealed owned image evidence changed')
+            value = parse(raw)
+            require(value['phase'] == row['phase'] and len(value['records']) == row['records']
+                    and len(value['records']) <= 512 and not value['errors'], 'Sealed owned phase differs from its index')
+            total += row['archive']['bytes']
+        require(total <= len(OWNED_PHASES) * 2 * 1024 * 1024, 'Declared owned phase evidence disk budget exceeded')
+
+    def seal_phase(self):
+        with self.lock:
+            if self.phase == 'build' or self.sealed_phase == self.phase:
+                return
+            self.capture()
+            require(not self.errors, 'Owned observation failure cannot be cleared by phase rotation')
+            roots = [value for value in self.roots.values() if value.get('phase') == self.phase]
+            # Successful commands have exited, but may have left owned
+            # descendants. Retire their exact identities before sealing too.
+            for root in roots:
+                if not any(row['root_pid'] == root['pid'] and row['root_starttime'] == root['starttime']
+                           for row in self.cleanups):
+                    receipt = self.stop(root['process'])
+                    require(not receipt['observation_failure'], 'Owned observation failed during phase cleanup')
+            live = [value for value in self.known.values() if (now := proc_stat(value['pid']))
+                    and now['starttime'] == value['starttime'] and now['state'] != 'Z']
+            require(not live, 'Owned phase cannot rotate before exact lifetime cleanup')
+            require(self.phase in OWNED_PHASES and len(self.archives) < len(OWNED_PHASES), 'Undeclared owned phase archive')
+            for root in roots:
+                require(any(row['root_pid'] == root['pid'] and row['root_starttime'] == root['starttime']
+                            and not row['live_descendants_remaining'] for row in self.cleanups),
+                        'Owned phase requires actual cleanup receipt for every root')
+            payload = {'schema': 'epi.hosted-owned-process-image-phase/v1', 'phase': self.phase,
+                       'records': list(self.rows.values()), 'errors': list(self.errors),
+                       'cleanups': [row for row in self.cleanups if row.get('phase') == self.phase]}
+            raw = (json.dumps(payload, indent=2, allow_nan=False) + '\n').encode()
+            require(len(self.rows) <= 512 and len(raw) <= 2 * 1024 * 1024, 'Owned phase evidence exceeds original bounds')
+            directory = self.output / 'owned-image-phases'
+            directory.mkdir(exist_ok=True)
+            target = directory / (str(OWNED_PHASES.index(self.phase)).zfill(2) + '-' + self.phase + '.json')
+            require(not target.exists(), 'Owned phase evidence is immutable')
+            with target.open('xb') as stream:
+                stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+            with target.open('rb') as stream:
+                observed = stream.read(2 * 1024 * 1024 + 1)
+            require(observed == raw and parse(observed) == payload, 'Owned phase evidence readback differs')
+            archive = {'path': str(target.absolute()), 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
+            self.archives.append({'phase': self.phase, 'archive': archive, 'records': len(self.rows)})
+            self.verify_archives()
+            self.sealed_phase = self.phase
+
+    def begin_phase(self, name):
+        with self.lock:
+            require(name in OWNED_PHASES and (self.phase == 'build' or OWNED_PHASES.index(name) > OWNED_PHASES.index(self.phase)),
+                    'Owned phase must advance through the declared original encounter')
+            if self.phase == 'build':
+                for root in list(self.roots.values()):
+                    if root.get('phase') == 'build':
+                        receipt = self.stop(root['process'])
+                        require(not receipt['observation_failure'], 'Build lifetime observation failed during cleanup')
+                require(not [value for value in self.known.values() if (now := proc_stat(value['pid']))
+                             and now['starttime'] == value['starttime'] and now['state'] != 'Z'],
+                        'First encounter phase cannot inherit a live build descendant')
+            self.seal_phase()
+            self.verify_archives()
+            require(not self.errors, 'Earlier owned observation failure remains fatal')
+            self.phase = name
+            self.rows = {}
+
+    def finish_phases(self):
+        self.seal_phase()
+        self.verify_archives()
+        require([row['phase'] for row in self.archives] == list(OWNED_PHASES), 'Complete proof omitted an original owned lifetime')
+        return self.evidence()
+
     def add(self, process, label, allow_completed=False):
-        value = proc_stat(process.pid)
-        if value is None:
-            status = process.poll()
-            require(allow_completed and status is not None, 'Owned live process disappeared before registration: ' + label)
-            with self.lock:
+        with self.lock:
+            require(self.sealed_phase != self.phase, 'Cannot register owned work after its immutable lifetime was sealed')
+            value = proc_stat(process.pid)
+            if value is None:
+                status = process.poll()
+                require(allow_completed and status is not None, 'Owned live process disappeared before registration: ' + label)
                 require(len(self.completed_short_commands) < 512, 'Completed command evidence bound exceeded')
                 self.completed_short_commands.append({'pid': process.pid, 'label': label, 'exit': status,
                     'standing': 'Actual already completed non-bridge command; stdout/stderr/exit retained separately, no live image or descendant claim'})
-            return False
-        with self.lock:
+                return False
             identity = (process.pid, value['starttime'])
             process.epi_owned_identity = identity
-            self.roots[identity] = {**value, 'label': label, 'process': process}
+            self.roots[identity] = {**value, 'label': label, 'phase': self.phase, 'process': process}
             self.known[identity] = {**value, 'root': identity}
-        return True
+            require(sum(row['phase'] == self.phase for row in self.roots.values()) <= 512,
+                    'Owned root registrations exceed the original per-lifetime record bound')
+            require(len(self.roots) <= (len(OWNED_PHASES) + 1) * 512, 'Owned root lifetime index exceeds declared whole')
+            return True
 
     def loop(self):
         while not self.quit.wait(0.05):
@@ -189,6 +286,12 @@ class OwnedProcesses:
                     if pid not in owners and value['ppid'] in owners:
                         owners[pid] = owners[value['ppid']]
                         changed = True
+            # Identity custody precedes image acceptance: a refused record or
+            # live-population budget must still leave every discovered exact
+            # owned family available to cleanup.
+            for pid, root in owners.items():
+                value = {**table[pid], 'root': root}
+                self.known[(pid, value['starttime'])] = value
             require(len(owners) <= 512, 'Owned process population exceeds bounded observer')
             for pid, root in owners.items():
                 value = {**table[pid], 'root': root}
@@ -239,19 +342,35 @@ class OwnedProcesses:
     def evidence(self):
         self.capture()
         with self.lock:
+            self.verify_archives()
             value = {'schema': 'epi.hosted-owned-process-images/v1',
-                     'scope': 'Actual Linux descendants of explicitly owned roots only; no inferred image fields from kernel',
+                     'scope': 'Actual Linux descendants of explicitly owned roots only; current phase records plus complete immutable earlier phase archives; no inferred image fields from kernel',
+                     'current_phase': self.phase, 'declared_phases': list(OWNED_PHASES),
+                     'archived_phases': list(self.archives),
                      'records': list(self.rows.values()), 'errors': list(self.errors),
                      'completed_short_commands_without_live_image_claim': list(self.completed_short_commands)}
+            require(len(json.dumps(value).encode()) <= 2 * 1024 * 1024, 'Current owned evidence exceeds original byte bound')
             save(self.output / 'owned-process-images.json', value)
             return value
 
     def stop(self, process):
-        self.capture()
+        observation_failure = None
+        try:
+            self.capture()
+        except Exception as error:
+            observation_failure = repr(error)
+            with self.lock:
+                if len(self.errors) < 16:
+                    self.errors.append(str(error))
         root_identity = process.epi_owned_identity
         root = self.roots[root_identity]
         with self.lock:
             targets = [dict(v) for v in self.known.values() if v['root'] == root_identity]
+            prior = next((row for row in self.cleanups if row['root_pid'] == root_identity[0]
+                          and row['root_starttime'] == root_identity[1]), None)
+        if prior and process.poll() is not None and not [v for v in targets if (now := proc_stat(v['pid']))
+                and now['starttime'] == v['starttime'] and now['state'] != 'Z']:
+            return prior
         # Snapshot before the bridge exits and descendants can be reparented.
         sent = []
         for sig in (signal.SIGTERM, signal.SIGKILL):
@@ -278,19 +397,36 @@ class OwnedProcesses:
         alive = [v for v in targets if (now := proc_stat(v['pid']))
                  and now['starttime'] == v['starttime'] and now['state'] != 'Z']
         require(not alive, 'Owned native descendants remain live after cleanup')
-        return {'root_pid': process.pid, 'root_starttime': root['starttime'],
+        receipt = {'root_pid': process.pid, 'root_starttime': root['starttime'],
+                'phase': root['phase'], 'observation_failure': observation_failure,
                 'label': root['label'], 'exit': process.returncode, 'signals': sent,
                 'live_descendants_remaining': alive,
                 'zombie_descendants_remaining': [v for v in targets if (now := proc_stat(v['pid']))
                     and now['starttime'] == v['starttime'] and now['state'] == 'Z']}
+        with self.lock:
+            require(len(self.cleanups) < (len(OWNED_PHASES) + 1) * 512, 'Owned cleanup receipt index exceeds declared whole')
+            self.cleanups.append(receipt)
+        return receipt
 
     def close(self):
         cleanups = []
-        for root in list(self.roots.values())[::-1]:
-            cleanups.append(self.stop(root['process']))
-        self.quit.set()
-        self.monitor.join(timeout=5)
-        save(self.output / 'owned-process-cleanup.json', cleanups)
+        failures = []
+        try:
+            for root in list(self.roots.values())[::-1]:
+                try:
+                    cleanups.append(self.stop(root['process']))
+                except Exception as error:
+                    failures.append({'pid': root['pid'], 'starttime': root['starttime'], 'failure': repr(error)})
+        finally:
+            self.quit.set()
+            self.monitor.join(timeout=5)
+            require(len(json.dumps(cleanups).encode()) <= (len(OWNED_PHASES) + 1) * 2 * 1024 * 1024,
+                    'Owned cleanup output exceeds declared lifetime disk budget')
+            save(self.output / 'owned-process-cleanup.json', cleanups)
+            save(self.output / 'owned-process-cleanup-failures.json', {'schema': 'epi.hosted-owned-cleanup-failures/v1',
+                 'failures': failures, 'observation_errors': self.errors})
+        require(not failures and not self.errors, 'Owned cleanup or image observation failed; all actual cleanup attempts retained')
+        self.seal_phase()
 
 
 class Replay:
@@ -454,7 +590,7 @@ class Replay:
         return result['outcome']
 
     def start_bridge(self, name):
-        self.owned.phase = name
+        self.owned.begin_phase(name)
         stderr = (self.out / f'{name}-bridge.stderr').open('wb')
         process = subprocess.Popen([self.bridge, '127.0.0.1:0'], cwd=self.world, env=self.env,
                                    stdout=subprocess.PIPE, stderr=stderr, start_new_session=True)
@@ -478,10 +614,12 @@ class Replay:
 
     def stop_bridge(self):
         if self.bridge_process:
-            self.report.setdefault('bridge_cleanups', []).append(self.owned.stop(self.bridge_process))
+            receipt = self.owned.stop(self.bridge_process)
+            self.report.setdefault('bridge_cleanups', []).append(receipt)
             self.bridge_process.stdout.close()
             self.bridge_stderr.close()
             self.bridge_process = None
+            require(not receipt.get('observation_failure'), 'Owned bridge image observation failed during actual cleanup')
 
     def file_admission(self, relative, label, expected_revision=None):
         outcome = self.op(label + '-listing', {'op': 'files_list', 'path': str(PurePosixPath(relative).parent), 'fresh': True})
@@ -942,6 +1080,9 @@ class Replay:
 
     def run(self):
         require(platform.system() == 'Linux' and Path('/proc').is_dir(), 'This explicit hosted custody route requires Linux /proc')
+        self.command('actual-owned-process-phase-regressions',
+                     [sys.executable, self.repo / 'desktop/cradle/tests/epi-owned-processes-native.py'],
+                     self.repo, timeout=180)
         fixture, fm = self.package()
         original_template = fixture / fm['expectation_template']
         require(file_ref(original_template)['sha256'] == '98d9ed07dbfe9212f9eedff6583c894d074d89f3d96d08d9b07d82e35c89f845',
@@ -1143,6 +1284,12 @@ class Replay:
             'OI_CENTRAL_CTRL_BIN', 'OI_CENTRAL_PROJECT_QUERY', 'OI_CRADLE_STATE', 'OI_EXPRESSION_SOCKET', 'QL_NARA_PROVIDER_CACHE',
             'OI_QL_BIN', 'OI_QL_SKY_BIN', 'OI_QL_FIELD_HOST_BIN', 'OI_QL_FIELD_WORKER_BIN', 'QL_NARA_UV', 'XDG_CACHE_HOME', 'UV_CACHE_DIR')}
         self.report['owned_environment']['PLAYWRIGHT_BROWSERS_PATH'] = self.env.get('PLAYWRIGHT_BROWSERS_PATH')
+        self.command('actual-complete-saved-confirmation-and-admission-races',
+                     ['node', '--experimental-strip-types', '--import', './tests/ts-register.mjs', '--test',
+                      'tests/native-saved-confirmation-native.test.mjs', 'tests/native-adoption-races-native.test.mjs'],
+                     self.repo / 'desktop/cradle',
+                     {**self.env, 'OI_NATIVE_SAVED_CONFIRMATION': '1', 'OI_NATIVE_EXPRESSION_RECOVERY': '1',
+                      'OI_KERNEL_BIN': self.bridge}, timeout=180)
         self.command('central-controlled-init', [ctrl, '--json', '--root', self.world, 'init'], self.out, timeout=120)
         require(self.world.is_dir(), 'Actual Central init did not create the owned world')
         first = self.start_bridge('selection-setup')
@@ -1407,7 +1554,6 @@ class Replay:
         require(reopened.get('scene_damping_restart', {}).get('passed') is True, 'Fresh owned-kernel/browser material receiving gate cannot be skipped')
         require(reopened.get('scene_axes_restart', {}).get('passed') is True, 'Fresh owned-kernel/browser must consume the exact independently acknowledged saved continuous axes')
         self.stop_bridge()
-        self.owned.evidence()
         for before in binaries:
             after = file_ref(before['path'])
             require(after['sha256'] == before['sha256'] and after['bytes'] == before['bytes'], 'Native companion changed during whole receiving')
@@ -1422,6 +1568,7 @@ class Replay:
             'ql_source_unchanged': self.source_rows(self.ql, self.args.expected_ql_head, [row['path'] for row in ql_rows]) == ql_rows,
             'ql_succession_consumers_unchanged': self.source_rows(self.ql, self.args.expected_ql_head, consumer_paths) == consumer_rows}
         require(self.report['source_recheck']['oi_source_unchanged'] and self.report['source_recheck']['ql_source_unchanged'] and self.report['source_recheck']['ql_succession_consumers_unchanged'] and self.report['source_recheck']['aikit_image_unchanged'], 'Qualified source changed during native receiving')
+        self.owned.finish_phases()
         self.report['independent_whole_and_restart'] = {
             'passed': True, 'whole_ref': self.report['whole-production'],
             'restart_ref': self.report['fresh-process-entry'],
@@ -1453,13 +1600,16 @@ def main():
         replay.report['passed'] = False
         replay.report['failure'] = repr(error)
     finally:
-        try:
-            replay.stop_bridge()
-            replay.owned.evidence()
-            replay.owned.close()
-        except BaseException as error:
+        cleanup_failures = []
+        for cleanup in (replay.stop_bridge, replay.owned.evidence, replay.owned.close):
+            try:
+                cleanup()
+            except BaseException as error:
+                cleanup_failures.append(repr(error))
+        if cleanup_failures:
             replay.report['passed'] = False
-            replay.report['cleanup_failure'] = repr(error)
+            replay.report['cleanup_failure'] = cleanup_failures[0]
+            replay.report['cleanup_failures'] = cleanup_failures
         save(replay.out / 'receipt.json', replay.report)
     require(replay.report['passed'], replay.report.get('failure', replay.report.get('cleanup_failure', 'Hosted replay failed')))
 

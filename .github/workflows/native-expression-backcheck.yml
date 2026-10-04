@@ -150,6 +150,13 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - name: Actual Linux owned-process lifetimes and strict refusal regressions
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks/native
+          sha256sum desktop/cradle/tests/epi-owned-processes-native.py desktop/cradle/tests/epi-world-hosted-native.py > /tmp/w5-checks/native/owned-process-source-before.sha256
+          python3 desktop/cradle/tests/epi-owned-processes-native.py 2>&1 | tee /tmp/w5-checks/native/owned-process-regressions.log
+          sha256sum -c /tmp/w5-checks/native/owned-process-source-before.sha256
       # These unchanged clients are qualified byte-for-byte at the named native
       # cut. Keep browser scheduling and current native behaviour on one pin.
       - id: ql
