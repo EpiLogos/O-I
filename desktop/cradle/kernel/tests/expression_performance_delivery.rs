@@ -4,7 +4,7 @@ use oi_cradle_kernel::expression_performance::*;
 use oi_cradle_kernel::expression_performance_delivery::{SelectedPerformance, Selection};
 use oi_cradle_kernel::expression_performance_management::InputHistoryEntry;
 use oi_cradle_kernel::expression_performance_recording::{
-    prepare_recording, NativeRecordState, ParameterBinding, RecordAdmission,
+    prepare_recording, NativeApplication, NativeRecordState, ParameterBinding, RecordAdmission,
 };
 use oi_cradle_kernel::expression_performance_source_asset::NativePerformanceSourceAsset;
 use oi_cradle_kernel::{
@@ -270,7 +270,29 @@ fn actual_native_act_delivery_preserves_encoded_original_bytes_decoded_applicati
             .as_array()
             .unwrap()
         {
-            assert_eq!(receipt["application"], applications[count]);
+            // The codec retains canonical native bytes above. Its declared
+            // application fields retain exact Scalar meaning across number
+            // spelling, plus every original non-scalar/opaque field.
+            let decoded_application: NativeApplication =
+                serde_json::from_value(receipt["application"].clone()).unwrap();
+            let native_application: NativeApplication =
+                serde_json::from_value(applications[count].clone()).unwrap();
+            assert_eq!(decoded_application, native_application);
+            let mut altered = receipt["application"].clone();
+            altered["value"] = json!(f64::from_bits(
+                decoded_application.value.value().to_bits() + 1,
+            ));
+            assert_ne!(
+                serde_json::from_value::<NativeApplication>(altered).unwrap(),
+                native_application,
+                "an adjacent binary64 operand is a different native application",
+            );
+            let mut extra = receipt["application"].clone();
+            extra["unknown_application_field"] = json!(true);
+            assert!(serde_json::from_value::<NativeApplication>(extra).is_err());
+            let mut missing = receipt["application"].clone();
+            missing.as_object_mut().unwrap().remove("touch");
+            assert!(serde_json::from_value::<NativeApplication>(missing).is_err());
             count += 1;
         }
         assert_eq!(

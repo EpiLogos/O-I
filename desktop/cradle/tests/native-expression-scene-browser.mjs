@@ -75,9 +75,15 @@ async function run(label,vary){
  try{
   await page.goto(`http://127.0.0.1:${server.address().port}`);
   const frame=page.frames().find(f=>f!==page.mainFrame());
+  // Controller requirements exist before actual asynchronous workspace boot.
+  // Wait on its real admission barrier before dismissing the ordinary gate;
+  // otherwise a late gate can conceal Studio after the earlier empty check.
+  await frame.waitForFunction(async()=>{
+   const f=window.__FIELD_STUDIES__;if(typeof f?.workspaceReady!=='function')return false;
+   await f.workspaceReady();return f.native()?.renderer_requirements?.slot_count>0&&!!f.telemetry()&&!!f.inspect();
+  },null,{timeout:60000});
   const dismiss=frame.locator('#entry-gate:not([hidden]) [data-action="entry-dismiss"]');
   if(await dismiss.count()){await dismiss.click();await frame.waitForFunction(()=>document.querySelector('#entry-gate')?.hasAttribute('hidden'),null,{timeout:5000});}
-  await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.native()?.renderer_requirements?.slot_count>0,null,{timeout:60000});
   if(!report.webgl)report.webgl=await frame.evaluate(()=>{for(const canvas of document.querySelectorAll('canvas')){const gl=canvas.getContext('webgl2')||canvas.getContext('webgl');if(gl){const ext=gl.getExtension('WEBGL_debug_renderer_info');return{vendor:gl.getParameter(ext?ext.UNMASKED_VENDOR_WEBGL:gl.VENDOR),renderer:gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER)};}}return{renderer:'unavailable'};});
   report.topology??=await frame.evaluate(()=>window.__FIELD_STUDIES__.native().renderer_requirements);
   const toggle=frame.locator('.workspace-cluster>.header-menu-toggle');if(await toggle.isVisible())await toggle.click({force:true});
@@ -133,9 +139,12 @@ async function cadence(){
  try{
   await page.goto(`http://127.0.0.1:${server.address().port}`);
   const frame=page.frames().find(f=>f!==page.mainFrame());
+  await frame.waitForFunction(async()=>{
+   const f=window.__FIELD_STUDIES__;if(typeof f?.workspaceReady!=='function')return false;
+   await f.workspaceReady();return f.native()?.renderer_requirements?.slot_count>0&&!!f.telemetry()&&!!f.inspect();
+  },null,{timeout:60000});
   const dismiss=frame.locator('#entry-gate:not([hidden]) [data-action="entry-dismiss"]');
   if(await dismiss.count()){await dismiss.click();await frame.waitForFunction(()=>document.querySelector('#entry-gate')?.hasAttribute('hidden'),null,{timeout:5000});}
-  await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.native()?.renderer_requirements?.slot_count>0,null,{timeout:60000});
   const toggle=frame.locator('.workspace-cluster>.header-menu-toggle');if(await toggle.isVisible())await toggle.click({force:true});
   await frame.locator('[data-action="studio"]').click({force:true});
   await frame.locator('[data-action="studio-section"][data-value="native"]').click({force:true});

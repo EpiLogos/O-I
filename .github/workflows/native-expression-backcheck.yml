@@ -119,6 +119,12 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/w5-checks
           cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge 2>&1 | tee /tmp/w5-checks/kernel-build.log
+          # Replay the original delivered-value and reservation failures first.
+          # These real native checks do not replace the unchanged full gate.
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --lib scalar_operand_tests -- --nocapture 2>&1 | tee /tmp/w5-checks/scalar-operands.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_performance_delivery actual_native_act_delivery_preserves_encoded_original_bytes_decoded_applications_and_current_score -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/delivered-native-operands.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_performance_delivery actual_pending_native_reservation_delivers_original_occurrence_without_a_played_future_receipt -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/reserved-native-operands.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_transport_native native_large_document_inspect_is_complete_and_world_routing_is_preserved -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/complete-native-inspect.log
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets --no-fail-fast -- --nocapture 2>&1 | tee /tmp/w5-checks/kernel.log
       - name: Qualify the native regression source after all original tests
         if: always()
@@ -451,8 +457,7 @@ jobs:
   epi-whole:
     name: Complete controlled Epi world / source-built hosted Linux
     # This is independent whole-experience evidence, not installation authority.
-    # The full native job remains mandatory for workflow success and the Mac
-    # candidate still requires both native and embedded floors. A native failure
+    # The full native job remains mandatory for workflow success. A native failure
     # must retain this actual encounter instead of skipping its independent proof.
     needs: [embedded]
     runs-on: ubuntu-latest
@@ -550,9 +555,11 @@ jobs:
   epi-mac-candidate:
     name: Exact native Mac candidate / canonical managed bundle
     # Explicit candidate builds support installed diagnosis; native failures remain acceptance failures.
-    # Require a completed native job and the embedded source/build proof; never admit cancelled or skipped runs.
-    if: ${{ always() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.build_mac_candidate && needs.embedded.result == 'success' && (needs.native-kernel-regressions.result == 'success' || needs.native-kernel-regressions.result == 'failure') }}
-    needs: [embedded, native-kernel-regressions]
+    # Build the exact diagnostic candidate after the embedded source/build
+    # proof while mandatory native/whole gates run. Build success is never
+    # native, whole, installed or release acceptance; their failures remain red.
+    if: ${{ always() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.build_mac_candidate && needs.embedded.result == 'success' }}
+    needs: [embedded]
     runs-on: macos-15
     timeout-minutes: 90
     steps:

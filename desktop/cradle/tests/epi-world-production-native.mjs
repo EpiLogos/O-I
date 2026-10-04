@@ -34,6 +34,8 @@ if(selectionStage){
 }
 
 if(config.reopen_file!==undefined)assert.equal(typeof config.reopen_file,'string','reopen_file must be the actual Central-relative path accepted by the production app file-opening API');
+if(config.stage==='first-construction')assert.ok(!config.reopen_file&&!config.existing_expression_ref&&!config.reopen_expected&&!config.reopen_acknowledgement_file,'New construction cannot substitute any saved-world opening');
+if(config.stage==='first-construction-restart')assert.ok(config.reopen_file&&config.construction_acknowledgement_file&&config.construction_acknowledgement_sha256&&!config.existing_expression_ref&&!config.reopen_expected&&!config.reopen_acknowledgement_file,'Constructor restart requires only its actual hash-bound constructor admission');
 if(config.reopen_acknowledgement_file)assert.ok(config.reopen_file,'Fresh process arrival requires ordinary file opening through the native file owner');
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const app=resolve(root,'expressions-app/field-studies-journeys');
@@ -83,6 +85,7 @@ const receipt={schema:'oi.epi-world-production-native-proof/v1',passed:false,
  independent_source_expectations:(config.independent_expectation_files??[]).map(path=>({path:resolve(path),sha256:sha(readFileSync(resolve(path)))})),
  source:Object.fromEntries(['src/expressions/hostedApp.ts','src/expressions/nativeChannel.ts','src/expressions/naraChannel.ts','expressions-app/field-studies-journeys/src/app.ts','expressions-app/field-studies-journeys/src/epiWorldProduction.ts','expressions-app/field-studies-journeys/src/sceneWorkflow.ts','expressions-app/field-studies-journeys/src/sceneCorrespondence.ts','expressions-app/field-studies-journeys/src/native-field/channel.ts','expressions-app/field-studies-journeys/src/epiWorldMaterial.ts','expressions-app/field-studies-journeys/src/nativeWorkspace.ts','expressions-app/field-studies-journeys/src/naraEvidenceField.ts','expressions-app/field-studies-journeys/src/naraInstrument.tsx','expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts','expressions-app/src/engine/fieldModel.ts','expressions-app/src/engine/PointCloudField.ts','expressions-app/src/engine/LocalizedResonanceBank.ts','expressions-app/src/engine/localizedResonanceProjection.ts'].map(p=>[p,sha(readFileSync(resolve(root,p)))]))};
 if(selectionStage){receipt.schema='oi.epi-selected-conversation-hosted-stage/v1';receipt.selection_case=config.selection_case??null;receipt.scope=config.selection_case==='required-cosmic-body-disabled'?'Actual isolated source-built native material/body counterproof and original restored receiving; whole/answer/provider/Keep/restart/installed/H remain unaccepted':'Actual isolated source-built ordinary file admission and selected-focus receiving only; whole/answer/provider/Keep/restart/installed/H remain unaccepted';}
+if(config.stage==='first-construction'||config.stage==='first-construction-restart'){receipt.schema='oi.epi-first-construction-native-stage/v1';receipt.scope='Actual new-world construction and admitted-current continuation; original whole and managed installed replay remain separate';}
 let server,browser,page,frame,phase='setup',heartbeat;const nativeComposes=[],nativePrepared=[],nativeFrames=[],nativeInspections=[],nativeM3=[];
 const check=(value,label)=>{assert.ok(value,label);receipt.checks.push(label);console.log('PASS',label);json('receipt.json',receipt);};
 const artifact=(name,value)=>{json(name,value);receipt.artifacts.push(name);};
@@ -666,7 +669,24 @@ async function actualGpuConsumerReplays(url,opening,cosmicRef){
 
 try{
  phase='actual production launch';
- const receiverModule=`import {relayKernelChannel,trackHostedAppState} from './src/expressions/hostedApp.ts';import {relayNaraChannel} from './src/expressions/naraChannel.ts';import {readScope,scopeProject} from './src/workspace/scope.ts';import {chatProvisionTarget} from './src/agent/chat/firstSend.ts';const frame=document.getElementById('world'),transport={kind:'bridge',url:${JSON.stringify(config.bridge)}};let hostedState=null;const stops=[trackHostedAppState(frame,value=>{hostedState=value;}),relayKernelChannel(frame,transport),relayNaraChannel(frame,transport,{project:()=>chatProvisionTarget(scopeProject(readScope())),expression:()=>hostedState?.nativeScene??null})];window.__EPI_REAL_HOST__={relay:'relayKernelChannel+relayNaraChannel+trackHostedAppState',bridge:${JSON.stringify(config.bridge)},state:()=>hostedState};frame.hidden=new URLSearchParams(location.search).has('lifecycle-cold');frame.src='/__epi_application'+location.search;window.addEventListener('pagehide',()=>stops.forEach(stop=>stop()));`;
+ const receiverModule=`import {relayKernelChannel,trackHostedAppState} from './src/expressions/hostedApp.ts';import {relayNaraChannel} from './src/expressions/naraChannel.ts';import {readScope,scopeProject} from './src/workspace/scope.ts';import {chatProvisionTarget} from './src/agent/chat/firstSend.ts';
+ const frame=document.getElementById('world'),transport={kind:'bridge',url:${JSON.stringify(config.bridge)}};let hostedState=null;
+ function installRealKernelRelay(){
+  const add=window.addEventListener,remove=window.removeEventListener,mapping=new Map(),registrations=[];
+  window.addEventListener=function(type,listener,options){
+   if(this!==window||type!=='message'||typeof listener!=='function')return Reflect.apply(add,this,[type,listener,options]);
+   const row={listener,options,kernel:false},wrapped=function(event){
+    const observer=window.__EPI_NAVIGATION_RELAY_INVOCATION__,invoke=()=>Reflect.apply(listener,this,[event]);
+    return row.kernel&&typeof observer==='function'?observer(event,invoke):invoke();
+   };row.wrapped=wrapped;registrations.push(row);mapping.set(listener,wrapped);return Reflect.apply(add,this,[type,wrapped,options]);
+  };
+  let stop;try{stop=relayKernelChannel(frame,transport);}finally{window.addEventListener=add;}
+  // This actual source registers the native relay first, kernel relay last.
+  if(registrations.length!==2)throw Error('Actual kernel relay registration shape changed');
+  registrations[1].kernel=true;
+  return ()=>{window.removeEventListener=function(type,listener,options){return Reflect.apply(remove,this,[type,mapping.get(listener)??listener,options]);};try{return stop();}finally{window.removeEventListener=remove;mapping.clear();}};
+ }
+ const stops=[trackHostedAppState(frame,value=>{hostedState=value;}),installRealKernelRelay(),relayNaraChannel(frame,transport,{project:()=>chatProvisionTarget(scopeProject(readScope())),expression:()=>hostedState?.nativeScene??null})];window.__EPI_REAL_HOST__={relay:'relayKernelChannel+relayNaraChannel+trackHostedAppState',bridge:${JSON.stringify(config.bridge)},state:()=>hostedState};frame.hidden=new URLSearchParams(location.search).has('lifecycle-cold');frame.src='/__epi_application'+location.search;window.addEventListener('pagehide',()=>stops.forEach(stop=>stop()));`;
  const compiledHost=await build({stdin:{contents:receiverModule,resolveDir:root,sourcefile:'actual-production-host-relay-entry.mjs',loader:'js'},bundle:true,write:false,format:'esm',platform:'browser',metafile:true,define:{__CRADLE_WALK__:'false','process.env.NODE_ENV':'"production"'},plugins:[{name:'existing-vite-raw-assets',setup(b){b.onResolve({filter:/\?raw$/},args=>({path:resolve(dirname(args.importer),args.path.slice(0,-4)),namespace:'actual-raw-asset'}));b.onLoad({filter:/.*/,namespace:'actual-raw-asset'},args=>({contents:readFileSync(args.path,'utf8'),loader:'text'}));}}]});
  const receiver=compiledHost.outputFiles[0].text;
  writeFileSync(resolve(out,'actual-production-host-relay.mjs'),receiver);writeFileSync(resolve(out,'actual-production-application.html'),entry);
@@ -885,6 +905,69 @@ try{
    standing:'Historical private payload unavailable; explicit new native acquisition, not restored f119 or silently normalized Document'});
  }
  await noAlert();await readyCurrent(identities[0].reading.person_ref);
+ if(config.stage==='first-construction'||config.stage==='first-construction-restart'){
+  // This new-world gate is separate from the immutable historical comparator.
+  // It exercises the ordinary producer and real private owner, never supplies
+  // a constructed Document/current/renderer reply to the application.
+  phase='actual first-construction personal receiving and continuation';
+  let prior=null;
+  if(config.stage==='first-construction-restart'){
+   assert.ok(config.reopen_file&&config.construction_acknowledgement_file&&config.construction_acknowledgement_sha256);
+   const ref={path:resolve(config.construction_acknowledgement_file),sha256:config.construction_acknowledgement_sha256};
+   prior=qualifiedJson(ref,'Actual first-construction save acknowledgement');
+   assert.equal(prior.schema,'epi.first-construction-saved-continuation/v1');
+   assert.deepEqual(prior.source_cuts,config.binaries);
+  }else assert.ok(firstConstructionCurrent&&!config.reopen_file&&!config.existing_expression_ref);
+  let received=await snapshot('first-construction-personal-arrival',true);
+  if(!prior){
+   await sceneNavigate(received.record.world.instance_ref+':scene:personal');
+   await frame.evaluate(ref=>window.__FIELD_STUDIES__.selectEntity(ref),received.record.receiving.personal.locus_entity_ref);
+   await action('save');received=await snapshot('first-construction-saved-personal',true);
+  }
+  requirePartitions(received,received.document.scenes[received.state.sceneIndex].entities.map(e=>e.id),'First construction personal');
+  requirePersonalDrivers(received,'First construction actual personal consumer');
+  const document=await nativeDocument(received.working.native_ref);
+  const requireCanonicalPersonal=(reading,doc)=>{
+   const sceneRef=reading.record.world.instance_ref+':scene:personal',locus=reading.record.receiving.personal.locus_entity_ref;
+   const scene=reading.document.scenes[reading.state.sceneIndex],binding=reading.working.bindings[scene?.id];
+   assert.equal(scene?.id,sceneRef);assert.equal(binding?.scene_ref,sceneRef);
+   assert.equal(doc.selection.scene_ref,sceneRef);assert.equal(doc.selection.entity_ref,locus);assert.equal(doc.selection.relation_ref,null);
+   assert.equal(doc.entities[locus]?.subject?.subject_ref,'ql:m-coordinate:bimba:M4.4.4.4');
+   assert.deepEqual(reading.state.selected.map(id=>binding.occurrences.find(row=>row.view_entity_id===id)?.entity_ref),[locus],'The selected rendered occurrence remains the canonical personal hub');
+  };
+  requireCanonicalPersonal(received,document);
+  assert.deepEqual(await savedFile(received.working,'first-construction-personal-continuation'),document);
+  const originalCurrent=prior?.current??firstConstructionCurrent;
+  assert.deepEqual(received.current.context,originalCurrent.context);assert.deepEqual(received.current.reading,originalCurrent.reading);
+  if(prior){
+   assert.deepEqual(document,prior.document);assert.deepEqual(received.working.file,prior.file);
+   assert.equal(received.record.person_ref,prior.person_ref);assert.deepEqual(received.record.world,prior.world);
+   assert.equal(receipt.issued_requests.filter(row=>row.op==='nara_current'&&row.operation==='pin').length,0,'A fresh native owner restores the exact admitted current without a new acquisition');
+   assert.ok(receipt.issued_requests.some(row=>row.op==='nara_current'&&row.operation==='restore'));
+  }else{
+   const before=receipt.issued_requests.length;
+   await page.goto(url+'&expression='+encodeURIComponent(document.expression_ref));
+   await page.waitForFunction(()=>document.querySelector('#world')?.getAttribute('src')?.startsWith('/__epi_application'),null,{timeout:90000});
+   frame=await page.locator('#world').elementHandle().then(el=>el.contentFrame());
+   await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.epiWorld(),null,{timeout:90000});
+   await readyCurrent(identities[0].reading.person_ref);await noAlert();
+   await frame.waitForFunction(()=>{const f=window.__FIELD_STUDIES__,s=f.getDocument().scenes[f.getState().sceneIndex];return s?.entities.every(e=>f.inspect()?.partitions?.some(p=>p.entityId===e.id&&p.end>p.start));},null,{timeout:30000});
+   const reopened=await snapshot('first-construction-ordinary-browser-restored',true);
+   const reopenedDocument=await nativeDocument(document.expression_ref);requireCanonicalPersonal(reopened,reopenedDocument);
+   assert.deepEqual(reopenedDocument,document);
+   assert.deepEqual(await savedFile(reopened.working,'first-construction-ordinary-browser-restored'),document);
+   assert.deepEqual(reopened.working.file,received.working.file);
+   assert.deepEqual(reopened.current.context,originalCurrent.context);assert.deepEqual(reopened.current.reading,originalCurrent.reading);
+   requirePersonalDrivers(reopened,'First construction restored personal consumer');
+   const requests=receipt.issued_requests.slice(before).filter(row=>row.op==='nara_current');
+   assert.equal(requests.filter(row=>row.operation==='pin').length,0);assert.ok(requests.some(row=>row.operation==='restore'));
+  }
+  receipt.first_construction_continuation={schema:'epi.first-construction-saved-continuation/v1',passed:true,source_cuts:config.binaries,
+   file:received.working.file,document,current:originalCurrent,person_ref:received.record.person_ref,world:received.record.world,
+   scope:'Actual construction/acquisition, nine-driver personal receiving, complete native save and ordinary Restore; historical whole and managed installed replay remain separate'};
+  receipt.scope=receipt.first_construction_continuation.scope;receipt.passed=true;
+  throw Object.assign(Error('Distinct first-construction stage complete'),{intentionalStop:true});
+ }
  // Separate selection-only cases stop before any original cosmic/tick/whole
  // gate. The acknowledged ordinary producer may first repair its known stale
  // caption/current pointer; that setup is retained, not erased or relabelled.

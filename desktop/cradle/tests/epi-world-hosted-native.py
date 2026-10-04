@@ -30,7 +30,8 @@ MAX_JSON = 24 * 1024 * 1024
 MAX_PACKAGE = 64 * 1024 * 1024
 ROLES = ('ql', 'ql-field-host', 'ql-field-worker', 'ql-focused-host', 'ql-sky')
 PERSONS = ('person:controlled-world-a', 'person:controlled-world-b')
-OWNED_PHASES = ('selection-setup', 'selected-conversation-positive',
+OWNED_PHASES = ('first-construction-identity-setup', 'first-construction', 'first-construction-restart',
+    'selection-setup', 'selected-conversation-positive',
     'selected-conversation-native-refusal', 'selected-conversation-native-changed',
     'selected-conversation-local-changed', 'selected-conversation-navigation-choose-positive',
     'selected-conversation-navigation-return-positive', 'selected-conversation-navigation-native-refusal',
@@ -1077,7 +1078,10 @@ class Replay:
         self.command(phase, ['node', self.repo / 'desktop/cradle/tests/epi-world-production-native.mjs', target],
                      self.repo / 'desktop/cradle', timeout=aggregate_seconds)
         receipt = read_json(self.out / phase / 'receipt.json')
-        require(receipt['schema'] == 'oi.epi-world-production-native-proof/v1' and receipt['passed'] is True
+        expected_schema = ('oi.epi-first-construction-native-stage/v1'
+                           if phase in ('first-construction', 'first-construction-restart')
+                           else 'oi.epi-world-production-native-proof/v1')
+        require(receipt['schema'] == expected_schema and receipt['passed'] is True
                 and 'failure' not in receipt and not receipt['entry']['changed_on_disk'], 'Original strict production driver failed')
         self.report[phase] = file_ref(self.out / phase / 'receipt.json')
         return receipt
@@ -1300,7 +1304,7 @@ class Replay:
                      {**self.env, 'OI_NATIVE_EPI_CAPTION': '1', 'OI_KERNEL_BIN': self.bridge}, timeout=180)
         self.command('central-controlled-init', [ctrl, '--json', '--root', self.world, 'init'], self.out, timeout=120)
         require(self.world.is_dir(), 'Actual Central init did not create the owned world')
-        first = self.start_bridge('selection-setup')
+        first = self.start_bridge('first-construction-identity-setup')
         acknowledged = []
         for index, relative in enumerate(fm['identity_files']):
             historical = read_json(fixture / relative)
@@ -1351,6 +1355,38 @@ class Replay:
         # whole proof. The first real ordinary open may acknowledge current
         # caption/personal refs through the unchanged producer. Preserve both
         # complete native documents, then fence the resulting durable basis.
+        self.stop_bridge()
+        constructor_owner = self.start_bridge('first-construction')
+        constructed = self.driver('first-construction', {**common, 'stage': 'first-construction'})
+        continuation = constructed.get('first_construction_continuation')
+        require(continuation and continuation['passed'] is True
+                and continuation['schema'] == 'epi.first-construction-saved-continuation/v1',
+                'The ordinary new-world constructor must acquire, receive, save and Restore its actual personal current')
+        constructor_ack = self.out / 'first-construction-saved-continuation.json'
+        save(constructor_ack, continuation)
+        self.stop_bridge()
+        constructor_restart = self.start_bridge('first-construction-restart')
+        require(constructor_restart['native_generation'] != constructor_owner['native_generation']
+                and (constructor_restart['pid'], constructor_restart['starttime']) != (constructor_owner['pid'], constructor_owner['starttime']),
+                'Constructor continuation requires a separately owned fresh native lifetime')
+        constructed_location = continuation['file']['location']
+        constructed_relative = constructed_location['path']
+        require(constructed_location['root'] == str(self.world)
+                and constructed_relative.startswith('Work/O-I/desktop/cradle/material/expressive-material/expression/')
+                and '..' not in PurePosixPath(constructed_relative).parts,
+                'Constructor file must have an actual confined native Central path')
+        # The native file owner accepts the same exact source ref; no expected
+        # Document or private current is imported into the application.
+        restarted_constructor = self.driver('first-construction-restart', {**common,
+            'stage': 'first-construction-restart', 'reopen_file': constructed_relative,
+            'construction_acknowledgement_file': str(constructor_ack),
+            'construction_acknowledgement_sha256': file_ref(constructor_ack)['sha256']})
+        require(restarted_constructor.get('first_construction_continuation', {}).get('passed') is True,
+                'Fresh-owner ordinary constructor continuation cannot be skipped')
+        self.report['first_construction'] = {'passed': True, 'acknowledgement_ref': file_ref(constructor_ack),
+            'construction_ref': self.report['first-construction'], 'restart_ref': self.report['first-construction-restart']}
+        self.stop_bridge()
+        first = self.start_bridge('selection-setup')
         selection_deadline = time.monotonic() + 1500
         self.selection_source_expectation_ref = file_ref(expectation)
         self.selection_original_world_ref = file_ref(fixture / fm['original_world'])

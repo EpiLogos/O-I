@@ -66,20 +66,19 @@ async function observeNavigationTransport(){
   const fail=error=>{if(failures.length<8)failures.push(String(error).slice(0,2048));};
   const exactInspect=request=>request&&typeof request==='object'&&Object.keys(request).sort().join(',')==='expression_ref,operation'
    &&request.operation==='inspect'&&request.expression_ref===expressionRef;
-  const listener=event=>{
+  const invoke=(event,run)=>{
    const world=document.querySelector('#world'),d=event.data;
-   if(event.source!==world?.contentWindow||!d||d.v!==1||d.kind!=='kernel-expression'||!Number.isSafeInteger(d.req)||d.req<1||!exactInspect(d.request))return;
-   if(requests.length>=32||dispatch||requests.some(row=>row.req===d.req)){fail('Ambiguous or excessive actual navigation dispatch');return;}
-   const row={kind:d.kind,req:d.req,at:Date.now(),url:null};requests.push(row);dispatch={row,event};
+   if(event.source!==world?.contentWindow||!d||d.v!==1||d.kind!=='kernel-expression'||!Number.isSafeInteger(d.req)||d.req<1||!exactInspect(d.request))return run();
+   if(requests.length>=32||dispatch||requests.some(row=>row.req===d.req)){fail('Ambiguous or excessive actual navigation dispatch');return run();}
+   const row={kind:d.kind,req:d.req,at:Date.now(),url:null};requests.push(row);dispatch={row};
    try{world.contentWindow.__EPI_NAVIGATION_ACK_OBSERVER__.expect(d.req);}catch(error){fail(error);}
+   try{return run();}finally{if(dispatch?.row===row){dispatch=null;fail('Actual kernel relay did not synchronously issue its qualified bridge fetch');}}
   };
-  // This later bubble listener runs after the already-mounted production
-  // relay. Clear at dispatch completion, not a microtask between listeners.
-  const settled=event=>{if(dispatch?.event===event){dispatch=null;fail('Actual iframe Inspect did not synchronously issue its qualified bridge fetch');}};
-  window.addEventListener('message',listener,true);window.addEventListener('message',settled);
+  // Bracket the registered real owner instead of relying on DOM listener
+  // ordering/currentTarget lifetime. No later/background read may be tagged.
+  window.__EPI_NAVIGATION_RELAY_INVOCATION__=invoke;
   const observedFetch=function(input,init){
-   if(dispatch&&dispatch.event.eventPhase===Event.AT_TARGET&&dispatch.event.currentTarget===window
-    &&input===bridge+'/op'&&init?.method==='POST'&&typeof init.body==='string'){
+   if(dispatch&&input===bridge+'/op'&&init?.method==='POST'&&typeof init.body==='string'){
     let op;try{op=JSON.parse(init.body);}catch{}
     if(op&&Object.keys(op).sort().join(',')==='op,request'&&op.op==='expression'&&exactInspect(op.request)){
      const row=dispatch.row;dispatch=null;
@@ -93,7 +92,7 @@ async function observeNavigationTransport(){
   window.fetch=observedFetch;
   window.__EPI_NAVIGATION_REQUEST_OBSERVER__={
    snapshot(){return {requests:requests.map(row=>({...row})),failures:[...failures]};},
-   stop(){window.removeEventListener('message',listener,true);window.removeEventListener('message',settled);if(window.fetch!==observedFetch)throw Error('Navigation fetch observer was replaced');window.fetch=baseFetch;}
+   stop(){if(window.__EPI_NAVIGATION_RELAY_INVOCATION__===invoke)delete window.__EPI_NAVIGATION_RELAY_INVOCATION__;if(window.fetch!==observedFetch)throw Error('Navigation fetch observer was replaced');window.fetch=baseFetch;dispatch=null;}
   };
  },{bridge:cfg.bridge,expressionRef:cfg.expression_ref,nonce:navigationNonce});
 }
@@ -741,6 +740,11 @@ try{
  }
  assert.ok(!report.requests.slice(requestStart).some(v=>(v.op==='encounter'&&['prompt','draft'].includes(v.action))||['send','epii_delegate'].includes(v.operation)),'Selection qualification must not send a model question'); }
  assert.deepEqual(errors,[]);if(selectionOnly){await qualifyHostedDurable('after actual selection outcome');await qualifyHostedOwner();report.portable_custody_after=requalifyPortableCurrentCustody(hostedSourceExpectation,hostedSourceQualification);}report.passed=true;
-}catch(error){report.failure=String(error);if(captureDOM)try{report.failed_current_dom=await captureDOM('failed-current');}catch(diagnostic){report.failed_dom_diagnostic_error=String(diagnostic);}throw error;}finally{
+}catch(error){report.failure=String(error);
+ if(navigationCase){
+  try{report.failed_navigation_request_channel=await page.evaluate(()=>window.__EPI_NAVIGATION_REQUEST_OBSERVER__?.snapshot()??null);}catch(diagnostic){report.failed_navigation_request_diagnostic=String(diagnostic);}
+  try{report.failed_navigation_ack_channel=await frame.evaluate(()=>window.__EPI_NAVIGATION_ACK_OBSERVER__?.snapshot()??null);}catch(diagnostic){report.failed_navigation_ack_diagnostic=String(diagnostic);}
+ }
+ if(captureDOM)try{report.failed_current_dom=await captureDOM('failed-current');}catch(diagnostic){report.failed_dom_diagnostic_error=String(diagnostic);}throw error;}finally{
  releaseHeld?.();if(frame)try{await frame.locator('#nara-instrument').press('Escape');}catch{}if(browser)await browser.close();await writeFile(resolve(cfg.output,'receipt.json'),JSON.stringify(report,null,2)+'\n');
 }

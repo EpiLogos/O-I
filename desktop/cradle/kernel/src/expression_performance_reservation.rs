@@ -2,7 +2,7 @@
 //! Queue acceptance is not a performed event. Only actual callback receipts
 //! reconcile executed/refused states. The existing Scene/Act CAS owns edits.
 use crate::expression_performance::{
-    CheckpointBinding, Counter, EventAction, ModulationRoute, ParameterTarget, Performance,
+    CheckpointBinding, Counter, EventAction, ModulationRoute, ParameterTarget, Performance, Scalar,
     TimedEvent,
 };
 use crate::expression_performance_recording::{NativeApplication, ParameterBinding};
@@ -48,6 +48,25 @@ pub struct ReservationApplication {
 fn count(value: &Value) -> Result<Counter, String> {
     serde_json::from_value(value.clone()).map_err(|e| e.to_string())
 }
+// A declared native Scalar is a finite binary64 operand, not a JSON-token
+// identity. Original native operation/receipt bytes remain stored unchanged.
+fn same_native_scalar(actual: &Value, expected: Scalar) -> bool {
+    actual.is_number()
+        && serde_json::from_value::<Scalar>(actual.clone()).is_ok_and(|value| value == expected)
+}
+fn same_native_note(
+    actual: &Value,
+    expected: &crate::expression_performance_management::NativeNoteTarget,
+) -> bool {
+    same_native_scalar(&actual["fundamental_hz"], expected.fundamental_hz)
+        && same_native_scalar(&actual["hertz"], expected.hertz)
+        && same_native_scalar(&actual["phase_sin"], expected.phase_sin)
+        && same_native_scalar(&actual["phase_cos"], expected.phase_cos)
+        && serde_json::from_value::<crate::expression_performance_management::NativeNoteTarget>(
+            actual.clone(),
+        )
+        .is_ok_and(|value| value == *expected)
+}
 impl NativeScoreReservation {
     /// Original requested time belongs to native admission, independently of
     /// the resolved deadline. Historical absence stays explicitly unavailable.
@@ -89,7 +108,9 @@ impl NativeScoreReservation {
                         .source_parameter
                         .as_ref()
                         .ok_or("original reservation parameter absent")?;
-                    if self.source_route.is_some() || operation["value"] != json!(value) {
+                    if self.source_route.is_some()
+                        || !same_native_scalar(&operation["value"], *value)
+                    {
                         return Err("original reserved parameter operand differs".into());
                     }
                     target
@@ -101,7 +122,7 @@ impl NativeScoreReservation {
                         .ok_or("original reservation route absent")?;
                     if self.source_parameter.is_some()
                         || !route.enabled
-                        || operation["value"] != json!(route.effective(*value)?)
+                        || !same_native_scalar(&operation["value"], route.effective(*value)?)
                     {
                         return Err("original reserved automation operand differs".into());
                     }
@@ -226,11 +247,21 @@ impl NativeScoreReservation {
         }
         for (key, value) in [
             ("touch", json!(application.touch)),
-            ("value", json!(application.value)),
-            ("pitch_hz", json!(application.pitch_hz)),
             ("parameter", json!(application.parameter)),
         ] {
             if self.native_operation.get(key).is_some_and(|v| v != &value) {
+                return Err(format!("reserved native operation operand differs: {key}"));
+            }
+        }
+        for (key, value) in [
+            ("value", application.value),
+            ("pitch_hz", application.pitch_hz),
+        ] {
+            if self
+                .native_operation
+                .get(key)
+                .is_some_and(|actual| !same_native_scalar(actual, value))
+            {
                 return Err(format!("reserved native operation operand differs: {key}"));
             }
         }
@@ -238,7 +269,7 @@ impl NativeScoreReservation {
             application
                 .note
                 .as_ref()
-                .is_none_or(|a| serde_json::to_value(a).ok().as_ref() != Some(note))
+                .is_none_or(|a| !same_native_note(note, a))
         }) {
             return Err("reserved actual native note target differs".into());
         }
@@ -333,7 +364,7 @@ pub fn reserve_checkpoint_occurrences(
                     .collect();
                 if matching.len() != 1
                     || operation["parameter"] != json!(matching[0].native_parameter)
-                    || operation["value"] != json!(value)
+                    || !same_native_scalar(&operation["value"], *value)
                 {
                     return Err("reserved native parameter target/value differs".into());
                 }
@@ -355,7 +386,7 @@ pub fn reserve_checkpoint_occurrences(
                 if !route.enabled
                     || matching.len() != 1
                     || operation["parameter"] != json!(matching[0].native_parameter)
-                    || operation["value"] != json!(route.effective(*value)?)
+                    || !same_native_scalar(&operation["value"], route.effective(*value)?)
                 {
                     return Err(
                         "reserved native automation source/transfer/destination differs".into(),
@@ -370,10 +401,10 @@ pub fn reserve_checkpoint_occurrences(
                 let note = &operation["note"];
                 if note["touch"] != json!(touch)
                     || note["member"] != json!(member)
-                    || note["hertz"] != json!(pitch.hertz)
-                    || note["phase_sin"] != json!(sine)
-                    || note["phase_cos"] != json!(cosine)
-                    || operation["value"] != json!(velocity)
+                    || !same_native_scalar(&note["hertz"], pitch.hertz)
+                    || !same_native_scalar(&note["phase_sin"], *sine)
+                    || !same_native_scalar(&note["phase_cos"], *cosine)
+                    || !same_native_scalar(&operation["value"], *velocity)
                 {
                     return Err("reserved source-qualified note/touch/phase differs".into());
                 }
@@ -381,11 +412,14 @@ pub fn reserve_checkpoint_occurrences(
             (EventAction::NoteOff(touch), Some(1)) if operation["touch"] == json!(touch) => {}
             (EventAction::Expression(touch, pressure, hertz), Some(3))
                 if operation["touch"] == json!(touch)
-                    && operation["value"] == json!(pressure)
-                    && (operation["pitch_hz"] == json!(hertz)
-                        || operation["pitch_hz"] == json!(0.0)) => {}
+                    && same_native_scalar(&operation["value"], *pressure)
+                    && (same_native_scalar(&operation["pitch_hz"], *hertz)
+                        || same_native_scalar(&operation["pitch_hz"], Scalar::new(0.0)?)) => {}
             (EventAction::Sustain(down), Some(2))
-                if operation["value"] == json!(if *down { 1.0 } else { 0.0 }) => {}
+                if same_native_scalar(
+                    &operation["value"],
+                    Scalar::new(if *down { 1.0 } else { 0.0 })?,
+                ) => {}
             (EventAction::Panic, Some(4)) => {}
             _ => {
                 return Err(
@@ -667,5 +701,39 @@ impl NativeReservationTermination {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod scalar_operand_tests {
+    use super::*;
+
+    #[test]
+    fn declared_native_scalar_uses_exact_finite_bits_not_number_spelling() {
+        for (token, expected) in [
+            ("0.80000000000000004", 0.8),
+            ("0.86602540378443915", 0.8660254037844392),
+            ("0.20000000000000001", 0.2),
+        ] {
+            let actual: Value = serde_json::from_str(token).unwrap();
+            let expected = Scalar::new(expected).unwrap();
+            assert!(same_native_scalar(&actual, expected));
+            let next = Scalar::new(f64::from_bits(expected.value().to_bits() + 1)).unwrap();
+            assert!(!same_native_scalar(&actual, next));
+        }
+        let expected = Scalar::new(0.8).unwrap();
+        for token in ["null", "true", "\"0.8\"", "[]", "{}", "1e400"] {
+            let actual: Value = serde_json::from_str(token).unwrap();
+            assert!(!same_native_scalar(&actual, expected));
+        }
+        for actual in [
+            json!({"$serde_json::private::Number": "0.8"}),
+            json!({"$serde_json::private::RawValue": "0.8"}),
+        ] {
+            assert!(!same_native_scalar(&actual, expected));
+        }
+        // Preserve Scalar::new's original explicit signed-zero canonicalization;
+        // no global Value equality or stored native number token is changed.
+        assert!(same_native_scalar(&json!(-0.0), Scalar::new(0.0).unwrap()));
     }
 }

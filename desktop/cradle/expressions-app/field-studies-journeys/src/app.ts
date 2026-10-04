@@ -1488,8 +1488,13 @@ async function receiveEpiPersonal(){
   naraInstrument.refresh();return;
  }
  try{
-  const input:EvidencePresentation={identity:epiIdentity,channel:'direct-planetary-resonance',current:admittedCurrent,waves:true};
+  // A qualified dated current does not imply that the person has selected
+  // the native identity/transit baseline. Preserve its natal/context route;
+  // only explicit absence disables waves, while malformed bases still refuse.
+  const unavailableBaseline=admittedCurrent.reading?.baseline_available===false&&admittedCurrent.reading.q_identity_transit===null;
+  const input:EvidencePresentation={identity:epiIdentity,channel:'direct-planetary-resonance',current:admittedCurrent,waves:!unavailableBaseline};
   const field=createEvidenceField(input,currentView,scene().id);
+  if(unavailableBaseline)epiEncounter?.status('Your dated sky is admitted. Review Composition in Your identity before entering personal waves.');
   engine?.releasePrivateSound?.();privateEvidencePresentation=input;privateEvidenceField=field;needsFrame=true;naraInstrument.refresh();
  }
  catch(e){clearPrivateEvidence();epiEncounter?.fail('Personal reception: '+String(e));naraInstrument.refresh();}
