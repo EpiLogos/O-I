@@ -910,7 +910,12 @@ try{
    assert.equal(selected.schema,'oi.epi-selected-conversation-native-gate/v1');assert.equal(selected.passed,true);assert.equal(selected.failure,undefined);assert.equal(selected.selection_case,config.selection_case);
    receipt.selected_case_ref={path:selectedReceiptPath,...hashFileReadOnly(selectedReceiptPath)};
    const durable=await op({op:'expression',request:{operation:'inspect_file',location:admission.file.location,expected_file_revision:admission.file.revision}});
-   assert.equal(durable.data.state,'ready');assert.deepEqual(durable.data.document,admission.document);assert.deepEqual(durable.data.file,admission.file);
+   assert.equal(durable.data.state,'ready');assert.deepEqual(durable.data.document,admission.document);
+   // The native file receipt contains location/CAS; the working view adds
+   // Expression identity/revision from its separately decoded full Document.
+   assert.deepEqual(durable.data.file,{location:admission.file.location,revision:admission.file.revision});
+   assert.equal(durable.data.document.expression_ref,admission.file.expression_ref);
+   assert.equal(durable.data.document.revision,admission.file.document_revision);
   }
   check(true,'Isolated selection-only ordinary native admission and outcome preserved the complete durable controlled personal world');
   receipt.passed=true;const stop=Error('Selection-only stage complete; original whole/restart not executed in this lifetime');stop.intentionalStop=true;throw stop;
