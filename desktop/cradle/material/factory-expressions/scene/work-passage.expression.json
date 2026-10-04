@@ -97,9 +97,9 @@
       "mode": "2d",
       "yaw": 0,
       "pitch": 0,
-      "zoom": 1,
+      "zoom": 0.55,
       "panX": 0,
-      "panY": 0
+      "panY": 0.19
      },
      "field": {
       "background": "#ebe7dc",
@@ -162,7 +162,7 @@
        "kind": "formation",
        "position": {
         "x": -0.9,
-        "y": -0.28,
+        "y": -0.12,
         "z": 0
        },
        "size": {
@@ -422,9 +422,10 @@
        "italic": "",
        "body": "",
        "x": 0.07,
-       "y": 0.84,
-       "width": 520,
-       "size": 22,
+       "y": 0.08,
+       "width": 600,
+       "size": 26,
+       "bodySize": 17,
        "align": "left",
        "role": "progressText"
       }

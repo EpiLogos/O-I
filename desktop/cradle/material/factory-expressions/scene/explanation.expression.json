@@ -94,9 +94,9 @@
       "mode": "2d",
       "yaw": 0,
       "pitch": 0,
-      "zoom": 1,
+      "zoom": 0.55,
       "panX": 0,
-      "panY": 0
+      "panY": 0.19
      },
      "field": {
       "background": "#ebe7dc",
@@ -306,9 +306,10 @@
        "italic": "",
        "body": "",
        "x": 0.07,
-       "y": 0.12,
-       "width": 520,
+       "y": 0.08,
+       "width": 600,
        "size": 26,
+       "bodySize": 17,
        "align": "left",
        "role": "caption"
       },
@@ -319,10 +320,11 @@
        "title": "",
        "italic": "",
        "body": "",
-       "x": 0.55,
-       "y": 0.7,
-       "width": 420,
-       "size": 18,
+       "x": 0.07,
+       "y": 0.27,
+       "width": 600,
+       "size": 24,
+       "bodySize": 17,
        "align": "left",
        "role": "progressText"
       }

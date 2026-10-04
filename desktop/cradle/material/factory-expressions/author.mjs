@@ -16,7 +16,7 @@
 // Regenerate: node material/factory-expressions/author.mjs   (from desktop/cradle)
 // The JSON files are the deliverable; this script is how they were authored.
 import {register} from "node:module";
-import {mkdirSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
 import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
 
@@ -63,6 +63,10 @@ const scene = (name, character, patch = {}) => {
   const s = M.blankScene(name);
   s.character = character;
   s.text = [];
+  // Purpose and returned words occupy the upper reading band. The same
+  // authored camera keeps the compound bodies and their motion below it;
+  // the renderer receives this view instead of inventing role-based layout.
+  s.view = {...s.view, zoom: .55, panY: .19};
   Object.assign(s, patch);
   return s;
 };
@@ -74,7 +78,7 @@ const body = (id, name, text, position, patch = {}) => {
 };
 const step = (id, text, shape, hold, transition, objectState, extra = {}) => ({id, text, shape, hold, transition, position: null, ...(objectState ? {objectState} : {}), ...extra});
 const state = (size, rotation, tint, tintWeight, force, scale = 1) => ({size, rotation, scale, tint, tintWeight, force});
-const text = (id, role, patch) => ({id, visible: true, kicker: "", title: "", italic: "", body: "", x: .08, y: .82, width: 520, size: 22, align: "left", role, ...patch});
+const text = (id, role, patch) => ({id, visible: true, kicker: "", title: "", italic: "", body: "", x: .07, y: .08, width: 600, size: 26, bodySize: 17, align: "left", role, ...patch});
 const ramp = (id, target, min, max, duration, delay = 0, easing = "smoothstep") =>
   ({id, enabled: true, target, type: "ramp", wave: "smooth", min, max, rate: 1, phase: 0, blend: "replace", duration, delay, loop: "once", firedAt: null, easing});
 const lfo = (id, target, min, max, rate, wave = "sine") =>
@@ -131,7 +135,7 @@ function characterDocument(key, style = "nocturne") {
     if (c.ascii) self.source = {kind: "ascii", ascii: {text: c.ascii, fontFamily: "Menlo, monospace", fontSize: 64, invert: false}};
     configure(self, s);
     s.entities = [self];
-    s.text = [text("t-label", "caption", {kicker: c.title.split(" — ")[0].toUpperCase(), title: name, x: .06, y: .86, size: 18})];
+    s.text = [text("t-label", "caption", {kicker: c.title.split(" — ")[0].toUpperCase(), title: name, x: .07, y: .08, width: 600, size: 24})];
     return {key: name.toLowerCase().replace(/[^a-z]+/g, "-").replace(/-$/, ""), scene: s};
   };
   const idle = stateScene("Idle", `${c.title} at rest: gathered, breathing.`, (self, s) => {
@@ -161,7 +165,7 @@ function characterDocument(key, style = "nocturne") {
       step(`${key}-speak-a`, c.glyph, "text", .45, .25, state({x: .95, y: 1.05}, 0, c.tint, 1, {kind: "repel", strength: .5, radius: .38, spin: .2})),
       step(`${key}-speak-b`, c.speakGlyph, "text", .35, .2, state({x: 1.02, y: 1.1}, -6, c.tint, 1, {kind: "repel", strength: .8, radius: .42, spin: .3}), {name: "utter"}),
     ]};
-    s.text.push(text("t-speech", "caption", {body: "", italic: "", x: .56, y: .3, width: 380, size: 20}));
+    s.text.push(text("t-speech", "caption", {body: "", italic: "", x: .07, y: .24, width: 600, size: 24}));
     s.automation = [lfo(`${key}-speak-pulse`, "field.excitation", .4, .95, 2.2, "square")];
   });
   const gesture = (name, gestureKey, glyphs, easing) => stateScene(name, `${c.title}: ${name.toLowerCase()} while the current Scene continues.`, (self, s) => {
@@ -204,13 +208,13 @@ const SCENES = {
     const self = agentSlot(refs.entity("self"), "self", "Arriving agent", {x: -1.25, y: 0, z: 0});
     const goal = objectSlot(refs.entity("goal"), "goal", "Goal", {x: .55, y: .05, z: 0}, "◎", {shape: "ring", size: {x: .9, y: .9}, tint: "#c9a24e", tintWeight: .8, force: {kind: "vortex", strength: .5, radius: .5, spin: .25}});
     s.entities = [self, goal, station(refs.entity("threshold"), "Threshold", {x: -.35, y: 0, z: 0}, .6)];
-    s.text = [text("t-caption", "caption", {kicker: "ARRIVAL", title: "", x: .07, y: .8}), text("t-goal", "goalText", {italic: "", x: .6, y: .2, width: 360, size: 18})];
+    s.text = [text("t-caption", "caption", {kicker: "ARRIVAL", title: "", x: .07, y: .08}), text("t-goal", "goalText", {italic: "", x: .07, y: .27, width: 600, size: 24})];
     s.automation = [ramp("arrive-x", entityTarget(self.id, "x"), -1.25, -.4, 3.2, .2), ramp("arrive-halo", "field.halo", .08, .24, 3)];
     return {key: "arrival", scene: s};
   },
   "work-passage": style => refs => {
     const s = styled(scene("Work passage", "Work moves from A to B: the object travels between stations while its bearer keeps pace.", {duration: 12, transition: 1.2}), style);
-    const self = agentSlot(refs.entity("self"), "self", "Working agent", {x: -.9, y: -.28, z: 0});
+    const self = agentSlot(refs.entity("self"), "self", "Working agent", {x: -.9, y: -.12, z: 0});
     const artifact = objectSlot(refs.entity("artifact"), "artifact", "Work object", {x: -.9, y: .12, z: 0}, "▤", {tint: "#6f7d8c", tintWeight: .7});
     artifact.sequence = {...artifact.sequence, enabled: true, order: "loop", easing: "smoothstep", steps: [
       step("work-object-a", "▤", "text", 2, 1.4, state({x: .48, y: .52}, 0, "#6f7d8c", .7, {kind: "attract", strength: .3, radius: .3, spin: 0})),
@@ -218,7 +222,7 @@ const SCENES = {
     ]};
     const goal = objectSlot(refs.entity("goal"), "goal", "Goal", {x: 1.1, y: .45, z: 0}, "◎", {shape: "ring", size: {x: .5, y: .5}, tint: "#c9a24e", tintWeight: .6});
     s.entities = [self, artifact, goal, station(refs.entity("station-a"), "Station A", {x: -.9, y: .12, z: 0}), station(refs.entity("station-b"), "Station B", {x: .9, y: .12, z: 0})];
-    s.text = [text("t-progress", "progressText", {kicker: "IN PROGRESS", x: .07, y: .84})];
+    s.text = [text("t-progress", "progressText", {kicker: "IN PROGRESS", x: .07, y: .08})];
     s.automation = [ramp("artifact-a-b", entityTarget(artifact.id, "x"), -.9, .9, 8, .5), ramp("bearer-a-b", entityTarget(self.id, "x"), -.9, .75, 8.4, .8), lfo("passage-turbulence", "field.turbulence", .1, .24, .08)];
     s.composition.focus = "travelling"; s.composition.focusDuration = 6;
     return {key: "work-passage", scene: s};
@@ -229,7 +233,7 @@ const SCENES = {
     const recipient = agentSlot(refs.entity("recipient"), "recipient", "Recipient", {x: .85, y: 0, z: 0});
     const artifact = objectSlot(refs.entity("artifact"), "artifact", "Artifact", {x: -.55, y: .22, z: 0}, "✉", {tint: "#b0643c", tintWeight: .9, force: {kind: "vortex", strength: .7, radius: .26, spin: .8}});
     s.entities = [sender, recipient, artifact];
-    s.text = [text("t-caption", "caption", {kicker: "HANDOFF", x: .3, y: .78, width: 560, align: "center"})];
+    s.text = [text("t-caption", "caption", {kicker: "HANDOFF", x: .07, y: .08, width: 600, align: "left"})];
     s.automation = [ramp("handoff-arc-x", entityTarget(artifact.id, "x"), -.55, .55, 4, .6), ramp("handoff-arc-y", entityTarget(artifact.id, "y"), .22, .42, 2, .6, "whip"), ramp("handoff-settle-y", entityTarget(artifact.id, "y"), .42, .2, 2, 2.6)];
     return {key: "handoff", scene: s};
   },
@@ -239,7 +243,7 @@ const SCENES = {
     const artifact = objectSlot(refs.entity("artifact"), "artifact", "Under review", {x: .25, y: .1, z: 0}, "▣", {tint: "#6f7d8c", tintWeight: .8});
     const plate = body(refs.entity("plate"), "Resonant plate", "", {x: .25, y: .1, z: -.1}, {shape: "cymatic", templateFrequency: 396, templateGeometry: "circular", templateDimension: "2D", size: {x: 1.4, y: 1.4}, share: 1.4, tint: "#9fb7b0", tintWeight: .5, force: {kind: "repel", strength: .4, radius: .7, spin: 0}});
     s.entities = [lead, artifact, plate];
-    s.text = [text("t-caption", "caption", {kicker: "REVIEW", x: .07, y: .82})];
+    s.text = [text("t-caption", "caption", {kicker: "REVIEW", x: .07, y: .08})];
     Object.assign(s.field.params, {frequency: 396, excitation: .7});
     s.engine.resonatorMode = "template";
     s.resonanceDrive = {kind: "frequency"};
@@ -249,11 +253,11 @@ const SCENES = {
   completion: style => refs => {
     const s = styled(scene("Completion", "The cast gathers at the goal; the goal opens and the result is written beneath it.", {duration: 12, transition: 2}), style);
     const goal = objectSlot(refs.entity("goal"), "goal", "Goal", {x: 0, y: .12, z: 0}, "✺", {shape: "yantra", yantraId: "sahasrara", size: {x: 1.1, y: 1.1}, share: 1.6, tint: "#d9a36a", tintWeight: 1, force: {kind: "vortex", strength: .9, radius: .6, spin: .5}});
-    const lead = agentSlot(refs.entity("lead"), "lead", "Lead", {x: -.7, y: -.35, z: 0});
-    const p0 = agentSlot(refs.entity("participant-0"), "participants.0", "Participant", {x: .7, y: -.35, z: 0});
-    const p1 = agentSlot(refs.entity("participant-1"), "participants.1", "Participant", {x: 0, y: -.6, z: 0});
+    const lead = agentSlot(refs.entity("lead"), "lead", "Lead", {x: -.7, y: -.15, z: 0});
+    const p0 = agentSlot(refs.entity("participant-0"), "participants.0", "Participant", {x: .7, y: -.15, z: 0});
+    const p1 = agentSlot(refs.entity("participant-1"), "participants.1", "Participant", {x: 0, y: -.3, z: 0});
     s.entities = [goal, lead, p0, p1];
-    s.text = [text("t-result", "resultText", {kicker: "RETURNED", x: .22, y: .86, width: 640, align: "center"})];
+    s.text = [text("t-result", "resultText", {kicker: "RETURNED", x: .07, y: .08, width: 600, align: "left"})];
     s.automation = [ramp("completion-bloom", entityTarget(goal.id, "scale"), .7, 1.25, 5, .3), ramp("completion-gather-l", entityTarget(lead.id, "x"), -1.1, -.55, 4), ramp("completion-gather-r", entityTarget(p0.id, "x"), 1.1, .55, 4)];
     s.morph = {...s.morph, law: "beat", depth: 1.4, thetaRate: .12, phiRate: .21};
     return {key: "completion", scene: s};
@@ -268,7 +272,7 @@ const SCENES = {
       step("subject-open", "◈", "text", 3, 1.5, state({x: 1.1, y: 1.1}, 45, "#9fb7b0", .9, {kind: "vortex", strength: .6, radius: .5, spin: .35}), {name: "unfolded"}),
     ]};
     s.entities = [lead, goal];
-    s.text = [text("t-caption", "caption", {kicker: "EXPLANATION", x: .07, y: .12, size: 26}), text("t-progress", "progressText", {x: .55, y: .7, width: 420, size: 18})];
+    s.text = [text("t-caption", "caption", {kicker: "EXPLANATION", x: .07, y: .08, size: 26}), text("t-progress", "progressText", {x: .07, y: .27, width: 600, size: 24})];
     return {key: "explanation", scene: s};
   },
   continuation: style => refs => {
@@ -276,7 +280,7 @@ const SCENES = {
     const self = agentSlot(refs.entity("self"), "self", "Continuing agent", {x: .8, y: -.2, z: 0});
     const artifact = objectSlot(refs.entity("artifact"), "artifact", "Work object", {x: .8, y: .15, z: 0}, "▤", {tint: "#6f7d8c", tintWeight: .7});
     s.entities = [self, artifact, station(refs.entity("return-station"), "Return station", {x: -.6, y: .15, z: 0})];
-    s.text = [text("t-caption", "caption", {kicker: "AGAIN", x: .07, y: .84})];
+    s.text = [text("t-caption", "caption", {kicker: "AGAIN", x: .07, y: .08})];
     s.automation = [ramp("return-x", entityTarget(artifact.id, "x"), .8, -.6, 5, .4), ramp("return-bearer", entityTarget(self.id, "x"), .8, -.4, 5.4, .6)];
     return {key: "continuation", scene: s};
   },
@@ -313,7 +317,7 @@ function skillGestureDocument(style = "studio") {
       step("skill-3", "✧", "text", .5, .6, state({x: .62, y: .72}, 360, "#8a7f6c", .6, {kind: "attract", strength: .3, radius: .38, spin: .05}), {name: "settle"}),
     ]};
     s.entities = [self];
-    s.text = [text("t-skill", "caption", {kicker: "SKILL", x: .55, y: .25, size: 20})];
+    s.text = [text("t-skill", "caption", {kicker: "SKILL", x: .07, y: .08, size: 24})];
     s.automation = [ramp("skill-ring", "field.excitation", .2, 1, 1.4, 0, "whip")];
     return {key: "skill-invocation", scene: s};
   };
@@ -341,7 +345,7 @@ function workflowExpression({slug, title, description, style, workflowKeys, skil
       step(`${slug}-skill-3`, "✧", "text", .5, .6, state({x: .62, y: .72}, 360, "#8a7f6c", .6, {kind: "attract", strength: .3, radius: .38, spin: .05}), {name: "settle"}),
     ]};
     s.entities = [self];
-    s.text = [text("t-skill", "caption", {kicker: "SKILL", x: .55, y: .25, size: 20})];
+    s.text = [text("t-skill", "caption", {kicker: "SKILL", x: .07, y: .08, size: 24})];
     s.automation = [ramp(`${slug}-skill-ring`, "field.excitation", .2, 1, 1.4, 0, "whip")];
     return {key: "skill-invocation", scene: s};
   });
@@ -392,6 +396,31 @@ const files = {
 };
 for (const [path, doc] of Object.entries(files)) {
   const target = join(HERE, path);
+  if (existsSync(target)) {
+    // A pin's inactive sequence still has authored identity. M.pin() assigns
+    // fresh step IDs; regenerating a visual edition must keep the original
+    // IDs of the same native Scene/entity/step instead of replacing them.
+    const previous = JSON.parse(readFileSync(target, "utf8"));
+    if (previous.schema !== doc.schema || previous.expression_ref !== doc.expression_ref) {
+      throw new Error(`Existing material has a different identity: ${path}`);
+    }
+    for (const held of doc.scenes) {
+      const before = previous.scenes.find(candidate => candidate.scene_ref === held.scene_ref);
+      for (const pin of held.presentation.scene.entities.filter(entity => entity.kind === "pin")) {
+        const original = before?.presentation?.scene?.entities?.find(entity => entity.id === pin.id);
+        if (!original) continue; // A newly authored pin has its new native IDs.
+        if (original.kind !== "pin" || !Array.isArray(original.sequence?.steps)
+          || original.sequence.steps.length !== pin.sequence.steps.length) {
+          throw new Error(`Existing pin sequence has a different basis: ${path} ${pin.id}`);
+        }
+        pin.sequence.steps.forEach((step, index) => {
+          const id = original.sequence.steps[index].id;
+          if (typeof id !== "string" || !id) throw new Error(`Existing pin has no step identity: ${path} ${pin.id}`);
+          step.id = id;
+        });
+      }
+    }
+  }
   mkdirSync(dirname(target), {recursive: true});
   writeFileSync(target, `${JSON.stringify(doc, null, 1)}\n`);
 }

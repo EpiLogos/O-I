@@ -93,9 +93,9 @@
       "mode": "2d",
       "yaw": 0,
       "pitch": 0,
-      "zoom": 1,
+      "zoom": 0.55,
       "panX": 0,
-      "panY": 0
+      "panY": 0.19
      },
      "field": {
       "background": "#12161a",
@@ -261,10 +261,11 @@
        "title": "Idle",
        "italic": "",
        "body": "",
-       "x": 0.06,
-       "y": 0.86,
-       "width": 520,
-       "size": 18,
+       "x": 0.07,
+       "y": 0.08,
+       "width": 600,
+       "size": 24,
+       "bodySize": 17,
        "align": "left",
        "role": "caption"
       }
@@ -394,9 +395,9 @@
       "mode": "2d",
       "yaw": 0,
       "pitch": 0,
-      "zoom": 1,
+      "zoom": 0.55,
       "panX": 0,
-      "panY": 0
+      "panY": 0.19
      },
      "field": {
       "background": "#12161a",
@@ -593,10 +594,11 @@
        "title": "Working",
        "italic": "",
        "body": "",
-       "x": 0.06,
-       "y": 0.86,
-       "width": 520,
-       "size": 18,
+       "x": 0.07,
+       "y": 0.08,
+       "width": 600,
+       "size": 24,
+       "bodySize": 17,
        "align": "left",
        "role": "caption"
       }
@@ -731,9 +733,9 @@
       "mode": "2d",
       "yaw": 0,
       "pitch": 0,
-      "zoom": 1,
+      "zoom": 0.55,
       "panX": 0,
-      "panY": 0
+      "panY": 0.19
      },
      "field": {
       "background": "#12161a",
@@ -901,10 +903,11 @@
        "title": "Speaking",
        "italic": "",
        "body": "",
-       "x": 0.06,
-       "y": 0.86,
-       "width": 520,
-       "size": 18,
+       "x": 0.07,
+       "y": 0.08,
+       "width": 600,
+       "size": 24,
+       "bodySize": 17,
        "align": "left",
        "role": "caption"
       }
@@ -1033,9 +1036,9 @@
       "mode": "2d",
       "yaw": 0,
       "pitch": 0,
-      "zoom": 1,
+      "zoom": 0.55,
       "panX": 0,
-      "panY": 0
+      "panY": 0.19
      },
      "field": {
       "background": "#12161a",
@@ -1277,10 +1280,11 @@
        "title": "Invoke skill",
        "italic": "",
        "body": "",
-       "x": 0.06,
-       "y": 0.86,
-       "width": 520,
-       "size": 18,
+       "x": 0.07,
+       "y": 0.08,
+       "width": 600,
+       "size": 24,
+       "bodySize": 17,
        "align": "left",
        "role": "caption"
       }
@@ -1410,9 +1414,9 @@
       "mode": "2d",
       "yaw": 0,
       "pitch": 0,
-      "zoom": 1,
+      "zoom": 0.55,
       "panX": 0,
-      "panY": 0
+      "panY": 0.19
      },
      "field": {
       "background": "#12161a",
@@ -1629,10 +1633,11 @@
        "title": "Operate",
        "italic": "",
        "body": "",
-       "x": 0.06,
-       "y": 0.86,
-       "width": 520,
-       "size": 18,
+       "x": 0.07,
+       "y": 0.08,
+       "width": 600,
+       "size": 24,
+       "bodySize": 17,
        "align": "left",
        "role": "caption"
       }

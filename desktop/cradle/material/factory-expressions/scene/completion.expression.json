@@ -96,9 +96,9 @@
       "mode": "2d",
       "yaw": 0,
       "pitch": 0,
-      "zoom": 1,
+      "zoom": 0.55,
       "panX": 0,
-      "panY": 0
+      "panY": 0.19
      },
      "field": {
       "background": "#ebe7dc",
@@ -205,7 +205,7 @@
        "kind": "formation",
        "position": {
         "x": -0.7,
-        "y": -0.35,
+        "y": -0.15,
         "z": 0
        },
        "size": {
@@ -248,7 +248,7 @@
        "kind": "formation",
        "position": {
         "x": 0.7,
-        "y": -0.35,
+        "y": -0.15,
         "z": 0
        },
        "size": {
@@ -291,7 +291,7 @@
        "kind": "formation",
        "position": {
         "x": 0,
-        "y": -0.6,
+        "y": -0.3,
         "z": 0
        },
        "size": {
@@ -337,11 +337,12 @@
        "title": "",
        "italic": "",
        "body": "",
-       "x": 0.22,
-       "y": 0.86,
-       "width": 640,
-       "size": 22,
-       "align": "center",
+       "x": 0.07,
+       "y": 0.08,
+       "width": 600,
+       "size": 26,
+       "bodySize": 17,
+       "align": "left",
        "role": "resultText"
       }
      ],

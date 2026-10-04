@@ -93,9 +93,9 @@
       "mode": "2d",
       "yaw": 0,
       "pitch": 0,
-      "zoom": 1,
+      "zoom": 0.55,
       "panX": 0,
-      "panY": 0
+      "panY": 0.19
      },
      "field": {
       "background": "#ebe7dc",
@@ -299,10 +299,11 @@
        "title": "",
        "italic": "",
        "body": "",
-       "x": 0.55,
-       "y": 0.25,
-       "width": 520,
-       "size": 20,
+       "x": 0.07,
+       "y": 0.08,
+       "width": 600,
+       "size": 24,
+       "bodySize": 17,
        "align": "left",
        "role": "caption"
       }
