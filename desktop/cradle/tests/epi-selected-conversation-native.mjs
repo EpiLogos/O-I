@@ -10,7 +10,7 @@ import {createEpiFirstRestReceivingGate} from './epi-first-rest-receiving.mjs';
 import {readFile,writeFile,mkdir,readdir,stat,realpath,lstat,open} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {resolve} from 'node:path';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
 import {chromium} from 'playwright';
 import {qualifyPortableNativeSourceExpectation,requalifyPortableCurrentCustody} from './epi-world-portable-custody.mjs';
 const cfg=JSON.parse(await readFile(process.argv[2],'utf8'));
@@ -26,6 +26,78 @@ if(selectionOnly){
 assert.equal(resolve(cfg.output),cfg.output);assert.ok(cfg.output.startsWith(resolve(cfg.world,'..')+'/')&&!cfg.output.startsWith(cfg.world+'/'));
 const navigationCases=['navigation-choose-positive','navigation-return-positive','navigation-native-refusal','navigation-local-changed'];
 const navigationCase=navigationCases.includes(cfg.selection_case);
+// Test-only correlation travels in the bridge URL, never in the native op.
+// walk-bridge dispatches POST /op after stripping its query. The real relay
+// reaches fetch synchronously in the same actual iframe message dispatch.
+const navigationNonce=randomUUID();
+function navigationRequestId(url){
+ let actual;try{actual=new URL(url);}catch{return null;}
+ if(actual.origin!==cfg.bridge||actual.pathname!=='/op'||actual.hash||actual.searchParams.size!==3
+  ||actual.searchParams.get('epi_observation')!==navigationNonce||actual.searchParams.get('kind')!=='kernel-expression')return null;
+ const raw=actual.searchParams.get('req');if(!/^[1-9][0-9]*$/.test(raw??''))return null;
+ const req=Number(raw);return Number.isSafeInteger(req)?req:null;
+}
+const observedOpURL=url=>url===cfg.bridge+'/op'||navigationCase&&navigationRequestId(url)!==null;
+async function observeNavigationTransport(){
+ // The application borrows only actual replies for the expected request IDs.
+ // No reply, value, status or callback is manufactured or substituted.
+ await frame.evaluate(()=>{
+  const expected=new Set(),received=[],replies=new Map(),failures=[];let bytes=0;
+  const fail=error=>{if(failures.length<8)failures.push(String(error).slice(0,2048));};
+  const listener=event=>{
+   const d=event.data;if(event.source!==window.parent||!d||d.v!==1||d.kind!=='kernel-expression-result'||!expected.has(d.req))return;
+   try{
+    if(received.some(row=>row.req===d.req))throw Error('A navigation request received duplicate actual acknowledgements');
+    const raw=JSON.stringify(d),size=new TextEncoder().encode(raw).length;
+    if(received.length>=32||size>64*1024*1024||bytes+size>64*1024*1024)throw Error('Actual navigation ACK observation exceeds its existing64MiB receiving aperture');
+    replies.set(d.req,raw);received.push({req:d.req,at:Date.now(),bytes:size});bytes+=size;
+   }catch(error){fail(error);}
+  };
+  window.addEventListener('message',listener,true);
+  window.__EPI_NAVIGATION_ACK_OBSERVER__={
+   expect(req){if(!Number.isSafeInteger(req)||req<1||expected.size>=32||expected.has(req))throw Error('Invalid or duplicate actual navigation request ID');expected.add(req);},
+   take(req){const raw=replies.get(req);if(raw===undefined)throw Error('The application has not received this exact navigation ACK');replies.delete(req);bytes-=new TextEncoder().encode(raw).length;return raw;},
+   snapshot(){return {expected:[...expected],received:received.map(row=>({...row})),failures:[...failures]};},
+   stop(){window.removeEventListener('message',listener,true);replies.clear();bytes=0;}
+  };
+ });
+ await page.evaluate(({bridge,expressionRef,nonce})=>{
+  const baseFetch=window.fetch,requests=[],failures=[];let dispatch=null;
+  const fail=error=>{if(failures.length<8)failures.push(String(error).slice(0,2048));};
+  const exactInspect=request=>request&&typeof request==='object'&&Object.keys(request).sort().join(',')==='expression_ref,operation'
+   &&request.operation==='inspect'&&request.expression_ref===expressionRef;
+  const listener=event=>{
+   const world=document.querySelector('#world'),d=event.data;
+   if(event.source!==world?.contentWindow||!d||d.v!==1||d.kind!=='kernel-expression'||!Number.isSafeInteger(d.req)||d.req<1||!exactInspect(d.request))return;
+   if(requests.length>=32||dispatch||requests.some(row=>row.req===d.req)){fail('Ambiguous or excessive actual navigation dispatch');return;}
+   const row={kind:d.kind,req:d.req,at:Date.now(),url:null};requests.push(row);dispatch={row,event};
+   try{world.contentWindow.__EPI_NAVIGATION_ACK_OBSERVER__.expect(d.req);}catch(error){fail(error);}
+  };
+  // This later bubble listener runs after the already-mounted production
+  // relay. Clear at dispatch completion, not a microtask between listeners.
+  const settled=event=>{if(dispatch?.event===event){dispatch=null;fail('Actual iframe Inspect did not synchronously issue its qualified bridge fetch');}};
+  window.addEventListener('message',listener,true);window.addEventListener('message',settled);
+  const observedFetch=function(input,init){
+   if(dispatch&&dispatch.event.eventPhase===Event.AT_TARGET&&dispatch.event.currentTarget===window
+    &&input===bridge+'/op'&&init?.method==='POST'&&typeof init.body==='string'){
+    let op;try{op=JSON.parse(init.body);}catch{}
+    if(op&&Object.keys(op).sort().join(',')==='op,request'&&op.op==='expression'&&exactInspect(op.request)){
+     const row=dispatch.row;dispatch=null;
+     const url=new URL(input);url.searchParams.set('epi_observation',nonce);url.searchParams.set('kind',row.kind);url.searchParams.set('req',String(row.req));row.url=url.href;
+     // Same options, body, signal and real Response; only the inert URL query differs.
+     return Reflect.apply(baseFetch,this,[row.url,init]);
+    }
+   }
+   return Reflect.apply(baseFetch,this,[input,init]);
+  };
+  window.fetch=observedFetch;
+  window.__EPI_NAVIGATION_REQUEST_OBSERVER__={
+   snapshot(){return {requests:requests.map(row=>({...row})),failures:[...failures]};},
+   stop(){window.removeEventListener('message',listener,true);window.removeEventListener('message',settled);if(window.fetch!==observedFetch)throw Error('Navigation fetch observer was replaced');window.fetch=baseFetch;}
+  };
+ },{bridge:cfg.bridge,expressionRef:cfg.expression_ref,nonce:navigationNonce});
+}
+
 assert.ok(['positive','native-refusal','native-changed','local-changed','required-cosmic-body-disabled',...navigationCases].includes(cfg.selection_case));
 assert.ok(!('answer' in cfg)&&!('expected_answer' in cfg)&&!('provider' in cfg));
 const qstat=await stat(cfg.qualification);assert.ok(qstat.isFile()&&qstat.size<=2*1024*1024);
@@ -277,7 +349,7 @@ try{
  browser=selectionOnly?await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']}):await chromium.launch({headless:true});page=selectionOnly?await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}):await browser.newPage({viewport:{width:1440,height:900}});
  if(selectionOnly)await page.addInitScript(installInitialChannelPhaseObserver);
  const errors=[];page.on('pageerror',e=>{errors.push(String(e));if(collectingInitialWitness){if(initialPageErrors.length<8)initialPageErrors.push(shortError(e));else initialPageErrorDrops++;}});
- page.on('request',request=>{if(request.url()!==cfg.bridge+'/op'||request.method()!=='POST')return;const text=request.postData();if(!text||Buffer.byteLength(text)>32*1024*1024)return;try{const v=JSON.parse(text);report.requests.push({op:v.op,operation:v.request?.operation,action:v.request?.action,sha256:hash(text),bytes:Buffer.byteLength(text)});if(collectingInitialWitness){const metadata={ordinal:report.requests.length-1,op:shortTag(v.op),operation:shortTag(v.request?.operation),started:Date.now()};initialRequestTimes.set(request,metadata);observeInitialCriticalRequest(request,v,metadata,text);}}catch{report.requests.push({unreadable:true});}});
+ page.on('request',request=>{if(!observedOpURL(request.url())||request.method()!=='POST')return;const text=request.postData();if(!text||Buffer.byteLength(text)>32*1024*1024)return;try{const v=JSON.parse(text);report.requests.push({op:v.op,operation:v.request?.operation,action:v.request?.action,...(v.op==='nara_coordinate'?{coordinate_ref:v.request?.coordinate_ref,face:v.request?.face,source_only:v.request?.source_only}:{}),sha256:hash(text),bytes:Buffer.byteLength(text)});if(collectingInitialWitness){const metadata={ordinal:report.requests.length-1,op:shortTag(v.op),operation:shortTag(v.request?.operation),started:Date.now()};initialRequestTimes.set(request,metadata);observeInitialCriticalRequest(request,v,metadata,text);}}catch{report.requests.push({unreadable:true});}});
  page.on('response',response=>{
   const metadata=initialRequestTimes.get(response.request());if(!metadata||!collectingInitialWitness)return;
   const arrived=Date.now(),headers=response.headers(),length=headers['content-length'];
@@ -455,24 +527,29 @@ try{
     &&dialog.textContent.includes('907c46bc8a65b47e12f14aa4d8b444263dc956a1a7b4b6d038e57223d6073288')
     &&!document.querySelector('[data-epi="source"]').disabled;
   },null,{timeout:30000});
-  assert.ok(report.requests.slice(at).some(row=>row.operation==='source'),'Ordinary disclosure must actually request the selected source');
+  const sourceRequests=report.requests.slice(at).filter(row=>row.op==='nara_coordinate'&&row.coordinate_ref==='ql:m-coordinate:bimba:M4.4.4.4'&&row.face==='bimba'&&row.source_only===true);
+  assert.equal(sourceRequests.length,1,'Ordinary disclosure must issue exactly one actual selected-coordinate source-only native request');
+  report.actual_navigation_source_request=sourceRequests[0];
   report.navigation_source_disclosure={coordinate:'M4.4.4.4',uuid:'dcb274c1-fbbc-5914-b27d-dea979c78558',properties:64,incident_relations:23,
    source_revision:'907c46bc8a65b47e12f14aa4d8b444263dc956a1a7b4b6d038e57223d6073288',standing:'Actual selected-source DOM and issued native request; no fresh-model answer'};
  };
+ await observeNavigationTransport();
  const ordinaryInspectReplies=[];
- // Only browser-issued production-owner reads count here. The test's own
- // inspection cannot supply the missing ordinary receiving acknowledgement.
+ // Count only the native HTTP read issued synchronously by this actual
+ // iframe kind/req. Personal-current host reads stay active and uncounted.
+ // An actual matching application ACK is additionally required below.
  page.on('response',response=>{
-  const request=response.request();if(request.url()!==cfg.bridge+'/op'||request.method()!=='POST')return;
+  const request=response.request(),channelReq=navigationRequestId(request.url());if(channelReq===null||request.method()!=='POST')return;
   const raw=request.postData();if(!raw||Buffer.byteLength(raw)>64*1024)return;let sent;try{sent=JSON.parse(raw);}catch{return;}
   if(sent.op!=='expression'||sent.request?.operation!=='inspect'||sent.request.expression_ref!==cfg.expression_ref)return;
   const observed=(async()=>{
    const ordinal=ordinaryInspectReplies.length,request_file=`navigation-owner-inspect-${ordinal}.request.json`,response_file=`navigation-owner-inspect-${ordinal}.response.json`;
    assert.deepEqual(sent,{op:'expression',request:{operation:'inspect',expression_ref:cfg.expression_ref}});
+   assert.equal(raw,JSON.stringify({op:'expression',request:{operation:'inspect',expression_ref:cfg.expression_ref}}),'Diagnostic URL preserves the exact production native request bytes');
    assert.equal(response.ok(),true);const declared=response.headers()['content-length'];assert.match(declared??'',/^(0|[1-9][0-9]*)$/);assert.ok(Number(declared)<=64*1024*1024);
    const bytes=await response.body();assert.equal(bytes.length,Number(declared));const value=JSON.parse(bytes);assert.equal(value.ok,true);assert.equal(value.outcome?.result,'expression');assert.ok(value.outcome.data.document);
    await writeFile(resolve(cfg.output,request_file),raw);await writeFile(resolve(cfg.output,response_file),bytes);
-   return {request_file,response_file,request_sha256:hash(raw),response_sha256:hash(bytes),response_bytes:bytes.length,document:value.outcome.data.document,unchanged_actual_response:true};
+   return {kind:'kernel-expression',req:channelReq,url:request.url(),request_file,response_file,request_sha256:hash(raw),response_sha256:hash(bytes),response_bytes:bytes.length,native_data:value.outcome.data,document:value.outcome.data.document,unchanged_actual_response:true};
   })().catch(error=>({failure:String(error)}));ordinaryInspectReplies.push(observed);
  });
  const actualAppFocusResponses=[];
@@ -504,13 +581,15 @@ try{
  assert.equal(report.before_navigation_dom.choose_disabled,false);assert.equal(report.before_navigation_dom.native_working.busy,false);
  if(cfg.selection_case==='navigation-local-changed'){
   let observed,release,claimed=false;const heldObserved=new Promise(resolve=>{observed=resolve;}),released=new Promise(resolve=>{release=resolve;});releaseHeld=release;
-  await page.route(cfg.bridge+'/op',async route=>{
+  await page.route(url=>navigationRequestId(url.href)!==null,async route=>{
    const raw=route.request().postData();let request;try{request=raw&&JSON.parse(raw);}catch{}
    if(claimed||request?.op!=='expression'||request.request?.operation!=='inspect'||request.request.expression_ref!==cfg.expression_ref){await route.continue();return;}
+   const channelReq=navigationRequestId(route.request().url());assert.ok(channelReq!==null);
+   assert.deepEqual(request,{op:'expression',request:{operation:'inspect',expression_ref:cfg.expression_ref}});
    claimed=true;const response=await route.fetch();assert.ok(response.ok());const declared=response.headers()['content-length'];assert.match(declared??'',/^(0|[1-9][0-9]*)$/);assert.ok(Number(declared)<=64*1024*1024);
    const bytes=await response.body();assert.equal(bytes.length,Number(declared));const real=JSON.parse(bytes);assert.equal(real.ok,true);assert.equal(real.outcome?.result,'expression');assert.deepEqual(real.outcome.data.document,before.document);
    await writeFile(resolve(cfg.output,'navigation-held-inspect.request.json'),raw);await writeFile(resolve(cfg.output,'navigation-held-inspect.response.json'),bytes);
-   report.held_actual_navigation_inspect={request_sha256:hash(raw),response_sha256:hash(bytes),response_bytes:bytes.length,request_file:'navigation-held-inspect.request.json',response_file:'navigation-held-inspect.response.json',unchanged_actual_response:true};
+   report.held_actual_navigation_inspect={kind:'kernel-expression',req:channelReq,url:route.request().url(),request_sha256:hash(raw),response_sha256:hash(bytes),response_bytes:bytes.length,request_file:'navigation-held-inspect.request.json',response_file:'navigation-held-inspect.response.json',unchanged_actual_response:true};
    observed();await released;await route.fulfill({response});
   });
   await frame.locator('[data-epi-source="return"]').click();
@@ -537,8 +616,25 @@ try{
   assert.equal(ordinaryInspectReplies.length,1,'One actual production navigation owner inspection is mandatory; test-side reads cannot stand in');
   const observed=await ordinaryInspectReplies[0];assert.ok(!observed.failure,observed.failure);
   assert.deepEqual(observed.document,cfg.selection_case==='navigation-local-changed'?before.document:after.document,'Qualify the actual production owner reply against independent pre-action or post-action basis');
-  const {document:observedDocument,...ref}=observed;report.actual_ordinary_navigation_inspect=ref;
+  const ackRaw=await frame.evaluate(req=>window.__EPI_NAVIGATION_ACK_OBSERVER__.take(req),observed.req);
+  assert.ok(Buffer.byteLength(ackRaw)<=64*1024*1024);const ack=JSON.parse(ackRaw);
+  assert.equal(ack.v,1);assert.equal(ack.kind,observed.kind+'-result');assert.equal(ack.req,observed.req);assert.equal(ack.ok,true);
+  assert.deepEqual(ack.data,observed.native_data,'The actual application ACK must carry this exact real native owner reply');
+  const ack_file='navigation-owner-inspect.application-ack.json';await writeFile(resolve(cfg.output,ack_file),ackRaw);
+  const {document:observedDocument,native_data:observedData,...ref}=observed;
+  report.actual_ordinary_navigation_inspect={...ref,application_ack:{file:ack_file,bytes:Buffer.byteLength(ackRaw),sha256:hash(ackRaw),kind:ack.kind,req:ack.req,unchanged_actual_reply:true}};
  }
+ const requestChannel=await page.evaluate(()=>window.__EPI_NAVIGATION_REQUEST_OBSERVER__.snapshot()),ackChannel=await frame.evaluate(()=>window.__EPI_NAVIGATION_ACK_OBSERVER__.snapshot());
+ assert.deepEqual(requestChannel.failures,[]);assert.deepEqual(ackChannel.failures,[]);
+ const expectedReads=cfg.selection_case==='navigation-native-refusal'?0:1;
+ assert.equal(requestChannel.requests.length,expectedReads,'Exact actual iframe navigation Inspect request count');
+ assert.equal(ackChannel.expected.length,expectedReads);assert.equal(ackChannel.received.length,expectedReads,'Exact genuine navigation application ACK count');
+ if(expectedReads){
+  const observed=await ordinaryInspectReplies[0];assert.equal(requestChannel.requests[0].kind,observed.kind);assert.equal(requestChannel.requests[0].req,observed.req);assert.equal(requestChannel.requests[0].url,observed.url);
+  assert.equal(ackChannel.expected[0],observed.req);assert.equal(ackChannel.received[0].req,observed.req);
+ }
+ report.actual_navigation_channel={requestChannel,ackChannel,scope:'Actual iframe request → unchanged native POST body → genuine HTTP reply → same req application ACK; diagnostic URL only; periodic personal current reads remain active'};
+ await page.evaluate(()=>window.__EPI_NAVIGATION_REQUEST_OBSERVER__.stop());await frame.evaluate(()=>window.__EPI_NAVIGATION_ACK_OBSERVER__.stop());
  report.after_navigation_dom=await captureDOM('after-navigation');
  assert.equal(report.after_navigation_dom.source_open,false);assert.equal(report.after_navigation_dom.choose_disabled,false);
  if(errorText){assert.equal(report.after_navigation_dom.alert_text,errorText);assert.equal(report.after_navigation_dom.alert_visible,true);}

@@ -644,8 +644,19 @@ try{
  // instead and could not establish a native checkpoint/restart claim.
  const url=`http://127.0.0.1:${server.httpServer.address().port}/__epi_parent?mode=expressions&host=expressions&world=epi-logos${coldOpening?'':'&still'}`+(config.existing_expression_ref?'&expression='+encodeURIComponent(config.existing_expression_ref):'');
  phase='actual production host relay launch';await page.goto(url);await page.waitForFunction(()=>document.querySelector('#world')?.getAttribute('src')?.startsWith('/__epi_application'),null,{timeout:90000});frame=await page.locator('#world').elementHandle().then(el=>el.contentFrame());phase='actual production application launch';
- await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.enterEpiWorld&&window.__OI_KERNEL_EXPRESSIONS__?.kernelExpressionsAvailable(),null,{timeout:90000});
- receipt.browser.actual_gpu=await frame.evaluate(()=>{for(const c of document.querySelectorAll('canvas')){const g=c.getContext('webgl2')??c.getContext('webgl');if(!g)continue;const e=g.getExtension('WEBGL_debug_renderer_info');return{canvas:c.id,version:g.getParameter(g.VERSION),vendor:e?g.getParameter(e.UNMASKED_VENDOR_WEBGL):g.getParameter(g.VENDOR),renderer:e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):g.getParameter(g.RENDERER)};}return{unavailable:true};});
+ await frame.waitForFunction(()=>{
+  const f=window.__FIELD_STUDIES__;
+  return !!f?.enterEpiWorld&&window.__OI_KERNEL_EXPRESSIONS__?.kernelExpressionsAvailable()
+   &&f.capabilities?.kind==='production'&&!!f.telemetry()&&!!f.inspect();
+ },null,{timeout:90000});
+ receipt.browser.actual_gpu=await frame.evaluate(()=>{
+  // Production telemetry/inspection above requires the actual lazy field
+  // owner to have rendered. Never allocate a context on a paper/overlay canvas.
+  const c=document.querySelector('#field-canvas'),g=c?.getContext('webgl2');
+  if(!g||g.isContextLost())return{unavailable:true,canvas:c?.id??null};
+  const e=g.getExtension('WEBGL_debug_renderer_info');
+  return{canvas:c.id,version:g.getParameter(g.VERSION),vendor:e?g.getParameter(e.UNMASKED_VENDOR_WEBGL):g.getParameter(g.VENDOR),renderer:e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):g.getParameter(g.RENDERER)};
+ });
  check(receipt.browser.actual_gpu.canvas==='field-canvas'&&receipt.browser.actual_gpu.version?.includes('WebGL 2'),'The ordinary production field has an actual WebGL 2 receiving context');
  check(await frame.locator('[data-epi="identity"]').isVisible(),'Ordinary production Epi entrance is visible before construction');
  const ordinaryEntranceHit=await frame.locator('[data-epi="identity"]').evaluate(button=>{
