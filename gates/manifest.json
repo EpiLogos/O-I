@@ -262,7 +262,7 @@
         "job": "build",
         "step": "Verify the essay publication builders and host contract"
       },
-      "command": "node --experimental-strip-types --test essay-browser.test.mjs essay-host.test.mjs"
+      "command": "node --experimental-strip-types --test essay-source.test.mjs essay-browser.test.mjs essay-host.test.mjs quartz-staged-input.test.mjs"
     },
     {
       "name": "walk-mode-workspaces",

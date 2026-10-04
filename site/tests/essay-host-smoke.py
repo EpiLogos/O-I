@@ -150,15 +150,18 @@ def main():
             browser = p.chromium.launch(executable_path=os.environ.get('CHROMIUM_EXECUTABLE') or None)
             ctx = browser.new_context(viewport={'width': 1280, 'height': 800})
             cases = [
-                (f'{vercel}/essay', 200, 'The Return of Zero — Reading Root'),
+                (f'{vercel}/essay', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
                 (f'{vercel}/essay/symbolon/matheme/README', 200, None),
-                (f'{vercel}/essay/THE-RETURN-OF-ZERO', 200, 'The Return of Zero'),
+                (f'{vercel}/essay/section-rooms/00-integral-threshold/ROOM-00-integral-threshold', 200, None),
+                (f'{vercel}/essay/section-rooms/arguments/A01-Subject-God-and-Faithful-Definition', 200, None),
+                (f'{vercel}/essay/symbolon/matheme/diagrams/torus-square-quotient-and-winding', 200, None),
+                (f'{vercel}/essay/THE-RETURN-OF-ZERO', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
                 (f'{vercel}/essay/section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism', 200, None),
                 (f'{vercel}/essay/section-rooms', 200, None),
-                (f'{vercel}/essay/not-a-real-page', 200, 'The Return of Zero — Reading Root'),
+                (f'{vercel}/essay/not-a-real-page', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
                 (f'{vercel}/symbolon/matheme/README', 200, None),
-                (f'{vercel}/manuscript', 200, 'The Return of Zero'),
-                (f'{pages}/O-I/essay', 200, 'The Return of Zero — Reading Root'),
+                (f'{vercel}/manuscript', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
+                (f'{pages}/O-I/essay', 200, 'Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.'),
                 (f'{pages}/O-I/essay/not-a-real-page', 404, None),
             ]
             for url, status, heading in cases:
@@ -171,6 +174,11 @@ def main():
                     if status == 200:
                         expect(page.locator('.graph-container').first).to_be_attached(timeout=20000)
                         expect(page.locator('.explorer').first).to_be_visible(timeout=20000)
+                        expect(page.locator('nav[aria-label="Essay reading routes"]')).to_be_visible(timeout=20000)
+                        if '/ROOM-00-integral-threshold' not in page.url:
+                            foundation = page.locator('.essay-anchor a').filter(has_text='§0/1')
+                            expect(foundation).to_have_count(1)
+                            assert 'ROOM-00-integral-threshold' in foundation.get_attribute('href')
                         assert page.locator('.tags').count() == 0, 'tag dump still on the page'
                         assert page.locator('.content-meta').count() == 0, 'content meta still on the page'
                         has_body = page.locator('article .body p').count() > 0

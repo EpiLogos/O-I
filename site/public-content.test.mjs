@@ -118,9 +118,10 @@ test('current six-office wording and truthful local installation do not imply pu
   assert.match(sectionBody('build', 'links'), /INSTALL-UPDATE-FLOW\.md/);
 });
 
-test('Objective : Internality is the authored title form', () => {
+test('O:I keeps its authored brand and the essay carries its full authored title', () => {
   assert.match(source, /^### \[title\] Objective : Internality$/m);
-  assert.doesNotMatch(source, /^#{1,4} .*Objective Internality[.]*$/m);
+  assert.doesNotMatch(source, /^#{1,4} (?!\[essay-title\]).*Objective Internality[.]*$/m);
+  assert.match(source, /^### \[essay-title\] Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality\.$/m);
 });
 
 test('vite emits the structured public pages without replacing Explore', () => {

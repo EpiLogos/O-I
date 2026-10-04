@@ -32,7 +32,7 @@ The published expressions. Open one and read it. This is the visual record of th
 
 The written field: rooms, symbolon, and the manuscript. The six products are described here, as intent, not as finished software.
 
-### [essay-title] The Return of Zero
+### [essay-title] Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.
 
 ### [coming] Still being made
 
