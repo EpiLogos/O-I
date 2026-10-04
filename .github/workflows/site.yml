@@ -53,7 +53,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Antykathera-Essay-Work
-          ref: d3bba69392aad66e4e2740644e40a01195fde7e7
+          ref: f09c9c241f9f9b145480ba6b10089ea16e0c2034
           path: .publication-sources/essay-reading
           persist-credentials: false
       - uses: actions/setup-node@v4

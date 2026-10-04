@@ -3,7 +3,7 @@ import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { dirname, extname, join, resolve } from 'node:path';
+import { dirname, extname, join, resolve, posix } from 'node:path';
 import { promisify } from 'node:util';
 import { ESSAY_REF, ESSAY_REMOTE, isPublishedMarkdown } from './essay-browser.mjs';
 
@@ -23,12 +23,13 @@ export async function resolveEssaySource({ siteDirectory, candidates, remote = E
   const parent = resolve(siteDirectory, '..');
   const choices = candidates ?? [process.env.OI_ESSAY_BROWSER_REPO, process.env.OI_ESSAY_REPO,
     join(parent, 'Antykathera-Essay-Work'), resolve(parent, '../Antykathera-Essay-Work'), resolve(parent, '../../Antykathera-Essay-Work')].filter(Boolean);
-  let root, essay;
+  let root, essay, managed = false;
   for (const candidate of choices) {
     const found = essayDir(candidate);
     if (found) { root = candidate; essay = found; break; }
   }
   if (!essay) {
+    managed = true;
     root = resolve(siteDirectory, '.essay-source');
     if (!existsSync(join(root, '.git'))) {
       await exec('git', ['clone', '--depth', '1', '--filter=blob:none', '--sparse', '--branch', ref, remote, root]);
@@ -44,7 +45,9 @@ export async function resolveEssaySource({ siteDirectory, candidates, remote = E
   }
   const { stdout: commit } = await exec('git', ['-C', essay, 'rev-parse', 'HEAD']);
   const { stdout: status } = await exec('git', ['-C', essay, 'status', '--porcelain', '--untracked-files=all', '--', '.']);
-  return { root, essay, commit: commit.trim(), ref, remote, workingTreeDirty: Boolean(status.trim()) };
+  const { stdout: branch } = await exec('git', ['-C', essay, 'branch', '--show-current']);
+  return { root, essay, commit: commit.trim(), ref: managed ? ref : (branch.trim() || commit.trim()),
+    remote, workingTreeDirty: Boolean(status.trim()) };
 }
 
 export async function readEssayInputs(essay) {
@@ -101,7 +104,14 @@ export async function stageEssayInputs(inputs, contentDir) {
     if (entry.kind==='markdown') {
       const normalized=dedupeFrontmatter(entry.bytes.toString('utf8'));
       if (normalized.changed) frontmatterFixed++;
-      await writeFile(dest,normalized.text);
+      // Consumer links into the private working desk remain native source relations,
+      // but they cannot be clickable routes in the curated public reading edition.
+      const publicText = normalized.text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (link,label,target) => {
+        if (/^(?:https?:|mailto:|#)/.test(target)) return link;
+        const path = posix.normalize(posix.join(posix.dirname(entry.rel),target.split('#')[0]));
+        return /^\.\.\/(?:\.\.\/)*working\//.test(path) ? label : link;
+      });
+      await writeFile(dest,publicText);
     } else await writeFile(dest,entry.bytes);
   }
   return { staged:inputs.entries.filter(entry=>entry.kind==='markdown').length,
