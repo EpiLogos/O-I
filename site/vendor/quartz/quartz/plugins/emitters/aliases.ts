@@ -5,7 +5,7 @@ import { BuildCtx } from "../../util/ctx"
 import { VFile } from "vfile"
 import path from "path"
 
-async function* processFile(ctx: BuildCtx, file: VFile) {
+async function* processFile(ctx: BuildCtx, file: VFile, canonicalSlugs: Set<string>) {
   const ogSlug = simplifySlug(file.data.slug!)
 
   for (const aliasTarget of file.data.aliases ?? []) {
@@ -14,6 +14,9 @@ async function* processFile(ctx: BuildCtx, file: VFile) {
         ? path.normalize(path.join(ogSlug, "..", aliasTarget))
         : aliasTarget
     ) as FullSlug
+
+    // A concept alias may name the manuscript. The real reading page owns its address.
+    if (canonicalSlugs.has(simplifySlug(aliasTargetSlug))) continue
 
     const redirUrl = resolveRelative(aliasTargetSlug, ogSlug)
     yield write({
@@ -39,16 +42,18 @@ async function* processFile(ctx: BuildCtx, file: VFile) {
 export const AliasRedirects: QuartzEmitterPlugin = () => ({
   name: "AliasRedirects",
   async *emit(ctx, content) {
+    const canonicalSlugs = new Set(content.map(([, file]) => simplifySlug(file.data.slug!)))
     for (const [_tree, file] of content) {
-      yield* processFile(ctx, file)
+      yield* processFile(ctx, file, canonicalSlugs)
     }
   },
-  async *partialEmit(ctx, _content, _resources, changeEvents) {
+  async *partialEmit(ctx, content, _resources, changeEvents) {
+    const canonicalSlugs = new Set(content.map(([, file]) => simplifySlug(file.data.slug!)))
     for (const changeEvent of changeEvents) {
       if (!changeEvent.file) continue
       if (changeEvent.type === "add" || changeEvent.type === "change") {
         // add new ones if this file still exists
-        yield* processFile(ctx, changeEvent.file)
+        yield* processFile(ctx, changeEvent.file, canonicalSlugs)
       }
     }
   },
