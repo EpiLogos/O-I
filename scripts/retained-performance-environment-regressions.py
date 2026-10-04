@@ -133,6 +133,15 @@ class ActualPublication(unittest.TestCase):
                 self.refused("actual native fixture inventory membership differs")
         self.receipt["fixtures"] = original_fixtures
 
+    def test_missing_actual_three_register_workload_admission_is_refused(self) -> None:
+        missing = "current-receiving/world-workload.source-performance.json"
+        self.assertEqual(sum(str(Path(row["path"]).relative_to(self.run)) == missing
+            for row in self.receipt["fixtures"]), 1,
+            "Counterproof requires the actual native three-register worker artifact")
+        self.receipt["fixtures"] = [row for row in self.receipt["fixtures"]
+            if str(Path(row["path"]).relative_to(self.run)) != missing]
+        self.refused("actual native fixture inventory membership differs")
+
     def test_duplicate_actual_native_body_is_refused(self) -> None:
         self.receipt["fixtures"].append(copy.deepcopy(self.receipt["fixtures"][0]))
         self.refused("actual native fixture inventory membership differs")

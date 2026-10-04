@@ -44,6 +44,7 @@ def required_fixture_paths() -> set[str]:
         "native-packets/baseline.packet.json", "native-packets/baseline.basis.json",
     }
     paths.update("current-receiving/" + kind + ".source-performance.json" for kind in ("world", "personal", "shared"))
+    paths.add("current-receiving/world-workload.source-performance.json")
     paths.update("native-management/" + name for name in (
         "baseline.pending.management.json", "baseline.basis.json", "baseline.applied-events.json",
         "baseline.input-journal.json", "baseline.current.management.json", "manifest.json"))

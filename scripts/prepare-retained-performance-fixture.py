@@ -172,6 +172,33 @@ def main() -> None:
                     or assets.get("current_receiving",{}).get("source_context")!=assets.get("source_context")
                     or assets.get("current_receiving",{}).get("receiving_definition")!=assets.get("receiving_definition")):
                 raise RuntimeError("actual activated original receiving/source contract differs")
+        # The original36-cell receiving artifacts remain the source for their
+        # original consumer gates. The full Source workload requires a separate
+        # actual three-register worker admission, never duplicated pitch rows.
+        source_workload_input = receiving_dir / "world-workload.source-performance.json"
+        if not source_workload_input.is_file() or not 0 < source_workload_input.stat().st_size < 16*1024*1024:
+            raise RuntimeError("actual three-register Source workload admission missing/excessive")
+        source_workload_input_value = json.loads(source_workload_input.read_bytes())
+        workload_assets = source_workload_input_value.get("source_assets", {})
+        workload_pitches = source_workload_input_value.get("pitches")
+        if (source_workload_input_value.get("schema") != "ql.retained-source-performance-fixture/v1"
+                or workload_assets.get("configuration", {}).get("columns") != 18
+                or workload_assets.get("configuration", {}).get("base_register") != 0
+                or workload_assets.get("configuration", {}).get("transpose") != 0
+                or workload_assets.get("source_context", {}).get("context", {}).get("kind") != "world"
+                or workload_assets.get("source_context", {}).get("context", {}).get("private") is not False
+                or workload_assets.get("current_receiving", {}).get("source_inputs") != workload_assets.get("receiving_source_inputs")
+                or workload_assets.get("current_receiving", {}).get("source_context") != workload_assets.get("source_context")
+                or workload_assets.get("current_receiving", {}).get("receiving_definition") != workload_assets.get("receiving_definition")
+                or workload_assets.get("current_receiving", {}).get("native_admission", {}).get("native_basis") != source_workload_input_value.get("native_basis")
+                or not isinstance(workload_pitches, list) or len(workload_pitches) != 21
+                or any(not isinstance(pitch, dict) or type(pitch.get("key")) is not int
+                    or type(pitch.get("register")) is not int for pitch in workload_pitches)):
+            raise RuntimeError("actual three-register Source workload native/source basis differs")
+        workload_addresses = {(pitch["key"], pitch["register"]) for pitch in workload_pitches}
+        if (len(workload_addresses) != 21 or {register for _, register in workload_addresses} != {0, 1, 2}
+                or any(sum(r == register for _, r in workload_addresses) != 7 for register in (0, 1, 2))):
+            raise RuntimeError("actual Source workload must retain three registers of seven genuine targets")
         execute([str(native), str(rust_fixture)], "actual-native-play-checkpoint-replay", checkpoint_fixture)
         management_dir = run / "native-management"
         management_dir.mkdir(mode=0o700)
@@ -190,7 +217,7 @@ def main() -> None:
             raise RuntimeError("actual native workload output count/declared artifact budget differs")
         source_workload_dir=run/"native-retained-source-workload"
         execute([str(workload_native),str(packet_dir),str(source_workload_dir),
-                 str(receiving_dir/"world.source-performance.json")],
+                 str(source_workload_input)],
                 "actual-native-source-form-full-fifteen-minute-workload")
         source_workload=json.loads((source_workload_dir/"manifest.json").read_bytes())
         if source_workload.get("schema")!="ql.retained-native-workload/v1" or any(source_workload.get(k)!=v for k,v in
@@ -200,7 +227,7 @@ def main() -> None:
             raise RuntimeError("actual SourceForm native workload count/declared artifact budget differs")
         if (source_workload.get("source_performance")!="source-performance.json"
                 or source_workload.get("initial_checkpoint")!="initial.checkpoint.json"
-                or json.loads((source_workload_dir/"source-performance.json").read_bytes())!=json.loads((receiving_dir/"world.source-performance.json").read_bytes())
+                or json.loads((source_workload_dir/"source-performance.json").read_bytes())!=source_workload_input_value
                 or json.loads((source_workload_dir/"initial.checkpoint.json").read_bytes())["native_pair"]["audio"]["cursor"]!="0"):
             raise RuntimeError("actual SourceForm workload lost initial native checkpoint or whole original source")
         for name in ["release","panic"]:

@@ -1597,9 +1597,75 @@ impl PreparedCompose {
                 || world["scene"]["snapshot_ref"] != event_ref
                 || world["scene"]["subject_ref"] != subject_ref
             {
-                return Err(refused(
-                    "ql scene world did not preserve one sky/event/subject basis".into(),
-                ));
+                // Failure-only source diagnostics; admission above is exact.
+                let failed = [
+                    ("basis_object", !basis.is_object()),
+                    ("sky", world["sky"] != owner_request["sky"]),
+                    ("world_event", world["event_ref"] != event_ref),
+                    ("world_snapshot", world["snapshot_ref"] != event_ref),
+                    ("world_subject", world["subject_ref"] != subject_ref),
+                    ("world_instance", world["instance_ref"] != instance_ref),
+                    (
+                        "binding_instance",
+                        world["binding"]["host"]["instance_ref"] != instance_ref,
+                    ),
+                    ("event_input", world["event"] != basis["input"]),
+                    ("binding_basis", world["binding"]["native_basis"] != *basis),
+                    ("binding_scene", world["binding"]["scene"] != world["scene"]),
+                    (
+                        "binding_readback",
+                        world["binding"]["native_readback"] != world["native_readback"],
+                    ),
+                    (
+                        "input_m1_event",
+                        basis["input"]["m1"]["event_ref"] != event_ref,
+                    ),
+                    (
+                        "input_m2_event",
+                        basis["input"]["m2"]["stamp"]["identity"]["event_ref"] != event_ref,
+                    ),
+                    (
+                        "input_m3_event",
+                        basis["input"]["m3"]["stamp"]["identity"]["event_ref"] != event_ref,
+                    ),
+                    (
+                        "input_m3_subject",
+                        basis["input"]["m3"]["subject_ref"] != subject_ref,
+                    ),
+                    (
+                        "basis_m1_event",
+                        basis["m1"]["config"]["event_ref"] != event_ref,
+                    ),
+                    (
+                        "basis_m2_event",
+                        basis["m2"]["identity"]["event_ref"] != event_ref,
+                    ),
+                    (
+                        "basis_m3_event",
+                        basis["m3"]["identity"]["event_ref"] != event_ref,
+                    ),
+                    (
+                        "basis_m3_subject",
+                        basis["m3"]["subject_ref"] != subject_ref,
+                    ),
+                    ("scene_event", world["scene"]["event_ref"] != event_ref),
+                    (
+                        "scene_snapshot",
+                        world["scene"]["snapshot_ref"] != event_ref,
+                    ),
+                    (
+                        "scene_subject",
+                        world["scene"]["subject_ref"] != subject_ref,
+                    ),
+                ]
+                .into_iter()
+                .filter_map(|(name, failed)| failed.then_some(name))
+                .collect::<Vec<_>>();
+                return Err(refused(scene_world_basis_diagnostic(
+                    &failed,
+                    &owner_request["sky"],
+                    &world["sky"],
+                )));
             }
             let content = serde_json::to_string(&world["binding"])
                 .map_err(|error| refused(error.to_string()))?;
@@ -1625,6 +1691,298 @@ impl PreparedCompose {
             source,
             finish: self.finish,
         })
+    }
+}
+
+// Failure diagnostics only: never consulted by sky/world admission. Bounded
+// classes and redacted public-schema paths contain no source scalar values.
+const SKY_DIAGNOSTIC_UNITS: usize = 4096;
+const SKY_DIAGNOSTIC_SAMPLES: usize = 4;
+const SKY_DIAGNOSTIC_PATH: usize = 80;
+const SKY_DIAGNOSTIC_TOKEN: usize = 256;
+const SKY_DIAGNOSTIC_ERROR: usize = 2048;
+
+#[derive(Serialize)]
+struct SkyDifferenceSample {
+    path: String,
+    class: &'static str,
+    exact_decimal_equal: Option<bool>,
+    finite_binary64_equal: Option<bool>,
+}
+#[derive(Serialize)]
+struct SkyDifferenceAccount {
+    budget_units: usize,
+    value_pairs_examined: usize,
+    differences: usize,
+    classes: BTreeMap<&'static str, usize>,
+    paths_omitted: usize,
+    walk_complete: bool,
+    numeric_classification_complete: bool,
+    samples: Vec<SkyDifferenceSample>,
+}
+impl SkyDifferenceAccount {
+    fn new() -> Self {
+        Self {
+            budget_units: 0,
+            value_pairs_examined: 0,
+            differences: 0,
+            classes: [
+                "type_changed",
+                "member_missing",
+                "array_item_missing",
+                "text_changed",
+                "other_scalar_changed",
+                "number_spelling_only",
+                "number_decimal_changed_same_binary64",
+                "number_binary64_changed",
+                "number_nonfinite_or_unrepresented",
+                "number_unclassified",
+            ]
+            .into_iter()
+            .map(|name| (name, 0))
+            .collect(),
+            paths_omitted: 0,
+            walk_complete: true,
+            numeric_classification_complete: true,
+            samples: Vec::new(),
+        }
+    }
+    fn unit(&mut self) -> bool {
+        if self.budget_units == SKY_DIAGNOSTIC_UNITS {
+            self.walk_complete = false;
+            false
+        } else {
+            self.budget_units += 1;
+            true
+        }
+    }
+    fn note(&mut self, path: &str, class: &'static str, decimal: Option<bool>, bits: Option<bool>) {
+        self.differences += 1;
+        *self
+            .classes
+            .get_mut(class)
+            .expect("declared diagnostic class") += 1;
+        if self.samples.len() < SKY_DIAGNOSTIC_SAMPLES {
+            self.samples.push(SkyDifferenceSample {
+                path: path.into(),
+                class,
+                exact_decimal_equal: decimal,
+                finite_binary64_equal: bits,
+            });
+        } else {
+            self.paths_omitted += 1;
+        }
+    }
+    fn walk(&mut self, requested: &Value, returned: &Value, path: &str, depth: usize) {
+        if depth > 127 || !self.unit() {
+            self.walk_complete = false;
+            return;
+        }
+        self.value_pairs_examined += 1;
+        match (requested, returned) {
+            (Value::Object(a), Value::Object(b)) => {
+                for (key, value) in a {
+                    if self.budget_units == SKY_DIAGNOSTIC_UNITS {
+                        self.walk_complete = false;
+                        return;
+                    }
+                    let next = sky_diagnostic_path(path, SkyDiagnosticComponent::Member(key));
+                    if let Some(other) = b.get(key) {
+                        self.walk(value, other, &next, depth + 1);
+                    } else if self.unit() {
+                        self.note(&next, "member_missing", None, None);
+                    }
+                }
+                for key in b.keys() {
+                    if !self.unit() {
+                        return;
+                    }
+                    if !a.contains_key(key) {
+                        self.note(
+                            &sky_diagnostic_path(path, SkyDiagnosticComponent::Member(key)),
+                            "member_missing",
+                            None,
+                            None,
+                        );
+                    }
+                }
+            }
+            (Value::Array(a), Value::Array(b)) => {
+                for (index, (value, other)) in a.iter().zip(b).enumerate() {
+                    if self.budget_units == SKY_DIAGNOSTIC_UNITS {
+                        self.walk_complete = false;
+                        return;
+                    }
+                    self.walk(
+                        value,
+                        other,
+                        &sky_diagnostic_path(path, SkyDiagnosticComponent::Index(index)),
+                        depth + 1,
+                    );
+                }
+                for index in a.len().min(b.len())..a.len().max(b.len()) {
+                    if !self.unit() {
+                        return;
+                    }
+                    self.note(
+                        &sky_diagnostic_path(path, SkyDiagnosticComponent::Index(index)),
+                        "array_item_missing",
+                        None,
+                        None,
+                    );
+                }
+            }
+            (Value::Number(a), Value::Number(b)) => {
+                // Borrow the original admitted tokens; no whole Number clone.
+                if a.as_str() == b.as_str() {
+                    return;
+                }
+                if a.as_str().len() > SKY_DIAGNOSTIC_TOKEN
+                    || b.as_str().len() > SKY_DIAGNOSTIC_TOKEN
+                {
+                    self.numeric_classification_complete = false;
+                    self.note(path, "number_unclassified", None, None);
+                    return;
+                }
+                let Some((a_bits, b_bits)) = a
+                    .as_f64()
+                    .filter(|n| n.is_finite())
+                    .zip(b.as_f64().filter(|n| n.is_finite()))
+                else {
+                    self.numeric_classification_complete = false;
+                    self.note(path, "number_nonfinite_or_unrepresented", None, None);
+                    return;
+                };
+                let bits = a_bits.to_bits() == b_bits.to_bits();
+                let Some((a_decimal, b_decimal)) =
+                    sky_diagnostic_decimal(a.as_str()).zip(sky_diagnostic_decimal(b.as_str()))
+                else {
+                    self.numeric_classification_complete = false;
+                    self.note(path, "number_unclassified", None, Some(bits));
+                    return;
+                };
+                let decimal = a_decimal == b_decimal;
+                let class = if decimal && bits {
+                    "number_spelling_only"
+                } else if bits {
+                    "number_decimal_changed_same_binary64"
+                } else {
+                    "number_binary64_changed"
+                };
+                self.note(path, class, Some(decimal), Some(bits));
+            }
+            (Value::String(a), Value::String(b)) => {
+                if a != b {
+                    self.note(path, "text_changed", None, None);
+                }
+            }
+            (Value::Bool(a), Value::Bool(b)) => {
+                if a != b {
+                    self.note(path, "other_scalar_changed", None, None);
+                }
+            }
+            (Value::Null, Value::Null) => {}
+            _ => self.note(path, "type_changed", None, None),
+        }
+    }
+}
+enum SkyDiagnosticComponent<'a> {
+    Member(&'a str),
+    Index(usize),
+}
+fn sky_diagnostic_path(path: &str, part: SkyDiagnosticComponent<'_>) -> String {
+    // Only array iteration supplies an ordinal. Arbitrary object keys never
+    // enter formatting, and every request subtree is redacted at any depth.
+    let private = path.ends_with(".request")
+        || path.contains(".request.")
+        || path.contains(".request[")
+        || path.contains(".*");
+    let mut next = match part {
+        SkyDiagnosticComponent::Index(index) if !private => format!("{path}[{index}]"),
+        SkyDiagnosticComponent::Member(key)
+            if !private
+                && matches!(
+                    key,
+                    "schema"
+                        | "bodies"
+                        | "snapshot_ref"
+                        | "epoch_utc"
+                        | "epoch_unix_ms"
+                        | "receipt_utc"
+                        | "receipt_unix_ms"
+                        | "provider"
+                        | "source_binding"
+                        | "request"
+                        | "body"
+                        | "longitude_degrees"
+                        | "latitude_degrees"
+                        | "distance_au"
+                        | "speed_degrees_per_day"
+                        | "latitude_speed_degrees_per_day"
+                        | "radial_speed_au_per_day"
+                        | "retrograde"
+                        | "adapter_sha256"
+                ) =>
+        {
+            format!("{path}.{key}")
+        }
+        _ => format!("{path}.*"),
+    };
+    // Paths contain only bounded generated ASCII components; no source key
+    // is copied before this bound. Parent paths were bounded by the same step.
+    if next.len() > SKY_DIAGNOSTIC_PATH {
+        next.truncate(SKY_DIAGNOSTIC_PATH - 3);
+        next.push_str("...");
+    }
+    next
+}
+fn sky_diagnostic_decimal(token: &str) -> Option<(bool, String, i64)> {
+    let negative = token.starts_with('-');
+    let unsigned = token.strip_prefix('-').unwrap_or(token);
+    let (mantissa, exponent) = match unsigned.split_once(|c| c == 'e' || c == 'E') {
+        Some((m, e)) => (m, e.parse::<i64>().ok()?),
+        None => (unsigned, 0),
+    };
+    let (integer, fraction) = mantissa.split_once('.').unwrap_or((mantissa, ""));
+    let digits = format!("{integer}{fraction}");
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let digits = digits.trim_start_matches('0');
+    if digits.is_empty() {
+        return Some((negative, "0".into(), 0));
+    }
+    let significant = digits.trim_end_matches('0');
+    let removed = i64::try_from(digits.len() - significant.len()).ok()?;
+    let fraction = i64::try_from(fraction.len()).ok()?;
+    Some((
+        negative,
+        significant.into(),
+        exponent.checked_sub(fraction)?.checked_add(removed)?,
+    ))
+}
+fn scene_world_basis_diagnostic(failed: &[&str], requested: &Value, returned: &Value) -> String {
+    let describe =
+        |value: &Value| match crate::expression_act_storage::fingerprint(value, MAX_REPLY) {
+            Ok((bytes, sha256)) => format!("{sha256}/{bytes}"),
+            Err(_) => "fingerprint-unavailable-under-original-cap".into(),
+        };
+    let requested_hash = describe(requested);
+    let returned_hash = describe(returned);
+    let mut account = SkyDifferenceAccount::new();
+    account.walk(requested, returned, "$", 0);
+    loop {
+        let encoded = serde_json::to_string(&account)
+            .unwrap_or_else(|_| "diagnostic-serialization-unavailable".into());
+        let message = format!("ql scene world did not preserve one sky/event/subject basis; failed_joins={}; sky_fingerprint_basis=canonical-parsed-structured-json; requested_sky={requested_hash}; returned_sky={returned_hash}; sky_differences={encoded}", failed.join(","));
+        if message.len() + "native-expression.compose_refused: ".len() <= SKY_DIAGNOSTIC_ERROR {
+            return message;
+        }
+        if account.samples.pop().is_some() {
+            account.paths_omitted += 1;
+        } else {
+            return format!("ql scene world did not preserve one sky/event/subject basis; failed_joins={}; requested_sky={requested_hash}; returned_sky={returned_hash}; sky_differences=diagnostic-cap-unavailable", failed.join(","));
+        }
     }
 }
 
