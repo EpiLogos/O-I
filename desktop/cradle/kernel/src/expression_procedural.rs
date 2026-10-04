@@ -4074,6 +4074,15 @@ impl Application {
         Ok(json!(rows))
     }
 
+    /// Borrow resident material for accounting before reservation and the
+    /// separate Source/currentness checks. This grants no Source authority.
+    pub(crate) fn procedural_current_receiver_document(
+        &self,
+        expression_ref: &str,
+    ) -> Result<&Document, String> {
+        self.document(expression_ref)
+    }
+
     /// Borrow the actual current native Document before a joined owner
     /// accounts any future material copies. This creates no Source grant.
     pub(crate) fn procedural_source_borrow(

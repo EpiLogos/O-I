@@ -1082,7 +1082,7 @@ impl crate::Kernel {
             .ok_or("Original native Library owner absent")?;
         let original = owner.stage_library_replays.rows.get(operation_ref)
             .ok_or("Original native Library preparation absent")?;
-        let document = self.expressions.document(&original.intent.basis.expression_ref).ok();
+        let document = self.expressions.procedural_current_receiver_document(&original.intent.basis.expression_ref).ok();
         let receiving_resource = owner.stage_library_replays.reserve_reception(operation_ref, document)?;
         // Declaring the removed material after its guard also guarantees its
         // destruction precedes resource retirement on an early error unwind.
