@@ -7,7 +7,7 @@ legacy vault aliases enter the essay, and a missing essay path falls back to
 the reading root (200) — an existing page always wins. Pages mode (prefix
 /O-I) serves a missing path as essay/404.html with status 404. The essay
 must paint the Quartz night reading surface with graph and explorer present;
-/ stays on Plate A.
+/ retains the original O:I hero and developed home.
 """
 import json, os, sys
 import threading
@@ -225,13 +225,15 @@ def main():
                 response = page.goto(f'{vercel}/', wait_until='load')
                 assert response is not None and response.status == 200
                 expect(page.locator('.graph-container')).to_have_count(0)
+                expect(page.locator('.pl')).to_be_visible()
+                expect(page.get_by_role('heading', name='A world to act within. A way to understand it.', exact=True)).to_have_count(1)
                 expect(page.locator('nav[aria-label="Primary"]')).to_be_visible()
                 Path('evidence/library').mkdir(parents=True, exist_ok=True)
-                page.screenshot(path='evidence/library/essay-vercel-plate-a.png')
-                print('PASS vercel / stays on Plate A', flush=True)
+                page.screenshot(path='evidence/library/essay-vercel-restored-home.png')
+                print('PASS vercel / retains the original hero and developed home', flush=True)
             except Exception as exc:
-                failures.append(f'plate-a: {exc}')
-                print('FAIL plate-a', exc, flush=True)
+                failures.append(f'restored-home: {exc}')
+                print('FAIL restored-home', exc, flush=True)
             browser.close()
     finally:
         stop(pages_server)
