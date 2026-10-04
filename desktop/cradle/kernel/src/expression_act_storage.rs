@@ -47,12 +47,12 @@ struct Record<A> {
     act: A,
 }
 
-struct Counter {
+struct Counter<const HASH: bool> {
     bytes: usize,
     limit: usize,
     hash: Sha256,
 }
-impl Write for Counter {
+impl<const HASH: bool> Write for Counter<HASH> {
     fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
         self.bytes = self
             .bytes
@@ -63,7 +63,9 @@ impl Write for Counter {
                 "Expanded Act byte budget exceeded before cloning",
             ));
         }
-        self.hash.update(bytes);
+        if HASH {
+            self.hash.update(bytes);
+        }
         Ok(bytes.len())
     }
     fn flush(&mut self) -> io::Result<()> {
@@ -71,7 +73,13 @@ impl Write for Counter {
     }
 }
 pub(crate) fn measure<T: Serialize + ?Sized>(value: &T, limit: usize) -> Result<usize, String> {
-    Ok(fingerprint(value, limit)?.0)
+    let mut output = Counter::<false> {
+        bytes: 0,
+        limit,
+        hash: Sha256::new(),
+    };
+    serde_json::to_writer(&mut output, value).map_err(|e| e.to_string())?;
+    Ok(output.bytes)
 }
 
 /// Count the prospective complete history without cloning any prior edition.
@@ -200,7 +208,7 @@ pub(crate) fn fingerprint<T: Serialize + ?Sized>(
     value: &T,
     limit: usize,
 ) -> Result<(usize, String), String> {
-    let mut output = Counter {
+    let mut output = Counter::<true> {
         bytes: 0,
         limit,
         hash: Sha256::new(),
@@ -687,6 +695,38 @@ mod tests {
     use serde_json::json;
 
     #[test]
+    fn count_only_measure_preserves_complete_retained_native_document_bytes_and_refusals() {
+        let bytes = include_str!("../tests/fixtures/epi-world-131.expression.json");
+        assert_eq!(
+            format!("{:x}", Sha256::digest(bytes.as_bytes())),
+            "630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
+        let actual = expression_file::decode(bytes).unwrap();
+        actual.validate().unwrap();
+        assert_eq!(
+            (
+                actual.revision,
+                actual.entities.len(),
+                actual.relations.len(),
+                actual.scenes.len()
+            ),
+            (131, 38, 86, 3)
+        );
+        let canonical = serde_json::to_vec(&actual).unwrap();
+        let literal_digest = format!("sha256:{:x}", Sha256::digest(&canonical));
+        assert_eq!(measure(&actual, canonical.len()).unwrap(), canonical.len());
+        assert_eq!(
+            fingerprint(&actual, canonical.len()).unwrap(),
+            (canonical.len(), literal_digest)
+        );
+        for limit in [0, canonical.len() - 1] {
+            let error = measure(&actual, limit).unwrap_err();
+            assert_eq!(error, fingerprint(&actual, limit).unwrap_err());
+            assert!(error.contains("Expanded Act byte budget exceeded before cloning"));
+        }
+    }
+
+    #[test]
     fn a_defaulted_legacy_native_act_obeys_the_canonical_caller_budget() {
         let mut kernel = Kernel::new(crate::flow::CentralClient::with(
             "/nonexistent/oi".into(),
@@ -722,6 +762,13 @@ mod tests {
         assert!(fingerprint(&actual, canonical.len() - 1)
             .unwrap_err()
             .contains("Expanded Act byte budget exceeded before cloning"));
+        assert_eq!(measure(&actual, canonical.len()).unwrap(), canonical.len());
+        for limit in [0, canonical.len() - 1] {
+            assert_eq!(
+                measure(&actual, limit).unwrap_err(),
+                fingerprint(&actual, limit).unwrap_err()
+            );
+        }
         let mut literal = data["act"].clone();
         literal.as_object_mut().unwrap().remove("cast");
         let raw_weight = serde_json::to_vec(&literal).unwrap().len();
