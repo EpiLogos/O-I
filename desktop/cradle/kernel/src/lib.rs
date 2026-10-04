@@ -2486,6 +2486,26 @@ impl Kernel {
                 self.apply(*request)
             }
             KernelOp::Expression { request } => {
+                if let expression::Request::ProfileDefineMany { definitions } = &request {
+                    self.expressions.profile_definition_batch_reply_budget(&self.client, definitions)?;
+                    let mut profiles = Vec::new();
+                    let mut receipts = Vec::new();
+                    // Each definition follows the same native path, including
+                    // changed ancestor voice/M3 invalidation. A refusal leaves
+                    // the already acknowledged prefix, as separate calls do.
+                    for (index, request) in expression::profile_definition_requests(definitions)?.into_iter().enumerate() {
+                        let outcome = self.apply(KernelOp::Expression { request }).map_err(|error|
+                            format!("Profile definition {} refused after {index} admitted definitions: {error}", index + 1))?;
+                        receipts.extend(outcome.receipts);
+                        let KernelOpResult::Expression { data } = outcome.result else {
+                            return Err("The native profile owner returned another operation".into());
+                        };
+                        profiles.push(data);
+                    }
+                    return Ok(KernelOpOutcome { receipts,
+                        result: KernelOpResult::Expression { data: serde_json::json!({"state":"profiles","profiles":profiles}) },
+                    });
+                }
                 let selection_only = matches!(&request, expression::Request::Edit { changes, .. }
                     if !changes.is_empty() && changes.iter().all(|change| matches!(change,
                         expression::Change::Focus { .. } | expression::Change::RelationFocus { .. })));

@@ -216,7 +216,7 @@ export function trackShellCutout(frame: HTMLIFrameElement): () => void {
 //   {v:1, kind:"oi-kernel-channel", channel:"kernel-expression"}.
 
 /** Kernel expression operations the hosted frame may relay. */
-export const FRAME_EXPRESSION_OPERATIONS: ReadonlySet<string> = new Set(["profile_define", "profile_inspect", "list", "inspect", "inspect_file", "create", "edit", "open", "open_file", "save_as", "save", "export", "fork", "index", "close"]);
+export const FRAME_EXPRESSION_OPERATIONS: ReadonlySet<string> = new Set(["profile_define", "profile_define_many", "profile_inspect", "list", "inspect", "inspect_file", "create", "edit", "open", "open_file", "save_as", "save", "export", "fork", "index", "close"]);
 
 /** The relay's envelope version. Bump only with a paired app-side change. */
 export const KERNEL_CHANNEL_VERSION = 1;

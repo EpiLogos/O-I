@@ -24,6 +24,51 @@ const STEPS=240,DT=1/120,EXCITATION=.6,DOMINANCE=.25;
 const fields=['positions','velocities','targets'];
 const seed=0x13579bdf;
 const jsonCopy=value=>JSON.parse(JSON.stringify(value));
+const ORIENTATION_SHADER='vec3 qv=uLocalResOrientation.xyz;float qw=uLocalResOrientation.w;';
+/** A mutation of the real compiled consumer, never a native response or ACK.
+ * The identity cut retains every driver and deliberately ignores the input. */
+export function orientationConsumerCounterproof(html,kind){
+ assert.ok(['negated','identity-disconnected'].includes(kind));
+ assert.equal(html.split(ORIENTATION_SHADER).length-1,1,'One exact actual orientation consumer is required');
+ const replacement=kind==='negated'?'vec3 qv=-uLocalResOrientation.xyz;float qw=-uLocalResOrientation.w;':'vec3 qv=vec3(0.0);float qw=1.0;';
+ const changed=html.replace(ORIENTATION_SHADER,replacement);
+ assert.equal(changed.replace(replacement,ORIENTATION_SHADER),html,'Only the declared orientation consumer may change');
+ return changed;
+}
+/** Independent Hamilton rotation matrix and analytic intensity derivative.
+ * This predicts the shader's spatial force from its actual float32 inputs; it
+ * does not simulate a new knowledge coordinate or manufacture native current. */
+export function predictLocalIntensityForce(position,frames,q,u){
+ const {w,x,y,z}=q,R=[[1-2*(y*y+z*z),2*(x*y-w*z),2*(x*z+w*y)],
+  [2*(x*y+w*z),1-2*(x*x+z*z),2*(y*z-w*x)],
+  [2*(x*z-w*y),2*(y*z+w*x),1-2*(x*x+y*y)]];
+ const force=[0,0,0];
+ for(const frame of frames){
+  const offset=position.map((v,i)=>v-Math.fround(frame.position[i]));
+  const local=[0,1,2].map(i=>R.reduce((sum,row,j)=>sum+row[i]*offset[j],0));
+  const L=Math.max(10,Math.fround(frame.params.plateSize));let Wr=0,Wi=0;
+  const dr=[0,0,0],di=[0,0,0];
+  for(let mode=0;mode<64;mode++){
+   const ar=Math.fround(frame.re[mode]),ai=Math.fround(frame.im[mode]);if(Math.abs(ar)+Math.abs(ai)<1e-8)continue;
+   let phi,gradient;
+   if(frame.params.dimension==='3D'){
+    const k=[Math.floor(mode/16)+1,Math.floor(mode%16/4)+1,mode%4+1].map(n=>n*Math.PI);
+    const angle=k.map((v,i)=>v*(local[i]/L+.5)),c=angle.map(Math.cos),s=angle.map(Math.sin);
+    phi=c[0]*c[1]*c[2];gradient=k.map((v,i)=>-v/L*s[i]*c[(i+1)%3]*c[(i+2)%3]);
+   }else{
+    const m=Math.floor(mode/8)+1,n=mode%8+1,sign=(m+n)%2===0?1:-1,axis=u.plane>.5?2:1;
+    const a=local[0]/L,b=local[axis]/L,mp=m*Math.PI,np=n*Math.PI;
+    phi=Math.cos(mp*a)*Math.cos(np*b)+sign*Math.cos(np*a)*Math.cos(mp*b);
+    gradient=[(-mp*Math.sin(mp*a)*Math.cos(np*b)-sign*np*Math.sin(np*a)*Math.cos(mp*b))/L,0,0];
+    gradient[axis]=(-np*Math.cos(mp*a)*Math.sin(np*b)-sign*mp*Math.cos(np*a)*Math.sin(mp*b))/L;
+   }
+   Wr+=ar*phi;Wi+=ai*phi;for(let i=0;i<3;i++){dr[i]+=ar*gradient[i];di[i]+=ai*gradient[i];}
+  }
+  const gradient=dr.map((v,i)=>2*(Wr*v+Wi*di[i])*u.driveScale);
+  for(let i=0;i<3;i++)force[i]-=R[i].reduce((sum,v,j)=>sum+v*gradient[j],0)*u.transport*Math.max(0,Math.min(1,u.dominance));
+ }
+ force.forEach(finite);return force;
+}
 const finite=value=>assert.ok(Number.isFinite(value),'Nonfinite actual GPU/native value');
 const actualScene=s=>s.document.scenes[s.state.sceneIndex];
 const driverRows=s=>s.rendered.localizedResonance;
@@ -117,12 +162,23 @@ export async function runPersonalModalConsumerProof({browser,url,worldA,worldB=n
  const artifact=(name,value)=>{writeFileSync(resolve(out,name),JSON.stringify(value,null,2)+'\n');receipt.artifacts.push(name);};
  const passed=label=>{receipt.checks.push(label);save();};save();
  const results=[];
- async function trial(world,name,excitation,waves){
+ async function trial(world,name,excitation,waves,orientationConsumer='native'){
   onPhase('personal modal '+name);
   const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
   await context.addInitScript(initial=>{let state=initial;Math.random=()=>{state=(Math.imul(1664525,state)+1013904223)>>>0;return state/4294967296;};},seed);
   const page=await context.newPage();page.setDefaultTimeout(40000);observePage(page);
-  let frame,excitationChanged=false;
+  let frame,excitationChanged=false,consumerReceipt=null;
+  if(orientationConsumer!=='native')await page.route('**/__epi_application*',async route=>{
+   assert.equal(route.request().resourceType(),'document','Only the actual application HTML may be intervened upon');
+   const response=await route.fetch(),original=await response.text();assert.equal(response.status(),200);
+   const changed=orientationConsumerCounterproof(original,orientationConsumer);
+   assert.equal(consumerReceipt,null,'One actual application admission per counterproof');
+   const bundle=text=>{const match=text.match(/<script id="app-bundle">([\s\S]*?)<\/script>/);assert.ok(match);return match[1];};
+   consumerReceipt={kind:orientationConsumer,original_html_sha256:sha(original),changed_html_sha256:sha(changed),original_bundle_sha256:sha(bundle(original)),changed_bundle_sha256:sha(bundle(changed)),native_response_intervention:false};
+   writeFileSync(resolve(out,name+'-actual-original-application.html'),original);writeFileSync(resolve(out,name+'-actual-consumer-intervention.html'),changed);
+   receipt.artifacts.push(name+'-actual-original-application.html',name+'-actual-consumer-intervention.html');
+   await route.fulfill({response,body:changed});
+  });
   const shot=async label=>{await page.screenshot({path:resolve(out,name+'-'+label+'.png')});receipt.artifacts.push(name+'-'+label+'.png');};
   const read=()=>frame.evaluate(()=>{const f=window.__FIELD_STUDIES__;return{state:f.getState(),working:f.nativeWorking(),record:f.epiWorld(),current:f.epiCurrent(),native:f.native(),document:f.getDocument(),rendered:f.inspect(true),telemetry:f.telemetry()};});
   const alert=async()=>assert.deepEqual((await frame.locator('.epi-world-entrance [role="alert"], .nara-personal-error, .nara-instrument [role="alert"]').allTextContents()).filter(v=>v.trim()),[],'Actual native/UI refusal');
@@ -171,8 +227,15 @@ export async function runPersonalModalConsumerProof({browser,url,worldA,worldB=n
    else receipt.environment={...environment};
    const application=await frame.evaluate(()=>{const bundle=document.getElementById('app-bundle');if(!bundle?.textContent)throw Error('The actual ordinary production bundle is absent');return{url:location.href,bundle:bundle.textContent};});
    const bundleHash=sha(application.bundle);
-   if(receipt.loaded_application_sha256)assert.equal(bundleHash,receipt.loaded_application_sha256,'Production code changed between causal trials');
-   else receipt.loaded_application_sha256=bundleHash;
+   if(orientationConsumer==='native'){
+    if(receipt.loaded_application_sha256)assert.equal(bundleHash,receipt.loaded_application_sha256,'Production code changed between causal trials');
+    else receipt.loaded_application_sha256=bundleHash;
+   }else{
+    assert.ok(consumerReceipt,'Actual application consumer intervention was not observed');
+    assert.equal(consumerReceipt.original_bundle_sha256,receipt.loaded_application_sha256,'Counterproof did not receive the same real original application');
+    assert.equal(bundleHash,consumerReceipt.changed_bundle_sha256,'The declared actual consumer was not loaded');
+    artifact(name+'-consumer-intervention.json',consumerReceipt);
+   }
    artifact(name+'-environment.json',{browser_version:browser.version(),browser_launch_flags_custody:'Caller records actual launch flags; helper does not infer hardware or headless from backend',reduced_motion:'reduce',host_url:page.url(),app_url:application.url,actual_dom_app_bundle_sha256:bundleHash,gpu:environment});
    // Turn the actual projection off before reset. A particle reset alone does
    // not rewind independently retained modal envelopes.
@@ -193,6 +256,23 @@ export async function runPersonalModalConsumerProof({browser,url,worldA,worldB=n
    artifact(name+'-before.json',initial);
    await frame.evaluate(({steps,dt})=>window.__FIELD_STUDIES__.probeSteps(steps,dt),{steps:STEPS,dt:DT});
    const final=await read();required(final);assert.deepEqual(lock(final),lock(initial));
+   let orientationUniforms=null;
+   if(waves&&excitation>0){
+    orientationUniforms=await frame.evaluate(()=>{
+     const field=window.OI_DEBUG_ENGINE?.engine,sim=field?.simulator,renderer=sim?.renderer,material=sim?.velMaterial;
+     if(!renderer||!material)throw Error('The actual loaded velocity material is unavailable');
+     const program=renderer.properties.get(material).currentProgram?.program,gl=renderer.getContext();
+     if(!program||!gl.isProgram(program))throw Error('The actual compiled GPU velocity program is unavailable');
+     const uniform=name=>{const location=gl.getUniformLocation(program,name);if(location===null)return null;const value=gl.getUniform(program,location);return ArrayBuffer.isView(value)?Array.from(value):value;};
+     return{orientation:uniform('uLocalResOrientation'),count:uniform('uLocalResCount'),transport:uniform('uLocalResTransport'),driveScale:uniform('uLocalResDriveScale'),dominance:uniform('uResDominance'),plane:uniform('uCompPlane'),host_orientation:material.uniforms.uLocalResOrientation.value.toArray()};
+    });
+    const q=final.current.reading.q_identity_transit;
+    assert.deepEqual(orientationUniforms.host_orientation,[q.x,q.y,q.z,q.w],'Actual host input must retain the admitted native orientation');
+    assert.equal(orientationUniforms.count,9);assert.ok(orientationUniforms.transport>0&&orientationUniforms.driveScale>0);assert.equal(orientationUniforms.dominance,DOMINANCE);
+    if(orientationConsumer==='identity-disconnected')assert.equal(orientationUniforms.orientation,null,'The negative consumer must truly exclude the orientation input from the GPU program');
+    else assert.deepEqual(orientationUniforms.orientation,[q.x,q.y,q.z,q.w].map(Math.fround),'Actual linked GPU uniform must receive the native quaternion');
+    artifact(name+'-actual-linked-gpu-uniforms.json',orientationUniforms);
+   }
    assert.deepEqual(material(final),material(initial));assert.deepEqual(final.state.camera,initial.state.camera);
    assert.equal(final.rendered.steps-initial.rendered.steps,STEPS,'A hidden extra integration invalidates the fixed-step comparison');
    assert.ok(Math.abs(final.rendered.simTime-STEPS*DT)<=STEPS*Number.EPSILON*4,'Actual resident clock differs from fixed steps');
@@ -220,8 +300,8 @@ export async function runPersonalModalConsumerProof({browser,url,worldA,worldB=n
    // native material receiving standing; do not pretend an uncommitted live
    // numeric control was acknowledged by CAS or saved to the original file.
    const nativeMaterialExcitation=exact.presentation.scene.field?.params?.excitation;
-   const result={name,waves,excitation,opening,initial,final,pixels};results.push(result);
-   receipt.trials.push({name,waves,excitation,native_material_excitation:nativeMaterialExcitation,live_edit_native_material_acknowledged:nativeMaterialExcitation===excitation,saved_file_rewrite_claim:false,person_ref:final.record.person_ref,expression_ref:final.working.native_ref,file:final.working.file,identity:final.record.identity_source,event_ref:final.record.world.event_ref,source_revision:final.record.source_basis.source_revision,driver_count:driverRows(final).length,steps:final.rendered.steps,gpu_positions_sha256:sha(JSON.stringify(final.rendered.positions)),gpu_velocities_sha256:sha(JSON.stringify(final.rendered.velocities)),rgba_sha256:sha(JSON.stringify(pixels))});
+   const result={name,waves,excitation,orientationConsumer,orientationUniforms,opening,initial,final,pixels};results.push(result);
+   receipt.trials.push({name,waves,excitation,orientation_consumer:orientationConsumer,native_material_excitation:nativeMaterialExcitation,live_edit_native_material_acknowledged:nativeMaterialExcitation===excitation,saved_file_rewrite_claim:false,person_ref:final.record.person_ref,expression_ref:final.working.native_ref,file:final.working.file,identity:final.record.identity_source,event_ref:final.record.world.event_ref,source_revision:final.record.source_basis.source_revision,driver_count:driverRows(final).length,steps:final.rendered.steps,gpu_positions_sha256:sha(JSON.stringify(final.rendered.positions)),gpu_velocities_sha256:sha(JSON.stringify(final.rendered.velocities)),rgba_sha256:sha(JSON.stringify(pixels))});
    passed(name+': actual file/UI, unchanged protected basis, exact fixed-step GPU readback and owner source subjects');return result;
   }catch(error){artifact(name+'-failure.json',{error:String(error.stack??error)});if(frame)try{artifact(name+'-failure-state.json',await read());await shot('failure');}catch(capture){receipt.capture_error=String(capture);}throw error;
   }finally{
@@ -261,6 +341,40 @@ export async function runPersonalModalConsumerProof({browser,url,worldA,worldB=n
    disconnected_pixel_difference:pixelDifference(positive.pixels,disconnected.pixels),
    distinction:'Projection removal changes localCount and formation spring mixture; only positive versus live-zero with nine retained drivers isolates modal excitation.'});
   passed('All seven actual centre bodies have modal position/velocity effects beyond measured repeat and Float32 precision; pixels differ with the same nine drivers and spring mixture');
+  const negated=await trial(worldA,'a-orientation-sign-equivalent',EXCITATION,true,'negated');
+  const cut=await trial(worldA,'a-orientation-consumer-cut',EXCITATION,true,'identity-disconnected');
+  for(const r of [negated,cut]){
+   assert.deepEqual(lock(r.initial),lock(positive.initial));assert.deepEqual(material(r.initial),material(positive.initial));
+   assert.deepEqual(r.initial.telemetry.config,positive.initial.telemetry.config);assert.deepEqual(r.initial.state.camera,positive.initial.state.camera);
+   assert.deepEqual(r.initial.rendered.partitions,positive.initial.rendered.partitions);
+   for(const key of fields)assert.deepEqual(r.initial.rendered[key],positive.initial.rendered[key],'Orientation-only trial changed initial GPU '+key);
+   assert.deepEqual(driverRows(r.initial),driverRows(positive.initial),'Orientation-only trial changed the initial nine drivers');
+   assert.deepEqual(driverRows(r.final),driverRows(positive.final),'Orientation-only trial changed modal weights, origins, frequencies, parameters or envelopes');
+  }
+  const orientationEffects=required(positive.final).map(entity=>{
+   const row={entity_ref:entity};
+   for(const key of ['positions','velocities']){
+    const effect=difference(samples(positive.final,entity,key),samples(cut.final,entity,key)),noise=difference(samples(positive.final,entity,key),samples(repeat.final,entity,key)),equivalent=difference(samples(positive.final,entity,key),samples(negated.final,entity,key));
+    const floor=8*Math.max(noise.max,effect.float32_ulp_max,equivalent.float32_ulp_max);
+    assert.ok(equivalent.max<=8*Math.max(noise.max,equivalent.float32_ulp_max),'Sign-equivalent quaternion changed actual '+key+' beyond repeat/Float32 precision');
+    assert.ok(effect.changed>0&&effect.max>floor,'Native orientation has no resolved '+key+' effect in '+entity);
+    row[key]={effect,sign_equivalent:equivalent,repeat_noise:noise,required_floor:floor};
+   }return row;
+  });
+  const actualQ=positive.orientationUniforms.orientation,q={x:actualQ[0],y:actualQ[1],z:actualQ[2],w:actualQ[3]},minus=Object.fromEntries(Object.entries(q).map(([key,v])=>[key,-v]));
+  const predictions=required(positive.final).map(entity=>{
+   const p=partition(positive.final,entity),rows=[];
+   for(let index=p.start;index<p.end;index+=Math.max(1,Math.floor((p.end-p.start)/16))){
+    const position=positive.final.rendered.positions.slice(index*4,index*4+3),normal=predictLocalIntensityForce(position,driverRows(positive.final),q,positive.orientationUniforms),sign=predictLocalIntensityForce(position,driverRows(positive.final),minus,positive.orientationUniforms),identity=predictLocalIntensityForce(position,driverRows(positive.final),{w:1,x:0,y:0,z:0},positive.orientationUniforms);
+    assert.deepEqual(sign,normal,'Independent Hamilton rotation prediction violates q/-q invariance');
+    rows.push({particle:index,position,native_force:normal,sign_equivalent_force:sign,disconnected_identity_force:identity,difference:Math.hypot(...normal.map((v,i)=>v-identity[i]))});
+   }
+   assert.ok(rows.some(row=>row.difference>1e-8),'Actual centre has no independently predicted orientation-sensitive spatial force');return{entity_ref:entity,rows};
+  });
+  const orientationPixels=pixelDifference(positive.pixels,cut.pixels),equivalentPixels=pixelDifference(positive.pixels,negated.pixels);
+  assert.ok(orientationPixels.changed>0&&orientationPixels.absolute>8*noise.absolute,'Orientation pixel effect does not exceed repeat noise');
+  artifact('fixed-nine-driver-orientation-effect.json',{effects:orientationEffects,pixels:orientationPixels,sign_equivalent_pixels:equivalentPixels,predictions,distinction:'Only the real compiled spatial orientation consumer changes. Native current, nine driver weights/frequencies/modal envelopes, authored material, mixture and initial GPU state remain exact.'});
+  passed('Native orientation reaches the actual linked GPU program and alters all seven resident bodies with nine identical drivers; q/-q preserves the effect and a real consumer cut defeats it');
   if(worldB){
    const second=await trial(worldB,'b-positive',EXCITATION,true);
    assert.equal(second.final.record.world.event_ref,positive.final.record.world.event_ref);assert.deepEqual(second.final.record.world.sky,positive.final.record.world.sky);

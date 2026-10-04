@@ -87,6 +87,7 @@ export type ExpressionRequest =
  | {operation:"invoke";expression_ref:string;expected_revision:number;entity_ref:string;action_ref:string;input:unknown;project:string|null}
  /* Substrate requests (#352): ES3 profiles/editions/index, ES3A asset index. */
  | {operation:"profile_define";profile:unknown;actor:string}
+ | {operation:"profile_define_many";definitions:{profile:unknown;actor:string}[]}
  | {operation:"profile_inspect";profile_ref:string}
  | {operation:"profile_resolve";native_owner:string;carrier:CarrierKind}
  | {operation:"edition_create";edition:unknown;actor:string}

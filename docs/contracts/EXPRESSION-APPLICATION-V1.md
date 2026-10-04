@@ -322,6 +322,19 @@ registry clearing or profile-revision rewrite is part of this capacity repair.
 Capacity refusal remains explicit; this bound is not unlimited lifecycle or
 whole-world acceptance.
 
+`profile_define_many` admits 1–64 ordered definitions through the same native
+`profile_define` path, retaining each row's actor, immutable revision, parent
+and lineage checks and changed-parent consumer invalidation. An exact retry
+does not invalidate consumers. The typed request and complete inherited reply
+each have an 8 MiB preflight bound, below the existing transport bounds; a
+weight refusal admits nothing. A later semantic refusal preserves
+the successfully admitted prefix and identifies its length, as sequential
+single definitions do. The successful reply contains every full profile and
+its resolved defaults in request order. This operation changes no Document,
+adoption, subject, identity or current occasion. Saved-world loading may use
+these batches to recover its complete authored grammar before native personal
+admission; receiving a batch is not scene construction or opening acceptance.
+
 **Asset admission + occurrence index (ES3A).** `asset_admit` indexes a real
 use: an `AdmittedAsset` (ref+revision/digest, kind, native source, rights,
 subject refs it may depict, tags/roles, fallback, family refs) with

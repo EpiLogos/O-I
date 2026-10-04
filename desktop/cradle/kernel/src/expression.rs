@@ -793,6 +793,11 @@ pub enum Request {
         profile: crate::expression_profile::ExpressionProfile,
         actor: String,
     },
+    /// Ordered registry definitions, with the same per-definition authority
+    /// and failure prefix as separate native calls. Never a Document edit.
+    ProfileDefineMany {
+        definitions: Vec<ProfileDefinition>,
+    },
     ProfileInspect {
         profile_ref: String,
     },
@@ -842,6 +847,26 @@ pub enum Request {
         actor: String,
     },
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct ProfileDefinition {
+    pub profile: crate::expression_profile::ExpressionProfile,
+    pub actor: String,
+}
+
+pub(crate) fn profile_definition_requests(
+    definitions: &[ProfileDefinition],
+) -> Result<Vec<Request>, String> {
+    if definitions.is_empty() || definitions.len() > 64 {
+        return Err("A native profile batch requires 1–64 definitions".into());
+    }
+    crate::expression_act_storage::measure(definitions, DOCUMENT_BYTES)
+        .map_err(|_| "Native profile batch input byte budget exceeded".to_owned())?;
+    Ok(definitions.iter().map(|definition| Request::ProfileDefine {
+        profile: definition.profile.clone(), actor: definition.actor.clone(),
+    }).collect())
+}
 #[derive(Clone, Debug, Serialize)]
 pub struct Changed {
     pub expression_ref: String,
@@ -873,7 +898,7 @@ pub struct Application {
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
         "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
-            "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
+            "profile_define","profile_define_many","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
         "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
         "reuse":{"schema":REUSE_SCHEMA,"kinds":["character","scene","expression","gesture"],"accepts":["agent","object","text","value"],
@@ -1738,6 +1763,27 @@ impl Application {
             .collect()
     }
 
+    /// Qualify reply weight before any real registry or encounter effect.
+    /// A semantic refusal is left to the real ordered path, which retains its
+    /// successful prefix. The shadow owns only a bounded profile catalog.
+    pub(crate) fn profile_definition_batch_reply_budget(
+        &self, client: &CentralClient, definitions: &[ProfileDefinition],
+    ) -> Result<(), String> {
+        let requests = profile_definition_requests(definitions)?;
+        let mut catalog = Self { profiles: self.profiles.clone(),
+            profile_bytes: self.profile_bytes, ..Self::default() };
+        let mut bytes = b"{\"state\":\"profiles\",\"profiles\":[]}".len();
+        for (index, request) in requests.into_iter().enumerate() {
+            let Ok((profile, _)) = catalog.apply(client, request) else { return Ok(()); };
+            let weight = crate::expression_act_storage::measure(&profile, DOCUMENT_BYTES)
+                .map_err(|_| "Native profile batch reply byte budget exceeded".to_owned())?;
+            bytes = bytes.checked_add(weight + usize::from(index > 0))
+                .ok_or("Native profile batch reply byte accounting overflow")?;
+            if bytes > DOCUMENT_BYTES { return Err("Native profile batch reply byte budget exceeded".into()); }
+        }
+        Ok(())
+    }
+
     pub(crate) fn document(&self, r: &str) -> Result<&Document, String> {
         self.documents
             .get(r)
@@ -2384,6 +2430,16 @@ impl Application {
             // profiles/editions/assets: they return their full resulting
             // state and emit no expression_changed receipt, because they
             // never change an Expression document. ———
+            Request::ProfileDefineMany { definitions } => {
+                self.profile_definition_batch_reply_budget(client, &definitions)?;
+                let mut profiles = Vec::new();
+                for (index, request) in profile_definition_requests(&definitions)?.into_iter().enumerate() {
+                    let (value, _) = self.apply(client, request).map_err(|error|
+                        format!("Profile definition {} refused after {index} admitted definitions: {error}", index + 1))?;
+                    profiles.push(value);
+                }
+                json!({"state":"profiles","profiles":profiles})
+            }
             Request::ProfileDefine { profile, actor } => {
                 text(&actor)?;
                 profile.validate()?;

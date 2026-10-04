@@ -123,6 +123,20 @@ export function createEpiWorldProduction(port:EpiProductionPort){
   if(result.state!=='profile'||!object(result.profile)||result.profile.profile_ref!==request.profile.profile_ref||!object(result.resolved_defaults))throw Error('The native profile owner refused '+request.profile.profile_ref+': '+JSON.stringify(result));
   return result.resolved_defaults;
  }
+ async function defineProfiles(requests:ExpressionRequest[]){
+  const definitions=requests.map(request=>{
+   if(request.operation!=='profile_define'||!object(request.profile)||typeof request.profile.profile_ref!=='string')throw Error('Only native reusable profile definitions are admitted here.');
+   return{profile:request.profile,actor:request.actor};
+  });
+  for(let start=0;start<definitions.length;start+=64){
+   const part=definitions.slice(start,start+64),result=await port.expression({operation:'profile_define_many',definitions:part});
+   if(result.state!=='profiles'||!Array.isArray(result.profiles)||result.profiles.length!==part.length)throw Error('The native profile owner refused the complete ordered definitions.');
+   for(let index=0;index<part.length;index++){
+    const row=result.profiles[index];
+    if(!object(row)||row.state!=='profile'||!object(row.profile)||row.profile.profile_ref!==(part[index].profile as Record<string,unknown>).profile_ref||!object(row.resolved_defaults))throw Error('The native profile owner lost a definition or its resolved inheritance.');
+   }
+  }
+ }
  async function construct(identity:InstrumentIdentity,sky:NativeSky='now',retainedSky?:NativeSkySnapshot){
   if(inFlight)throw Error('The current native world construction is still being acknowledged.');
   inFlight=true;
@@ -218,10 +232,23 @@ export function createEpiWorldProduction(port:EpiProductionPort){
   const adopted=(inspected.document.profiles??[]).filter(profile=>profile.profile_ref.startsWith('profile:epi-coordinate-'));
   const source=locus.subject_binding.sources[0];
   if(adopted.length!==1||adopted[0].profile_ref!==locus.binding.resolved_profile_ref||adopted[0].revision!==locus.binding.profile_revision||!sameSceneData(adopted[0].source_basis,source))throw Error('The saved coordinate profile needs review. Open Coordinate Atlas, read Personal Pratibimba, and choose Use profile for this Expression before receiving its personal current.');
-  for(const profile of locus.profiles)await defineProfile({operation:'profile_define',profile,actor:'human:epi-world-reopen'});
+  await defineProfiles(locus.profiles.map(profile=>({operation:'profile_define' as const,profile,actor:'human:epi-world-reopen'})));
   const definitions=record.profile_definitions;if(!Array.isArray(definitions)||definitions.length>64)throw Error('The saved world has no bounded reusable profile definitions.');
   const unique=new Map<string,string>();
-  for(const definition of definitions){if(definition.operation!=='profile_define')throw Error('A saved reusable profile receipt contains another native operation.');if(!object(definition.profile)||typeof definition.profile.profile_ref!=='string')throw Error('A saved profile definition has no native identity.');const ref=definition.profile.profile_ref,bytes=JSON.stringify(definition.profile);if(unique.has(ref)&&unique.get(ref)!==bytes)throw Error('A saved profile has conflicting immutable definitions.');unique.set(ref,bytes);await defineProfile(definition);}
+  const checked:ExpressionRequest[]=[];
+  for(const definition of definitions){
+   try{
+    if(definition.operation!=='profile_define')throw Error('A saved reusable profile receipt contains another native operation.');
+    if(!object(definition.profile)||typeof definition.profile.profile_ref!=='string')throw Error('A saved profile definition has no native identity.');
+    const ref=definition.profile.profile_ref,bytes=JSON.stringify(definition.profile);
+    if(unique.has(ref)&&unique.get(ref)!==bytes)throw Error('A saved profile has conflicting immutable definitions.');
+    unique.set(ref,bytes);checked.push(definition);
+   }catch(error){
+    // Preserve the former ordered native prefix on a later local refusal.
+    if(checked.length)await defineProfiles(checked);throw error;
+   }
+  }
+  await defineProfiles(checked);
   const selected=await port.nara({operation:'select_identity',source:record.identity_source,input_revision:record.identity_input_revision});
   if(selected.schema!=='oi.nara-instrument-state/v1'||selected.identity?.reading.person_ref!==record.person_ref)throw Error('Reopen the saved person for this particular world.');
   const basis={expression_ref:record.world.instance_ref,source:record.identity_source};

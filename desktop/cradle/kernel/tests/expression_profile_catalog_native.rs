@@ -5,7 +5,7 @@
 use oi_cradle_kernel::{
     expression::{Application, Request},
     expression_profile::ExpressionProfile,
-    flow::CentralClient,
+    flow::CentralClient, Kernel, KernelOp, KernelOpResult,
 };
 use serde_json::{json, Value};
 
@@ -43,6 +43,91 @@ fn define(app: &mut Application, profile: Value) -> Value {
     );
     assert_eq!(response["state"], "profile");
     response
+}
+
+fn kernel_expression(kernel: &mut Kernel, value: Value) -> Result<Value, String> {
+    let outcome = kernel.apply(KernelOp::Expression { request: serde_json::from_value(value).unwrap() })?;
+    assert!(outcome.receipts.is_empty(), "Profile registry calls must not mutate Documents");
+    let KernelOpResult::Expression { data } = outcome.result else { panic!("Native Expression result required"); };
+    Ok(data)
+}
+fn canonical_profile(value: Value) -> Value {
+    serde_json::to_value(serde_json::from_value::<ExpressionProfile>(value).unwrap()).unwrap()
+}
+
+#[test]
+fn native_profile_batch_preserves_order_inheritance_replay_and_refused_prefix() {
+    let mut kernel = Kernel::new(CentralClient::discover());
+    let root = profile("profile:batch-root", None, 1);
+    let child = profile("profile:batch-child", Some("profile:batch-root"), 1);
+    let definition = |profile: Value| json!({"profile":profile,"actor":"agent:native-batch-test"});
+    let request = json!({"operation":"profile_define_many","definitions":[definition(root.clone()),definition(child.clone())]});
+    let admitted = kernel_expression(&mut kernel, request.clone()).unwrap();
+    assert_eq!(admitted["state"], "profiles");
+    for (index, original) in [root.clone(), child.clone()].into_iter().enumerate() {
+        let inspected = kernel_expression(&mut kernel, json!({"operation":"profile_inspect","profile_ref":original["profile_ref"]})).unwrap();
+        assert_eq!(admitted["profiles"][index], inspected);
+        assert_eq!(inspected["profile"], canonical_profile(original));
+        assert_eq!(inspected["resolved_defaults"]["scale"]["value"], 1.5);
+    }
+    assert_eq!(kernel_expression(&mut kernel, request).unwrap(), admitted);
+    let prefix = profile("profile:batch-prefix", None, 1);
+    let mut conflict = child.clone(); conflict["title"] = json!("Different content at the same revision");
+    let error = kernel_expression(&mut kernel, json!({"operation":"profile_define_many","definitions":[definition(prefix.clone()),definition(conflict)]})).unwrap_err();
+    assert!(error.contains("after 1 admitted definitions") && error.contains("cannot name different content"));
+    assert_eq!(kernel_expression(&mut kernel, json!({"operation":"profile_inspect","profile_ref":prefix["profile_ref"]})).unwrap()["profile"], canonical_profile(prefix));
+    assert_eq!(kernel_expression(&mut kernel, json!({"operation":"profile_inspect","profile_ref":child["profile_ref"]})).unwrap()["profile"], canonical_profile(child));
+    assert!(kernel_expression(&mut kernel, json!({"operation":"profile_define_many","definitions":[]})).unwrap_err().contains("1–64"));
+    assert!(kernel_expression(&mut kernel, json!({"operation":"profile_define_many","definitions":vec![definition(root.clone());65]})).unwrap_err().contains("1–64"));
+    assert!(kernel_expression(&mut kernel, json!({"operation":"profile_define_many","definitions":[{"profile":profile("profile:bad-batch-actor",None,1),"actor":""}]})).unwrap_err().contains("after 0 admitted definitions"));
+    assert!(kernel_expression(&mut kernel, json!({"operation":"profile_inspect","profile_ref":"profile:bad-batch-actor"})).is_err());
+}
+
+#[test]
+fn actual_retained_61_profile_batch_matches_every_single_native_definition_and_document() {
+    let bytes = include_str!("fixtures/epi-world-131.expression.json");
+    let actual = oi_cradle_kernel::expression_file::decode(bytes).unwrap();
+    let source: Value = serde_json::from_str(include_str!("fixtures/epi-world-profile-definitions-61.json")).unwrap();
+    assert_eq!(source["source_document_sha256"], "477ea134ff75cdad033a424263c23f9bff8897e175cf9d0bff3e45f933888507");
+    assert_eq!(source["source_document_revision"], 136);
+    let definitions = source["definitions"].as_array().unwrap();
+    assert_eq!(definitions.len(), 61);
+    let mut single = Kernel::new(CentralClient::discover());
+    let mut batch = Kernel::new(CentralClient::discover());
+    let mut expected = Vec::new();
+    for request in definitions { expected.push(kernel_expression(&mut single, request.clone()).unwrap()); }
+    let rows: Vec<Value> = definitions.iter().map(|r| json!({"profile":r["profile"],"actor":r["actor"]})).collect();
+    let request = json!({"operation":"profile_define_many","definitions":rows});
+    let result = kernel_expression(&mut batch, request.clone()).unwrap();
+    assert_eq!(result["profiles"], json!(expected));
+    let reference = actual.expression_ref.clone();
+    batch.apply(KernelOp::Expression { request: Request::Open { document: Box::new(actual), actor: "agent:actual-native-batch-test".into() } }).unwrap();
+    let inspect = json!({"operation":"inspect","expression_ref":reference});
+    let before = kernel_expression(&mut batch, inspect.clone()).unwrap();
+    assert_eq!(kernel_expression(&mut batch, request).unwrap(), result);
+    assert_eq!(kernel_expression(&mut batch, inspect).unwrap(), before);
+}
+
+#[test]
+fn native_profile_batch_refuses_input_and_inherited_reply_weight_before_effects() {
+    let large = large_authored_profile(700);
+    // The existing authored sequence passes the real profile validator.
+    let weight = native_bytes(&large); assert!(weight > 400_000);
+    let definition = |p: Value| json!({"profile":p,"actor":"agent:native-batch-budget-test"});
+    let mut kernel = Kernel::new(CentralClient::discover());
+    let oversized_input = json!({"operation":"profile_define_many","definitions":vec![definition(large.clone());32]});
+    assert!(kernel_expression(&mut kernel, oversized_input).unwrap_err().contains("input byte budget"));
+    assert!(kernel_expression(&mut kernel, json!({"operation":"profile_inspect","profile_ref":large["profile_ref"]})).is_err());
+    kernel_expression(&mut kernel, json!({"operation":"profile_define","profile":large,"actor":"agent:native-batch-budget-test"})).unwrap();
+    let rows: Vec<Value> = (0..32).map(|i|{
+        let mut child = profile(&format!("profile:batch-weight-child-{i:02}"), Some("profile:catalog-bytes-0700"), 1);
+        child["material_defaults"] = json!({}); definition(child)
+    }).collect();
+    assert!(serde_json::to_vec(&rows).unwrap().len() < 32_000, "Small input must exercise inherited reply weight");
+    assert!(kernel_expression(&mut kernel, json!({"operation":"profile_define_many","definitions":rows})).unwrap_err().contains("reply byte budget"));
+    for i in 0..32 {
+        assert!(kernel_expression(&mut kernel, json!({"operation":"profile_inspect","profile_ref":format!("profile:batch-weight-child-{i:02}")})).is_err());
+    }
 }
 fn inspect_profile(app: &mut Application, reference: &str) -> Value {
     let (response, changed) = apply(
