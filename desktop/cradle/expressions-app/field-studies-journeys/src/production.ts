@@ -70,6 +70,9 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
     this.seedRecoveredSources=true;this.restoredClock=true;this.allocationRestSeed=true;
    }
    if(this.engine&&this.sceneId!==frame.scene.id){
+    // The interruption belongs to the old Scene, not this admission.
+    // Pausing or editing a live Scene cannot clear it.
+    delete this.sourceStatus['material-adoption'];
     this.allocationRestSeed=false;
     this.duration=frame.delta>0?frame.scene.transition:0;this.from=this.duration>0?this.evaluated:null;this.transitionStart=this.engine.inspectState().simTime;
     // A newly opened held Scene must encounter its own bodies before Play.
@@ -106,7 +109,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   this.dirty=false;
   if(this.contextLost)throw new Error('GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.');
   const config=this.nativeConfig(this.configuration(frame));
-  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
+  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);delete this.sourceStatus['material-adoption'];this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
   this.engine.setForceEmitterProjection(frame.forceEmitterProjection??null);this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection??null);this.engine.setFormationGeometryProjection(frame.formationGeometryProjection??null);
   if(config!==this.applied){this.syncSources(frame.scene);this.soundScene=frame.scene.entities.some(e=>e.sound?.enabled)?frame.scene:null;}this.applied=config;
