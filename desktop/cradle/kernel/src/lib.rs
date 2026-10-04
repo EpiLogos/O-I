@@ -2440,6 +2440,22 @@ impl Kernel {
                     native_expression::Request::AbandonSelectedScene { request } => {
                         self.abandon_native_selected_scene_open(request)?
                     }
+                    native_expression::Request::ProceduralStageLibrary { .. } => {
+                        return Err("Stage Library production requires native prepare/execute/finish outside the mutation lock".into());
+                    }
+                    native_expression::Request::ProceduralStageLibraryRetry { request } => {
+                        match self.native_stage_library_retry(request.clone()) {
+                            Ok(data) => data,
+                            Err(reason) => {
+                                native_expression::procedural::stage_library::known_refusal(
+                                    &request, reason,
+                                )?
+                            }
+                        }
+                    }
+                    native_expression::Request::ProceduralStageCapability { request } => {
+                        self.native_stage_capability(request)?
+                    }
                     native_expression::Request::ProceduralConduct { request } => {
                         self.native_procedural_conduct(request)?
                     }

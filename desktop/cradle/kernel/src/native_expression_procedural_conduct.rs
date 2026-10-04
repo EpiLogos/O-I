@@ -202,6 +202,10 @@ impl crate::Kernel {
             if action == "restore" {
                 current["document_revision"] = json!(before.revision);
             }
+            if matches!(action.as_str(), "install" | "replace") {
+                self.native_expression
+                    .check_registered_definition_consumers(&self.expressions, &before, &current)?;
+            }
             self.expressions
                 .qualify_procedural_definition(&before, source_ref, &current)?;
             self.native_expression

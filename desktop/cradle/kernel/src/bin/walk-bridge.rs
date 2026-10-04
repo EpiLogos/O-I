@@ -367,6 +367,33 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 if let Some(prepared) = identity {
                     return prepared.execute();
                 }
+                let stage = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_native_stage_library(&op);
+                match stage {
+                    Err(reason) => {
+                        return oi_cradle_kernel::Kernel::native_stage_library_refusal(&op, reason)
+                    }
+                    Ok(Some(prepared)) => {
+                        let completed = match prepared.execute() {
+                            Ok(completed) => completed,
+                            Err(reason) => {
+                                return oi_cradle_kernel::Kernel::native_stage_library_refusal(
+                                    &op, reason,
+                                )
+                            }
+                        };
+                        let outcome = kernel
+                            .lock()
+                            .expect("kernel mutex")
+                            .finish_native_stage_library(completed);
+                        return outcome.or_else(|reason| {
+                            oi_cradle_kernel::Kernel::native_stage_library_refusal(&op, reason)
+                        });
+                    }
+                    Ok(None) => {}
+                }
                 let read = kernel.lock().expect("kernel mutex").prepare_owner_read(&op);
                 if let Some(read) = read {
                     return read.execute();

@@ -10,6 +10,9 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "expression_procedural_address.rs"]
+mod address_material;
+
 #[path = "expression_procedural_bootstrap.rs"]
 pub(crate) mod bootstrap;
 #[path = "expression_procedural_budget.rs"]
@@ -23,9 +26,11 @@ pub(crate) mod manual;
 #[path = "expression_procedural_observation.rs"]
 mod observation;
 #[path = "expression_procedural_receiver.rs"]
-mod receiver;
+pub(crate) mod receiver;
 #[path = "expression_procedural_scene_receiver.rs"]
 pub(crate) mod scene_receiver;
+#[path = "expression_procedural_stage_library.rs"]
+pub(crate) mod stage_library;
 
 pub const SCHEMA: &str = "oi.expression-procedural/v1";
 pub const MAX_OPERATIONS: usize = 256;
@@ -356,7 +361,7 @@ fn layer_locations<'a>(root: &'a Value, address: &Address) -> Vec<(Option<String
 }
 
 fn canonical_address(document: &Document, address: &Address) -> Result<Address, String> {
-    addressed(document, address)?;
+    validate_address_borrowed(document, address)?;
     let mut resolved = address.clone();
     if address.component == Component::Layer && address.parent_ref.is_none() {
         let root = document
@@ -379,191 +384,13 @@ fn canonical_address(document: &Document, address: &Address) -> Result<Address, 
     Ok(resolved)
 }
 
+/// Existing owned material getter. Preflight uses the same borrowed root.
 pub fn addressed(document: &Document, address: &Address) -> Result<Value, String> {
-    retained_address(&serde_json::to_value(address).map_err(|e| e.to_string())?)?;
-    if address.expression_ref != document.expression_ref {
-        return Err("Wrong Expression subject".into());
-    }
-    if address.component == Component::Expression {
-        if let Some(property) = &address.property {
-            for bucket in ["values", "pointer"] {
-                if let Some(key) = property.strip_prefix(&format!("shared.{bucket}.")) {
-                    retained_address(&serde_json::to_value(address).map_err(|e| e.to_string())?)?;
-                    let p = document
-                        .presentation
-                        .as_ref()
-                        .ok_or("Expression has no authored composition")?;
-                    return p
-                        .shared
-                        .as_ref()
-                        .ok_or("Expression has no shared properties")?[bucket]
-                        .get(key)
-                        .cloned()
-                        .ok_or("Shared registry property has no authored override".into());
-                }
-            }
-        }
-    }
-    let mut value = if address.component == Component::Expression {
-        if address.scene_ref.is_some()
-            || address.entity_ref.is_some()
-            || address.constituent_ref.is_some()
-        {
-            return Err("Expression scope has constituent refs".into());
-        }
-        serde_json::to_value(document).map_err(|e| e.to_string())?
-    } else {
-        let scene = document
-            .scenes
-            .iter()
-            .find(|s| Some(&s.scene_ref) == address.scene_ref.as_ref())
-            .ok_or("Unknown Scene address")?;
-        if matches!(address.component, Component::Scene | Component::Field)
-            && (address.entity_ref.is_some() || address.constituent_ref.is_some())
-        {
-            return Err("Scene/field address has unrelated constituent refs".into());
-        }
-        if !matches!(
-            address.component,
-            Component::Layer | Component::SequenceLink | Component::Driver
-        ) && address.constituent_ref.is_some()
-        {
-            return Err("Component does not have a constituent ref".into());
-        }
-        match address.component {
-            Component::Scene => serde_json::to_value(scene).map_err(|e| e.to_string())?,
-            Component::Field => scene
-                .presentation
-                .as_ref()
-                .ok_or("Scene has no authored material")?
-                .scene["field"]
-                .clone(),
-            Component::Property if address.entity_ref.is_none() => scene
-                .presentation
-                .as_ref()
-                .ok_or("Scene has no authored material")?
-                .scene
-                .clone(),
-            Component::Driver => {
-                let controls = scene
-                    .presentation
-                    .as_ref()
-                    .and_then(|p| p.scene["procedural"]["controls"].as_array())
-                    .ok_or("Scene has no retained drivers")?;
-                let reference = address
-                    .constituent_ref
-                    .as_deref()
-                    .ok_or("Driver needs its stable control target ref")?;
-                controls
-                    .iter()
-                    .find(|c| {
-                        c["target"].as_str() == Some(reference)
-                            && c["address"]["entity_ref"].as_str() == address.entity_ref.as_deref()
-                    })
-                    .cloned()
-                    .ok_or("Unknown named driver")?
-            }
-            _ => {
-                let reference = address
-                    .entity_ref
-                    .as_ref()
-                    .ok_or("Constituent needs a stable entity ref")?;
-                if !scene.entity_refs.contains(reference) {
-                    return Err("Occurrence is not in this Scene".into());
-                }
-                let native = document
-                    .entities
-                    .get(reference)
-                    .ok_or("Unknown entity occurrence")?;
-                let material = scene
-                    .presentation
-                    .as_ref()
-                    .and_then(|p| p.scene["entities"].as_array())
-                    .and_then(|entities| {
-                        entities
-                            .iter()
-                            .find(|e| e["id"].as_str() == Some(reference))
-                    });
-                match address.component {
-                    Component::Entity => material
-                        .cloned()
-                        .unwrap_or(serde_json::to_value(native).map_err(|e| e.to_string())?),
-                    Component::Force => {
-                        let root = material.ok_or("Occurrence has no material")?;
-                        root.get("force")
-                            .or_else(|| root.get("forces"))
-                            .or_else(|| root["native"].get("forces"))
-                            .cloned()
-                            .ok_or("Force is unavailable")?
-                    }
-                    Component::Sequence => {
-                        let root = material.ok_or("Occurrence has no material")?;
-                        root.get("sequence")
-                            .or_else(|| root["native"].get("sequence"))
-                            .cloned()
-                            .ok_or("Sequence is unavailable")?
-                    }
-                    Component::Layer => {
-                        let root = material.ok_or("Occurrence has no material")?;
-                        let matches = layer_locations(root, address);
-                        if address.parent_ref.is_none()
-                            && matches
-                                .iter()
-                                .map(|(parent, _)| parent)
-                                .collect::<BTreeSet<_>>()
-                                .len()
-                                > 1
-                        {
-                            return Err("Legacy Layer address has multiple containing coordinates; select its base or exact state".into());
-                        }
-                        let (_, found) = matches
-                            .first()
-                            .ok_or("Unknown stable layer or containing state")?;
-                        if matches.iter().any(|(_, row)| *row != *found) {
-                            return Err("Ambiguous native/authoring layer projection".into());
-                        }
-                        (*found).clone()
-                    }
-                    Component::SequenceLink => {
-                        let root = material.ok_or("Occurrence has no material")?;
-                        let matches: Vec<_> = [
-                            &root["sequence"]["steps"],
-                            &root["sequence"]["links"],
-                            &root["native"]["sequence"]["links"],
-                        ]
-                        .into_iter()
-                        .filter_map(Value::as_array)
-                        .flatten()
-                        .filter(|row| row["id"].as_str() == address.constituent_ref.as_deref())
-                        .collect();
-                        let found = matches.first().ok_or("Unknown stable sequence-link ref")?;
-                        if matches.iter().any(|row| *row != *found) {
-                            return Err("Ambiguous native/authoring sequence projection".into());
-                        }
-                        (*found).clone()
-                    }
-                    Component::Property => {
-                        serde_json::to_value(&native.parameters).map_err(|e| e.to_string())?
-                    }
-                    Component::Driver => scene
-                        .presentation
-                        .as_ref()
-                        .and_then(|p| p.scene.get("procedural"))
-                        .and_then(|p| p.get("controls"))
-                        .cloned()
-                        .unwrap_or(json!([])),
-                    _ => return Err("Unsupported component address".into()),
-                }
-            }
-        }
-    };
-    if value.is_null() {
-        return Err("This component is unavailable".into());
-    }
-    if let Some(property) = &address.property {
-        value = path(&value, property)?.clone();
-    }
-    Ok(value)
+    address_material::root(document, address)?.to_owned()
+}
+
+fn validate_address_borrowed(document: &Document, address: &Address) -> Result<(), String> {
+    address_material::root(document, address)?.validate()
 }
 
 fn address(
@@ -755,7 +582,10 @@ pub fn validate_scene_sources(material: &Value) -> Result<(), String> {
     Ok(())
 }
 
-fn source_exact_binding(document: &Document, target: &Address) -> Result<Option<Value>, String> {
+fn source_exact_binding_borrowed<'a>(
+    document: &'a Document,
+    target: &Address,
+) -> Result<Option<&'a Value>, String> {
     let target = canonical_address(document, target)?;
     let mut whole = target.clone();
     whole.property = None;
@@ -774,7 +604,11 @@ fn source_exact_binding(document: &Document, target: &Address) -> Result<Option<
     if rows.iter().any(|row| *row != *first) {
         return Err("Conflicting current native manifestation bindings".into());
     }
-    Ok(Some((*first).clone()))
+    Ok(Some(*first))
+}
+
+fn source_exact_binding(document: &Document, target: &Address) -> Result<Option<Value>, String> {
+    Ok(source_exact_binding_borrowed(document, target)?.cloned())
 }
 
 fn source_native_subject(document: &Document, target: &Address) -> Result<Value, String> {
@@ -2632,7 +2466,7 @@ pub fn resolve(document: &Document, scope: &Scope) -> Result<Vec<Address>, Strin
         Scope::Scenes { scene_refs } => {
             for r in scene_refs {
                 let a = address(document, Some(r), None, Component::Scene);
-                addressed(document, &a)?;
+                validate_address_borrowed(document, &a)?;
                 targets.insert(a);
             }
         }
@@ -2674,7 +2508,7 @@ pub fn resolve(document: &Document, scope: &Scope) -> Result<Vec<Address>, Strin
                     {
                         let a: Address = serde_json::from_value(binding["address"].clone())
                             .map_err(|e| e.to_string())?;
-                        addressed(document, &a)?;
+                        validate_address_borrowed(document, &a)?;
                         targets.insert(a);
                     }
                 }
@@ -2693,7 +2527,7 @@ pub fn resolve(document: &Document, scope: &Scope) -> Result<Vec<Address>, Strin
                     {
                         let a: Address = serde_json::from_value(binding["address"].clone())
                             .map_err(|e| e.to_string())?;
-                        addressed(document, &a)?;
+                        validate_address_borrowed(document, &a)?;
                         targets.insert(a);
                     }
                 }
@@ -2720,7 +2554,7 @@ pub fn resolve(document: &Document, scope: &Scope) -> Result<Vec<Address>, Strin
                     }) {
                         let a: Address = serde_json::from_value(binding["address"].clone())
                             .map_err(|e| e.to_string())?;
-                        addressed(document, &a)?;
+                        validate_address_borrowed(document, &a)?;
                         targets.insert(a);
                     }
                 }
@@ -3985,48 +3819,12 @@ impl Runtime {
                 "Operation retention full; archive through the native performance owner".into(),
             );
         }
-        let producer = envelope
-            .producer_ref
-            .as_ref()
-            .and_then(|reference| self.producers.get(reference));
-        let mut targets = if matches!(&envelope.scope, Scope::Addresses { addresses } if addresses.is_empty())
-            && producer.is_some_and(|p| p.targets.is_empty())
-        {
-            Vec::new()
-        } else {
-            resolve(document, &envelope.scope)?
-        };
-        if let Some(producer) = producer {
-            targets.extend(producer.outputs.iter().cloned());
-        }
-        if envelope.output_readings.len() > MAX_TARGETS {
-            return Err("Output reading budget exceeded".into());
-        }
-        let mut capability_ids = BTreeSet::new();
-        for reading in &envelope.output_readings {
-            let procedure_ref = retained_text(reading, "procedure_ref")?;
-            let contribution_ref = retained_text(reading, "contribution_ref")?;
-            if !capability_ids.insert(contribution_ref.to_owned()) {
-                return Err("Duplicate owned output capability".into());
-            }
-            let actual = self.output_readings(document, procedure_ref)?;
-            if !actual.iter().any(|r| r == reading) {
-                return Err("Owned output capability is stale, foreign or differs from the actual native journal/material/source".into());
-            }
-            let owned: Vec<Address> = serde_json::from_value(reading["owned_addresses"].clone())
-                .map_err(|e| e.to_string())?;
-            for target in owned {
-                targets.push(canonical_address(document, &target)?);
-            }
-        }
-        targets.sort();
-        targets.dedup();
-        if targets.len() > MAX_TARGETS {
-            return Err("Resolved owned scope exceeds native cardinality".into());
-        }
-        if targets.is_empty() {
-            return Err("Scope deliberately resolves to no targets".into());
-        }
+        let targets = self.resolve_receiving_targets(
+            document,
+            &envelope.scope,
+            envelope.producer_ref.as_deref(),
+            &envelope.output_readings,
+        )?;
         let expanded_changes = inherit_material_receipts(document, &envelope.changes)?;
         let producer = envelope
             .producer_ref
@@ -4223,6 +4021,59 @@ impl Application {
         Ok(())
     }
 
+    /// A current native output may have several same-material regenerations.
+    /// Only this live Runtime's actual Applied journal identifies their order;
+    /// restored/caller operation names never become a preparation witness.
+    pub(crate) fn stage_library_applied_preparations(
+        &self,
+        before: &Document,
+        procedure_ref: &str,
+    ) -> Result<Value, String> {
+        if self.document(&before.expression_ref)? != before {
+            return Err("revision_conflict".into());
+        }
+        let journal = budget::borrowed_journal(before)?;
+        let mut rows = Vec::new();
+        let mut count = 0usize;
+        for (id, operation) in &self.procedural_runtime.operations {
+            if operation.envelope.expression_ref != before.expression_ref
+                || operation.status != Status::Applied
+                || self.procedural_runtime.restored.contains(id)
+                || self
+                    .procedural_runtime
+                    .qualified_operations
+                    .get(id)
+                    .map(String::as_str)
+                    != Some(procedure_ref)
+                || !operation
+                    .applied_revision
+                    .is_some_and(|revision| revision <= before.revision)
+            {
+                continue;
+            }
+            let Some(raw) = journal.get(id.as_str()) else {
+                continue;
+            };
+            if raw["fingerprint"].as_str() != Some(operation.fingerprint.as_str())
+                || !budget::matches_borrowed(&operation.envelope, &raw["envelope"])
+            {
+                continue;
+            }
+            let Some(producer_ref) = operation.envelope.producer_ref.as_ref() else {
+                continue;
+            };
+            count += 1;
+            if count > MAX_TARGETS {
+                return Err(
+                    "Native Library applied preparation cardinality exceeds its bound".into(),
+                );
+            }
+            rows.push(json!({"operation_ref":id,"producer_ref":producer_ref,"applied_revision":operation.applied_revision}));
+        }
+        bootstrap::preflight_source_message(&rows)?;
+        Ok(json!(rows))
+    }
+
     /// The compiler intake carries an actual owner snapshot through its
     /// bounded outside-lock work. Completion must meet this exact snapshot.
     pub(crate) fn procedural_source_snapshot(
@@ -4239,17 +4090,19 @@ impl Application {
         Ok(document.clone())
     }
 
-    pub(crate) fn admit_procedural_source(
-        &mut self,
+    pub(crate) fn prepare_procedural_source_admission(
+        &self,
         before: &Document,
         prepared: Value,
         source: Value,
-    ) -> Result<Value, String> {
+    ) -> Result<ProducerAdmission, String> {
         if self.document(&before.expression_ref)? != before {
             return Err("The original native compiler basis changed; retain and requalify the source intent".into());
         }
         let mut snapshot_budget = budget::Budget::new();
         snapshot_budget.value(before)?;
+        snapshot_budget.value(&prepared)?;
+        snapshot_budget.value(&source)?;
         let current = self.document(&before.expression_ref)?.clone();
         let document = &current;
         let edit = &prepared["native_edit"];
@@ -4421,49 +4274,6 @@ impl Application {
         }
         let bytes=serde_json::to_vec(&json!({"prepared":prepared,"source":source,"expression_ref":document.expression_ref,"document_revision":document.revision})).map_err(|e|e.to_string())?;
         let producer_ref = format!("procedure-source:{:x}", Sha256::digest(&bytes));
-        if self
-            .procedural_runtime
-            .producers
-            .contains_key(&producer_ref)
-        {
-            return serde_json::to_value(&self.procedural_runtime.producers[&producer_ref])
-                .map_err(|e| e.to_string());
-        }
-        // An unused compilation from an older CAS cannot subsequently be
-        // admitted. Active prepared/scheduled work keeps its original source.
-        let held: BTreeSet<_> = self
-            .procedural_runtime
-            .operations
-            .values()
-            .filter(|operation| {
-                matches!(
-                    operation.status,
-                    Status::Prepared | Status::Scheduled | Status::Applying
-                )
-            })
-            .filter_map(|operation| operation.envelope.producer_ref.clone())
-            .collect();
-        self.procedural_runtime
-            .producers
-            .retain(|reference, admission| {
-                admission.expression_ref != before.expression_ref
-                    || admission.document_revision == before.revision
-                    || held.contains(reference)
-            });
-        let retained = self
-            .procedural_runtime
-            .producers
-            .values()
-            .try_fold(0usize, |sum, p| {
-                serde_json::to_vec(p)
-                    .map(|bytes| sum.saturating_add(bytes.len()))
-                    .map_err(|e| e.to_string())
-            })?;
-        if self.procedural_runtime.producers.len() >= 64
-            || retained.saturating_add(bytes.len()) > 8 * 1024 * 1024
-        {
-            return Err("Native producer preparation horizon is full; settle and release its owned work before producing more".into());
-        }
         let admitted = ProducerAdmission {
             producer_ref: producer_ref.clone(),
             expression_ref: document.expression_ref.clone(),
@@ -4476,10 +4286,90 @@ impl Application {
             outputs,
             metadata,
         };
-        let receipt = serde_json::to_value(&admitted).map_err(|e| e.to_string())?;
+        Ok(admitted)
+    }
+
+    /// Capacity and complete CAS are checked without releasing any old producer.
+    /// The prepared object is issued by the source compiler, never a JSON grant.
+    pub(crate) fn commit_procedural_source_admission(
+        &mut self,
+        before: &Document,
+        admitted: ProducerAdmission,
+    ) -> Result<(), String> {
+        if self.document(&before.expression_ref)? != before
+            || admitted.expression_ref != before.expression_ref
+            || admitted.document_revision != before.revision
+        {
+            return Err("The original native compiler basis changed before admission".into());
+        }
+        if let Some(existing) = self
+            .procedural_runtime
+            .producers
+            .get(&admitted.producer_ref)
+        {
+            if existing.prepared != admitted.prepared || existing.source != admitted.source {
+                return Err(
+                    "Original producer identity differs from its compiled preparation".into(),
+                );
+            }
+            return Ok(());
+        }
+        let held: BTreeSet<_> = self
+            .procedural_runtime
+            .operations
+            .values()
+            .filter(|operation| {
+                matches!(
+                    operation.status,
+                    Status::Prepared | Status::Scheduled | Status::Applying
+                )
+            })
+            .filter_map(|operation| operation.envelope.producer_ref.as_deref())
+            .collect();
+        let keep = |reference: &String, admission: &ProducerAdmission| {
+            admission.expression_ref != before.expression_ref
+                || admission.document_revision == before.revision
+                || held.contains(reference.as_str())
+        };
+        let mut budget = budget::Budget::new();
+        let mut count = 0usize;
+        for (reference, admission) in &self.procedural_runtime.producers {
+            if keep(reference, admission) {
+                budget.value(admission)?;
+                count += 1;
+            }
+        }
+        budget.value(&admitted)?;
+        if count >= 64 {
+            return Err("Native producer preparation horizon is full; settle and release its owned work before producing more".into());
+        }
+        // All fallible checks precede the two native owner mutations.
+        let keep_refs: BTreeSet<String> = self
+            .procedural_runtime
+            .producers
+            .iter()
+            .filter(|(reference, admission)| keep(reference, admission))
+            .map(|(reference, _)| reference.clone())
+            .collect();
         self.procedural_runtime
             .producers
-            .insert(producer_ref, admitted);
+            .retain(|reference, _| keep_refs.contains(reference));
+        self.procedural_runtime
+            .producers
+            .insert(admitted.producer_ref.clone(), admitted);
+        Ok(())
+    }
+
+    pub(crate) fn admit_procedural_source(
+        &mut self,
+        before: &Document,
+        prepared: Value,
+        source: Value,
+    ) -> Result<Value, String> {
+        let admitted = self.prepare_procedural_source_admission(before, prepared, source)?;
+        bootstrap::preflight_source_message(&admitted)?;
+        let receipt = serde_json::to_value(&admitted).map_err(|e| e.to_string())?;
+        self.commit_procedural_source_admission(before, admitted)?;
         Ok(receipt)
     }
 

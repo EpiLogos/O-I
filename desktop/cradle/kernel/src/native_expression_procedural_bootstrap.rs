@@ -237,6 +237,11 @@ impl crate::Kernel {
         }
         let mut request = input.request;
         request["command"]["request"]["input"] = issued.request(&intent)?;
+        let intake = super::lifecycle::SourceIntake::capture(
+            &self.native_expression,
+            &input.lease,
+            &request,
+        )?;
         let scene_revision = before
             .scenes
             .iter()
@@ -266,15 +271,45 @@ impl crate::Kernel {
                 });
             }
         };
+        let completion = intake.finish_qualified(&mut self.native_expression, &reply);
         let source_currentness = outcome
             .currentness
             .and_then(|()| issued.require_scene_owner(&self.expressions, &before));
         let (data, changed) = if reply["status"] == "ok" {
             let admitted = source_currentness
-                .and_then(|()| issued.qualify(&before, &intent, &reply))
-                .and_then(|admission| {
-                    self.expressions
-                        .finish_source_bootstrap(&self.client, admission)
+                .and_then(|()| completion)
+                .and_then(|completion| {
+                    let scene_owner = self
+                        .expressions
+                        .procedural_scene_owner(&before, &intent.scene_ref)?;
+                    let admission = issued.qualify(&before, &intent, &reply)?;
+                    let mut accepted = self
+                        .expressions
+                        .finish_source_bootstrap(&self.client, admission)?;
+                    if accepted.0["source_current"] == true {
+                        // Only SAME actual current CAS qualifies constructor custody.
+                        // A binding Edit instead requires fresh native no-write bootstrap.
+                        match self.native_expression.retain_registered_consumers(
+                            &self.expressions,
+                            &before,
+                            scene_owner,
+                            completion,
+                        ) {
+                            Ok(()) => accepted.0["receiving_qualification"] = json!("registered"),
+                            Err(reason) => {
+                                self.native_expression.invalidate_registered_consumers();
+                                // Preserve the actual accepted Source reply/adoption and
+                                // full native receipt despite this later factory refusal.
+                                accepted.0["receiving_qualification"] = json!("pending_reception");
+                                accepted.0["receiving_reason"] = json!(reason);
+                            }
+                        }
+                    } else {
+                        self.native_expression.invalidate_registered_consumers();
+                        accepted.0["receiving_qualification"] =
+                            json!("fresh_current_source_required");
+                    }
+                    Ok(accepted)
                 });
             match admitted {
                 Ok(accepted) => accepted,

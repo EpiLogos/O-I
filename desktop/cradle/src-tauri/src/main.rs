@@ -222,6 +222,33 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         }
         // Composing may provision QL's dated sky for tens of seconds: run it
         // outside the lock; only the single-owner open is serialised.
+        let stage = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_native_stage_library(&op);
+        match stage {
+            Err(reason) => {
+                return oi_cradle_kernel::Kernel::native_stage_library_refusal(&op, reason)
+            }
+            Ok(Some(prepared)) => {
+                let completed = match prepared.execute() {
+                    Ok(completed) => completed,
+                    Err(reason) => {
+                        return oi_cradle_kernel::Kernel::native_stage_library_refusal(&op, reason)
+                    }
+                };
+                let outcome = host
+                    .0
+                    .lock()
+                    .map_err(|_| "kernel lock unavailable")?
+                    .finish_native_stage_library(completed);
+                return outcome.or_else(|reason| {
+                    oi_cradle_kernel::Kernel::native_stage_library_refusal(&op, reason)
+                });
+            }
+            Ok(None) => {}
+        }
         let procedure = host
             .0
             .lock()

@@ -10,6 +10,7 @@ use serde_json::{json, Value};
 
 /// Captured from the actual current Manager before its private C31 channel
 /// consumes this original Host request. There is no wire constructor.
+#[derive(Debug)]
 pub(super) struct SourceIntake {
     lease: String,
     identity: Value,
@@ -64,6 +65,16 @@ impl SourceIntake {
         manager: &mut crate::native_expression::Manager,
         reply: &Value,
     ) -> Result<Value, String> {
+        self.finish_qualified(manager, reply)
+            .map(CompletedSourceIntake::into_source)
+    }
+    /// Preserve the actual private intake after its original channel receipt.
+    /// No wire constructor or caller-returned provenance can create this type.
+    pub(super) fn finish_qualified(
+        self,
+        manager: &mut crate::native_expression::Manager,
+        reply: &Value,
+    ) -> Result<CompletedSourceIntake, String> {
         let owner = manager
             .active
             .as_mut()
@@ -90,12 +101,74 @@ impl SourceIntake {
         // Keep actual FIELD cursor facts for the next serialized native
         // request. They never substitute for the admitted P timing position.
         owner.procedural_position = json!({"generation":reply["field"]["generation"],"samples_elapsed":reply["field"]["samples_elapsed"]});
-        Ok(
-            json!({"schema":"oi.native-expression-composed-source/v1","ql_executable":self.executable,
+        let source = json!({"schema":"oi.native-expression-composed-source/v1","ql_executable":self.executable,
             "native_binding":self.binding,"native_request_id":self.ordinal.to_string(),
             "original_request":self.original_request,"request_sha256":self.request_sha256,
-            "result_sha256":super::super::sha256_hex(&serde_json::to_vec(reply).map_err(|e| e.to_string())?)}),
-        )
+            "result_sha256":super::super::sha256_hex(&serde_json::to_vec(reply).map_err(|e| e.to_string())?)});
+        crate::expression::procedural::bootstrap::preflight_source_message(&(&source, reply))?;
+        Ok(CompletedSourceIntake {
+            intake: self,
+            source,
+            reply: reply.clone(),
+        })
+    }
+}
+
+/// Actual one-request completion retained on the SAME private native owner.
+/// Its fields cannot be deserialized, copied into a receipt, or reconstructed
+/// by importing the separately returned source provenance.
+#[derive(Debug)]
+pub(super) struct CompletedSourceIntake {
+    intake: SourceIntake,
+    source: Value,
+    reply: Value,
+}
+impl CompletedSourceIntake {
+    pub(super) fn source(&self) -> &Value {
+        &self.source
+    }
+    pub(super) fn reply(&self) -> &Value {
+        &self.reply
+    }
+    fn into_source(self) -> Value {
+        self.source
+    }
+    pub(super) fn require_current(
+        &self,
+        manager: &mut crate::native_expression::Manager,
+    ) -> Result<(), String> {
+        self.require_owner(manager, true)
+    }
+    pub(super) fn require_same_owner(
+        &self,
+        manager: &mut crate::native_expression::Manager,
+    ) -> Result<(), String> {
+        self.require_owner(manager, false)
+    }
+    fn require_owner(
+        &self,
+        manager: &mut crate::native_expression::Manager,
+        exact_ordinal: bool,
+    ) -> Result<(), String> {
+        let owner = manager
+            .active
+            .as_mut()
+            .ok_or("Actual Source completion owner closed")?;
+        if owner.lease != self.intake.lease
+            || owner.identity != self.intake.identity
+            || owner.procedural_executable != self.intake.executable
+            || owner.procedural_source != self.intake.binding
+            || owner.stopped
+            || owner.process_exited()?
+            || owner.last_request_id < self.intake.ordinal
+            || (exact_ordinal && owner.last_request_id != self.intake.ordinal)
+        {
+            return Err(
+                "Actual Source completion changed its original private owner or request standing"
+                    .into(),
+            );
+        }
+        Ok(())
     }
 }
 
@@ -135,6 +208,7 @@ pub(super) fn channel_refused(
 
 /// Issued only inside the native owner from its registered counterparts. This
 /// type has no public wire constructor and carries no claimed observation.
+#[derive(Debug, PartialEq)]
 pub struct ReceivingBoundary {
     expression_ref: String,
     document_revision: u64,
@@ -365,7 +439,7 @@ impl crate::Kernel {
         let source_currentness = outcome.currentness;
         // The native ordinal/pulse is consumed on an ordinary refusal too.
         // Retain its actual cursor before Source or Document qualification.
-        let source_result = intake.finish(&mut self.native_expression, &native_receipt);
+        let source_result = intake.finish_qualified(&mut self.native_expression, &native_receipt);
         let mut preparation = Value::Null;
         let mut prepare_request = Value::Null;
         let mut reason = source_currentness
@@ -379,9 +453,10 @@ impl crate::Kernel {
             "reconciliation_required"
         };
         if native_receipt["status"] == "ok" {
-            let qualified = (|| -> Result<Value, String> {
+            let qualified = (|| -> Result<(Value, CompletedSourceIntake), String> {
                 source_currentness?;
-                let source = source_result?;
+                let completion = source_result?;
+                let source = completion.source().clone();
                 let procedural = &native_receipt["procedural"];
                 if procedural["schema"] != "ql.procedural-conduct-receipt/v1"
                     || procedural["status"] != "prepared"
@@ -429,13 +504,30 @@ impl crate::Kernel {
                         .ok_or("Actual native producer identity absent")?,
                     position,
                 )?;
-                Ok(admission)
+                Ok((admission, completion))
             })();
             match qualified {
-                Ok(admission) => {
+                Ok((admission, completion)) => {
                     preparation = admission;
                     native_receipt["procedural"]["admission"] = preparation.clone();
-                    if let Some(boundary) = boundary.as_ref() {
+                    let registered = self.native_expression.procedural_receiving_boundary(
+                        &self.expressions,
+                        &before,
+                        &intent.scene_ref,
+                        preparation["producer_ref"]
+                            .as_str()
+                            .ok_or("Actual native producer identity absent")?,
+                        Some(&completion),
+                    );
+                    // Existing internal callers may supply a separately issued
+                    // boundary, but it must equal the SAME actual factory result.
+                    let registered = registered.and_then(|registered| {
+                        if boundary.as_ref().is_some_and(|provided| provided != &registered) {
+                            return Err("Supplied native boundary differs from actual registered counterparts".into());
+                        }
+                        Ok(registered)
+                    });
+                    if let Ok(boundary) = registered.as_ref() {
                         let receiving = (|| -> Result<Value, String> {
                             let envelope = self.expressions.procedural_receiving_envelope(
                                 &before,
@@ -461,9 +553,9 @@ impl crate::Kernel {
                         }
                     } else {
                         state = "pending_reception";
-                        reason = json!(
-                            "Source prepared actual material; its registered native receiver boundary is unavailable"
-                        );
+                        if let Err(refusal) = registered {
+                            reason = json!(refusal);
+                        }
                     }
                 }
                 Err(error) => {

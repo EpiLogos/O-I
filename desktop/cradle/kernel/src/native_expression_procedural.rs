@@ -22,6 +22,10 @@ pub mod lifecycle;
 pub mod lifecycle_cancel;
 #[path = "native_expression_procedural_manual.rs"]
 pub mod manual;
+#[path = "native_expression_procedural_receiver.rs"]
+pub(super) mod receiving;
+#[path = "native_expression_procedural_stage_library.rs"]
+pub mod stage_library;
 
 /// Fixed internal Source operations share the product's bounded installed
 /// executable owner. Public JSON never selects an executable or this verb.

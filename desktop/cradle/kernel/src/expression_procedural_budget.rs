@@ -4,24 +4,24 @@ use super::*;
 use serde::ser::{SerializeMap, SerializeStruct};
 use std::io::{self, Write};
 
-pub(super) const SOURCE_BYTES: usize = 8 * 1024 * 1024;
-pub(super) struct Budget {
+pub(crate) const SOURCE_BYTES: usize = 8 * 1024 * 1024;
+pub(crate) struct Budget {
     remaining: usize,
 }
 impl Budget {
-    pub(super) fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             remaining: SOURCE_BYTES,
         }
     }
-    pub(super) fn reserve(&mut self, bytes: usize) -> Result<(), String> {
+    pub(crate) fn reserve(&mut self, bytes: usize) -> Result<(), String> {
         self.remaining = self
             .remaining
             .checked_sub(bytes)
             .ok_or("Native Source aggregate intake byte budget exceeded before allocation")?;
         Ok(())
     }
-    pub(super) fn value<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), String> {
+    pub(crate) fn value<T: Serialize + ?Sized>(&mut self, value: &T) -> Result<(), String> {
         serde_json::to_writer(&mut *self, value).map_err(|_| {
             "Native Source aggregate intake byte budget exceeded before allocation".into()
         })
@@ -676,6 +676,13 @@ impl Serialize for GeneratedBasis<'_> {
         }
         map.end()
     }
+}
+/// Compare the exact native generated basis with the retained reading while
+/// borrowing all glyph material. Only the recursive procedural journal is omitted.
+pub(crate) fn generated_basis_matches(generated: &Value, current: &Value) -> bool {
+    GeneratedBasis(generated)
+        .serialize(MatchValue(current))
+        .is_ok()
 }
 #[derive(Serialize)]
 struct SourceBasisRow<'a> {

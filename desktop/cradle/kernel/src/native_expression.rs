@@ -42,6 +42,15 @@ pub enum Request {
     AbandonSelectedScene {
         request: selected_scene::Request,
     },
+    ProceduralStageLibrary {
+        request: procedural::stage_library::Intent,
+    },
+    ProceduralStageLibraryRetry {
+        request: procedural::stage_library::Intent,
+    },
+    ProceduralStageCapability {
+        request: procedural::stage_library::CapabilityRequest,
+    },
     ProceduralCompile {
         request: procedural::CompileRequest,
     },
@@ -110,7 +119,10 @@ struct Owner {
     procedural_executable: PathBuf,
     procedural_worker: PathBuf,
     procedural_definitions: BTreeMap<String, Value>,
+    // Original private Source/constructor qualification; never restored from JSON.
+    registered_consumers: Option<procedural::receiving::RegisteredConsumers>,
     procedural_checkpoints: BTreeMap<String, std::collections::BTreeSet<String>>,
+    stage_library_replays: procedural::stage_library::Memos,
     last_request_id: u64,
     stopped: bool,
     #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -630,6 +642,11 @@ impl Manager {
                 "Selected-Scene opening/recovery requires its actual native Kernel Document owner"
                     .into(),
             ),
+            Request::ProceduralStageLibrary { .. }
+            | Request::ProceduralStageLibraryRetry { .. }
+            | Request::ProceduralStageCapability { .. } => {
+                Err("Stage Library requires the actual native Kernel Document/Source owner".into())
+            }
             Request::ProceduralCompile { request } => procedural::Prepared::new(request)?
                 .execute()
                 .map(|completed| completed.response),
@@ -915,7 +932,9 @@ impl Manager {
             procedural_executable: host,
             procedural_worker: worker,
             procedural_definitions: BTreeMap::new(),
+            registered_consumers: None,
             procedural_checkpoints: BTreeMap::new(),
+            stage_library_replays: procedural::stage_library::Memos::default(),
             last_request_id: 0,
             stopped: false,
             #[cfg(any(target_os = "linux", target_os = "macos"))]
@@ -1887,7 +1906,25 @@ impl crate::Kernel {
         else {
             return Ok(None);
         };
-        let prepared = procedural::Prepared::new(request.clone())?;
+        let mut request = request.clone();
+        if request.command == procedural::Command::Prepare {
+            let basis = request
+                .basis
+                .as_ref()
+                .ok_or("Registered preparation needs actual Document basis")?;
+            let before = self
+                .expressions
+                .procedural_source_snapshot(&basis.expression_ref, basis.document_revision)?;
+            self.native_expression.bind_registered_prepare_consumers(
+                &self.expressions,
+                &before,
+                request
+                    .request
+                    .as_mut()
+                    .ok_or("Original native preparation absent")?,
+            )?;
+        }
+        let prepared = procedural::Prepared::new(request)?;
         let prepared = if let Some(basis) = prepared.basis() {
             let before = self
                 .expressions
@@ -1925,6 +1962,31 @@ impl crate::Kernel {
                 response["source"].clone(),
             )?;
             response["admission"] = admission;
+            // The private receiving source Scene is the current original bootstrap,
+            // not guessed from a recipe/output or an imported response.
+            let receiving = self
+                .native_expression
+                .registered_receiving_scene(&before.expression_ref)
+                .and_then(|scene| {
+                    self.native_registered_receiving_prepare(
+                        &before.expression_ref,
+                        before.revision,
+                        &scene,
+                        response["admission"]["producer_ref"]
+                            .as_str()
+                            .ok_or("Native producer identity absent")?,
+                    )
+                });
+            match receiving {
+                Ok(request) => {
+                    response["prepare_request"] = request;
+                    response["receiving_state"] = json!("prepared");
+                }
+                Err(reason) => {
+                    response["receiving_state"] = json!("pending_reception");
+                    response["receiving_reason"] = json!(reason);
+                }
+            }
         }
         Ok(crate::KernelOpOutcome {
             receipts: Vec::new(),
@@ -2019,7 +2081,9 @@ mod tests {
             procedural_executable: PathBuf::new(),
             procedural_worker: PathBuf::new(),
             procedural_definitions: BTreeMap::new(),
+            registered_consumers: None,
             procedural_checkpoints: BTreeMap::new(),
+            stage_library_replays: procedural::stage_library::Memos::default(),
             last_request_id: 0,
             stopped: false,
             #[cfg(any(target_os = "linux", target_os = "macos"))]
