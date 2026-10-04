@@ -116,7 +116,7 @@ def controls(page, base, prefix, width, label):
     expect(page.locator('.tag-filter .tag-chip').first).to_be_visible()
     if width == 900:
         chip = page.locator('.tag-filter .tag-chip').first
-        namespace = chip.inner_text()
+        namespace = chip.text_content().strip()
         chip.click()
         expect(page.locator('.tag-chip').filter(has_text=namespace).first).to_have_attribute('aria-pressed', 'true')
         assert namespace in page.evaluate('JSON.parse(localStorage.getItem("oi-graph-tag-namespaces"))')
@@ -159,11 +159,15 @@ def controls(page, base, prefix, width, label):
 
 
 def deep_routes(page, base, prefix, label):
+    width = page.viewport_size['width']
+    errors = []
+    page.on('pageerror', lambda err: errors.append(str(err)))
     response = page.goto(base + prefix + '/essay/' + FOUNDATION, wait_until='load')
     assert response.status == 200
     expect(page.locator('.essay-reader-toolbar')).to_be_visible()
     assert page.locator('.essay-site-home').evaluate('a => new URL(a.href).pathname') == prefix + '/'
-    page.locator('[data-essay-panel="connections"]').click()
+    if not page.locator('#essay-connections').is_visible():
+        page.locator('[data-essay-panel="connections"]').click()
     backlinks = page.locator('#essay-connections .backlinks a')
     expect(backlinks.first).to_be_visible(timeout=20000)
     backlink_count = backlinks.count()
@@ -179,12 +183,35 @@ def deep_routes(page, base, prefix, label):
     expect(page.locator('body')).to_have_attribute('data-slug', FOUNDATION)
     page.locator('.essay-anchor a').filter(has_text='Reading home').click()
     expect(page.locator('body')).to_have_attribute('data-slug', 'index')
-    # Search uses the native index and opens an actual section record.
-    page.locator('[data-essay-panel="pages"]').click()
-    page.locator('.search-button').click()
-    query = page.locator('.search-container.active .search-bar')
-    query.fill('Integral Threshold')
-    expect(page.locator('.search-container.active .result-card').first).to_be_visible(timeout=20000)
+    # Search uses the native index and repeats the same query after SPA visits.
+    search_states = []
+    def search():
+        if not page.locator('#essay-pages').is_visible():
+            page.locator('[data-essay-panel="pages"]').click()
+        page.locator('.search-button').click()
+        query = page.locator('.search-container.active .search-bar')
+        expect(query).to_be_focused()
+        state = query.evaluate('''e => ({
+          value: e.value, connected: e.isConnected,
+          layoutConnected: e.closest('.search').querySelector('.search-layout').isConnected,
+          results: [...e.closest('.search').querySelectorAll('.results-container')].map(r => ({ connected: r.isConnected, children: r.children.length }))
+        })''')
+        assert state['value'] == '' and state['connected'] and state['layoutConnected'], state
+        assert len(state['results']) == 1 and state['results'][0]['connected'], state
+        search_states.append(state)
+        if width >= 1280:
+            # Actual hit testing proves the Search overlay covers the toolbar.
+            assert page.evaluate('''() => {
+              const b = document.querySelector('[data-essay-panel="pages"]').getBoundingClientRect();
+              return !!document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2)?.closest('.search-container.active');
+            }'''), 'toolbar sits above Search'
+        query.fill('Integral Threshold')
+        expect(page.locator('.search-container.active .result-card:not(.no-match)').first).to_be_visible(timeout=20000)
+        expect(page.locator('.search-container.active .preview-inner')).to_be_visible(timeout=20000)
+        expect(page.locator('.essay-reader-toolbar')).to_have_count(1)
+        expect(page.locator('#essay-pages')).to_have_count(1)
+        expect(page.locator('#essay-connections')).to_have_count(1)
+    search()
     page.locator('.search-container.active .result-card').first.click()
     expect(page).not_to_have_url(base + prefix + '/essay/')
     searched_slug = page.locator('body').get_attribute('data-slug')
@@ -192,15 +219,18 @@ def deep_routes(page, base, prefix, label):
     expect(page.locator('article')).to_be_visible()
     page.locator('.essay-anchor a').filter(has_text='Reading home').click()
     expect(page.locator('body')).to_have_attribute('data-slug', 'index')
-    page.locator('[data-essay-panel="pages"]').click()
-    page.locator('.search-button').click()
-    page.locator('.search-container.active .search-bar').fill('Integral Threshold')
-    expect(page.locator('.search-container.active .result-card').first).to_be_visible(timeout=20000)
+    search()
+    page.screenshot(path=str(OUT / f'{label}-repeated-search.png'))
     page.keyboard.press('Escape')
     expect(page.locator('.search-container')).not_to_be_visible()
-    page.keyboard.press('Escape')
+    expect(page.locator('#essay-pages')).to_be_visible()
+    if width < 1280:
+        page.keyboard.press('Escape')
+    else:
+        page.locator('#essay-pages [data-essay-close]').click()
     expect(page.locator('#essay-pages')).not_to_be_visible()
-    return {'root_home': prefix + '/', 'foundation': FOUNDATION, 'native_search': True, 'searched_record': searched_slug, 'foundation_backlinks': backlink_count, 'first_backlink': backlink_target}
+    assert not errors, errors
+    return {'root_home': prefix + '/', 'foundation': FOUNDATION, 'native_search': True, 'search_states': search_states, 'searched_record': searched_slug, 'foundation_backlinks': backlink_count, 'first_backlink': backlink_target, 'page_errors': errors}
 
 
 def main():
@@ -230,19 +260,21 @@ def main():
                     except Exception as screenshot_error: RESULTS[-1]['failure_screenshot_error'] = str(screenshot_error)
                 context.close()
             if os.environ.get('OI_READER_DEEP', '1') == '0': continue
-            context = browser.new_context(viewport={'width': 900, 'height': 850})
-            page = context.new_page()
-            try:
-                evidence = deep_routes(page, base, prefix, mode)
-                RESULTS.append({'case': mode + '-deep-routes-and-search', 'passed': True, **evidence})
-                print('PASS', mode + '-deep-routes-and-search', flush=True)
-            except Exception as err:
-                RESULTS.append({'case': mode + '-deep-routes-and-search', 'passed': False, 'error': str(err), 'traceback': traceback.format_exc()})
-                print('FAIL', mode + '-deep-routes-and-search', str(err), flush=True)
-                (OUT / 'reader-controls.json').write_text(json.dumps(RESULTS, indent=2) + '\n')
-                try: page.screenshot(path=str(OUT / f'{mode}-routes-failure.png'), timeout=5000)
-                except Exception as screenshot_error: RESULTS[-1]['failure_screenshot_error'] = str(screenshot_error)
-            context.close()
+            for width in [900, 1440]:
+                label = f'{mode}-{width}-deep-routes-and-search'
+                context = browser.new_context(viewport={'width': width, 'height': 850})
+                page = context.new_page()
+                try:
+                    evidence = deep_routes(page, base, prefix, label)
+                    RESULTS.append({'case': label, 'passed': True, **evidence})
+                    print('PASS', label, flush=True)
+                except Exception as err:
+                    RESULTS.append({'case': label, 'passed': False, 'error': str(err), 'traceback': traceback.format_exc()})
+                    print('FAIL', label, str(err), flush=True)
+                    (OUT / 'reader-controls.json').write_text(json.dumps(RESULTS, indent=2) + '\n')
+                    try: page.screenshot(path=str(OUT / f'{label}-failure.png'), timeout=5000)
+                    except Exception as screenshot_error: RESULTS[-1]['failure_screenshot_error'] = str(screenshot_error)
+                context.close()
         browser.close()
     for server in servers:
         host.stop(server)
