@@ -17,7 +17,7 @@ test('a real cached Git source refreshes main and stages figures while withholdi
     await writeFile(join(essay,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold.md'),'# §0/1\n');
     const visual=join(essay,'symbolon/matheme/diagrams');await mkdir(visual,{recursive:true});
     const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><circle cx="10" cy="10" r="5"/></svg>\n';
-    await writeFile(join(visual,'relation.md'),'# Relation\n![Relation](relation.svg)\n');await writeFile(join(visual,'relation.svg'),svg);
+    await writeFile(join(visual,'relation.md'),'# Relation\n![Relation](relation.svg)\nConsumer: [working draft](../../../../../working/s01/M05.md)\n');await writeFile(join(visual,'relation.svg'),svg);
     await writeFile(join(visual,'relation-NOTES.md'),'Private author encounter\n');
     git('add','.');git('commit','-m','First actual essay source');
     const first=await resolveEssaySource({siteDirectory:site,candidates:[],remote,ref:'main'});
@@ -29,8 +29,13 @@ test('a real cached Git source refreshes main and stages figures while withholdi
     assert.equal(result.assets,1);assert.equal(await readFile(join(staged,'symbolon/matheme/diagrams/relation.svg'),'utf8'),svg);
     assert.equal(await readFile(join(staged,'index.md'),'utf8'),'# Updated Foundation\n');
     await assert.rejects(readFile(join(staged,'symbolon/matheme/diagrams/relation-NOTES.md')),{code:'ENOENT'});
+    assert.equal((await readFile(join(staged,'symbolon/matheme/diagrams/relation.md'),'utf8')).includes('Consumer: working draft'),true);
+    assert.equal((await readFile(join(visual,'relation.md'),'utf8')).includes('[working draft]'),true);
     assert.equal(inputs.foundationSlug,'section-rooms/00-integral-threshold/ROOM-00-integral-threshold');
     assert.match(inputs.inputSha256,/^[a-f0-9]{64}$/);
+    git('checkout','--detach','HEAD');
+    const detached = await resolveEssaySource({siteDirectory:site,candidates:[remote],remote,ref:'main'});
+    assert.equal(detached.ref,detached.commit); // never label an explicit pinned snapshot as canonical main
   } finally { await rm(dir,{recursive:true,force:true}); }
 });
 
