@@ -198,6 +198,9 @@ class OwnedProcesses:
             payload = {'schema': 'epi.hosted-owned-process-image-phase/v1', 'phase': self.phase,
                        'records': list(self.rows.values()), 'errors': list(self.errors),
                        'cleanups': [row for row in self.cleanups if row.get('phase') == self.phase]}
+            # PID/start tuples are JSON arrays on disk. Compare against the
+            # complete wire value rather than Python-only tuple identities.
+            payload = parse(json.dumps(payload, allow_nan=False))
             raw = (json.dumps(payload, indent=2, allow_nan=False) + '\n').encode()
             require(len(self.rows) <= 512 and len(raw) <= 2 * 1024 * 1024, 'Owned phase evidence exceeds original bounds')
             directory = self.output / 'owned-image-phases'
