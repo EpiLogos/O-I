@@ -55,6 +55,7 @@ OI_SCOPE = [
     'desktop/cradle/tests/epi-world-hosted-native.py',
     'desktop/cradle/tests/current-manifest-artifact-guards.mjs',
     'desktop/cradle/tests/native-saved-confirmation-native.test.mjs',
+    'desktop/cradle/tests/epi-caption-native.test.mjs',
     'desktop/cradle/tests/epi-owned-processes-native.py',
     'desktop/cradle/expressions-app/field-studies-journeys/src/app.ts',
     'desktop/cradle/expressions-app/field-studies-journeys/src/epiWorldProduction.ts',
@@ -1293,6 +1294,10 @@ class Replay:
                      self.repo / 'desktop/cradle',
                      {**self.env, 'OI_NATIVE_SAVED_CONFIRMATION': '1', 'OI_NATIVE_EXPRESSION_RECOVERY': '1',
                       'OI_KERNEL_BIN': self.bridge}, timeout=180)
+        self.command('actual-caption-native-flushed-basis',
+                     ['node', '--experimental-strip-types', '--import', './tests/ts-register.mjs', '--test',
+                      'tests/epi-caption-native.test.mjs'], self.repo / 'desktop/cradle',
+                     {**self.env, 'OI_NATIVE_EPI_CAPTION': '1', 'OI_KERNEL_BIN': self.bridge}, timeout=180)
         self.command('central-controlled-init', [ctrl, '--json', '--root', self.world, 'init'], self.out, timeout=120)
         require(self.world.is_dir(), 'Actual Central init did not create the owned world')
         first = self.start_bridge('selection-setup')

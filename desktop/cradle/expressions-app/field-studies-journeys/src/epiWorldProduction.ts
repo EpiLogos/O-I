@@ -299,26 +299,7 @@ export function createEpiWorldProduction(port:EpiProductionPort){
    const received=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
    if(!received.document||!sameSceneData(readEpiWorldRecord(received.document),record)||!sameSceneData(received.document.scenes.find(s=>s.scene_ref===record.receiving.scene_ref)?.presentation,captionChanges[0].presentation)||epiClockCaptionCorrection(received.document,record).length)throw Error('The native clock caption correction was not acknowledged.');
   }
-  const geometryDocument=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
-  if(!geometryDocument.document)throw Error('The saved cosmic captions cannot be read for their authored geometry.');
-  const geometryCorrection=epiCosmicCaptionGeometryCorrection(geometryDocument.document,record);
-  if(geometryCorrection.changes.length){
-   if(!port.presentationRest())throw Error('Reopen this saved world at rest to separate its generated captions; live field continuity was preserved.');
-   port.status('Separating the complete authored cosmic captions…');
-   // SceneMaterialSet changes exactly this presentation; the native owner
-   // advances its containing Scene and Document once. No other body may drift.
-   const expectedDocument=structuredClone(geometryDocument.document),expectedScene=expectedDocument.scenes.find(scene=>scene.scene_ref===record.receiving.scene_ref);
-   if(!expectedScene)throw Error('The caption geometry correction lost its containing Scene.');
-   expectedDocument.revision++;expectedScene.revision=expectedDocument.revision;expectedScene.presentation=geometryCorrection.changes[0].presentation;
-   await port.edit(document=>{
-    if(!sameSceneData(document,geometryDocument.document))throw Error('The native world changed before its caption geometry edit.');
-    return epiCosmicCaptionGeometryCorrection(document,record).changes;
-   });
-   const received=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
-   const acknowledged=received.document&&readEpiWorldRecord(received.document);
-   if(!received.document||!acknowledged||!sameSceneData(received.document,expectedDocument)||!sameSceneData(acknowledged,geometryCorrection.record)||!sameSceneData(received.document.scenes.find(scene=>scene.scene_ref===record.receiving.scene_ref)?.presentation,geometryCorrection.changes[0].presentation)||epiCosmicCaptionGeometryCorrection(received.document,acknowledged).changes.length)throw Error('The exact native live/saved caption geometry correction was not acknowledged.');
-   record=acknowledged;
-  }
+  record=await acknowledgeEpiCosmicCaptionGeometry(port,record);
   if(intent==='restore'&&(!sameSceneData(identity.source,record.identity_source)||identity.reading.input_revision!==record.identity_input_revision))throw Error('The saved identity changed. Review it and choose Use to admit its new current.');
   const updated={...record,identity_source:identity.source,identity_input_revision:identity.reading.input_revision};
   const current=await pin(updated,intent),context=current.context!;
@@ -368,6 +349,32 @@ export function epiClockCaptionCorrection(document:ExpressionDocument,record:Epi
  * is left untouched. An acknowledged receipt never re-normalises later edits. */
 function captionGeometryAdjustment(document:ExpressionDocument,record:EpiWorldRecord):EpiCaptionGeometryAdjustment{
  return{schema:'oi.epi-instance-caption-geometry-adjustment/v1',standing:'authored-presentation',actor:'agent:codex:epi-fidelity-lead',purpose:'Separate the complete generated cosmic caption cohort without changing source, bodies or typography',basis_revision:document.revision,scene_ref:record.receiving.scene_ref,event_ref:record.world.event_ref,person_ref:record.person_ref,source:structuredClone(EPI_COSMIC_CAPTION_GEOMETRY.source),before_y:[...EPI_COSMIC_CAPTION_GEOMETRY.before_y],after_y:[...EPI_COSMIC_CAPTION_GEOMETRY.after_y]};
+}
+/** The workspace commits a submitted local draft before invoking an edit.
+ * Determine the correction and its complete expected readback from that
+ * acknowledged basis, preserving every other authored value and selection. */
+export async function acknowledgeEpiCosmicCaptionGeometry(port:Pick<EpiProductionPort,'expression'|'edit'|'presentationRest'|'status'>,record:EpiWorldRecord):Promise<EpiWorldRecord>{
+ const inspected=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
+ if(!inspected.document)throw Error('The saved cosmic captions cannot be read for their authored geometry.');
+ if(!epiCosmicCaptionGeometryCorrection(inspected.document,record).changes.length)return record;
+ if(!port.presentationRest())throw Error('Reopen this saved world at rest to separate its generated captions; live field continuity was preserved.');
+ port.status('Separating the complete authored cosmic captions…');
+ let expectedDocument:ExpressionDocument|undefined,expectedRecord:EpiWorldRecord|undefined;
+ await port.edit(document=>{
+  const correction=epiCosmicCaptionGeometryCorrection(document,record);
+  if(correction.changes.length&&!port.presentationRest())throw Error('Reopen this saved world at rest to separate its generated captions; live field continuity was preserved.');
+  expectedDocument=structuredClone(document);expectedRecord=correction.record;
+  if(correction.changes.length){
+   const scene=expectedDocument.scenes.find(scene=>scene.scene_ref===record.receiving.scene_ref);
+   if(!scene)throw Error('The caption geometry correction lost its containing Scene.');
+   expectedDocument.revision++;scene.revision=expectedDocument.revision;scene.presentation=correction.changes[0].presentation;
+  }
+  return correction.changes;
+ });
+ const received=await port.expression({operation:'inspect',expression_ref:record.world.instance_ref});
+ const acknowledged=received.document&&readEpiWorldRecord(received.document);
+ if(!expectedDocument||!expectedRecord||!received.document||!acknowledged||!sameSceneData(received.document,expectedDocument)||!sameSceneData(acknowledged,expectedRecord)||epiCosmicCaptionGeometryCorrection(received.document,acknowledged).changes.length)throw Error('The exact native live/saved caption geometry correction was not acknowledged.');
+ return acknowledged;
 }
 export function epiCosmicCaptionGeometryCorrection(document:ExpressionDocument,record:EpiWorldRecord):{changes:Extract<import('../../../src/expression/types.js').Change,{change:'scene_material_set'}>[];record:EpiWorldRecord}{
  const actual=readEpiWorldRecord(document),sceneRef=`${document.expression_ref}:scene:cosmic`;
