@@ -635,12 +635,12 @@
       "diagram": "upgrade-lifecycle.mmd",
       "from": "binary",
       "to": "pointer",
-      "label": "stage and atomically select after success",
+      "label": "prepare all, then commit links",
       "standing": "source-inspected",
       "basis": [
         {
           "source": "O:I:cli/src/update_flow.rs",
-          "relation": "stage_and_link / atomic_symlink after successful preparation"
+          "relation": "e16a64fc prepare_entry stages/digest/smoke-checks all admitted products before commit_prepared sequential per-link atomic renames; undo_flips is best effort and receipt/composition rollback is unresolved"
         }
       ]
     },
@@ -649,12 +649,12 @@
       "diagram": "upgrade-lifecycle.mmd",
       "from": "pointer",
       "to": "old",
-      "label": "old process retains old inode",
+      "label": "selection alone does not restart residents",
       "standing": "source-inspected",
       "basis": [
         {
           "source": "O:I:cli/src/update_flow.rs",
-          "relation": "Atomic link replacement retains old executable inode; existing process is not restarted"
+          "relation": "e16a64fc default apply retains resident processes and reports stale cuts; optional --restart-residents delegates product-owned gateway upgrade, not transparent process migration"
         }
       ]
     },
