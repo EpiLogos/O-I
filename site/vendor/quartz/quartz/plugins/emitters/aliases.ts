@@ -15,8 +15,8 @@ async function* processFile(ctx: BuildCtx, file: VFile, canonicalSlugs: Set<stri
         : aliasTarget
     ) as FullSlug
 
-    // A concept alias may name the manuscript. The real reading page owns its address.
-    if (canonicalSlugs.has(simplifySlug(aliasTargetSlug))) continue
+    // Preserve real reading addresses across case-sensitive and case-insensitive build hosts.
+    if (canonicalSlugs.has(simplifySlug(aliasTargetSlug).normalize("NFC").toLowerCase())) continue
 
     const redirUrl = resolveRelative(aliasTargetSlug, ogSlug)
     yield write({
@@ -42,13 +42,13 @@ async function* processFile(ctx: BuildCtx, file: VFile, canonicalSlugs: Set<stri
 export const AliasRedirects: QuartzEmitterPlugin = () => ({
   name: "AliasRedirects",
   async *emit(ctx, content) {
-    const canonicalSlugs = new Set(content.map(([, file]) => simplifySlug(file.data.slug!)))
+    const canonicalSlugs = new Set(content.map(([, file]) => simplifySlug(file.data.slug!).normalize("NFC").toLowerCase()))
     for (const [_tree, file] of content) {
       yield* processFile(ctx, file, canonicalSlugs)
     }
   },
   async *partialEmit(ctx, content, _resources, changeEvents) {
-    const canonicalSlugs = new Set(content.map(([, file]) => simplifySlug(file.data.slug!)))
+    const canonicalSlugs = new Set(content.map(([, file]) => simplifySlug(file.data.slug!).normalize("NFC").toLowerCase()))
     for (const changeEvent of changeEvents) {
       if (!changeEvent.file) continue
       if (changeEvent.type === "add" || changeEvent.type === "change") {
