@@ -4,6 +4,7 @@
 use crate::{files, CentralClient};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeMap,
     fs::{self, OpenOptions},
@@ -29,6 +30,18 @@ pub enum Request {
     Exchange {
         lease: String,
         request: Value,
+    },
+    /// Observe the last acknowledged field without issuing a worker request.
+    /// Every fence names the same live owner and exact acknowledged cursor.
+    Observe {
+        lease: String,
+        instance_ref: String,
+        event_ref: String,
+        subject_ref: String,
+        expected_generation: String,
+        expected_samples_elapsed: String,
+        #[serde(default)]
+        expected_request_id: Option<String>,
     },
     Close {
         lease: String,
@@ -75,7 +88,52 @@ struct Owner {
     config_path: PathBuf,
     identity: Value,
     last_request_id: u64,
+    // One bounded field/ACK witness, never a trace or private source cache.
+    observation: Result<Value, String>,
     stopped: bool,
+}
+
+impl Owner {
+    fn retain_acknowledgement(&mut self, reply: &Value, request: Option<Value>) {
+        // Observation failure must not turn a real accepted operation into
+        // unknown standing. Its next passive read reports the exact failure.
+        self.observation = (|| {
+            let (bytes, digest) = crate::expression_act_storage::fingerprint(reply, MAX_REPLY)?;
+            let at = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map_err(|e| e.to_string())?
+                .as_millis();
+            let envelope = reply
+                .as_object()
+                .ok_or("native acknowledgement is not an object")?
+                .iter()
+                .filter(|(key, _)| {
+                    [
+                        "schema",
+                        "status",
+                        "available",
+                        "standing",
+                        "instance_ref",
+                        "request_id",
+                        "last_request_id",
+                        "error",
+                        "field",
+                    ]
+                    .contains(&key.as_str())
+                })
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect::<serde_json::Map<_, _>>();
+            Ok(json!({
+                "acknowledgement":envelope,
+                "acknowledged_at_unix_ms":at,
+                "acknowledgement_sha256":digest,
+                "acknowledgement_serialized_byte_len":bytes,
+                "request":request,
+                "fingerprint_basis":"complete parsed native packet serialized as JSON; excludes transport newline",
+                "inspect_sources_retained":false
+            }))
+        })();
+    }
 }
 
 fn nonempty(s: &str) -> bool {
@@ -611,13 +669,17 @@ impl Manager {
                 if Some(id) != owner.last_request_id.checked_add(1) {
                     return Err("native-expression.stale_request".into());
                 }
-                if serde_json::to_vec(&request)
-                    .map_err(|e| e.to_string())?
-                    .len()
-                    > MAX_REQUEST
-                {
+                let request_bytes = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
+                if request_bytes.len() > MAX_REQUEST {
                     return Err("native request exceeds 32 MiB".into());
                 }
+                let request_observation = json!({
+                    "operation":request["command"]["operation"],
+                    "request_id":request["request_id"],
+                    "sha256":format!("sha256:{:x}", Sha256::digest(&request_bytes)),
+                    "serialized_byte_len":request_bytes.len()
+                });
+                drop(request_bytes);
                 let reply = owner
                     .tx
                     .as_ref()
@@ -636,6 +698,7 @@ impl Manager {
                                 .contains(&reply["status"].as_str().unwrap_or("")) =>
                     {
                         owner.last_request_id = id;
+                        owner.retain_acknowledgement(&reply, Some(request_observation));
                         Ok(reply)
                     }
                     result => {
@@ -649,6 +712,73 @@ impl Manager {
                         ))
                     }
                 }
+            }
+            Request::Observe {
+                lease,
+                instance_ref,
+                event_ref,
+                subject_ref,
+                expected_generation,
+                expected_samples_elapsed,
+                expected_request_id,
+            } => {
+                let owner = self
+                    .active
+                    .as_mut()
+                    .ok_or("native-expression.unavailable: no active owner")?;
+                if lease != owner.lease {
+                    return Err("native-expression.foreign_lease".into());
+                }
+                for (key, value) in [
+                    ("instance_ref", instance_ref),
+                    ("event_ref", event_ref),
+                    ("subject_ref", subject_ref),
+                ] {
+                    if owner.identity[key].as_str() != Some(value.as_str()) {
+                        return Err(format!("native-expression.foreign_{key}"));
+                    }
+                }
+                if let Some(expected_request_id) = expected_request_id {
+                    if cursor(&Value::String(expected_request_id))? != owner.last_request_id {
+                        return Err("native-expression.stale_observation".into());
+                    }
+                }
+                let field = &owner.observation.as_ref().map_err(|reason| {
+                    format!("native-expression.observation_unavailable: {reason}")
+                })?["acknowledgement"]["field"];
+                if cursor(&Value::String(expected_generation))? != cursor(&field["generation"])?
+                    || cursor(&Value::String(expected_samples_elapsed))?
+                        != cursor(&field["samples_elapsed"])?
+                {
+                    return Err("native-expression.stale_observation".into());
+                }
+                if owner.child.try_wait().map_err(|e| e.to_string())?.is_some() {
+                    self.active.take();
+                    return Err("native-expression.unavailable: observed host has exited".into());
+                }
+                let observed_at = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .map_err(|e| e.to_string())?
+                    .as_millis();
+                let retained = owner.observation.as_ref().map_err(|reason| {
+                    format!("native-expression.observation_unavailable: {reason}")
+                })?;
+                let observation = json!({
+                    "schema":"oi.native-expression-observation/v1",
+                    "standing":"last-acknowledged field; no fresh native read",
+                    "lease":owner.lease,
+                    "identity":owner.identity,
+                    "last_request_id":owner.last_request_id.to_string(),
+                    "kernel_process_id":std::process::id(),
+                    "native_host_process_id":owner.child.id(),
+                    "host_has_not_exited":true,
+                    "observed_at_unix_ms":observed_at,
+                    "retained":retained
+                });
+                crate::expression_act_storage::measure(&observation, MAX_REPLY).map_err(
+                    |reason| format!("native-expression.observation_unavailable: {reason}"),
+                )?;
+                Ok(observation)
             }
             Request::Compose { request } => {
                 let prepared = self.prepare_compose(&request)?;
@@ -789,6 +919,7 @@ impl Manager {
             config_path,
             identity: Value::Null,
             last_request_id: 0,
+            observation: Err("native acknowledgement not yet received".into()),
             stopped: false,
         };
         let receipt = owner.receive()?;
@@ -812,6 +943,7 @@ impl Manager {
         {
             return Err("native owner omitted its identity".into());
         }
+        owner.retain_acknowledgement(&receipt, None);
         self.active = Some(owner);
         Ok(
             json!({"schema":"oi.native-expression-open/v1","lease":lease,"source":source,"presentation":binding.presentation,"receipt":receipt,"checkpoint":"same-live-GPU-only; no process or native rewind"}),

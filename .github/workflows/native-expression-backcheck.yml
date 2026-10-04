@@ -126,7 +126,11 @@ jobs:
           # Replay the original delivered-value and reservation failures first.
           # These real native checks do not replace the unchanged full gate.
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --lib scalar_operand_tests -- --nocapture 2>&1 | tee /tmp/w5-checks/scalar-operands.log
-          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_performance_delivery actual_native_act_delivery_preserves_encoded_original_bytes_decoded_applications_and_current_score -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/delivered-native-operands.log
+          # Preserve this prefix's actual output separately: the full gate's
+          # original no-overwrite check must receive a fresh destination.
+          delivered_prefix="$OI_NATIVE_PERFORMANCE_DELIVERY_DIRECTORY/delivered-operands-prefix"
+          mkdir -m 700 "$delivered_prefix"
+          OI_NATIVE_PERFORMANCE_DELIVERY_DIRECTORY="$delivered_prefix" cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_performance_delivery actual_native_act_delivery_preserves_encoded_original_bytes_decoded_applications_and_current_score -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/delivered-native-operands.log
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_performance_delivery actual_pending_native_reservation_delivers_original_occurrence_without_a_played_future_receipt -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/reserved-native-operands.log
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test expression_transport_native native_large_document_inspect_is_complete_and_world_routing_is_preserved -- --exact --nocapture 2>&1 | tee /tmp/w5-checks/complete-native-inspect.log
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets --no-fail-fast -- --nocapture 2>&1 | tee /tmp/w5-checks/kernel.log

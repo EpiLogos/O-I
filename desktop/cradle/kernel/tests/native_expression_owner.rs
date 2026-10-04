@@ -54,6 +54,85 @@ fn state(reply: &Value) -> Value {
     value
 }
 
+fn observe_request(lease: &str, last: &Value) -> Request {
+    Request::Observe {
+        lease: lease.into(),
+        instance_ref: last["instance_ref"].as_str().unwrap().into(),
+        event_ref: last["field"]["event_ref"].as_str().unwrap().into(),
+        subject_ref: last["field"]["subject_ref"].as_str().unwrap().into(),
+        expected_generation: last["field"]["generation"].as_str().unwrap().into(),
+        expected_samples_elapsed: last["field"]["samples_elapsed"].as_str().unwrap().into(),
+        expected_request_id: Some(last["last_request_id"].as_str().unwrap().into()),
+    }
+}
+
+fn assert_passive_observation(
+    manager: &mut Manager,
+    client: &CentralClient,
+    lease: &str,
+    last: &Value,
+    actual_request: Option<&Value>,
+) -> Value {
+    let observed = manager.apply(client, observe_request(lease, last)).unwrap();
+    assert_eq!(observed["schema"], "oi.native-expression-observation/v1");
+    assert_eq!(
+        observed["standing"],
+        "last-acknowledged field; no fresh native read"
+    );
+    assert_eq!(observed["lease"], lease);
+    assert_eq!(observed["last_request_id"], last["last_request_id"]);
+    assert_eq!(observed["kernel_process_id"], std::process::id());
+    assert!(observed["native_host_process_id"].as_u64().unwrap() > 0);
+    let retained = &observed["retained"];
+    // Compare the complete actual worker field, including targets and PCM,
+    // against the original operation reply consumed by the scene caller.
+    assert_eq!(retained["acknowledgement"]["field"], last["field"]);
+    for key in [
+        "schema",
+        "status",
+        "available",
+        "standing",
+        "instance_ref",
+        "request_id",
+        "last_request_id",
+        "error",
+    ] {
+        assert_eq!(retained["acknowledgement"].get(key), last.get(key));
+    }
+    assert!(retained["acknowledgement"].get("sources").is_none());
+    assert!(retained["acknowledgement"].get("influence").is_none());
+    assert!(retained["acknowledgement"].get("event").is_none());
+    // Independently materialize the original full reply bytes; private Inspect
+    // extras participate in its fingerprint without entering the passive body.
+    let bytes = serde_json::to_vec(last).unwrap();
+    assert_eq!(retained["acknowledgement_serialized_byte_len"], bytes.len());
+    assert_eq!(
+        retained["acknowledgement_sha256"],
+        format!("sha256:{:x}", Sha256::digest(bytes))
+    );
+    if let Some(request) = actual_request {
+        let bytes = serde_json::to_vec(request).unwrap();
+        assert_eq!(
+            retained["request"]["operation"],
+            request["command"]["operation"]
+        );
+        assert_eq!(retained["request"]["request_id"], request["request_id"]);
+        assert_eq!(retained["request"]["serialized_byte_len"], bytes.len());
+        assert_eq!(
+            retained["request"]["sha256"],
+            format!("sha256:{:x}", Sha256::digest(bytes))
+        );
+        assert_eq!(retained["request"].as_object().unwrap().len(), 4);
+    } else {
+        assert!(retained["request"].is_null());
+    }
+    assert!(serde_json::to_vec(&observed).unwrap().len() <= 64 * 1024 * 1024);
+    let again = manager.apply(client, observe_request(lease, last)).unwrap();
+    assert_eq!(again["retained"], *retained);
+    assert_eq!(again["last_request_id"], observed["last_request_id"]);
+    observed
+}
+
 // QL's original.input is a typed CoupledInput, not the original JSON token
 // stream. Its opaque source_receipts are parsed by the native QL owner and may
 // serialize an equivalent finite decimal spelling. Retain full receipt shape,
@@ -97,16 +176,17 @@ fn same_typed_source_receipt(actual: &Value, expected: &Value) -> bool {
         }
         (Value::Array(actual), Value::Array(expected)) => {
             actual.len() == expected.len()
-                && actual.iter().zip(expected).all(|(actual, expected)| {
-                    same_typed_source_receipt(actual, expected)
-                })
+                && actual
+                    .iter()
+                    .zip(expected)
+                    .all(|(actual, expected)| same_typed_source_receipt(actual, expected))
         }
         (Value::Object(actual), Value::Object(expected)) => {
             actual.len() == expected.len()
                 && actual.iter().all(|(key, actual)| {
-                    expected.get(key).is_some_and(|expected| {
-                        same_typed_source_receipt(actual, expected)
-                    })
+                    expected
+                        .get(key)
+                        .is_some_and(|expected| same_typed_source_receipt(actual, expected))
                 })
         }
         _ => actual == expected,
@@ -142,18 +222,45 @@ fn typed_receipt_comparison_keeps_exact_value_bits_shape_and_raw_basis() {
     }
     let original = value("0.000011881545124631414");
     let changed = value("0.0000118815451246314141");
-    assert_eq!(original.as_f64().unwrap().to_bits(), changed.as_f64().unwrap().to_bits());
-    assert!(!same_typed_source_receipt(&original, &changed), "same IEEE bits must not hide a changed decimal value");
-    assert!(!same_typed_source_receipt(&value("-0.0"), &value("0.0")), "signed zero must retain its bits");
-    assert!(!same_typed_source_receipt(&value("1.0"), &value("1.0000000000000002")), "changed finite IEEE value must refuse");
-    assert!(!same_typed_source_receipt(&json!([1, 2]), &json!([2, 1])), "receipt array order must stay exact");
-    assert!(!same_typed_source_receipt(&json!({"body":"Moon"}), &json!({"body":"Sun"})), "receipt text must stay exact");
-    assert!(!same_typed_source_receipt(&json!({"body":"Moon"}), &json!({"body":"Moon", "extra":null})), "receipt members must stay exact");
+    assert_eq!(
+        original.as_f64().unwrap().to_bits(),
+        changed.as_f64().unwrap().to_bits()
+    );
+    assert!(
+        !same_typed_source_receipt(&original, &changed),
+        "same IEEE bits must not hide a changed decimal value"
+    );
+    assert!(
+        !same_typed_source_receipt(&value("-0.0"), &value("0.0")),
+        "signed zero must retain its bits"
+    );
+    assert!(
+        !same_typed_source_receipt(&value("1.0"), &value("1.0000000000000002")),
+        "changed finite IEEE value must refuse"
+    );
+    assert!(
+        !same_typed_source_receipt(&json!([1, 2]), &json!([2, 1])),
+        "receipt array order must stay exact"
+    );
+    assert!(
+        !same_typed_source_receipt(&json!({"body":"Moon"}), &json!({"body":"Sun"})),
+        "receipt text must stay exact"
+    );
+    assert!(
+        !same_typed_source_receipt(
+            &json!({"body":"Moon"}),
+            &json!({"body":"Moon", "extra":null})
+        ),
+        "receipt members must stay exact"
+    );
     let actual = value(r#"{"m1":{"drive":1e-5},"source_receipts":[{"rate":1e-5}]}"#);
     let receipts_only = value(r#"{"m1":{"drive":1e-5},"source_receipts":[{"rate":0.00001}]}"#);
     let non_receipt = value(r#"{"m1":{"drive":0.00001},"source_receipts":[{"rate":0.00001}]}"#);
     assert!(same_original_input_basis(&actual, &receipts_only));
-    assert!(!same_original_input_basis(&actual, &non_receipt), "outside opaque typed receipts Number tokens remain exact");
+    assert!(
+        !same_original_input_basis(&actual, &non_receipt),
+        "outside opaque typed receipts Number tokens remain exact"
+    );
 }
 
 #[test]
@@ -228,11 +335,47 @@ print(json.dumps({'ok':True,'data':data}))
     let lease = opened["lease"].as_str().unwrap().to_string();
     let mut last = opened["receipt"].clone();
     let original = state(&last);
+    assert_passive_observation(&mut manager, &client, &lease, &last, None);
+    // UI depth exposes generation/samples, while the native request cursor is
+    // returned by this first passive observation; neither needs an Exchange.
+    let mut initial: Value = serde_json::to_value(observe_request(&lease, &last)).unwrap();
+    initial
+        .as_object_mut()
+        .unwrap()
+        .remove("expected_request_id");
+    assert_eq!(
+        manager
+            .apply(&client, serde_json::from_value(initial.clone()).unwrap())
+            .unwrap()["last_request_id"],
+        last["last_request_id"]
+    );
+    for (key, foreign) in [
+        ("lease", "foreign"),
+        ("instance_ref", "foreign:instance"),
+        ("event_ref", "foreign:event"),
+        ("subject_ref", "foreign:subject"),
+    ] {
+        let mut request = initial.clone();
+        request[key] = json!(foreign);
+        assert!(manager
+            .apply(&client, serde_json::from_value(request).unwrap())
+            .unwrap_err()
+            .contains("foreign_"));
+    }
+    for key in ["expected_generation", "expected_samples_elapsed"] {
+        let mut request = initial.clone();
+        request[key] = json!("999999999");
+        assert!(manager
+            .apply(&client, serde_json::from_value(request).unwrap())
+            .unwrap_err()
+            .contains("stale_observation"));
+    }
     assert!(manager
         .apply(&client, open())
         .unwrap_err()
         .contains("owner_busy"));
     assert_eq!(opened["source"]["revision"], "controlled:r1");
+    let inspect_request = packet(&last, json!({"operation":"inspect"}));
     let inspected = exchange(
         &mut manager,
         &client,
@@ -241,6 +384,8 @@ print(json.dumps({'ok':True,'data':data}))
         json!({"operation":"inspect"}),
     );
     assert_eq!(state(&inspected), original);
+    assert_passive_observation(&mut manager, &client, &lease, &last, Some(&inspect_request));
+    let old_observation = observe_request(&lease, &last);
     assert!(
         same_original_input_basis(&inspected["sources"]["original"]["input"], &input["basis"]),
         "complete native original input differs from its independently consumed basis: actual={:?}, expected={:?}",
@@ -265,6 +410,17 @@ print(json.dumps({'ok':True,'data':data}))
         timings.push(t.elapsed().as_secs_f64() * 1000.);
         assert_eq!(state(&r), original);
     }
+    assert!(
+        manager
+            .apply(&client, old_observation)
+            .unwrap_err()
+            .contains("stale_observation"),
+        "same field cursor must not imply the same acknowledged request"
+    );
+    let advance_request = packet(
+        &last,
+        json!({"operation":"advance","frames":512,"muted":false}),
+    );
     let advanced = exchange(
         &mut manager,
         &client,
@@ -280,15 +436,18 @@ print(json.dumps({'ok':True,'data':data}))
         .iter()
         .any(|v| v.as_f64().unwrap().abs() > 1e-7));
     assert_ne!(advanced["field"]["targets"], original["targets"]);
+    assert_passive_observation(&mut manager, &client, &lease, &last, Some(&advance_request));
     let held = state(&advanced);
     for command in [
         json!({"operation":"advance","frames":8193,"muted":false}),
         json!({"operation":"set-axis","axis":2,"phase":{"turns":"0","half_degrees":10}}),
     ] {
+        let actual_request = packet(&last, command.clone());
         let refused = exchange(&mut manager, &client, &lease, &mut last, command);
         assert_eq!(refused["status"], "refused");
         assert_eq!(state(&refused), held);
         assert!(!refused["error"].is_null());
+        assert_passive_observation(&mut manager, &client, &lease, &last, Some(&actual_request));
     }
     let changed = exchange(
         &mut manager,
@@ -371,6 +530,7 @@ print(json.dumps({'ok':True,'data':data}))
         .unwrap_err();
     assert!(rejected.contains("foreign_lease"));
     let before_close = state(&last);
+    let before_close_observation = observe_request(&lease, &last);
     let start = Instant::now();
     manager
         .apply(
@@ -381,6 +541,10 @@ print(json.dumps({'ok':True,'data':data}))
         )
         .unwrap();
     let close_ms = start.elapsed().as_secs_f64() * 1000.;
+    assert!(manager
+        .apply(&client, before_close_observation.clone())
+        .unwrap_err()
+        .contains("unavailable"));
     assert!(manager
         .apply(
             &client,
@@ -394,6 +558,17 @@ print(json.dumps({'ok':True,'data':data}))
     assert!(!std::env::temp_dir().join(format!("{lease}.json")).exists());
     let restarted = manager.apply(&client, open()).unwrap();
     assert_ne!(restarted["lease"], lease);
+    assert!(manager
+        .apply(&client, before_close_observation)
+        .unwrap_err()
+        .contains("foreign_lease"));
+    assert_passive_observation(
+        &mut manager,
+        &client,
+        restarted["lease"].as_str().unwrap(),
+        &restarted["receipt"],
+        None,
+    );
     assert_eq!(state(&restarted["receipt"]), original);
     assert_ne!(before_close["samples_elapsed"], original["samples_elapsed"]);
     manager
@@ -404,6 +579,44 @@ print(json.dumps({'ok':True,'data':data}))
             },
         )
         .unwrap();
+    // A real owned host exit must retire its witness instead of serving the
+    // prior ACK as an available owner. Only this test's exact child is killed.
+    let doomed = manager.apply(&client, open()).unwrap();
+    let doomed_lease = doomed["lease"].as_str().unwrap();
+    let doomed_observation = assert_passive_observation(
+        &mut manager,
+        &client,
+        doomed_lease,
+        &doomed["receipt"],
+        None,
+    );
+    let owned_pid = i32::try_from(
+        doomed_observation["native_host_process_id"]
+            .as_u64()
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(unsafe { libc::kill(owned_pid, libc::SIGKILL) }, 0);
+    let deadline = Instant::now() + std::time::Duration::from_secs(2);
+    loop {
+        match manager.apply(&client, observe_request(doomed_lease, &doomed["receipt"])) {
+            Err(reason) => {
+                assert!(reason.contains("observed host has exited"));
+                break;
+            }
+            Ok(_) => {
+                assert!(
+                    Instant::now() < deadline,
+                    "actual owned host exit was not observed"
+                );
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
+        }
+    }
+    assert!(manager
+        .apply(&client, observe_request(doomed_lease, &doomed["receipt"]))
+        .unwrap_err()
+        .contains("no active owner"));
     timings.sort_by(f64::total_cmp);
     assert_eq!(
         format!("{:x}", Sha256::digest(fs::read(&input_path).unwrap())),

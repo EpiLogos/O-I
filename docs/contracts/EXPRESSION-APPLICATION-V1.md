@@ -89,6 +89,34 @@ Live owner state remains a session-local adapter input, outside this document.
 EX2–EX4 must consume native readings through their owners and cannot serialize
 protected state as parameters or Action inputs.
 
+## Passive native field observation
+
+The live `native_expression` owner accepts `observe` with its exact lease,
+instance, event and subject, plus the acknowledged generation and elapsed
+samples disclosed by the instrument. An optional exact `expected_request_id`
+also fences the last native acknowledgement. All cursors are canonical decimal
+strings. A mismatch, closed owner or observed exited host refuses. Observation
+does not send a worker command, advance either clock, acquire a lease, restart
+or rewind an owner. A passive channel timeout leaves the driver unchanged.
+
+The reading has `last-acknowledged` standing. It returns the complete field and
+original ACK envelope, actual request operation/cursor and SHA/byte count,
+complete structured ACK SHA/byte count, ACK and observation times, and owned
+kernel/host process IDs. These fingerprints cover parsed native JSON serialized
+by the kernel, excluding the transport newline; they are not raw-wire hashes.
+Only one bounded witness lives with the owner. Full private requests and Inspect
+source/profile/influence/event bodies do not enter it or persisted material.
+The complete output is capped at 64 MiB, a serialized bound rather than a heap
+measurement. Witness admission failure leaves an already accepted native
+operation and its cursor intact, then reports observation unavailable.
+
+A host that has not exited at observation is not proof of a live worker, fresh
+simulation, GPU consumption, audio device or listening. A later periodic read
+can replace the witnessed request with the same field cursor; its actual request
+ID and operation remain explicit. Causal acceptance still joins the original
+UI action, same owner/occasion, predicted effect and invariance, actual field,
+and rendered consumer. Private readings remain governed by the Journey contract.
+
 ## Persistence and composition
 
 `export` returns exact versioned document data, not a simulation checkpoint or a

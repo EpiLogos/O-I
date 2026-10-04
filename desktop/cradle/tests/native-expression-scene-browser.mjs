@@ -114,6 +114,34 @@ async function run(label,vary){
   }
   const held=await frame.evaluate(()=>window.__FIELD_STUDIES__.native());
   assert.equal(held.status,'held','the determinant commits while held');
+  // Passive evidence comes from the SAME actual kernel/host lease after the UI
+  // determinant. It does not issue a foreign Exchange or consume its cursor.
+  const observe={operation:'observe',lease:held.lease,instance_ref:held.native.instance_ref,
+   event_ref:held.native.event_ref,subject_ref:held.native.subject_ref,
+   expected_generation:held.native.acknowledged.generation,
+   expected_samples_elapsed:held.native.acknowledged.samples_elapsed};
+  const passive=async request=>{
+   const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify({op:'native_expression',request}),signal:AbortSignal.timeout(15000)});
+   const result=await response.json();assert.ok(!result.error,JSON.stringify(result));
+   assert.equal(result.outcome?.result,'native_expression');return result.outcome.data;
+  };
+  const observed=await passive(observe);
+  assert.equal(observed.schema,'oi.native-expression-observation/v1');
+  assert.equal(observed.lease,held.lease);
+  const acknowledged=observed.retained.acknowledgement;
+  assert.equal(acknowledged.field.generation,held.native.acknowledged.generation);
+  assert.equal(acknowledged.field.samples_elapsed,held.native.acknowledged.samples_elapsed);
+  assert.equal(acknowledged.field.event_ref,held.native.event_ref);
+  assert.equal(acknowledged.field.subject_ref,held.native.subject_ref);
+  assert.ok(acknowledged.field.targets.length>0);
+  assert.ok(!Object.hasOwn(acknowledged,'sources')&&!Object.hasOwn(acknowledged,'influence'));
+  const repeated=await passive({...observe,expected_request_id:observed.last_request_id});
+  assert.deepEqual(repeated.retained,observed.retained);
+  assert.deepEqual((await frame.evaluate(()=>window.__FIELD_STUDIES__.native())).native.acknowledged,
+   held.native.acknowledged,'passive observation leaves the actual UI/driver cursor unchanged');
+  await writeFile(join(out,`${label}-passive-native-observation.json`),JSON.stringify(observed,null,2));
+  report.checks.push(`${label}: same actual scene lease observed without worker Exchange or driver advance`);
   const influence1=held.instrument.influence,targets1=await frame.evaluate(()=>Array.from(window.__FIELD_STUDIES__.nativeTargets().target_a)),admitted1=await frame.evaluate(()=>Array.from(window.__FIELD_STUDIES__.nativeTargets().admitted_a));
   const steps=await frame.evaluate(({steps,dt})=>window.__FIELD_STUDIES__.probeSteps(steps,dt),{steps:STEPS,dt:DT});
   const gpu=await frame.evaluate(()=>{const s=window.__FIELD_STUDIES__.inspect(true);return{positions:s.positions,steps:s.steps,simTime:s.simTime};});

@@ -31,7 +31,7 @@ export class NativeChannel implements NativePort {
   const operation=request&&typeof request==='object'&&'operation' in request?request.operation:null;
   const timeout=operation==='prepare_world'||operation==='compose'?300000:15000;
   return new Promise((resolve,reject)=>{
-   const timer=window.setTimeout(()=>{this.pending.delete(req);this.onHold?.('native acknowledgement unknown; not retried');reject(new Error('native acknowledgement timed out; not retried'));},timeout);
+   const timer=window.setTimeout(()=>{this.pending.delete(req);if(operation!=='observe')this.onHold?.('native acknowledgement unknown; not retried');reject(new Error(operation==='observe'?'native observation timed out; driver unchanged':'native acknowledgement timed out; not retried'));},timeout);
    this.pending.set(req,{resolve,reject,timer});window.parent.postMessage({schema:SCHEMA,epoch:this.epoch,req,kind:'request',request},'*');
   });
  }
