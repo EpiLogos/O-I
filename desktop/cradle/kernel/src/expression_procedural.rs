@@ -4074,6 +4074,20 @@ impl Application {
         Ok(json!(rows))
     }
 
+    /// Borrow the actual current native Document before a joined owner
+    /// accounts any future material copies. This creates no Source grant.
+    pub(crate) fn procedural_source_borrow(
+        &self,
+        expression_ref: &str,
+        revision: u64,
+    ) -> Result<&Document, String> {
+        let document = self.document(expression_ref)?;
+        if document.revision != revision {
+            return Err("revision_conflict".into());
+        }
+        Ok(document)
+    }
+
     /// The compiler intake carries an actual owner snapshot through its
     /// bounded outside-lock work. Completion must meet this exact snapshot.
     pub(crate) fn procedural_source_snapshot(
@@ -4101,10 +4115,14 @@ impl Application {
         }
         let mut snapshot_budget = budget::Budget::new();
         snapshot_budget.value(before)?;
+        // Reuse the exact actual basis after its full CAS check. Charge the
+        // necessary edited candidate and matching protected receipt/journal
+        // inheritance before either copies material clipped from Source.
+        snapshot_budget.value(before)?;
+        snapshot_budget.value(before)?;
         snapshot_budget.value(&prepared)?;
         snapshot_budget.value(&source)?;
-        let current = self.document(&before.expression_ref)?.clone();
-        let document = &current;
+        let document = before;
         let edit = &prepared["native_edit"];
         if prepared["schema"] != "ql.procedural-composition/v1"
             || !prepared["native_cprime"].is_object()

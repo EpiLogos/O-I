@@ -14,6 +14,9 @@ impl Budget {
             remaining: SOURCE_BYTES,
         }
     }
+    pub(crate) fn charged_bytes(&self) -> usize {
+        SOURCE_BYTES - self.remaining
+    }
     pub(crate) fn reserve(&mut self, bytes: usize) -> Result<(), String> {
         self.remaining = self
             .remaining

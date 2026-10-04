@@ -3,6 +3,9 @@ name: Technē constructive field
 on:
   pull_request:
     paths:
+      - '.github/actions/native-dense-field-source/**'
+      - 'gates/prepare-native-dense-field-source.py'
+      - 'desktop/cradle/tests/native-expression-local.py'
       - 'desktop/cradle/**'
       - 'packages/**'
       - '.wayfinder/maps/techne-constructive-evidence.md'
@@ -143,6 +146,9 @@ jobs:
             .
             cli
             desktop/cradle/kernel
+      - name: Produce the genuine native FIELD input for kernel codecs
+        if: matrix.owner == 'O-I'
+        uses: ./.github/actions/native-dense-field-source
       - name: Build exact native source, with no owner data or live services
         shell: bash
         run: |

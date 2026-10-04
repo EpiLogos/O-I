@@ -3,7 +3,7 @@ on:
   push:
     branches: [agent/native-agent-session-20260920]
   pull_request:
-    paths: ['desktop/cradle/src/agency/**', 'desktop/cradle/src/encounter/**', 'desktop/cradle/src/agent/**', 'desktop/cradle/kernel/**', 'desktop/cradle/tests/agent-native-*', '.github/workflows/agent-session-native.yml']
+    paths: ['.github/actions/native-dense-field-source/**', 'gates/prepare-native-dense-field-source.py', 'desktop/cradle/tests/native-expression-local.py', 'desktop/cradle/src/agency/**', 'desktop/cradle/src/encounter/**', 'desktop/cradle/src/agent/**', 'desktop/cradle/kernel/**', 'desktop/cradle/tests/agent-native-*', '.github/workflows/agent-session-native.yml']
 permissions:
   contents: read
 jobs:
@@ -71,6 +71,8 @@ jobs:
         shell: bash
         working-directory: desktop/cradle/kernel
         run: cargo test --locked --test agent_native_gate --test agent_definition_gate 2>&1 | tee ../tests/agent-native-results/kernel.log
+      - name: Produce the genuine native FIELD input for kernel codecs
+        uses: ./.github/actions/native-dense-field-source
       - name: Full kernel regressions
         id: allkernel
         continue-on-error: true

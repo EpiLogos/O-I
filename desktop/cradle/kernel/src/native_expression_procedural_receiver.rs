@@ -912,19 +912,21 @@ impl crate::Kernel {
         scene_ref: &str,
         producer_ref: &str,
     ) -> Result<Value, String> {
+        // The native receiver mutates its own private registration, while
+        // the actual Document stays borrowed from the disjoint Application.
         let before = self
             .expressions
-            .procedural_source_snapshot(expression_ref, document_revision)?;
+            .procedural_source_borrow(expression_ref, document_revision)?;
         let boundary = self.native_expression.procedural_receiving_boundary(
             &self.expressions,
-            &before,
+            before,
             scene_ref,
             producer_ref,
             None,
         )?;
         let envelope =
             self.expressions
-                .procedural_receiving_envelope(&before, producer_ref, &boundary)?;
+                .procedural_receiving_envelope(before, producer_ref, &boundary)?;
         serde_json::to_value(crate::expression::procedural::Request::Prepare {
             envelope: Box::new(envelope),
         })

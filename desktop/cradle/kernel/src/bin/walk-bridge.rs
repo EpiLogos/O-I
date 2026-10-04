@@ -378,10 +378,11 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                     Ok(Some(prepared)) => {
                         let completed = match prepared.execute() {
                             Ok(completed) => completed,
-                            Err(reason) => {
-                                return oi_cradle_kernel::Kernel::native_stage_library_refusal(
-                                    &op, reason,
-                                )
+                            Err(failed) => {
+                                return kernel
+                                    .lock()
+                                    .expect("kernel mutex")
+                                    .fail_native_stage_library(failed);
                             }
                         };
                         let outcome = kernel

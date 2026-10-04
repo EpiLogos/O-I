@@ -2,9 +2,9 @@ name: Central desktop source walk
 on:
   push:
     branches: [agent/w2-central-day-source-20260920]
-    paths: ['desktop/cradle/**', 'docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md', '.github/workflows/central-desktop-source-walk.yml']
+    paths: ['.github/actions/native-dense-field-source/**', 'gates/prepare-native-dense-field-source.py', 'desktop/cradle/tests/native-expression-local.py', 'desktop/cradle/**', 'docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md', '.github/workflows/central-desktop-source-walk.yml']
   pull_request:
-    paths: ['desktop/cradle/**', 'docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md', '.github/workflows/central-desktop-source-walk.yml']
+    paths: ['.github/actions/native-dense-field-source/**', 'gates/prepare-native-dense-field-source.py', 'desktop/cradle/tests/native-expression-local.py', 'desktop/cradle/**', 'docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md', '.github/workflows/central-desktop-source-walk.yml']
 permissions:
   contents: read
 defaults:
@@ -48,6 +48,9 @@ jobs:
           cp cli/target/debug/oi "$RUNNER_TEMP/w2-proof/oi"
           cp desktop/cradle/kernel/target/debug/walk-bridge "$RUNNER_TEMP/w2-proof/walk-bridge"
           sha256sum "$RUNNER_TEMP/w2-proof/ctrl" "$RUNNER_TEMP/w2-proof/oi" "$RUNNER_TEMP/w2-proof/walk-bridge" > "$RUNNER_TEMP/w2-proof/binaries.txt"
+      - name: Produce the genuine native FIELD input for kernel codecs
+        if: always()
+        uses: ./.github/actions/native-dense-field-source
       - name: All desktop kernel regressions
         if: always()
         run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked -- --nocapture 2>&1 | tee "$RUNNER_TEMP/w2-proof/kernel-tests.log"

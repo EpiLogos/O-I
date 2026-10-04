@@ -2,12 +2,15 @@ name: O:I desktop
 
 # Guards the desktop surface only: the cradle kernel crate, the cradle web
 # build and the native Tauri shell graph. The CLI is gated by verify.yml; the
-# kernel tests that need built owner executables are marked ignored and run
-# through `oi dev gate`, so no sibling repository is built here.
+# live World/Scene owner tests run through `oi dev gate`. The regular FIELD
+# codec tests receive genuine input from the maintained native producer.
 
 on:
   pull_request:
     paths:
+      - '.github/actions/native-dense-field-source/**'
+      - 'gates/prepare-native-dense-field-source.py'
+      - 'desktop/cradle/tests/native-expression-local.py'
       - 'desktop/**'
       - 'packages/oi-design-system/**'
       - 'shared-field/**'
@@ -33,6 +36,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: desktop/cradle/kernel
+      - name: Produce the genuine native FIELD input for kernel codecs
+        uses: ./.github/actions/native-dense-field-source
       - name: Test and lint cradle kernel
         run: |
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets

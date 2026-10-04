@@ -60,6 +60,8 @@ jobs:
             --target OI_CENTRAL_CTRL_BIN .native-owner/Central/ctrl/Cargo.toml ctrl \
             --target OI_KERNEL_BIN desktop/cradle/kernel/Cargo.toml walk-bridge \
             --receipt "$RUNNER_TEMP/landing-native/binaries.json"
+      - name: Produce the genuine native FIELD input for kernel codecs
+        uses: ./.github/actions/native-dense-field-source
       - name: Run the complete native landing tier at the exact candidate
         run: node gates/run.mjs landing --keep-going --json
       - name: Confirm the receipt covers the complete clean candidate

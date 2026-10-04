@@ -12,6 +12,16 @@ fn preflight_intake(
     targets: &[Address],
 ) -> Result<(), String> {
     let mut budget = budget::Budget::new();
+    preflight_intake_into(document, runtime, intent, targets, &mut budget)
+}
+
+fn preflight_intake_into(
+    document: &Document,
+    runtime: &Runtime,
+    intent: &Intent,
+    targets: &[Address],
+    budget: &mut budget::Budget,
+) -> Result<(), String> {
     budget.value(document)?;
     budget.value(intent)?;
     budget.reserve(4096)?;
@@ -72,7 +82,7 @@ fn preflight_intake(
     }
     if intent.action == Action::Regenerate {
         let procedure_ref = retained_text(&intent.authored, "procedure_ref")?;
-        budget::preflight_source_outputs_into(document, procedure_ref, runtime, &mut budget)?;
+        budget::preflight_source_outputs_into(document, procedure_ref, runtime, budget)?;
         let mut seen = BTreeSet::new();
         let mut context_count = 0usize;
         for scene in &document.scenes {
@@ -376,6 +386,30 @@ pub(crate) fn intake(
 }
 
 impl Application {
+    /// Original native material serializer participates in the caller's
+    /// aggregate horizon BEFORE Document/source/material/context copies.
+    pub(crate) fn preflight_stage_library_intake_into(
+        &self,
+        before: &Document,
+        intent: &Intent,
+        horizon: &mut budget::Budget,
+    ) -> Result<(), String> {
+        if self.document(&before.expression_ref)? != before {
+            return Err("revision_conflict".into());
+        }
+        intent.validate(before)?;
+        let targets = match &intent.scope {
+            Scope::Addresses { addresses }
+                if addresses.is_empty()
+                    && ["scene_material", "sequence_material"]
+                        .contains(&intent.choice["recipe"].as_str().unwrap_or("")) =>
+            {
+                Vec::new()
+            }
+            _ => resolve(before, &intent.scope)?,
+        };
+        preflight_intake_into(before, &self.procedural_runtime, intent, &targets, horizon)
+    }
     pub(crate) fn stage_library_intake(
         &self,
         before: &Document,

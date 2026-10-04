@@ -4,6 +4,9 @@ on:
     branches: [agent/canvas-editor-context-20260920]
   pull_request:
     paths:
+      - '.github/actions/native-dense-field-source/**'
+      - 'gates/prepare-native-dense-field-source.py'
+      - 'desktop/cradle/tests/native-expression-local.py'
       - 'desktop/cradle/src/**'
       - 'desktop/cradle/tests/canvas-editor*'
       - 'desktop/cradle/tests/situation-frame.test.mjs'
@@ -90,6 +93,8 @@ jobs:
       - name: Production bundle
         working-directory: desktop/cradle
         run: set -o pipefail; npx vite build 2>&1 | tee ../../canvas-build.log
+      - name: Produce the genuine native FIELD input for kernel codecs
+        uses: ./.github/actions/native-dense-field-source
       - name: Kernel adapter compatibility
         run: set -o pipefail; cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets 2>&1 | tee canvas-kernel.log
       - name: Existing experience-source integrity

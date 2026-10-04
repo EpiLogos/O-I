@@ -4,6 +4,9 @@ on:
     branches: [agent/adoption-lifecycle-20260920]
   pull_request:
     paths:
+      - '.github/actions/native-dense-field-source/**'
+      - 'gates/prepare-native-dense-field-source.py'
+      - 'desktop/cradle/tests/native-expression-local.py'
       - '.github/workflows/adoption-lifecycle.yml'
       - 'cli/**'
       - 'desktop/cradle/src/configuration/**'
@@ -65,6 +68,9 @@ jobs:
         run: |
           set -o pipefail
           cargo test --manifest-path cli/Cargo.toml --all-targets --locked 2>&1 | tee /tmp/adoption-evidence/native-tests.log
+      - name: Produce the genuine native FIELD input for kernel codecs
+        if: always()
+        uses: ./.github/actions/native-dense-field-source
       - name: Native kernel transport regressions
         if: always()
         run: |

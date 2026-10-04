@@ -73,3 +73,36 @@ expectation.
 4. If a gate cannot pass locally for environmental reasons, it belongs in
    `ci-only` **with the reason on the entry** — never weakened, never
    silently skipped.
+
+## Genuine native FIELD test input
+
+The regular kernel suite requires `OI_NATIVE_DENSE_FIELD_SOURCE_ARTIFACT`.
+The hosted full-kernel workflows run the common
+`.github/actions/native-dense-field-source` prerequisite before their original
+commands. It builds the actual C/C++ worker and runs the maintained QL FieldHost
+producer, preserving all 65000 original samples and its later-basis assertions.
+The source, worker, execution log and original artifact are retained together.
+
+For an existing exact QL producer checkout, the same preparation is:
+
+```bash
+python3 gates/prepare-native-dense-field-source.py \
+  --ql-source /path/to/QL-MEF \
+  --expected-revision <exact-owner-commit> \
+  --output-base /path/to/task-evidence
+```
+
+Use the emitted artifact path as `OI_NATIVE_DENSE_FIELD_SOURCE_ARTIFACT` for
+the unchanged kernel tests or landing runner. The script requires the actual
+native compiler toolchain and json-c development library; it never supplies
+a substitute JSON fixture. It qualifies codec input only. A producer leaf
+passing does not qualify the complete QL suite, a selected World/Scene,
+private authority, liveness, installed rendering or two-human experience.
+The action records its exact producer pin and its qualification scope; the
+production browser adapter provenance and native operation owners stay separate.
+
+Preparation reuses the maintained native acceptance process-custody helper.
+Each actual command has a finite budget and a receipt saved before launch;
+partial logs and exact owned-group retirement remain available on failure.
+Unobserved retirement refuses prerequisite success. These controls run in the
+hosted job; they do not inspect or signal unrelated application processes.

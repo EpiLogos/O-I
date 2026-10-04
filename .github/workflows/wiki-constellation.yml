@@ -2,6 +2,9 @@ name: Wiki constellation integration
 on:
   pull_request:
     paths:
+      - '.github/actions/native-dense-field-source/**'
+      - 'gates/prepare-native-dense-field-source.py'
+      - 'desktop/cradle/tests/native-expression-local.py'
       - 'desktop/cradle/src/knowledge/**'
       - 'desktop/cradle/src/techne/**'
       - 'desktop/cradle/src/kernel/types.ts'
@@ -26,6 +29,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: desktop/cradle/kernel
+      - name: Produce the genuine native FIELD input for kernel codecs
+        uses: ./.github/actions/native-dense-field-source
       - name: Prove native graph, source currency and retained resources
         run: |
           if ! cargo test --locked --manifest-path desktop/cradle/kernel/Cargo.toml > /tmp/wiki-kernel-tests.log 2>&1; then tail -n 160 /tmp/wiki-kernel-tests.log; exit 1; fi

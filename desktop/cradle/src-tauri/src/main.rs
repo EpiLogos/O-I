@@ -234,8 +234,12 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
             Ok(Some(prepared)) => {
                 let completed = match prepared.execute() {
                     Ok(completed) => completed,
-                    Err(reason) => {
-                        return oi_cradle_kernel::Kernel::native_stage_library_refusal(&op, reason)
+                    Err(failed) => {
+                        return host
+                            .0
+                            .lock()
+                            .map_err(|_| "kernel lock unavailable")?
+                            .fail_native_stage_library(failed);
                     }
                 };
                 let outcome = host

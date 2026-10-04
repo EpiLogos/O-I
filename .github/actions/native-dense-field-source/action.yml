@@ -1,0 +1,52 @@
+name: Genuine native FIELD source for kernel codecs
+description: Run the maintained native FieldHost producer before the unchanged kernel suites
+inputs:
+  owner-revision:
+    description: Exact QL producer commit; this input alone does not qualify the whole owner suite
+    # The genuine 65000-source leaf passed at this commit in original QL run
+    # 37168448212. That whole QL run failed; this is codec input, not a release pin.
+    default: 8eaf8b5f8dd568021cf0050afb6251377e189622
+outputs:
+  artifact:
+    description: Original FIELD source emitted by the actual native producer
+    value: ${{ steps.generate.outputs.artifact }}
+  receipt:
+    description: Exact owner source, worker, producer execution and artifact evidence
+    value: ${{ steps.generate.outputs.receipt }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: EpiLogos/QL-MEF
+        ref: ${{ inputs.owner-revision }}
+        path: .native-owner/QL-MEF-dense-codec-source
+        persist-credentials: false
+    - uses: Swatinem/rust-cache@v2.9.2
+      with:
+        key: native-dense-field-codec-input
+        workspaces: .native-owner/QL-MEF-dense-codec-source -> target
+    - name: Install the actual native worker build dependency
+      shell: bash
+      run: |
+        set -euo pipefail
+        sudo apt-get update -qq
+        sudo apt-get install -y libjson-c-dev
+    - name: Generate the original native 65000-source input
+      id: generate
+      shell: bash
+      env:
+        QL_SOURCE_REVISION: ${{ inputs.owner-revision }}
+      run: |
+        python3 gates/prepare-native-dense-field-source.py \
+          --ql-source .native-owner/QL-MEF-dense-codec-source \
+          --expected-revision "$QL_SOURCE_REVISION" \
+          --output-base "$RUNNER_TEMP/oi-native-dense-field-source"
+    - name: Retain genuine producer execution and original input
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: native-dense-field-source-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+        path: ${{ runner.temp }}/oi-native-dense-field-source/
+        retention-days: 14
+        if-no-files-found: warn

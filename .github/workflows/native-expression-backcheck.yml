@@ -2,6 +2,9 @@ name: Native Expression backcheck
 on:
   pull_request:
     paths:
+      - '.github/actions/native-dense-field-source/**'
+      - 'gates/prepare-native-dense-field-source.py'
+      - 'desktop/cradle/tests/native-expression-local.py'
       - 'desktop/cradle/expressions-app/**'
       - 'desktop/cradle/kernel/**'
       - 'desktop/cradle/src/expressions/**'
@@ -166,6 +169,9 @@ jobs:
           node --test tests/native-expression-final.test.mjs 2>&1 | tee /tmp/w5-checks/csp-hash.log
           node tests/theme-prepaint-csp.mjs 2>&1 | tee /tmp/w5-checks/csp-browser.log
           node tests/native-expression-legacy-browser.mjs 2>&1 | tee /tmp/w5-checks/legacy-browser.log
+      - name: Produce the genuine native FIELD input for kernel codecs
+        if: always()
+        uses: ./.github/actions/native-dense-field-source
       - name: Native kernel regressions
         if: always()
         run: |
