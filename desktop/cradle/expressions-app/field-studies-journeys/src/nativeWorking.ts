@@ -317,7 +317,22 @@ export class NativeWorking {
   if(!record.view)throw new Error('This draft has no acknowledged native basis to reopen');
   const epoch=++this.epoch;this.inFlight=true;
   try{
-   const result=await this.ports.expression({operation:'open',document:record.view.document,actor:'oi:working-draft-recovery'});
+   // A clean saved checkpoint carries a file claim, not a live owner's file
+   // binding. Re-admit the actual file before restoring that clean basis;
+   // unsaved/pending recovery keeps the original document-open path.
+   const saved=record.file&&!record.pending
+    &&record.file.document_revision===record.view.document.revision
+    &&!prepareCompositionEdit(record.view,journey).changes.length?record.file:undefined;
+   if(saved){
+    if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed before its saved recovery file was read');
+    const durable=await this.ports.expression({operation:'inspect_file',location:saved.location,expected_file_revision:saved.revision});
+    if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while its saved recovery file was read');
+    const decoded=readDocument(durable,record.view.document.expression_ref),file=artifact(durable,record.view.document.expression_ref);
+    if(!same(decoded,record.view.document)||!same(file,saved))throw new Error('The saved recovery file differs from its complete retained native basis');
+   }
+   const result=await this.ports.expression(saved
+    ?{operation:'open_file',location:saved.location,expected_file_revision:saved.revision,actor:'oi:working-draft-recovery'}
+    :{operation:'open',document:record.view.document,actor:'oi:working-draft-recovery'});
    const conflict=result as {state?:string;expression_ref?:string}|null;
    if(conflict?.state==='revision_conflict'&&conflict.expression_ref===record.view.document.expression_ref
     &&!record.pending&&!prepareCompositionEdit(record.view,journey).changes.length){
@@ -334,6 +349,7 @@ export class NativeWorking {
    }
    const reopened=readDocument(result,record.view.document.expression_ref);
    if(!same(reopened,record.view.document))throw new Error('Native work changed; the recovery draft was retained separately');
+   if(saved&&!same(nativeOwnerSnapshot(result,record.view.document.expression_ref).file,saved))throw new Error('The native owner did not re-admit the exact saved recovery file binding');
    if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while recovery was returning; its native basis was not replaced');
    this.replaceRecord(record);
    return {...clone(record.view),journey:clone(journey)};

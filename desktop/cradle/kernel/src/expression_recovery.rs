@@ -14,6 +14,54 @@ pub const MAX_RECORD_BYTES: usize = 8 * 1024 * 1024;
 const MAX_SCOPE_BYTES: usize = 64 * 1024 * 1024;
 const MAX_RECORDS: usize = 256;
 const MAX_REVISION: u64 = crate::expression::MAX_REVISION;
+// Opt-in hosted-proof timings only. The bridge supplies a diagnostic ID;
+// no request field, owner result, admission law or default execution changes.
+thread_local! {
+    static DIAGNOSTIC_TRACE: std::cell::Cell<Option<u64>> = const { std::cell::Cell::new(None) };
+}
+pub fn with_diagnostic_trace<T>(id: u64, run: impl FnOnce() -> T) -> T {
+    struct Restore(Option<u64>);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            DIAGNOSTIC_TRACE.with(|trace| trace.set(self.0));
+        }
+    }
+    let _restore = Restore(DIAGNOSTIC_TRACE.with(|trace| trace.replace(Some(id))));
+    run()
+}
+struct DiagnosticPhase {
+    id: Option<u64>,
+    name: &'static str,
+    started: Option<std::time::Instant>,
+}
+fn diagnostic_phase(name: &'static str) -> DiagnosticPhase {
+    let id = DIAGNOSTIC_TRACE.with(std::cell::Cell::get);
+    DiagnosticPhase {
+        id,
+        name,
+        started: id.map(|_| std::time::Instant::now()),
+    }
+}
+impl Drop for DiagnosticPhase {
+    fn drop(&mut self) {
+        if let (Some(id), Some(started)) = (self.id, self.started) {
+            let at = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|v| v.as_micros())
+                .unwrap_or(0);
+            eprintln!(
+                "[recovery-phase] {}",
+                json!({
+                    "schema":"oi.hosted-recovery-phase/v1", "trace_id":id,
+                    "phase":self.name, "elapsed_us":started.elapsed().as_micros(),
+                    "ended_at_unix_us":at,
+                    "standing":"duration_only_not_acknowledgement"
+                })
+            );
+        }
+    }
+}
+
 const SCHEMA: &str = "oi.expression-recovery/v1";
 const STORAGE_SCHEMA: &str = "oi.expression-recovery-storage/v1";
 
@@ -151,10 +199,20 @@ fn data(value: &Value, depth: usize) -> Result<(), String> {
         return Err("Recovery data nesting exceeds its bound".into());
     }
     match value {
-        Value::Number(number) if number.as_f64().is_none() => return Err("Recovery data number must be finite".into()),
+        Value::Number(number) if number.as_f64().is_none() => {
+            return Err("Recovery data number must be finite".into())
+        }
         Value::Object(values) => {
             for (key, value) in values {
-                if ["__proto__", "constructor", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&key.as_str()) {
+                if [
+                    "__proto__",
+                    "constructor",
+                    "prototype",
+                    "$serde_json::private::Number",
+                    "$serde_json::private::RawValue",
+                ]
+                .contains(&key.as_str())
+                {
                     return Err("Unsafe recovery property".into());
                 }
                 data(value, depth + 1)?;
@@ -1339,9 +1397,12 @@ fn encode_shared_record(mut stored: StoredRecord) -> Result<Option<Vec<u8>>, Str
     }
     no_shared_refs(&stored.record.value)?;
     let mut candidates = BTreeMap::new();
+    let candidates_phase = diagnostic_phase("encode_shared_candidates");
     shared_candidates(&stored.record.value, "", &mut candidates)?;
+    drop(candidates_phase);
     let mut parts = BTreeMap::new();
     let mut used = BTreeMap::new();
+    let intern_phase = diagnostic_phase("encode_shared_intern");
     shared_intern(
         &mut stored.record.value,
         "",
@@ -1349,7 +1410,10 @@ fn encode_shared_record(mut stored: StoredRecord) -> Result<Option<Vec<u8>>, Str
         &mut parts,
         &mut used,
     )?;
+    drop(intern_phase);
+    let singletons_phase = diagnostic_phase("encode_shared_singletons");
     shared_singletons(&mut stored.record.value, &used, &mut parts)?;
+    drop(singletons_phase);
     if parts.is_empty() {
         return Ok(None);
     }
@@ -1371,8 +1435,11 @@ fn encode_shared_record(mut stored: StoredRecord) -> Result<Option<Vec<u8>>, Str
         .iter()
         .map(|i| (i.r#ref.clone(), i.data_url.clone()))
         .collect();
+    let qualify_phase = diagnostic_phase("encode_shared_qualification");
     qualify_shared(&next, &images)?;
+    drop(qualify_phase);
     // Do not materialize an over-bound serialized rescue candidate.
+    let _serialize_phase = diagnostic_phase("encode_shared_serialization");
     let mut counter = SizeCounter::default();
     serde_json::to_writer(&mut counter, &next).map_err(|e| e.to_string())?;
     if counter.0 > MAX_RECORD_BYTES + 2048 {
@@ -1638,6 +1705,7 @@ impl Store {
     }
     #[cfg(unix)]
     fn apply_unix(&self, request: Request) -> Result<Value, String> {
+        let _owner_phase = diagnostic_phase("store_total");
         use std::{
             fs,
             io::Read,
@@ -1662,6 +1730,7 @@ impl Store {
         let lock = root
             .file(".lock", true, true)?
             .ok_or("Cannot open native recovery lock")?;
+        let lock_phase = diagnostic_phase("store_lock_wait");
         let started = Instant::now();
         loop {
             match lock.try_lock() {
@@ -1674,6 +1743,8 @@ impl Store {
                 Err(error) => return Err(format!("Native recovery lock is unavailable: {error}")),
             }
         }
+        drop(lock_phase);
+        let setup_phase = diagnostic_phase("store_cleanup_sequence");
         root.cleanup_pending(128)?;
         let scope = match &request {
             Request::Read { scope, .. }
@@ -1702,6 +1773,7 @@ impl Store {
         if sequence > MAX_REVISION {
             return Err("Native recovery revision exceeds the exact JSON integer bound".into());
         }
+        drop(setup_phase);
         match request {
             Request::Read { kind, id, .. } => {
                 safe_id(&id)?;
@@ -1754,6 +1826,7 @@ impl Store {
                 value,
                 ..
             } => {
+                let validation_phase = diagnostic_phase("store_inbound_validation");
                 validate(kind, &id, &value).map_err(|error| {
                     if error == COMPONENT_SIZE_MESSAGE {
                         size_refusal_basis(
@@ -1777,7 +1850,10 @@ impl Store {
                         error
                     }
                 })?;
+                drop(validation_phase);
+                let previous_phase = diagnostic_phase("store_previous_full_read");
                 let previous = read_record(&dir, scope, &filename(kind, &id), sequence, true)?;
+                drop(previous_phase);
                 if previous.as_ref().map(|r| r.revision) != expected_revision {
                     return Ok(conflict(previous.as_ref().map(|r| r.revision)));
                 }
@@ -1800,7 +1876,9 @@ impl Store {
                     revision: sequence,
                     value,
                 };
+                let encode_phase = diagnostic_phase("store_encode");
                 let bytes = encode_record(&record)?;
+                drop(encode_phase);
                 let target = filename(kind, &record.id);
                 let total = entries
                     .iter()
@@ -1817,11 +1895,14 @@ impl Store {
                 }
                 // Allocate monotonically first. A crash can leave a gap, never reissue a
                 // previously acknowledged revision after remove/recreate.
+                let atomic_phase = diagnostic_phase("store_atomic_write");
                 root.atomic(
                     ".sequence",
                     &serde_json::to_vec(&sequence).map_err(|e| e.to_string())?,
                 )?;
                 dir.atomic(&filename(kind, &record.id), &bytes)?;
+                drop(atomic_phase);
+                let _public_phase = diagnostic_phase("store_public_acknowledgement");
                 Ok(json!({"schema":SCHEMA,"state":"written","record":record.public()}))
             }
             Request::Remove {
@@ -3797,7 +3878,6 @@ mod tests {
     }
 }
 
-
 #[cfg(test)]
 mod numeric_admission_conservation_tests {
     use super::*;
@@ -3805,9 +3885,43 @@ mod numeric_admission_conservation_tests {
     fn programmatic_nonfinite_or_reserved_maps_do_not_enter_recovery_custody() {
         let infinite: Value = serde_json::from_str("1e400").unwrap();
         assert!(data(&infinite, 0).is_err());
-        for key in ["$serde_json::private::Number", "$serde_json::private::RawValue"] {
-            let object = Value::Object([(key.into(), Value::String("3600".into()))].into_iter().collect());
+        for key in [
+            "$serde_json::private::Number",
+            "$serde_json::private::RawValue",
+        ] {
+            let object = Value::Object(
+                [(key.into(), Value::String("3600".into()))]
+                    .into_iter()
+                    .collect(),
+            );
             assert!(data(&object, 0).is_err());
         }
+    }
+}
+
+#[cfg(test)]
+mod hosted_diagnostic_scope_tests {
+    use super::*;
+    #[test]
+    fn diagnostic_context_is_nested_thread_local_and_unwind_restored() {
+        assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), None);
+        with_diagnostic_trace(7, || {
+            assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), Some(7));
+            assert_eq!(
+                std::thread::spawn(|| DIAGNOSTIC_TRACE.with(std::cell::Cell::get))
+                    .join()
+                    .unwrap(),
+                None
+            );
+            with_diagnostic_trace(8, || {
+                assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), Some(8))
+            });
+            assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), Some(7));
+        });
+        assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), None);
+        let panicked =
+            std::panic::catch_unwind(|| with_diagnostic_trace(9, || panic!("scope test")));
+        assert!(panicked.is_err());
+        assert_eq!(DIAGNOSTIC_TRACE.with(std::cell::Cell::get), None);
     }
 }

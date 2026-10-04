@@ -74,10 +74,30 @@ test('complete real Epi saved confirmation reads without writes and preserves di
   const exited=once(child,'exit');process.kill(-child.pid,'SIGTERM');await exited;
   child=spawn(env.OI_KERNEL_BIN,['127.0.0.1:0'],{env,detached:true,stdio:['ignore','pipe','pipe']});child.stderr.on('data',bytes=>stderr+=bytes);
   const freshUrl=await new Promise((resolve,reject)=>{let text='';const timer=setTimeout(()=>reject(Error('Fresh owner startup timed out')),30000);child.once('error',e=>{clearTimeout(timer);reject(e);});child.once('exit',code=>{clearTimeout(timer);reject(Error('Fresh owner exited '+code+stderr));});child.stdout.on('data',bytes=>{text+=bytes;const match=/listening on (http:\/\/\S+)/.exec(text);if(match){clearTimeout(timer);resolve(match[1]);}});});
-  transport={kind:'bridge',url:freshUrl};const reopened=await hostedCompositionFile(transport,{operation:'open',path:relative});assert.deepEqual(reopened.document,expected);
+  transport={kind:'bridge',url:freshUrl};
+  // Use the actual saved checkpoint before any file open primes the fresh
+  // owner's binding. A plain Document open leaves that binding absent.
+  const coldRecord=work.state,coldWrites=writes,coldFile=await readFile(join(root,relative));
+  requests.length=0;
+  const coldView=await work.reopenCheckpoint(coldRecord,snapshot.journey,()=>accepted);
+  assert.deepEqual(requests,['inspect_file','open_file']);assert.deepEqual(coldView.document,expected);
+  assert.deepEqual(work.state,coldRecord);assert.equal(writes,coldWrites);assert.deepEqual(await readFile(join(root,relative)),coldFile);
+  const coldHeadReply=await expression({operation:'inspect',expression_ref:reference}),coldHead=nativeOwnerSnapshot(coldHeadReply,reference);
+  assert.deepEqual(coldHead.document,expected);assert.deepEqual(coldHead.file,saved);assert.equal(coldHeadReply.dirty,false);assert.equal(coldHeadReply.saved_revision,expected.revision);
+  // Delay only the completed real file read. A newer local admission must
+  // refuse before dispatching OpenFile and preserve the old complete record.
+  requests.length=0;gate={operation:'inspect_file',entered:deferred(),release:deferred()};
+  const lateReopen=work.reopenCheckpoint(coldRecord,snapshot.journey,()=>accepted);
+  const lateReopenRefused=assert.rejects(lateReopen,/selected draft changed/);await gate.entered.promise;accepted=false;gate.release.resolve();await lateReopenRefused;gate=undefined;accepted=true;
+  assert.deepEqual(requests,['inspect_file']);assert.deepEqual(work.state,coldRecord);assert.equal(writes,coldWrites);assert.deepEqual(await readFile(join(root,relative)),coldFile);
+  const reopened=await hostedCompositionFile(transport,{operation:'open',path:relative});assert.deepEqual(reopened.document,expected);
   assert.deepEqual(await work.confirmSaved(snapshot),saved);
   // Physical external replacement retains real revision conflict semantics.
   await writeFile(join(root,relative),before);await assert.rejects(work.confirmSaved(snapshot),/addressed Expression|revision_conflict|saved file/);assert.deepEqual(work.state.view.document,expected);assert.deepEqual(await readFile(join(root,relative)),before);
+  requests.length=0;const unchangedRecovery=work.state;
+  await assert.rejects(work.reopenCheckpoint(unchangedRecovery,snapshot.journey),/owner did not return|revision_conflict|saved recovery file/);
+  assert.deepEqual(requests,['inspect_file']);assert.deepEqual(work.state,unchangedRecovery);assert.deepEqual(await readFile(join(root,relative)),before);
+  assert.deepEqual(nativeOwnerSnapshot(await expression({operation:'inspect',expression_ref:reference}),reference).document,expected);
   console.log(JSON.stringify({full_document_scene_bodies:[32,9,7],confirmed_file_reads:2,confirmation_writes:0,complete_material_edit_saved:true,local_dirty_retained:true,late_local_refused:true,real_head_drift_refused:true,real_file_replacement_refused:true,scope:'Actual native generic file/working confirmation; no personal-current computation, ordinary browser, installed, GPU or H proof'}));
  }finally{
   if(gate)gate.release.resolve();

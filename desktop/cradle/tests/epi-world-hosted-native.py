@@ -599,7 +599,17 @@ class Replay:
     def start_bridge(self, name):
         self.owned.begin_phase(name)
         stderr = (self.out / f'{name}-bridge.stderr').open('wb')
-        process = subprocess.Popen([self.bridge, '127.0.0.1:0'], cwd=self.world, env=self.env,
+        bridge_env = {key: value for key, value in self.env.items() if key != 'OI_RECOVERY_DIAGNOSTIC_DIR'}
+        recovery_diagnostic = None
+        if name == 'first-construction':
+            diagnostic_dir = self.out / (name + '-recovery-diagnostics')
+            diagnostic_dir.mkdir(mode=0o700)
+            bridge_env = {**self.env, 'OI_RECOVERY_DIAGNOSTIC_DIR': str(diagnostic_dir)}
+            recovery_diagnostic = {'schema': 'epi.controlled-recovery-diagnostic-launch/v1',
+                'directory': str(diagnostic_dir), 'environment_key': 'OI_RECOVERY_DIAGNOSTIC_DIR',
+                'scope': 'Actual controlled first-construction requests and native replies only; diagnostic copies add measured overhead, not receiver admission or timing acceptance',
+                'wire_limit': 64 * 1024 * 1024, 'total_wire_limit': 256 * 1024 * 1024, 'trace_limit': 64}
+        process = subprocess.Popen([self.bridge, '127.0.0.1:0'], cwd=self.world, env=bridge_env,
                                    stdout=subprocess.PIPE, stderr=stderr, start_new_session=True)
         self.owned.add(process, name + '-bridge')
         self.bridge_process, self.bridge_stderr = process, stderr
@@ -616,6 +626,8 @@ class Replay:
                 and replay['generation'], 'Actual event owner must disclose its generation')
         value = {'name': name, 'pid': process.pid, 'starttime': proc_stat(process.pid)['starttime'],
                  'url': self.url, 'native_generation': replay['generation'], 'bridge': file_ref(self.bridge)}
+        if recovery_diagnostic is not None:
+            value['recovery_diagnostic'] = recovery_diagnostic
         self.report['phases'].append(value)
         return value
 
@@ -1294,6 +1306,22 @@ class Replay:
             'OI_CENTRAL_CTRL_BIN', 'OI_CENTRAL_PROJECT_QUERY', 'OI_CRADLE_STATE', 'OI_EXPRESSION_SOCKET', 'QL_NARA_PROVIDER_CACHE',
             'OI_QL_BIN', 'OI_QL_SKY_BIN', 'OI_QL_FIELD_HOST_BIN', 'OI_QL_FIELD_WORKER_BIN', 'QL_NARA_UV', 'XDG_CACHE_HOME', 'UV_CACHE_DIR')}
         self.report['owned_environment']['PLAYWRIGHT_BROWSERS_PATH'] = self.env.get('PLAYWRIGHT_BROWSERS_PATH')
+        diagnostic_test_env = {key: value for key, value in self.env.items()
+                               if key != 'OI_RECOVERY_DIAGNOSTIC_DIR'}
+        diagnostic_test_env['CARGO_TARGET_DIR'] = kernel_env['CARGO_TARGET_DIR']
+        for name, target, test_filter, passed in [
+                ('actual-recovery-diagnostic-scope', '--lib',
+                 'expression_recovery::hosted_diagnostic_scope_tests::diagnostic_context_is_nested_thread_local_and_unwind_restored', 1),
+                ('actual-recovery-diagnostic-wire-custody', '--bin', 'recovery_diagnostic_tests', 3)]:
+            command = ['cargo', 'test', '--locked', '--manifest-path',
+                       self.repo / 'desktop/cradle/kernel/Cargo.toml', target]
+            if target == '--bin':
+                command.append('walk-bridge')
+            command.extend([test_filter, '--', '--test-threads=1', '--nocapture'])
+            result = self.command(name, command, self.repo, diagnostic_test_env, timeout=180)
+            require(re.search(r'test result: ok\. ' + str(passed) + r' passed; 0 failed; 0 ignored;',
+                              Path(result['stdout_ref']['path']).read_text()),
+                    'Actual diagnostic byte-custody and scope primitives must execute before the original encounter')
         owner_refusal = self.command('actual-central-source-return-and-action-refusal',
                      ['cargo', 'test', '--locked', '--manifest-path',
                       self.repo / 'desktop/cradle/kernel/Cargo.toml', '--test', 'flow_return',

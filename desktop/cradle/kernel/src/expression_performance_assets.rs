@@ -797,13 +797,21 @@ impl PerformancePartCatalog {
                 if data.kind() != kind {
                     return Err("native performance leaf kind/weight differs".into());
                 }
-                let actual_bytes = if let Some(weights) = qualification.qualified_weights {
-                    *weights
-                        .get(part.as_str())
-                        .ok_or("native performance leaf was not qualified in this validation")?
-                } else {
-                    encoded(&data.value()?)?
-                };
+                let (actual_bytes, expanded_value) =
+                    if let Some(weights) = qualification.qualified_weights {
+                        (
+                            *weights.get(part.as_str()).ok_or(
+                                "native performance leaf was not qualified in this validation",
+                            )?,
+                            None,
+                        )
+                    } else {
+                        // This exact native value already supplied the weight.
+                        // Move it into restitution after all original checks;
+                        // do not materialize the complete leaf a second time.
+                        let value = data.value()?;
+                        (encoded(&value)?, Some(value))
+                    };
                 if actual_bytes != *expanded_bytes as usize {
                     return Err("native performance leaf kind/weight differs".into());
                 }
@@ -811,7 +819,10 @@ impl PerformancePartCatalog {
                 let private = matches!(data.as_ref(),PerformancePart::Basis(b)if b.context.private)
                     || matches!(data.as_ref(), PerformancePart::NativeSource(source) if source.requires_private_disclosure());
                 if let Some(values) = out {
-                    values.push(data.value()?);
+                    values.push(match expanded_value {
+                        Some(value) => value,
+                        None => data.value()?,
+                    });
                 }
                 Walk {
                     items: 1,

@@ -946,6 +946,7 @@ fn genuine_activated_world_personal_shared_delivery_preserves_original_episode_a
         );
         let request = selection(&act, &document);
         let selected = SelectedPerformance::from_act(&act, &request).unwrap();
+        assert_eq!(selected.document(), &document);
         selected
             .verify_native_sources(&[actual["source_assets"].clone()])
             .unwrap();
@@ -1012,13 +1013,9 @@ fn genuine_activated_world_personal_shared_delivery_preserves_original_episode_a
         let reopened =
             oi_cradle_kernel::expression_performance_act::decode_bytes(&bytes, 64 * 1024 * 1024)
                 .unwrap();
-        assert_eq!(
-            SelectedPerformance::from_act(&reopened, &request)
-                .unwrap()
-                .native_payload()
-                .unwrap(),
-            delivered
-        );
+        let cold_selected = SelectedPerformance::from_act(&reopened, &request).unwrap();
+        assert_eq!(cold_selected.document(), &document);
+        assert_eq!(cold_selected.native_payload().unwrap(), delivered);
     }
 }
 
