@@ -37,6 +37,32 @@ Every arrow is indexed in [relations.json](relations.json). Use a later
 owner return only after reading the source it cites; a branch name is not an
 evidence revision.
 
+## Current documentation publication — 4 October 2026, 23:21 UTC
+
+The remaining native architecture entries and matrix/account relations are on Main:
+[AIKit #489](https://github.com/EpiLogos/ai-kit/pull/489) at `509ec40dcaebb14e9a146f2ecd5258d2f7457783`
+([entry](https://github.com/EpiLogos/ai-kit/blob/509ec40dcaebb14e9a146f2ecd5258d2f7457783/docs/ARCHITECTURE-NAVIGATION.md)),
+and [Actuation #131](https://github.com/EpiLogos/Actuation/pull/131) at
+`2139d78ceed15f8359e75a8a185648f80a604b8a` ([entry](https://github.com/EpiLogos/Actuation/blob/2139d78ceed15f8359e75a8a185648f80a604b8a/docs/ARCHITECTURE-NAVIGATION.md)).
+These four/six-file corrections repair relocation and retired links, preserve
+seed meanings and standing, and keep later code-lane evidence at its stated cut.
+
+[O:I #583](https://github.com/EpiLogos/O-I/pull/583) merged the sixteen
+suite documents/exports at `696a5fbbb5da44aa425746ef55bc8b7ccc798e73`.
+Its five required checks passed; the clean full landing receipt records 19/19.
+Six portable, independently inspected SVGs retain all fifty-nine sourced arrows.
+The primary received the exact sixteen documents through native revision-checked
+writes, preserving all 1,426 unrelated recorded paths and leaving code/index/HEAD separate.
+AIKit/Actuation primary-document refresh remains coordinated separately at this cut.
+
+Existing structural, seed, link and companion checks passed. A fresh reader
+located the unfamiliar handoff operation, owner, lifecycle, source and real
+no-resubmission verification. The broader hosted capability advisories still
+return exit 1 with 511 AIKit and 44 Actuation predicates; [exact Source/job
+provenance and navigation proof](verification.md#current-documentation-publication--4-october-2026-2321-utc)
+retain those findings. The [upgrade recovery gap](upgrade-lifecycle.md), Epi owner
+audit, installed experience and human Recognition remain open at their own standing.
+
 Retained publication snapshot, checked 4 October 2026, 18:58 UTC: Central's
 native-operation and architecture corrections are on `main` through
 [Central #257](https://github.com/EpiLogos/Central/pull/257) at
