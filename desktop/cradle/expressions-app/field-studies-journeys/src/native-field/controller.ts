@@ -495,6 +495,14 @@ export class NativeFieldController {
   // pumping, its source reads must complete, and admission reasserts the hold.
   if(this.admitting===this.epoch){this.openingHold=reason;return;}
   if(!this.session)return;
+  // An uncertain exchange has already stopped its driver and audio. Preserve
+  // that owner's refusal before a cleanup/finally hold can replace its reason
+  // with a completed-operation label or suggest that Resume is available.
+  const reading=this.session.reading;
+  if(!reading.available){
+   this.status='unavailable';this.reason=reading.reason??this.reason??'native acknowledgement unavailable';
+   this.pause('owner unavailable');this.changed();return;
+  }
   this.session.hold(reason);this.status='held';this.reason=reason;this.changed();
  }
  /** A temporary instrument hold owns only the state it actually suspended.

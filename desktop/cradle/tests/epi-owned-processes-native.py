@@ -9,7 +9,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
-import select
+import selectors
 import signal
 import subprocess
 import sys
@@ -66,7 +66,9 @@ class ActualOwnedLifetimes(unittest.TestCase):
         process = subprocess.Popen([sys.executable, '-u', '-c', body], stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
         self.processes.append(process)
-        self.assertTrue(select.select([process.stdout], [], [], 5)[0], 'Actual test process did not start')
+        with selectors.DefaultSelector() as ready:
+            ready.register(process.stdout, selectors.EVENT_READ)
+            self.assertTrue(ready.select(timeout=5), 'Actual test process did not start')
         announced = process.stdout.readline()
         children = json.loads(announced) if family else []
         if owned:
@@ -89,8 +91,15 @@ class ActualOwnedLifetimes(unittest.TestCase):
         receipt = owned.stop(process)
         self.assertFalse(receipt['observation_failure'])
         self.assertFalse(receipt['live_descendants_remaining'])
+        # The exact owned stop receipt is retained; exited process pipes no
+        # longer serve a reader and must not accumulate across phase rotation.
+        for pipe in (process.stdin, process.stdout, process.stderr):
+            if pipe:
+                pipe.close()
 
-    def test_complete_576_real_images_in_all_12_original_lifetimes(self):
+    def test_complete_576_original_images_and_144_constructor_images_in_all_declared_lifetimes(self):
+        self.assertEqual(hosted.OWNED_PHASES[:3], ('first-construction-identity-setup', 'first-construction', 'first-construction-restart'))
+        self.assertEqual(len(hosted.OWNED_PHASES[3:]), 12, 'All original twelve lifetimes remain')
         owned = self.observer()
         for phase in hosted.OWNED_PHASES:
             owned.begin_phase(phase)
@@ -100,11 +109,25 @@ class ActualOwnedLifetimes(unittest.TestCase):
         result = owned.finish_phases()
         self.assertFalse(result['errors'])
         self.assertEqual([row['phase'] for row in result['archived_phases']], list(hosted.OWNED_PHASES))
-        self.assertEqual(sum(row['records'] for row in result['archived_phases']), 576)
-        self.assertEqual(len(owned.cleanups), 288)
+        self.assertEqual(sum(row['records'] for row in result['archived_phases'][3:]), 576)
+        self.assertEqual(sum(row['records'] for row in result['archived_phases'][:3]), 144)
+        self.assertEqual(len(owned.cleanups), 360)
         owned.close()
-        self.assertEqual(len(owned.cleanups), 288, 'Close must reuse completed exact cleanup receipts')
+        self.assertEqual(len(owned.cleanups), 360, 'Close must reuse completed exact cleanup receipts')
         owned.verify_archives()
+
+    def test_actual_startup_above_select_descriptor_ceiling(self):
+        descriptors = []
+        try:
+            while not descriptors or descriptors[-1] <= 1024:
+                descriptors.append(os.open(os.devnull, os.O_RDONLY))
+            owned = self.observer(); owned.begin_phase(hosted.OWNED_PHASES[0])
+            self.two_images(owned)
+            self.assertEqual(len(owned.rows), 2)
+            owned.close()
+        finally:
+            for descriptor in descriptors:
+                os.close(descriptor)
 
     def test_original_512_record_refusal_retains_all_actual_family_identities_for_cleanup(self):
         owned = self.observer(); owned.begin_phase(hosted.OWNED_PHASES[0])

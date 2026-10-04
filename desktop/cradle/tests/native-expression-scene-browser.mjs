@@ -41,7 +41,7 @@ raise SystemExit(json.dumps({'ok':False,'error':'controlled Central: compose rea
 const bridge=spawn(paths.bridge,['127.0.0.1:0'],{env:{...process.env,OI_BIN:central,OI_CENTRAL_ROOT:temp,OI_CENTRAL_PROJECT_QUERY:'',OI_QL_BIN:paths.ql,OI_QL_SKY_BIN:'/usr/bin/false',OI_QL_FIELD_HOST_BIN:paths.host,OI_QL_FIELD_WORKER_BIN:paths.worker},stdio:['ignore','pipe','pipe']});
 let bridgeLog='',bridgeErr='';bridge.stdout.on('data',x=>bridgeLog+=x);bridge.stderr.on('data',x=>bridgeErr+=x);
 const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('kernel bridge startup timed out')),15000);bridge.once('error',reject);bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`bridge exited ${code}: ${bridgeErr}`));});bridge.stdout.on('data',()=>{const match=bridgeLog.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});});
-let opens=0,closes=0;const wire=[];const timings=[];
+let opens=0,closes=0,interruptNextInspect=false,interruptedInspect=null;const wire=[];const timings=[];
 await build({stdin:{contents:`import {relayNativeChannel} from './src/expressions/nativeChannel.ts'; window.disposeRelay=relayNativeChannel(document.querySelector('iframe'),{kind:'bridge',url:location.origin});`,resolveDir:resolve('.')},bundle:true,platform:'browser',format:'esm',outfile:join(temp,'parent.js')});
 const html=await readFile('expressions-app/field-studies-journeys/public/index.html');
 const server=createServer(async(req,res)=>{try{
@@ -55,6 +55,13 @@ const server=createServer(async(req,res)=>{try{
   if(data?.schema==='oi.native-expression-closed/v1')closes++;
   if(data?.field&&['m1-advance','read'].includes(operation))wire.push({operation,generation:data.field.generation,targets:data.field.targets.map(t=>t.position)});
   if(wire.length>8)wire.shift();
+  // Interrupt one real carrier only after its actual native Inspect completed.
+  // The browser receives no substitute acknowledgement or native response.
+  if(interruptNextInspect&&operation==='inspect'){
+   interruptNextInspect=false;interruptedInspect=result;
+   await writeFile(join(out,'interrupted-native-inspect-reply.json'),JSON.stringify(result,null,2));
+   res.destroy();return;
+  }
   res.setHeader('content-type','application/json');res.end(JSON.stringify(result));return;
  }
  if(req.url==='/parent.js'){res.setHeader('content-type','text/javascript');res.end(await readFile(join(temp,'parent.js')));return;}
@@ -179,6 +186,49 @@ async function cadence(){
   return result;
  }finally{await context.close();}
 }
+/** A fresh real field loses its HTTP acknowledgement, then ordinary Inspect
+ * cleanup must preserve the native session's uncertainty and original reason. */
+async function actualTransportRefusal(){
+ const context=await browser.newContext({viewport:{width:1100,height:800},reducedMotion:'reduce'});
+ await context.addInitScript(probe);
+ const page=await context.newPage();
+ try{
+  await page.goto(`http://127.0.0.1:${server.address().port}`);
+  const frame=page.frames().find(f=>f!==page.mainFrame());
+  await frame.waitForFunction(async()=>{const f=window.__FIELD_STUDIES__;if(typeof f?.workspaceReady!=='function')return false;await f.workspaceReady();return f.native()?.renderer_requirements?.slot_count>0&&!!f.telemetry()&&!!f.inspect();},null,{timeout:60000});
+  const dismiss=frame.locator('#entry-gate:not([hidden]) [data-action="entry-dismiss"]');
+  if(await dismiss.count()){await dismiss.click();await frame.waitForFunction(()=>document.querySelector('#entry-gate')?.hasAttribute('hidden'),null,{timeout:5000});}
+  const toggle=frame.locator('.workspace-cluster>.header-menu-toggle');if(await toggle.isVisible())await toggle.click({force:true});
+  await frame.locator('[data-action="studio"]').click({force:true});
+  await frame.locator('[data-action="studio-section"][data-value="native"]').click({force:true});
+  await frame.locator('.native-field-panel summary',{hasText:'Other openings'}).click();
+  await frame.locator('[data-ni="open-default"]').click();
+  await frame.waitForFunction(()=>{const r=window.__FIELD_STUDIES__.native();return r.instrument?.influence&&r.native?.available;},null,{timeout:60000});
+  await frame.locator('[data-ni="hold"]').click();
+  const before=await frame.evaluate(()=>window.__FIELD_STUDIES__.native());
+  await frame.locator('[data-ni-depth]>summary').click();
+  await frame.locator('.native-field-depth details>summary',{hasText:'Native operation and sources'}).click();
+  const closedBeforeInterruption=closes;interruptNextInspect=true;
+  await frame.locator('[data-native="inspect"]').click();
+  await frame.waitForFunction(()=>{const r=window.__FIELD_STUDIES__.native();return r.status==='unavailable'&&r.native?.available===false;},null,{timeout:15000});
+  const after=await frame.evaluate(()=>window.__FIELD_STUDIES__.native());
+  assert.ok(interruptedInspect?.outcome?.data?.schema==='ql.field-host-receipt/v1','interruption followed an actual native owner receipt');
+  assert.equal(interruptedInspect.outcome.data.status,'ok');
+  assert.deepEqual(after.native.acknowledged,before.native.acknowledged,'a lost read acknowledgement invents no new native cursor');
+  assert.equal(after.reason,after.native.reason,'cleanup preserves the original unavailable owner reason');
+  assert.ok(after.reason&&!/complete; resume explicitly/.test(after.reason));
+  const status=await frame.locator('[data-ni-v="status"]').innerText();
+  assert.ok(status.startsWith('Unavailable — ')&&status.includes(after.reason));
+  assert.equal(await frame.locator('[data-ni="resume"]').isDisabled(),true);
+  assert.equal(await frame.locator('[data-ni="step"]').isDisabled(),true);
+  assert.equal(after.instrument.cadence.playing,false,'uncertainty cannot keep cadence scheduling');
+  await page.screenshot({path:join(out,'native-unavailable-original-reason.png')});
+  await frame.locator('[data-ni="close"]').click();
+  for(let i=0;i<200&&closes===closedBeforeInterruption;i++)await settle(25);
+  assert.equal(closes,closedBeforeInterruption+1,'uncertainty and explicit UI cleanup release the real owner exactly once');
+  return{before,after,status,native_reply:'interrupted-native-inspect-reply.json',standing:'actual native Inspect followed by a destroyed HTTP carrier; no fabricated acknowledgement; browser/softwareGPU scope, not installed timeout cause'};
+ }finally{interruptNextInspect=false;await context.close();}
+}
 const top=influence=>influence.voices.reduce((a,v)=>v.frequency_hz>a.frequency_hz?v:a);
 /** Peak frequency near `hz` (±2%) by a Hann-windowed DFT scan, parabolic refined. */
 function peakNear(pcm,rate,hz){
@@ -243,6 +293,7 @@ try{
  report.measurement={latency_by_operation:Object.fromEntries([...new Set(timings.map(t=>t.operation))].map(op=>{const values=timings.filter(t=>t.operation===op).map(t=>t.elapsed).sort((x,y)=>x-y);return[op,{count:values.length,mean_ms:values.reduce((s,x)=>s+x,0)/values.length,max_ms:values.at(-1)}];}))};
  if(!disconnect){report.cadence=await cadence();check(true,'cadence: 1 and 12 ticks/s on the real owner stay following; applied beats equal M1 revisions; busy beats skipped',report.cadence);}
  assert.equal(opens,disconnect?3:4);assert.equal(closes,disconnect?3:4);
+ if(!disconnect){report.transport_refusal=await actualTransportRefusal();check(true,'actual transport interruption preserves unavailable native reason and disabled controls',report.transport_refusal);assert.equal(opens,5);assert.equal(closes,5);}
  report.pass=report.failures.length===0;
  console.log(JSON.stringify(report,null,2));
  assert.deepEqual(report.failures,[],'every layer must carry the determinant');
