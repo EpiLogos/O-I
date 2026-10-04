@@ -11,7 +11,7 @@ export default (() => {
     const root = allFiles.find((file) => file.slug === "index")
     return (
       <nav class="essay-anchor" aria-label="Essay reading routes">
-        {root?.slug && <a href={resolveRelative(fileData.slug, root.slug)}>Essay field</a>}
+        {root?.slug && <a href={resolveRelative(fileData.slug, root.slug)}>Reading home</a>}
         {fileData.slug !== foundation.slug && (
           <a href={resolveRelative(fileData.slug, foundation.slug)}>§0/1 · The foundation</a>
         )}

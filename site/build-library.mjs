@@ -60,7 +60,7 @@ export async function buildLibrary(){
  const root=fileURLToPath(new URL('.',import.meta.url));
  const source=await readFile(resolve(root,'content/public-site.md'),'utf8');
  let commit=process.env.GITHUB_SHA??'source-snapshot';
- try{commit=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim();}catch{/* A copied source build still has its exact content hash. */}
+ if(!process.env.GITHUB_SHA)try{commit=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim();}catch{/* A copied source build still has its exact content hash. */}
  const built=compileLibrary(source,commit);
  const destination=resolve(root,'public/data/library');
  await mkdir(destination,{recursive:true});

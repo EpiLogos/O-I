@@ -68,6 +68,18 @@ type TweenNode = {
   stop: () => void
 }
 
+/** Tag namespaces the fullscreen graph includes; empty = tags hidden.
+ * The local graph never shows tags. */
+let tagNamespaces: string[] = []
+const readNamespaceFilter = (): string[] => {
+  try {
+    const raw = JSON.parse(localStorage.getItem("oi-graph-tag-namespaces") ?? "[]")
+    return Array.isArray(raw) ? raw.map(String) : []
+  } catch {
+    return []
+  }
+}
+
 async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   const slug = simplifySlug(fullSlug)
   const visited = getVisited()
@@ -110,8 +122,11 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
 
     if (showTags) {
+      const isGlobal = !!graph.closest(".global-graph-outer")
+      const ns = isGlobal ? readNamespaceFilter() : []
       const localTags = details.tags
         .filter((tag) => !removeTags.includes(tag))
+        .filter((tag) => !isGlobal || ns.includes(tag.split("/")[0]))
         .map((tag) => simplifySlug(("tags/" + tag) as FullSlug))
 
       tags.push(...localTags.filter((tag) => !tags.includes(tag)))
@@ -121,6 +136,16 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       }
     }
   }
+
+  const namespaceFreq = new Map<string, number>()
+  for (const d of data.values()) {
+    for (const t of d.tags ?? []) {
+      const ns = t.split("/")[0]
+      if (!ns) continue
+      namespaceFreq.set(ns, (namespaceFreq.get(ns) ?? 0) + 1)
+    }
+  }
+  tagNamespaces = [...namespaceFreq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15).map(([ns]) => ns)
 
   const neighbourhood = new Set<SimpleSlug>()
   const wl: (SimpleSlug | "__SENTINEL")[] = [slug, "__SENTINEL"]
@@ -577,43 +602,113 @@ document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
   const slug = e.detail.url
   addToVisited(simplifySlug(slug))
 
-  async function renderLocalGraph() {
+  // A closed rail has no drawable width. Redraw the real native graph when
+  // the drawer opens or the reading layout changes, and dispose canvases on nav.
+  const localContainers = [...document.getElementsByClassName("graph-container")] as HTMLElement[]
+  let disposed = false
+  let rendering = false
+  let redraw = false
+  let lastSize = ""
+  let resizeTimer: ReturnType<typeof setTimeout> | undefined
+  async function renderLocalGraph(force = false) {
+    if (disposed) return
+    const size = localContainers.map((c) => `${c.offsetWidth}:${c.offsetHeight}`).join("|")
+    if (!force && size === lastSize) return
+    if (rendering) { redraw = true; return }
+    lastSize = size
+    rendering = true
     cleanupLocalGraphs()
-    const localGraphContainers = document.getElementsByClassName("graph-container")
-    for (const container of localGraphContainers) {
-      localGraphCleanups.push(await renderGraph(container as HTMLElement, slug))
+    try {
+      for (const container of localContainers) {
+        if (!container.isConnected || container.offsetWidth === 0) continue
+        const cleanup = await renderGraph(container, slug)
+        if (disposed || !container.isConnected) cleanup()
+        else localGraphCleanups.push(cleanup)
+      }
+    } finally {
+      rendering = false
+      if (redraw && !disposed) { redraw = false; void renderLocalGraph(true) }
     }
   }
-
-  await renderLocalGraph()
-  const handleThemeChange = () => {
-    void renderLocalGraph()
+  const scheduleGraph = () => {
+    clearTimeout(resizeTimer)
+    resizeTimer = setTimeout(() => { void renderLocalGraph() }, 100)
   }
-
+  const observer = new ResizeObserver(scheduleGraph)
+  localContainers.forEach((container) => observer.observe(container))
+  const handleThemeChange = () => { void renderLocalGraph(true) }
   document.addEventListener("themechange", handleThemeChange)
   window.addCleanup(() => {
+    disposed = true
+    clearTimeout(resizeTimer)
+    observer.disconnect()
     document.removeEventListener("themechange", handleThemeChange)
+    cleanupLocalGraphs()
   })
+  void renderLocalGraph()
 
   const containers = [...document.getElementsByClassName("global-graph-outer")] as HTMLElement[]
+  let globalGeneration = 0
+  let globalResizeTimer: ReturnType<typeof setTimeout> | undefined
   async function renderGlobalGraph() {
+    const generation = ++globalGeneration
     const slug = getFullSlug(window)
+    const rail = containers[0]?.closest("dialog") as HTMLDialogElement | null
+    if (rail && !rail.open) document.querySelector<HTMLButtonElement>('[data-essay-panel="connections"]')?.click()
+    cleanupGlobalGraphs()
     for (const container of containers) {
+      const wasOpen = container.classList.contains("active")
       container.classList.add("active")
+      if (!wasOpen) container.querySelector<HTMLButtonElement>(".global-graph-close")?.focus({ preventScroll: true })
       const sidebar = container.closest(".sidebar") as HTMLElement
       if (sidebar) {
-        sidebar.style.zIndex = "1"
+        sidebar.style.zIndex = "40"
       }
 
       const graphContainer = container.querySelector(".global-graph-container") as HTMLElement
-      registerEscapeHandler(container, hideGlobalGraph)
       if (graphContainer) {
-        globalGraphCleanups.push(await renderGraph(graphContainer, slug))
+        const cleanup = await renderGraph(graphContainer, slug)
+        if (disposed || generation !== globalGeneration || !container.classList.contains("active")) cleanup()
+        else globalGraphCleanups.push(cleanup)
+      }
+      if (disposed || generation !== globalGeneration || !container.classList.contains("active")) return
+
+      // Namespace filter: tags stay hidden until a namespace is switched on.
+      if (!localStorage.getItem("oi-graph-tag-namespaces")) {
+        localStorage.setItem("oi-graph-tag-namespaces", "[]")
+      }
+      let filter = container.querySelector(".tag-filter") as HTMLElement | null
+      if (!filter) {
+        filter = document.createElement("div")
+        filter.className = "tag-filter"
+        container.prepend(filter)
+      }
+      filter.replaceChildren()
+      const label = document.createElement("span")
+      label.className = "tag-filter-label"
+      label.textContent = "tags"
+      filter.appendChild(label)
+      const included = readNamespaceFilter()
+      for (const ns of tagNamespaces) {
+        const chip = document.createElement("button")
+        chip.className = "tag-chip"
+        chip.textContent = ns
+        chip.setAttribute("aria-pressed", String(included.includes(ns)))
+        chip.addEventListener("click", () => {
+          const cur = readNamespaceFilter()
+          const next = cur.includes(ns) ? cur.filter((x) => x !== ns) : [...cur, ns]
+          localStorage.setItem("oi-graph-tag-namespaces", JSON.stringify(next))
+          cleanupGlobalGraphs()
+          void renderGlobalGraph()
+        })
+        filter.appendChild(chip)
       }
     }
   }
 
   function hideGlobalGraph() {
+    const wasOpen = containers.some((container) => container.classList.contains("active"))
+    ++globalGeneration
     cleanupGlobalGraphs()
     for (const container of containers) {
       container.classList.remove("active")
@@ -622,7 +717,20 @@ document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
         sidebar.style.zIndex = ""
       }
     }
+    if (wasOpen) document.querySelector<HTMLButtonElement>(".global-graph-icon")?.focus({ preventScroll: true })
   }
+
+  const resizeGlobalGraph = () => {
+    clearTimeout(globalResizeTimer)
+    globalResizeTimer = setTimeout(() => {
+      if (containers.some((container) => container.classList.contains("active"))) void renderGlobalGraph()
+    }, 150)
+  }
+  window.addEventListener("resize", resizeGlobalGraph)
+  window.addCleanup(() => {
+    clearTimeout(globalResizeTimer)
+    window.removeEventListener("resize", resizeGlobalGraph)
+  })
 
   async function shortcutHandler(e: HTMLElementEventMap["keydown"]) {
     if (e.key === "g" && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
@@ -633,6 +741,13 @@ document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
       anyGlobalGraphOpen ? hideGlobalGraph() : renderGlobalGraph()
     }
   }
+
+  containers.forEach((container) => {
+    registerEscapeHandler(container, hideGlobalGraph)
+    const closeButton = container.querySelector<HTMLButtonElement>(".global-graph-close")
+    closeButton?.addEventListener("click", hideGlobalGraph)
+    window.addCleanup(() => closeButton?.removeEventListener("click", hideGlobalGraph))
+  })
 
   const containerIcons = document.getElementsByClassName("global-graph-icon")
   Array.from(containerIcons).forEach((icon) => {

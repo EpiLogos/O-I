@@ -95,6 +95,7 @@ export function dedupeFrontmatter(text) {
 }
 
 export async function stageEssayInputs(inputs, contentDir) {
+  const selectedPaths = new Set(inputs.entries.map(entry => entry.rel));
   await rm(contentDir,{ recursive:true,force:true });
   await mkdir(contentDir,{ recursive:true });
   let frontmatterFixed=0;
@@ -104,12 +105,15 @@ export async function stageEssayInputs(inputs, contentDir) {
     if (entry.kind==='markdown') {
       const normalized=dedupeFrontmatter(entry.bytes.toString('utf8'));
       if (normalized.changed) frontmatterFixed++;
-      // Consumer links into the private working desk remain native source relations,
-      // but they cannot be clickable routes in the curated public reading edition.
+      // Source relations into withheld desks remain readable labels. Their
+      // private targets cannot be clickable routes in the public edition.
       const publicText = normalized.text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (link,label,target) => {
         if (/^(?:https?:|mailto:|#)/.test(target)) return link;
         const path = posix.normalize(posix.join(posix.dirname(entry.rel),target.split('#')[0]));
-        return /^\.\.\/(?:\.\.\/)*working\//.test(path) ? label : link;
+        const withheld = /^\.\.\/(?:\.\.\/)*working\//.test(path) ||
+          /(?:^|\/)(?:quilt|reference-notes|private|templates)(?:\/|$)/.test(path) ||
+          (path.endsWith('.md') && !selectedPaths.has(path));
+        return withheld ? label : link;
       });
       await writeFile(dest,publicText);
     } else await writeFile(dest,entry.bytes);
