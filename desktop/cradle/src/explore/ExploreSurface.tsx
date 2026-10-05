@@ -80,6 +80,15 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
     return()=>window.removeEventListener(TRAVEL_EVENT,wake);
   },[pinned]);
   useEffect(()=>{if(pinned)return;const timer=setTimeout(()=>{if(!saveTravel(latest.current))setStorageError("Explore view state could not be saved on this device.");},200);return()=>clearTimeout(timer);},[travel,pinned]);
+  useEffect(()=>{
+    if(pinned)return;
+    // The debounce above loses the last ~200ms of view commits across an
+    // unload (reload, close): a continuation that forgets its final camera
+    // or mode is not a continuation. Flush on pagehide and on unmount.
+    const flush=()=>{if(!saveTravel(latest.current))setStorageError("Explore view state could not be saved on this device.");};
+    window.addEventListener("pagehide",flush);
+    return()=>{window.removeEventListener("pagehide",flush);saveTravel(latest.current);};
+  },[pinned]);
 
   const selected=visit.selected;
   const isEntry=!!selected&&!selected.startsWith("participant:")&&!selected.startsWith("human:")&&!selected.startsWith("oi:field:")&&!selected.startsWith("relation:");
