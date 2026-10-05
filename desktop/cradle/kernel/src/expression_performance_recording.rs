@@ -848,6 +848,12 @@ pub struct NativeRecordingBatch {
     input_journal: Vec<InputHistoryEntry>,
 }
 impl NativeRecordingBatch {
+    pub(crate) fn basis(&self) -> u16 {
+        self.basis
+    }
+    pub(crate) fn layer(&self) -> u16 {
+        self.layer
+    }
     pub fn entries(&self) -> &[RecordedApplication] {
         &self.receipts
     }

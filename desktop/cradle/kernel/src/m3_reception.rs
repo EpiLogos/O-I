@@ -301,7 +301,8 @@ impl Prepared {
                 }
                 Request::Read { .. } => unreachable!(),
             };
-            let reading = nara_identity::run_ql_m3(&input)?;
+            let prior = pin.ok_or("Protected personal current disappeared")?;
+            let reading = prior.run_native_m3(&input)?;
             if reading["state"]["schema"] != "ql.m3-state/v1"
                 || reading["state"]["subject_ref"] != binding.person_ref
                 || reading["state"]["identity"]["event_ref"] != event
@@ -309,13 +310,11 @@ impl Prepared {
                 return Err("QL M3 returned another subject or event".into());
             }
             if reading["activity"]["status"] == "available" {
-                let prior = pin.ok_or("Protected personal current disappeared")?;
-                let recomposed = nara_identity::run_ql_nara(
-                    "personal-recompose",
+                let recomposed = prior.recompose_native_activity(
                     &json!({
                     "schema":"ql.nara-personal-recompose-request/v1","current":prior.reading(),"m3_input":input}),
                 )?;
-                current_candidate = Some(prior.with_native_activity(recomposed)?);
+                current_candidate = Some(prior.with_native_activity(recomposed, input.clone())?);
             }
             let revision = format!(
                 "sha256:{:x}",

@@ -385,8 +385,8 @@ impl NativeReceivingReadmissionHandle {
                 .iter()
                 .rev()
                 .filter_map(|page| page.batch().ok())
-                .find(|batch| usize::from(batch.basis) == before_basis_index)
-                .map_or(0, |batch| batch.layer);
+                .find(|batch| usize::from(batch.basis()) == before_basis_index)
+                .map_or(0, |batch| batch.layer());
             let intent = super::recording::RecordingIntent {
                 actor: actor.into(),
                 basis: u16::try_from(before_basis_index).map_err(|e| e.to_string())?,
@@ -533,7 +533,7 @@ impl Manager {
         if owner.lease != lease || owner.stopped || owner.process_exited()? {
             return Err("native receiving continuation has another/closed actual owner".into());
         }
-        let channel = owner
+        owner
             .act_channel
             .as_ref()
             .ok_or("native receiving continuation has no qualified private Act channel")?;
@@ -558,6 +558,10 @@ impl Manager {
                 "manifest":manifest,"checkpoint_index":index,"transaction_ref":transaction_ref});
             let mut query = 0_u64;
             let mut visited = BTreeSet::new();
+            let channel = owner
+                .act_channel
+                .as_ref()
+                .ok_or("native receiving continuation has no qualified private Act channel")?;
             let reply = match channel.exchange_stream_custodied(&request, |pull| {
                 if pull["schema"] != "ql.native-act-owner-query/v1" { return Ok(None); }
                 query = query.checked_add(1).ok_or("native receiving pull ordinal exhausted")?;

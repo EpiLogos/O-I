@@ -1311,7 +1311,7 @@ impl CheckpointBinding {
             .map(|entry| entry.native_sequence)
             .collect();
         let mut unscored = Vec::new();
-        for (&sequence, operation) in checkpoint_queue(&checkpoint.audio)? {
+        for (sequence, operation) in checkpoint_queue(&checkpoint.audio)? {
             if !scored.contains(&sequence) {
                 unscored.push(UnscoredQueuedInput {
                     native_sequence: sequence,

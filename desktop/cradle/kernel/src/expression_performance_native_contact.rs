@@ -855,7 +855,7 @@ pub(crate) fn require_recorded_application(
     }
     matched
         .map(|_| ())
-        .ok_or("Contact lacks its complete original native admission/source/occurrence")
+        .ok_or_else(|| "Contact lacks its complete original native admission/source/occurrence".to_owned())
 }
 
 /// Literal old no-contact schemas stay unchanged. A v3 discriminator requires

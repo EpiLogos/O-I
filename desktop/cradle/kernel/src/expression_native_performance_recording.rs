@@ -7,7 +7,7 @@ use super::act_diagnostics::NativeDiagnosticReceipts;
 use crate::expression::procedural::scene_receiver::SceneOwner;
 use crate::expression::{Application, Change, Document, Request};
 use crate::expression_performance::{
-    CheckpointBinding, CheckpointReceipt, Counter, Performance, PerformanceOperation, Scope,
+    CheckpointBinding, CheckpointReceipt, Counter, Performance, PerformanceOperation, QueuedEventReceipt, Scope,
 };
 use crate::expression_performance_management::InputHistoryEntry;
 use crate::expression_performance_recording::{
@@ -1127,7 +1127,7 @@ impl Application {
                 // compact Serde JSON serializer. Compare their actual algorithms,
                 // not two caller-selected digest strings or sorted Value bytes.
                 let constructor_hash =
-                    crate::expression::procedural::bootstrap::fingerprint(before)?;
+                    crate::native_expression::procedural::bootstrap::fingerprint(before)?;
                 if fact["document_sha256"] != constructor_hash
                     || crate::expression_file::digest(&document_bytes)
                         != format!("sha256:{constructor_hash}")
