@@ -89,7 +89,7 @@ impl Manager {
     /// Private finite capacity borrowed from the SAME admitted Source slot.
     /// This sets no public grant and changes no ordinary channel limit. Full
     /// native post-channel refusals remain the underlying operation's custody.
-    pub(crate) fn with_source_delivery_reply_capture<T>(
+    pub(in crate::native_expression) fn with_source_delivery_reply_capture<T>(
         &mut self,
         lease:&str,
         capture:&crate::native_expression::procedural::stage_library::SourceDeliveryCapture,

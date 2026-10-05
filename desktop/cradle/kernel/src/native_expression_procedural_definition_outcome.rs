@@ -320,3 +320,31 @@ mod digest_tests {
         assert!(document_digest(&bytes).is_err());
     }
 }
+
+#[cfg(test)]
+mod definition_lookup_dispatch_tests {
+    #[test]
+    fn actual_kernel_lookup_reports_unknown_original_without_generic_exchange_or_effects() {
+        let mut kernel = crate::Kernel::new(crate::flow::CentralClient::discover());
+        let before = serde_json::to_value(kernel.snapshot()).unwrap();
+        // An absent original is a real refusal through the normal public
+        // operation. No private owner, Scene, result or producer is substituted.
+        let outcome = kernel.apply(crate::KernelOp::NativeExpression {
+            request: crate::native_expression::Request::ProceduralDefinitionRetry {
+                request: crate::native_expression::procedural::conduct::Request {
+                    lease: "absent-native-owner".into(),
+                    expression_ref: "expression:absent-original".into(),
+                    document_revision: 0,
+                    source_producer_ref: None,
+                    request: serde_json::json!({"action":"install_prepared"}),
+                },
+            },
+        });
+        let error = match outcome {
+            Err(reason) => reason,
+            Ok(_) => panic!("absent original definition acquired a result"),
+        };
+        assert_eq!(error, "Original native definition outcome unavailable; delivery remains unknown");
+        assert_eq!(serde_json::to_value(kernel.snapshot()).unwrap(), before);
+    }
+}

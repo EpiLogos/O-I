@@ -98,6 +98,9 @@ fn performance(actual: &Value) -> Performance {
         native_sources,
         native_recordings: vec![],
         native_reservations: vec![],
+        // This genuine FIELD-only history has no authored contact geometry.
+        // The owner schema omits its empty legacy default from the seal.
+        contact_definitions: vec![],
         layers: vec![Layer {
             layer_ref: "performance:physical-history/layer".into(),
             title: "Actual original physical source history".into(),

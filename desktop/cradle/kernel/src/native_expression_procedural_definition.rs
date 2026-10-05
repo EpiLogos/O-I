@@ -180,7 +180,7 @@ impl crate::native_expression::Manager {
     /// Borrow from genuine warm admission/current completion at unchanged Docr.
     /// The caller performs the existing acknowledged private Conduct request
     /// before ordinary S Prepare journals r->r+1. This method never exchanges.
-    pub(crate) fn native_prepared_definition(
+    pub(in crate::native_expression) fn native_prepared_definition(
         &mut self,
         application: &Application,
         before: &Document,
@@ -238,7 +238,7 @@ impl crate::native_expression::Manager {
     /// Current readings are supplied by Root's protected actual ReadSource.
     /// Fresh issuer/SceneOwner/Source completion already live on this Manager;
     /// neither a browser graph nor a serialized old contract can qualify this.
-    pub(crate) fn native_source_continuation_input(
+    pub(in crate::native_expression) fn native_source_continuation_input(
         &mut self,
         application: &Application,
         before: &Document,
@@ -275,7 +275,7 @@ impl crate::native_expression::Manager {
     /// Only the completed SAME private C/Source request may advance currentness.
     /// The original definition and compiler admission stay immutable; this is
     /// no new producer, S preparation, journal row or consumer acknowledgement.
-    pub(crate) fn retain_registered_source_continuation(
+    pub(in crate::native_expression) fn retain_registered_source_continuation(
         &mut self,
         application: &Application,
         before: &Document,
@@ -395,7 +395,7 @@ impl crate::native_expression::Manager {
     }
     /// Account only the real same-owner installed-pending result. First batch
     /// remains wholly unmodified and pending; no receiving operation is applied.
-    pub(crate) fn retain_prepared_definition(
+    pub(in crate::native_expression) fn retain_prepared_definition(
         &mut self,
         application: &Application,
         before: &Document,

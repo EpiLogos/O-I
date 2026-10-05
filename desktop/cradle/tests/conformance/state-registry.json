@@ -20,6 +20,7 @@
     "oi-action",
     "oi-menu-item context-insert-item",
     "oi-note",
+    "oi-object:factory-live-subject|",
     "oi:agent-setup-return",
     "oi:arrangement-action",
     "oi:browser-attached",
@@ -74,6 +75,13 @@
      "classification": "device-draft",
      "rationale": "Removes an unplaced writing draft only after its owner has saved it.",
      "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+    },
+    {
+     "family": "oi-object:factory-live-subject|<encoded project>|<encoded owner reference>",
+     "classification": "presentation-local",
+     "rationale": "Identity of the existing native object surface in the Context sidebar or detached window. encodeObjectRef/decodeObjectRef in src/agent/objects/registry.ts carry kind, project and owner reference; src/CradleFrame.tsx openObjectSidebar uses the prefix only to identify the previous surface. kernel/src/lib.rs surface_open owns the SurfaceState/navigation receipt. The object kind reader resolves the actual participant/session/work/source on mount. This string is neither a browser storage accessor/key nor copied semantic content, a writable source or an authority grant. Its presence is disclosed because keyLiterals also scans navigation literals.",
+     "spec_ref": "docs/cradle/10-SIDEBARS.md §4.7; docs/cradle/02-ARCHITECTURE.md §6; src/agent/objects/registry.ts; src/contributions/factory/live/liveObjects.ts; kernel/src/lib.rs surface_open",
+     "verification": "Original state-placement negative scanner/assertions unchanged; installed sidebar/pop-out and owner readback remain open."
     }
    ]
   },

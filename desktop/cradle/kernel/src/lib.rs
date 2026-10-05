@@ -2469,6 +2469,9 @@ impl Kernel {
                     native_expression::Request::ProceduralStageCapability { request } => {
                         self.native_stage_capability(request)?
                     }
+                    native_expression::Request::ProceduralDefinitionRetry { request } => {
+                        self.native_procedural_definition_retry(request)?
+                    }
                     native_expression::Request::ProceduralConduct { request } => {
                         self.native_procedural_conduct(request)?
                     }
