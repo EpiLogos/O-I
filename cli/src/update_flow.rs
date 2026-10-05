@@ -314,6 +314,7 @@ fn stage_and_link(data_root: &Path, id: &str, exe: &str, sha256: &str, source_bi
 /// Stage one binary into the content-addressed store. Nothing is linked: a
 /// staged generation changes what no invocation resolves, so it can be
 /// smoke-checked — and every other product built — before anything flips.
+#[cfg(test)]
 fn stage_binary(data_root: &Path, id: &str, exe: &str, sha256: &str, source_binary: &Path) -> Result<PathBuf, String> {
     let managed_dir = data_root.join("products").join(id).join(sha256).join("bin");
     fs::create_dir_all(&managed_dir).map_err(|error| format!("cannot create {}: {error}", managed_dir.display()))?;
@@ -513,6 +514,8 @@ fn companions_verify(managed: &Path, entry: &ManagedProduct, declared: &[String]
 fn built_companions(id: &str, target: &UpdateTarget, target_dir: &Path) -> Result<Vec<(String, PathBuf)>, String> {
     target.companions.iter().map(|(name, executable_path)| {
         let relative = executable_path.strip_prefix("target/")
+            .filter(|relative| !relative.is_empty() && Path::new(relative).components()
+                .all(|part| matches!(part, std::path::Component::Normal(_))))
             .ok_or_else(|| format!("{id}: unsupported companion executable_path {executable_path}"))?;
         let built = target_dir.join(relative);
         if !is_executable(&built) {
@@ -542,33 +545,238 @@ fn adopted_companions(id: &str, target: &UpdateTarget, discovered: &Path) -> Res
     Ok(found)
 }
 
-/// Stage companions into the primary's content-addressed directory with the
-/// same stage-beside-then-rename discipline. They are not linked into bin/
-/// and never activated: only the product itself spawns them.
-fn stage_companions(data_root: &Path, id: &str, sha256: &str, companions: &[(String, PathBuf)]) -> Result<BTreeMap<String, String>, String> {
-    let managed_dir = data_root.join("products").join(id).join(sha256).join("bin");
-    fs::create_dir_all(&managed_dir).map_err(|error| format!("cannot create {}: {error}", managed_dir.display()))?;
-    let mut digests = BTreeMap::new();
+/// A package generation is the complete image set at one Source cut, never
+/// the primary's digest alone. The primary digest in public receipts keeps
+/// its existing meaning; only the private directory key includes companions.
+struct StagedManagedPackage {
+    generation: String,
+    managed: PathBuf,
+    sha256: String,
+    companions: BTreeMap<String, String>,
+}
+
+fn managed_package_member_name(name: &str) -> Result<(), String> {
+    if name.is_empty() || name == "." || name == ".." || name.contains(['/', '\\']) {
+        return Err(format!("invalid managed package member {name:?}"));
+    }
+    Ok(())
+}
+
+struct HeldManagedPackageImage {
+    source: PathBuf,
+    before: fs::Metadata,
+    file: fs::File,
+}
+
+fn managed_package_image_same(a: &fs::Metadata, b: &fs::Metadata) -> bool {
+    let common = a.len() == b.len() && a.modified().ok() == b.modified().ok();
+    #[cfg(unix)] {
+        use std::os::unix::fs::MetadataExt;
+        common && a.dev() == b.dev() && a.ino() == b.ino() && a.mode() == b.mode()
+            && a.ctime() == b.ctime() && a.ctime_nsec() == b.ctime_nsec()
+    }
+    #[cfg(not(unix))] { common && a.permissions().readonly() == b.permissions().readonly() }
+}
+
+fn hold_managed_package_image(source: &Path) -> Result<HeldManagedPackageImage, String> {
+    let before = fs::symlink_metadata(source)
+        .map_err(|error| format!("cannot inspect package image {}: {error}", source.display()))?;
+    if !before.is_file() || before.file_type().is_symlink() || !is_executable(source)
+        || before.len() == 0 || before.len() > 2 * 1024 * 1024 * 1024
+    { return Err(format!("package image must be a bounded regular executable: {}", source.display())); }
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)] {
+        use std::os::unix::fs::OpenOptionsExt;
+        // NOFOLLOW + NONBLOCK: a swapped symlink/FIFO cannot be held as an image.
+        #[cfg(target_os = "macos")] options.custom_flags(0x100 | 0x4);
+        #[cfg(target_os = "linux")] options.custom_flags(0x20000 | 0x800);
+    }
+    let file = options.open(source).map_err(|error| format!("cannot hold package image: {error}"))?;
+    if !managed_package_image_same(&before, &file.metadata().map_err(|error| error.to_string())?) {
+        return Err(format!("package image changed while opening {}", source.display()));
+    }
+    Ok(HeldManagedPackageImage { source: source.to_path_buf(), before, file })
+}
+
+fn copy_held_managed_package_image(
+    image: &mut HeldManagedPackageImage, destination: &Path,
+) -> Result<String, String> {
+    use sha2::{Digest, Sha256};
+    use std::io::{Read, Write};
+    let path_metadata = fs::symlink_metadata(&image.source).map_err(|error| error.to_string())?;
+    if path_metadata.file_type().is_symlink()
+        || !managed_package_image_same(&image.before, &path_metadata)
+        || !managed_package_image_same(&image.before, &image.file.metadata().map_err(|error| error.to_string())?)
+    { return Err(format!("package image changed after the complete material census: {}", image.source.display())); }
+    let mut output = fs::OpenOptions::new().write(true).create_new(true).open(destination)
+        .map_err(|error| format!("cannot exclusively stage {}: {error}", destination.display()))?;
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(120);
+    let mut bytes = 0_u64;
+    let mut digest = Sha256::new();
+    let mut buffer = [0_u8; 65536];
+    loop {
+        if std::time::Instant::now() >= deadline {
+            return Err(format!("package copy deadline; partial bytes retained at {}", destination.display()));
+        }
+        let count = image.file.read(&mut buffer).map_err(|error| format!("package image read: {error}"))?;
+        if count == 0 { break; }
+        bytes += count as u64;
+        if bytes > image.before.len() {
+            return Err(format!("package image grew; partial bytes retained at {}", destination.display()));
+        }
+        output.write_all(&buffer[..count]).map_err(|error| format!("package image write: {error}"))?;
+        digest.update(&buffer[..count]);
+    }
+    let after = fs::symlink_metadata(&image.source).map_err(|error| error.to_string())?;
+    if bytes != image.before.len() || !managed_package_image_same(&image.before, &image.file.metadata().map_err(|error| error.to_string())?)
+        || !managed_package_image_same(&image.before, &after) || after.file_type().is_symlink()
+    { return Err(format!("package image changed during copy; candidate retained at {}", destination.display())); }
+    #[cfg(unix)] {
+        use std::os::unix::fs::PermissionsExt;
+        output.set_permissions(fs::Permissions::from_mode(image.before.permissions().mode() & 0o777))
+            .map_err(|error| error.to_string())?;
+    }
+    output.sync_all().map_err(|error| format!("cannot sync staged image: {error}"))?;
+    Ok(format!("{:x}", digest.finalize()))
+}
+
+#[cfg(test)]
+fn copy_managed_package_member(source: &Path, destination: &Path) -> Result<String, String> {
+    copy_held_managed_package_image(&mut hold_managed_package_image(source)?, destination)
+}
+
+
+fn stage_managed_package(
+    data_root: &Path,
+    id: &str,
+    exe: &str,
+    desired: &DesiredCut,
+    primary: &Path,
+    companions: &[(String, PathBuf)],
+) -> Result<StagedManagedPackage, String> {
+    managed_package_member_name(id)?;
+    managed_package_member_name(exe)?;
+    let mut images = BTreeMap::from([(exe.to_owned(), hold_managed_package_image(primary)?)]);
     for (name, source) in companions {
-        let digest = sha256_file(source)?;
-        let staged = managed_dir.join(name);
-        let temp = managed_dir.join(format!(".{name}.tmp-{}", std::process::id()));
-        fs::copy(source, &temp).map_err(|error| format!("cannot stage {id} companion {name}: {error}"))?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut permissions = fs::metadata(&temp).map_err(|error| error.to_string())?.permissions();
-            permissions.set_mode(0o755);
-            fs::set_permissions(&temp, permissions).map_err(|error| error.to_string())?;
-        }
-        fs::rename(&temp, &staged).map_err(|error| format!("cannot promote staged {id} companion {name}: {error}"))?;
-        if sha256_file(&staged)? != digest {
-            return Err(format!("{id}: staged companion {name} digest changed during staging"));
-        }
+        managed_package_member_name(name)?;
+        if images.contains_key(name) { return Err(format!("{id}: repeated package image {name}")); }
+        let held = hold_managed_package_image(source)
+            .map_err(|error| format!("{id}: required companion {name}: {error}"))?;
+        images.insert(name.clone(), held);
+    }
+    let product = data_root.join("products").join(id);
+    fs::create_dir_all(&product).map_err(|error| error.to_string())?;
+    if fs::symlink_metadata(&product).map_err(|error| error.to_string())?.file_type().is_symlink() {
+        return Err(format!("{id}: managed product directory must not be a symlink"));
+    }
+    let nonce = SystemTime::now().duration_since(UNIX_EPOCH).map_err(|error| error.to_string())?.as_nanos();
+    let candidate = product.join(format!(".package-{}-{nonce}", std::process::id()));
+    fs::create_dir(&candidate).map_err(|error| error.to_string())?;
+    let bin = candidate.join("bin");
+    fs::create_dir(&bin).map_err(|error| error.to_string())?;
+    let sha256 = copy_held_managed_package_image(images.get_mut(exe).ok_or("primary census image missing")?, &bin.join(exe))
+        .map_err(|error| format!("{error}; candidate {} retained", candidate.display()))?;
+    let mut digests = BTreeMap::new();
+    for (name, _) in companions {
+        let digest = copy_held_managed_package_image(images.get_mut(name).ok_or("companion census image missing")?, &bin.join(name))
+            .map_err(|error| format!("{error}; candidate {} retained", candidate.display()))?;
         digests.insert(name.clone(), digest);
     }
-    Ok(digests)
+    let generation = managed_package_generation_key(id, exe, &desired.revision,
+        &desired.tree, &sha256, &digests)?;
+    let final_dir = product.join(&generation);
+    if final_dir.exists() {
+        let metadata = fs::symlink_metadata(&final_dir).map_err(|error| error.to_string())?;
+        if !metadata.is_dir() || metadata.file_type().is_symlink() {
+            return Err(format!("{id}: existing package generation is not a regular directory"));
+        }
+        let mut expected = digests.clone();
+        expected.insert(exe.to_owned(), sha256.clone());
+        for (name, digest) in &expected {
+            let member = final_dir.join("bin").join(name);
+            let metadata = fs::symlink_metadata(&member).map_err(|error| error.to_string())?;
+            if !metadata.is_file() || metadata.file_type().is_symlink() || !is_executable(&member)
+                || sha256_file(&member)? != *digest
+            { return Err(format!("{id}: existing generation image {name} differs; no active bytes were overwritten")); }
+        }
+        fs::remove_dir_all(&candidate).map_err(|error| error.to_string())?;
+    } else {
+        fs::File::open(&bin).and_then(|file| file.sync_all()).map_err(|error| error.to_string())?;
+        fs::File::open(&candidate).and_then(|file| file.sync_all()).map_err(|error| error.to_string())?;
+        fs::rename(&candidate, &final_dir).map_err(|error| format!("{id}: package publication: {error}; candidate {} retained", candidate.display()))?;
+        fs::File::open(&product).and_then(|file| file.sync_all()).map_err(|error| error.to_string())?;
+    }
+    Ok(StagedManagedPackage {
+        managed: final_dir.join("bin").join(exe), generation, sha256, companions: digests,
+    })
 }
+
+/// Shared writer/reader normalization over existing receipted fields.
+/// sha256 remains the primary image digest. No new authority or receipt field.
+fn managed_package_generation_key(
+    id: &str, exe: &str, revision: &str, tree: &str,
+    sha256: &str, companions: &BTreeMap<String, String>,
+) -> Result<String, String> {
+    use sha2::{Digest, Sha256};
+    managed_package_member_name(id)?;
+    managed_package_member_name(exe)?;
+    if revision.is_empty() || tree.is_empty() {
+        return Err(format!("{id}: package Source revision/tree are missing"));
+    }
+    for (name, digest) in std::iter::once((exe, sha256))
+        .chain(companions.iter().map(|(name, digest)| (name.as_str(), digest.as_str())))
+    {
+        managed_package_member_name(name)?;
+        if digest.len() != 64 || !digest.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            return Err(format!("{id}: invalid image digest for {name}"));
+        }
+    }
+    if companions.contains_key(exe) { return Err(format!("{id}: primary is repeated as a companion")); }
+    let basis = serde_json::to_vec(&json!({
+        "product": id, "executable": exe, "revision": revision,
+        "tree": tree, "sha256": sha256, "companions": companions,
+    })).map_err(|error| error.to_string())?;
+    Ok(format!("{:x}", Sha256::digest(&basis)))
+}
+
+/// Accept complete existing primary-keyed generations and normalized new
+/// whole-package generations. Byte/required-role checks remain mandatory at
+/// the consuming boundary; this function qualifies only the receipted path.
+fn managed_receipted_package_path(
+    data_root: &Path, id: &str, exe: &str, revision: &str, tree: &str,
+    sha256: &str, companions: &BTreeMap<String, String>, declared_managed: &Path,
+) -> Result<PathBuf, String> {
+    let generation = managed_package_generation_key(id, exe, revision, tree, sha256, companions)?;
+    let current = managed_artifact_path(data_root, id, &generation, exe);
+    let legacy = managed_artifact_path(data_root, id, sha256, exe);
+    let declared = declared_managed;
+    if declared != current && declared != legacy {
+        return Err(format!("{id}: managed receipt escapes its declared package generation"));
+    }
+    Ok(declared.to_path_buf())
+}
+
+fn managed_receipted_artifact(data_root: &Path, id: &str, product: &ManagedProduct) -> Result<PathBuf, String> {
+    managed_receipted_package_path(data_root, id, &product.exe, &product.revision,
+        &product.tree, &product.sha256, &product.companions, Path::new(&product.managed))
+}
+
+fn managed_required_companion_names(
+    descriptor: &oi_cli::product_command::ProductCommandDescriptor,
+    actual: &BTreeMap<String, String>,
+) -> Result<(), String> {
+    let expected: std::collections::BTreeSet<_> = descriptor.source_install.companions.iter()
+        .map(|member| member.executable.as_str()).collect();
+    let observed: std::collections::BTreeSet<_> = actual.keys().map(String::as_str).collect();
+    if expected != observed {
+        return Err(format!("{}: required companion receipt differs from the owner descriptor; missing={:?}, foreign={:?}",
+            descriptor.id, expected.difference(&observed).collect::<Vec<_>>(),
+            observed.difference(&expected).collect::<Vec<_>>()));
+    }
+    Ok(())
+}
+
 
 struct UpdateTarget {
     id: String,
@@ -825,7 +1033,7 @@ fn acquire_update_lock(data_root: &Path) -> Result<UpdateLockGuard, String> {
 struct Prepared {
     id: String,
     exe: String,
-    sha256: String,
+    generation: String,
     product: ManagedProduct,
     gate_dir: Option<PathBuf>,
     gate_receipt: serde_json::Value,
@@ -905,7 +1113,10 @@ fn prepare_entry(
             let built = if target.id == "oi" {
                 target_dir.join("release/oi")
             } else {
-                let relative = target.executable_path.strip_prefix("target/").ok_or_else(|| {
+                let relative = target.executable_path.strip_prefix("target/")
+                    .filter(|relative| !relative.is_empty() && Path::new(relative).components()
+                        .all(|part| matches!(part, std::path::Component::Normal(_))))
+                    .ok_or_else(|| {
                     format!("{id}: unsupported executable_path {}", target.executable_path)
                 })?;
                 target_dir.join(relative)
@@ -918,14 +1129,11 @@ fn prepare_entry(
         }
         PlanAction::Skip | PlanAction::Absent => return Err(format!("{id}: nothing to apply for action {}", entry.action.as_str())),
     };
-    let sha256 = sha256_file(&built)?;
-    // Companions land first: once bin/<exe> flips, the primary it names
-    // already has every sibling it spawns at the same cut.
-    let companions = stage_companions(data_root, id, &sha256, &companion_sources)?;
-    // Staged, not linked: the smoke check below runs on the generation in the
-    // store, and nothing resolves to it until every product has passed.
-    let managed = stage_binary(data_root, id, &entry.exe, &sha256, &built)?;
-    let staged = managed_artifact_path(data_root, id, &sha256, &entry.exe);
+    let package = stage_managed_package(data_root, id, &entry.exe, desired, &built, &companion_sources)?;
+    let sha256 = package.sha256;
+    let companions = package.companions;
+    let managed = package.managed;
+    let staged = managed.clone();
     if sha256_file(&staged)? != sha256 {
         return Err(format!("{id}: staged binary digest changed during staging"));
     }
@@ -980,7 +1188,7 @@ fn prepare_entry(
     Ok(Prepared {
         id: id.to_owned(),
         exe: entry.exe.clone(),
-        sha256: product.sha256.clone(),
+        generation: package.generation,
         product,
         gate_dir: gate_path,
         gate_receipt,
@@ -996,7 +1204,7 @@ fn commit_prepared(prepared: &Prepared, data_root: &Path, activation_root: &Path
     let bin_previous = fs::read_link(&bin_link).ok();
     let activation = activation_root.join(&prepared.exe);
     let activation_previous = fs::read_link(&activation).ok();
-    link_managed(data_root, &prepared.id, &prepared.exe, &prepared.sha256)?;
+    link_managed(data_root, &prepared.id, &prepared.exe, &prepared.generation)?;
     if let Err(error) = point_activation(activation_root, &prepared.exe, data_root) {
         restore_link(&bin_link, &bin_previous);
         return Err(error);
@@ -1302,7 +1510,7 @@ fn command_update_rollback(json_mode: bool) -> Result<i32, String> {
     // All-or-nothing precheck: every product the previous receipt names must
     // still verify before any link moves.
     for (id, product) in &previous.products {
-        let artifact = managed_artifact_path(&data_root, id, &product.sha256, &product.exe);
+        let artifact = managed_receipted_artifact(&data_root, id, product)?;
         if !is_executable(&artifact) {
             return Err(format!("rollback refused: previous {id} artifact {} is missing", artifact.display()));
         }
@@ -1317,8 +1525,8 @@ fn command_update_rollback(json_mode: bool) -> Result<i32, String> {
         let mut restored = Vec::new();
         for (id, product) in &previous.products {
             let bin_link = data_root.join("bin").join(&product.exe);
-            let relative = Path::new("../products").join(id).join(&product.sha256).join("bin").join(&product.exe);
-            atomic_symlink(&bin_link, &relative)?;
+            let artifact = managed_receipted_artifact(&data_root, id, product)?;
+            atomic_symlink(&bin_link, &artifact)?;
             point_activation(&activation_root, &product.exe, &data_root)?;
             restored.push(id.clone());
         }
@@ -2215,7 +2423,7 @@ mod update_flow_tests {
         let (repo, first_rev) = companion_repo(temp.path(), "one");
         let first = apply_entry(&build_entry(&repo, &first_rev, PlanAction::Build, None), &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap();
         let first_dir = PathBuf::from(&first.managed).parent().unwrap().to_path_buf();
-        assert_eq!(first_dir, managed_artifact_path(&data_root, "tool", &first.sha256, "tool").parent().unwrap());
+        assert_eq!(first_dir.parent().unwrap().parent().unwrap(), data_root.join("products/tool"));
         let first_host = first_dir.join("tool-host");
         assert!(is_executable(&first_host), "the companion is staged in the primary's generation");
         assert_eq!(first.companions, BTreeMap::from([("tool-host".to_owned(), sha256_file(&first_host).unwrap())]));
@@ -2244,7 +2452,7 @@ mod update_flow_tests {
 
         // Rollback re-points bin/<exe> into the previous generation, and the
         // companion found beside it is the previous cut's: pairs never mix.
-        atomic_symlink(&data_root.join("bin/tool"), &Path::new("../products/tool").join(&first.sha256).join("bin/tool")).unwrap();
+        atomic_symlink(&data_root.join("bin/tool"), &PathBuf::from(&first.managed)).unwrap();
         let resolved = fs::canonicalize(data_root.join("bin/tool")).unwrap();
         assert_eq!(fs::read_to_string(resolved.parent().unwrap().join("tool-host")).unwrap(), "#!/bin/sh\necho \"host one\"\n");
     }

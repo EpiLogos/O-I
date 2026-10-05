@@ -559,6 +559,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
     let composition = load_composition()?;
     let registration = composition.modules.get(&product.id);
 
+    let mut receipt_revision: Option<String> = None;
     let (authority, modality, executable, receipt_ref, revision, revision_standing, sha256) =
         if let Some(override_path) = explicit_product_override(product) {
             let resolved = override_path
@@ -606,6 +607,17 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
                 "receipt-exact",
                 Some(installed.sha256.clone()),
             )
+        } else if let Some(installed) = current_managed_product_locations(&[product], &composition)?.remove(&product.id) {
+            receipt_revision = Some(installed.receipt_revision);
+            (
+                installed.authority,
+                installed.modality.to_owned(),
+                installed.executable,
+                Some(installed.receipt_ref),
+                Some(installed.revision),
+                "receipt-exact",
+                Some(installed.sha256),
+            )
         } else {
             let registered = registration
                 .and_then(|entry| entry.native_executable.as_deref())
@@ -642,6 +654,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
         "authority": authority,
         "modality": modality,
         "receipt_ref": receipt_ref,
+        "receipt_revision": receipt_revision,
         "revision": revision,
         "revision_standing": revision_standing,
         "expected_revision": product.command_revision,
@@ -670,6 +683,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
 }
 
 include!("development_field_source_package.rs");
+include!("managed_product_location.rs");
 
 #[cfg(test)]
 mod development_field_hardening_tests {

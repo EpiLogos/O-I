@@ -8,7 +8,9 @@ name: OI Verify
 #                    CLI or suite data changed)
 # Surface-specific work has its own path-scoped workflow (desktop.yml,
 # site.yml, shared-field.yml, npm-distribution.yml). Checks that build or
-# test sibling repositories run weekly in cross-product.yml, never per push.
+# test sibling repositories run weekly in cross-product.yml. The Rust gate
+# builds only the genuine Workcell input required by O:I installer regressions;
+# it does not run the sibling test programme.
 # Artifacts are built from main by release.yml.
 
 on:
@@ -60,6 +62,8 @@ jobs:
               - 'schemas/**'
               - 'packages/**'
               - 'scripts/**'
+              - 'gates/prepare-native-workcell-current-main-material.py'
+              - 'desktop/cradle/tests/native-expression-local.py'
               - '.github/workflows/verify.yml'
 
   suite-data:
@@ -112,8 +116,29 @@ jobs:
         run: cargo fmt --manifest-path cli/Cargo.toml -- --check
       - name: Clippy
         run: cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings
+      - name: Read the maintained Workcell source for the genuine installer prerequisite
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Workcell
+          ref: main
+          path: .native-owner/Workcell-current-main
+          persist-credentials: false
+      - name: Prepare genuine native roles and an owned test directory
+        env:
+          CARGO_TARGET_DIR: ${{ github.workspace }}/cli/target
+        run: |
+          python3 gates/prepare-native-workcell-current-main-material.py \
+            --workcell-source "$GITHUB_WORKSPACE/.native-owner/Workcell-current-main" \
+            --output-base "$RUNNER_TEMP"
       - name: Test
         run: cargo test --manifest-path cli/Cargo.toml --all-targets --locked
+      - name: Retain native installer prerequisites, interruption and restart evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-current-main-installer-${{ github.sha }}
+          path: ${{ runner.temp }}/native-workcell-current-main-*/
+          if-no-files-found: warn
       - name: Build the binary the smokes below exercise
         run: cargo build --manifest-path cli/Cargo.toml --locked
       - name: CLI capability disclosure matches the shipped projection

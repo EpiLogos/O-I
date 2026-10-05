@@ -3,6 +3,7 @@ import type {PresentationBinding} from "../../explore/presentation";
 import type {ExpressionDocument} from "../../expression/types";
 import type {RunReading,AttemptReading} from "./run-expression";
 import {currentReturnedAttempts} from "./run-expression";
+import {acceptedUnitProgress, runState, RUN_STATE_WORD} from "./desk/runModel";
 import {useKernel} from "../../kernel/KernelProvider";
 import {PointCloudHost} from "../../expressions/PointCloudHost";
 import {ensureExpression} from "./live/liveObjects";
@@ -35,12 +36,14 @@ export function RunExpressionBody({binding}:RendererProps){
   },[document,kernel.transport]);
   if(!document||!run) return <div className="factory-run-expression" data-run-expression="incomplete">The Run Expression is still composing — the owner readings have not returned.</div>;
   const returned=currentReturnedAttempts(run,attempt);
+  const standing=RUN_STATE_WORD[runState(run)];
+  const progress=acceptedUnitProgress(run);
   const cast=Object.values(document.entities).filter(entity=>entity.subject?.readings.some(reading=>reading.ref.startsWith("oi.expression-cast/")));
   return (
     <article className="factory-run-expression" data-run-expression={run.runRef} data-expression-ref={document.expression_ref}>
       <header className="factory-run-expression__header">
         <h3>{run.destination||`Run ${run.runRef}`}</h3>
-        <p className="factory-run-expression__frontier" data-frontier={run.lifecycle}>{run.lifecycle} · {cast.length} in the cast · {attempt?.attempts.length??0} attempt{attempt?.attempts.length===1?"":"s"}{returned.length?` · returned work: ${returned.map(attempt=>attempt.readableReturn!.summary).join(" · ")}`:""}</p>
+        <p className="factory-run-expression__frontier" data-frontier={run.lifecycle}>{standing}{progress?` · ${progress.accepted} of ${progress.required} units accepted`:""} · {cast.length} in the cast · {attempt?.attempts.length??0} attempt{attempt?.attempts.length===1?"":"s"}{returned.length?` · returned work: ${returned.map(attempt=>attempt.readableReturn!.summary).join(" · ")}`:""}</p>
       </header>
       <div className="factory-run-expression__stage" data-state={state}>
         {state==="ready"&&<PointCloudHost followsOwnRef mode="expressions" deepLink={document.expression_ref}/>}

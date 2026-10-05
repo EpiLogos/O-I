@@ -318,7 +318,21 @@
             "--locked",
             "--release"
           ],
-          "executable_path": "target/release/workcell"
+          "executable_path": "target/release/workcell",
+          "companions": [
+            {
+              "executable": "workcell-write-boundary",
+              "executable_path": "target/release/workcell-write-boundary"
+            },
+            {
+              "executable": "workcell-control-service",
+              "executable_path": "target/release/workcell-control-service"
+            },
+            {
+              "executable": "workcell-control-client",
+              "executable_path": "target/release/workcell-control-client"
+            }
+          ]
         },
         "version_manifest": "crates/workcell-cli/Cargo.toml"
       },

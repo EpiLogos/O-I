@@ -206,7 +206,8 @@ pub fn product_command_catalogue_from_json(
         for companion in source_install.companions {
             let name = companion.executable.trim();
             if name.is_empty()
-                || name.contains('/')
+                || name.contains(['/', '\\'])
+                || matches!(name, "." | "..")
                 || name == executable
                 || companions
                     .iter()
@@ -217,7 +218,10 @@ pub fn product_command_catalogue_from_json(
                     surface.id, companion.executable
                 ));
             }
-            if !companion.executable_path.starts_with("target/") {
+            if !companion.executable_path.starts_with("target/")
+                || std::path::Path::new(&companion.executable_path).components()
+                    .any(|part| !matches!(part, std::path::Component::Normal(_)))
+            {
                 return Err(format!(
                     "{} companion {} must be a build output under target/",
                     surface.id, name
@@ -412,7 +416,7 @@ mod tests {
         assert!(catalogue
             .products
             .iter()
-            .filter(|product| !matches!(product.id.as_str(), "quaternal-logic" | "ai-kit"))
+            .filter(|product| !matches!(product.id.as_str(), "quaternal-logic" | "workcell" | "ai-kit"))
             .all(|product| product.source_install.companions.is_empty()));
     }
 
@@ -464,6 +468,41 @@ mod tests {
     }
 
     #[test]
+    fn workcell_declares_one_coherent_native_owner_installation() {
+        let catalogue = product_command_catalogue_from_json(
+            crate::catalog_source::embedded_catalogue_json(),
+            "test-embedded",
+        )
+        .unwrap();
+        let install = &catalogue.resolve("workcell").unwrap().source_install;
+        assert_eq!(install.executable_path, "target/release/workcell");
+        assert_eq!(
+            install
+                .companions
+                .iter()
+                .map(|companion| (
+                    companion.executable.as_str(),
+                    companion.executable_path.as_str(),
+                ))
+                .collect::<Vec<_>>(),
+            vec![
+                (
+                    "workcell-write-boundary",
+                    "target/release/workcell-write-boundary"
+                ),
+                (
+                    "workcell-control-service",
+                    "target/release/workcell-control-service"
+                ),
+                (
+                    "workcell-control-client",
+                    "target/release/workcell-control-client"
+                ),
+            ],
+        );
+    }
+
+    #[test]
     fn companion_declarations_are_validated() {
         for (companions, fragment) in [
             (
@@ -498,5 +537,20 @@ mod tests {
             assert!(error.contains(fragment), "{companions}: {error}");
         }
         assert!(with_ql_companions(serde_json::json!([])).is_ok());
+    }
+    #[test]
+    fn companion_descriptor_refuses_foreign_build_paths_and_non_member_names() {
+        for (name, path) in [
+            ("ql-field-host", "target/../../foreign"),
+            ("ql-field-host", "/target/release/ql-field-host"),
+            ("..", "target/release/ql-field-host"),
+            (".", "target/release/ql-field-host"),
+            ("ql/field-host", "target/release/ql-field-host"),
+        ] {
+            let error = with_ql_companions(serde_json::json!([{
+                "executable": name, "executable_path": path
+            }])).unwrap_err();
+            assert!(!error.is_empty(), "{name}: {path}");
+        }
     }
 }

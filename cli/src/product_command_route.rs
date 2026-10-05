@@ -168,7 +168,12 @@ fn resolve_product_executables(
         }
     } else {
         let composition = load_composition()?;
+        let mut managed = current_managed_product_locations(&unresolved, &composition)?;
         for product in unresolved {
+            if let Some(installed) = managed.remove(&product.id) {
+                programs.insert(product.id.clone(), installed.executable);
+                continue;
+            }
             let registered = composition.modules.get(&product.id)
                 .and_then(|registration| registration.native_executable.as_deref())
                 .unwrap_or(product.executable.as_str());
@@ -209,26 +214,9 @@ fn short_revision(revision: &str) -> &str {
 // `session-space` prepended — there is no companion binary any more, and the
 // old `oi aikit-session-space` spelling stays as an alias for it.
 fn dispatch_session_space(args: &[OsString]) -> Result<i32, String> {
-    let product_override = env::var_os("OI_AIKIT_BIN").filter(|v| !v.is_empty());
-    // Never discard an invalid active-receipt error and fall back to a stale
-    // registered/PATH executable. Explicit developer overrides stay explicit.
-    let active = if product_override.is_none() {
-        active_suite_executable_s0("ai-kit")?
-    } else {
-        None
-    };
-    let composition = load_composition()?;
-    let executable = product_override
-        .map(PathBuf::from)
-        .or(active)
-        .or_else(|| {
-            composition
-                .modules
-                .get("ai-kit")
-                .and_then(|r| r.native_executable.as_ref())
-                .map(PathBuf::from)
-        })
-        .unwrap_or_else(|| "aikit".into());
+    let catalogue = oi_cli::product_command::product_command_catalogue()?;
+    let product = catalogue.resolve("ai-kit").ok_or("AIKit command descriptor is absent")?;
+    let executable = resolve_product_executable(product)?;
     let mut command = Command::new(&executable);
     command.arg("session-space");
     command.args(args);

@@ -162,6 +162,7 @@ export type RunState = "queued" | "running" | "blocked" | "success" | "fail" | "
  * owner admission carried in the same Run reading. */
 export function runState(run: RunReading): RunState {
   const native = nativeAttemptsFor(run);
+  if (native?.wholeRunState === "failed") return "fail";
   switch (run.lifecycle) {
     case "seeded": return "queued";
     case "active": case "finishing": return "running";
@@ -171,6 +172,13 @@ export function runState(run: RunReading): RunState {
     case "aborted": return "fail";
     default: return "queued";
   }
+}
+/** Accepted unit counts come from the same native owner snapshot. A readable
+ * Return can remain produced material after its acceptance has been rejected. */
+export function acceptedUnitProgress(run: RunReading): {accepted: number; required: number} | undefined {
+  const native = nativeAttemptsFor(run);
+  if (!Array.isArray(native?.requiredUnits) || !Array.isArray(native.currentReturnedUnits)) return undefined;
+  return {accepted: native.currentReturnedUnits.length, required: native.requiredUnits.length};
 }
 export const RUN_STATE_WORD: Record<RunState, string> = {queued: "Queued", running: "Running", blocked: "Blocked", success: "Succeeded", fail: "Failed", cancelled: "Cancelled", archived: "Archived"};
 export const RUN_STATE_GLYPH: Record<RunState, string> = {queued: "○", running: "●", blocked: "!", success: "✓", fail: "×", cancelled: "×", archived: "○"};

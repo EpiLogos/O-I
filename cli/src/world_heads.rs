@@ -30,24 +30,7 @@ fn world_heads_route(args: &[OsString]) -> Option<Result<i32, String>> {
 /// standalone AIKit can see. A bounded supply that cannot be encoded
 /// degrades to the plain delegation with the reason named — never silently.
 fn command_ui(args: &[OsString]) -> Result<i32, String> {
-    let product_override = env::var_os("OI_AIKIT_BIN").filter(|value| !value.is_empty());
-    let active = if product_override.is_none() {
-        active_suite_executable_s0("ai-kit")?
-    } else {
-        None
-    };
-    let composition = load_composition()?;
-    let executable = product_override
-        .map(PathBuf::from)
-        .or(active)
-        .or_else(|| {
-            composition
-                .modules
-                .get("ai-kit")
-                .and_then(|registration| registration.native_executable.as_ref())
-                .map(PathBuf::from)
-        })
-        .unwrap_or_else(|| "aikit".into());
+    let executable = resolve_aikit_executable()?;
     match world_orientation_document() {
         Ok(document) if document["current_world"].is_object() || document["surfaces"].is_object() => {
             let encoded = serde_json::to_string(&document)
@@ -224,24 +207,7 @@ fn exec_self(args: &[OsString]) -> Result<i32, String> {
 /// `explain`, `ui`). Resolution mirrors `dispatch_session_space`: an invalid
 /// active receipt is never traded for a stale registered/PATH executable.
 fn dispatch_aikit_verb(verb: &str, args: &[OsString]) -> Result<i32, String> {
-    let product_override = env::var_os("OI_AIKIT_BIN").filter(|value| !value.is_empty());
-    let active = if product_override.is_none() {
-        active_suite_executable_s0("ai-kit")?
-    } else {
-        None
-    };
-    let composition = load_composition()?;
-    let executable = product_override
-        .map(PathBuf::from)
-        .or(active)
-        .or_else(|| {
-            composition
-                .modules
-                .get("ai-kit")
-                .and_then(|registration| registration.native_executable.as_ref())
-                .map(PathBuf::from)
-        })
-        .unwrap_or_else(|| "aikit".into());
+    let executable = resolve_aikit_executable()?;
     let forwarded = std::iter::once(OsString::from(verb)).chain(args.iter().cloned());
     exec_native(&executable, forwarded)
 }
@@ -302,29 +268,14 @@ fn command_act(args: &[OsString]) -> Result<i32, String> {
     }
 }
 
-/// The AIKit executable, resolved exactly as the folded AIKit verbs resolve
-/// it: explicit override, then the active suite receipt, then the
-/// composition registration, then PATH. An invalid active receipt is never
-/// traded for a stale PATH executable.
+/// Every native AIKit doorway uses the ordinary product resolver. Explicit
+/// override and canonical suite retain precedence; managed current-main and
+/// update material use the same qualified reader as `oi where`/dispatch.
+/// An invalid authoritative receipt never becomes a PATH fallback.
 fn resolve_aikit_executable() -> Result<PathBuf, String> {
-    let product_override = env::var_os("OI_AIKIT_BIN").filter(|value| !value.is_empty());
-    let active = if product_override.is_none() {
-        active_suite_executable_s0("ai-kit")?
-    } else {
-        None
-    };
-    let composition = load_composition()?;
-    Ok(product_override
-        .map(PathBuf::from)
-        .or(active)
-        .or_else(|| {
-            composition
-                .modules
-                .get("ai-kit")
-                .and_then(|registration| registration.native_executable.as_ref())
-                .map(PathBuf::from)
-        })
-        .unwrap_or_else(|| "aikit".into()))
+    let catalogue = oi_cli::product_command::product_command_catalogue()?;
+    let product = catalogue.resolve("ai-kit").ok_or("AIKit command descriptor is absent")?;
+    resolve_product_executable(product)
 }
 
 /// One bounded read of AIKit's contextual Action field for the current
