@@ -349,6 +349,8 @@ export function projectExpression(input) {
   const publisher = record(input.publisher, 'publisher');
   const audience = validateAudience(input.audience);
   const worldRef = text(input.world_ref ?? `world:desktop:${slug(composition.expression_ref)}`, 'world_ref');
+  const activityRef = input.activity_ref === undefined ? undefined : text(input.activity_ref, 'activity_ref');
+  if (activityRef && !activityRef.startsWith(`${worldRef}/`)) throw new TypeError('activity_ref must be qualified by the source World');
   const fieldRef = text(input.field_ref ?? `oi:field:desktop:${slug(composition.expression_ref)}`, 'field_ref');
   // A Participant is a relation inside ONE SharedField (the hosted field
   // refuses to move a participant between fields). The human identity is
@@ -454,7 +456,7 @@ export function projectExpression(input) {
     aliases: [projectionRef],
     provenance,
     locators: [{ surface: 'web', locator: `/explore.html?ref=${encodeURIComponent(composition.expression_ref)}` }],
-    meta: { projection_ref: projectionRef, standing: 'projection', presentation_ref: presentationRef, expression_revision: composition.revision, live_renderer_ref: liveRendererRef },
+    meta: { projection_ref: projectionRef, standing: 'projection', presentation_ref: presentationRef, expression_revision: composition.revision, live_renderer_ref: liveRendererRef, ...(activityRef ? { activity_ref: activityRef } : {}) },
   });
   // Publishing into a field that already exists keeps that field's own
   // contract byte-for-byte; the Expression never retitles a World's field.
