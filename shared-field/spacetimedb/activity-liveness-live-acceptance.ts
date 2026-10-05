@@ -11,7 +11,7 @@
  *     Factory run (read through `factory development run … --json`);
  *   the owner-side producer (scripts/activity-producer.mjs, A's identity)
  *     runs → B (a contributor, a different identity) reads `live` with the
- *     run's own lifecycle and revision;
+ *     native whole-work state and owner revision (legacy lifecycle when absent);
  *   a second, one-shot connection under A's identity comes and goes → the
  *     producer's row survives (liveness is connection-scoped);
  *   producer SIGTERM → cleared → B reads `disconnected`;
@@ -146,10 +146,12 @@ const firstBeat = Number(liveRowForB().heartbeatAtMicros);
 await waitUntil(() => Number(liveRowForB()?.heartbeatAtMicros ?? 0) > firstBeat, 'a second heartbeat', 15_000);
 const live = readingForB();
 const ownerNow = readRun();
+const ownerState = ownerNow.nativeAttempts?.wholeRunState ?? ownerNow.lifecycle;
+const ownerRevision = ownerNow.nativeAttempts?.revision ?? ownerNow.revision;
 assert.equal(live.liveness, 'live');
 assert.equal(live.basis, 'hosted-producer');
-assert.equal(live.owner_state, ownerNow.lifecycle, 'the live Expression agrees with the owner lifecycle');
-assert.equal(live.owner_revision, ownerNow.revision, 'the live Expression agrees with the owner revision');
+assert.equal(live.owner_state, ownerState, 'the live Expression agrees with the native owner state');
+assert.equal(live.owner_revision, ownerRevision, 'the live Expression agrees with the owner revision');
 out.live = live;
 steps.push(`producer running (A identity, 1s interval) → B reads ${live.liveness}: owner_state=${live.owner_state} owner_revision=${live.owner_revision}, matching a direct Factory read`);
 
@@ -170,16 +172,16 @@ steps.push('a one-shot connection under the same owner identity connected and le
 /* ---------- authority and revision refusals (while the producer holds the row) ---------- */
 
 const refusals: Record<string, string> = {};
-refusals.non_participant = await refused(() => rc.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: 'running', ownerRevision: BigInt(ownerNow.revision + 1) }), 'C (not owner, no participant) put', /not owner/);
-refusals.unbound_participant = await refused(() => rc.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: PB, ownerState: 'running', ownerRevision: BigInt(ownerNow.revision + 1) }), 'C speaking for B', /not bound/);
-refusals.state_without_revision = await refused(() => ra.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: 'fabricated', ownerRevision: BigInt(ownerNow.revision) }), 'a changed state at the same revision', /without an owner revision advance/);
+refusals.non_participant = await refused(() => rc.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: 'running', ownerRevision: BigInt(ownerRevision + 1) }), 'C (not owner, no participant) put', /not owner/);
+refusals.unbound_participant = await refused(() => rc.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: PB, ownerState: 'running', ownerRevision: BigInt(ownerRevision + 1) }), 'C speaking for B', /not bound/);
+refusals.state_without_revision = await refused(() => ra.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: 'fabricated', ownerRevision: BigInt(ownerRevision) }), 'a changed state at the same revision', /without an owner revision advance/);
 // B is a live contributor, but the row is the owner producer's: B can neither
 // forge its state, push its revision to the ceiling, nor take the producer seat.
 refusals.contributor_overwrites_owner_row = await refused(() => rb.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: PB, ownerState: 'fabricated', ownerRevision: 18446744073709551615n }), 'B overwriting the owner producer row', /held by another producer/);
 assert.equal(liveRowForB()?.producerIdentity.toHexString(), a.identityHex, 'the owner producer still holds the row');
 refusals.not_an_activity = await refused(() => ra.putActivityLiveness({ fieldRef: FIELD, activityRef: NOT_ACTIVITY, producerParticipantRef: '', ownerState: 'running', ownerRevision: 1n }), 'liveness for a non-activity entry', /No activity entry/);
 refusals.clear_by_outsider = await refused(() => rc.clearActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY }), 'C clearing the owner producer', /Only the producing identity or the field owner/);
-assert.equal(readingForB().owner_state, ownerNow.lifecycle, 'no refused put changed the served owner state');
+assert.equal(readingForB().owner_state, ownerState, 'no refused put changed the served owner state');
 out.refusals = refusals;
 steps.push('refused server-side: non-participant put; put for a participant the caller is not bound to; state change without revision advance; a contributor taking over the owner producer row (forged state, u64-max revision); liveness for a non-activity entry; clear by a non-producer');
 
@@ -214,13 +216,13 @@ steps.push(`producer restarted → live; kill -9 → no self-clear; the client-d
 
 /* ---------- revision never goes backwards ---------- */
 
-await ra.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: ownerNow.lifecycle, ownerRevision: BigInt(ownerNow.revision + 2) });
-await waitUntil(() => Number(liveRowForB()?.ownerRevision ?? 0) === ownerNow.revision + 2, 'B to see the advanced revision');
-const regression = await refused(() => ra.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: ownerNow.lifecycle, ownerRevision: BigInt(ownerNow.revision + 1) }), 'revision regression', /must not go backwards/);
+await ra.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: ownerState, ownerRevision: BigInt(ownerRevision + 2) });
+await waitUntil(() => Number(liveRowForB()?.ownerRevision ?? 0) === ownerRevision + 2, 'B to see the advanced revision');
+const regression = await refused(() => ra.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: ownerState, ownerRevision: BigInt(ownerRevision + 1) }), 'revision regression', /must not go backwards/);
 (out.refusals as any).revision_regression = regression;
 await ra.clearActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY });
 await waitUntil(() => !liveRowForB(), 'the owner clear');
-steps.push(`owner put revision ${ownerNow.revision + 2}, then ${ownerNow.revision + 1} → refused (revision must not go backwards); owner cleared`);
+steps.push(`owner put revision ${ownerRevision + 2}, then ${ownerRevision + 1} → refused (revision must not go backwards); owner cleared`);
 
 /* ---------- frozen edition + replay of the same run ---------- */
 
@@ -228,7 +230,7 @@ const edition = activityEdition({ entry: activityEntry, liveness_row: null, run_
 let effectCalls = 0;
 const replay = replayActivity(edition, { effects: () => { effectCalls += 1; } });
 assert.equal(effectCalls, 0);
-out.edition = { schema: edition.schema, owner_state: edition.owner_state, owner_revision: edition.owner_revision, basis: edition.basis, events: edition.events, events_note: edition.events_note, scene_nodes: edition.scene.nodes.length, executions: edition.executions.length };
+out.edition = { schema: edition.schema, owner_state: edition.owner_state, owner_revision: edition.owner_revision, lifecycle: edition.lifecycle, run_revision: edition.run_revision, native_attempts: edition.native_attempts, basis: edition.basis, events: edition.events, events_note: edition.events_note, scene_nodes: edition.scene.nodes.length, executions: edition.executions.length };
 out.replay = { mode: replay.mode, live: replay.live, ordering: replay.ordering, steps: replay.steps.map((step: any) => step.kind), effect_calls: effectCalls };
 steps.push(`frozen edition of ${RUN_REF}@${edition.owner_revision} replayed as ${replay.steps.length} render steps; effect runner calls: ${effectCalls}`);
 

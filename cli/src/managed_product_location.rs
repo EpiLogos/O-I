@@ -176,8 +176,15 @@ fn managed_product_locations_at(
         {
             return Err(format!("{} current-main registration and material gate disagree", descriptor.id));
         }
-        let primary = managed_receipted_package_path(data_root, &descriptor.id, &descriptor.executable,
-            &gate.revision, &gate.tree, &gate.sha256, &gate.companions, &gate.managed)?;
+        let identity = ManagedPackageIdentity {
+            id: &descriptor.id,
+            exe: &descriptor.executable,
+            revision: &gate.revision,
+            tree: &gate.tree,
+            sha256: &gate.sha256,
+            companions: &gate.companions,
+        };
+        let primary = managed_receipted_package_path(data_root, &identity, &gate.managed)?;
         managed_location_members(data_root, descriptor, &primary, &gate.sha256, &gate.companions, &mut cohort)?;
         locations.insert(descriptor.id.clone(), ManagedProductLocation {
             authority: "current-main-registration-and-material-gate", modality: "developer-source",

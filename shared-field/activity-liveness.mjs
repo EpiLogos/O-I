@@ -125,20 +125,66 @@ export function activityReading({ entry, liveness_rows = [], now_ms, stale_after
   };
 }
 
+/** Pure projection of one native Factory reading, with no owner effects.
+ * Attempt-owner state uses its actual revision; lifecycle and Run revision
+ * remain distinct. Reported whole-work state never infers accepted completion.
+ */
+export function factoryRunActivityState(run_reading, expected_run_ref) {
+  const run = record(run_reading, 'factory run reading');
+  if (run.contract !== FACTORY_RUN_READING_CONTRACT) throw new TypeError(`Unsupported factory run contract: ${run.contract}`);
+  if (typeof run.runRef !== 'string' || !Number.isSafeInteger(run.revision) || run.revision < 1) throw new TypeError('factory run reading needs runRef and an integer revision >= 1');
+  if (expected_run_ref !== undefined && run.runRef !== expected_run_ref) throw new TypeError(`factory answered for ${run.runRef}, not ${expected_run_ref}`);
+  const lifecycle = typeof run.lifecycle === 'string' ? run.lifecycle : null;
+  const base = { owner_state: lifecycle ?? 'unavailable', owner_revision: run.revision, factory_state_revision: run.provenance?.factoryStateRevision ?? null, lifecycle, run_revision: run.revision };
+  if (run.nativeAttempts === undefined || run.nativeAttempts === null) return base;
+  const native = record(run.nativeAttempts, 'native Factory attempts');
+  if (native.contract !== 'factory.attempt-reading/v1' || native.runRef !== run.runRef || native.runRevision !== run.revision || native.lifecycle !== lifecycle)
+    throw new TypeError('native Factory attempts do not match this Run reading');
+  if (!Number.isSafeInteger(native.revision) || native.revision < 1 || run.provenance?.factoryStateRevision !== native.revision)
+    throw new TypeError('native Factory attempts and provenance revisions disagree');
+  if (!['incomplete', 'failed', 'complete'].includes(native.wholeRunState) || typeof native.sourceCurrent !== 'boolean' || typeof native.completionVerified !== 'boolean')
+    throw new TypeError('native Factory attempts have no authoritative whole-work state');
+  if (!Number.isSafeInteger(native.topologyRevision) || native.topologyRevision < 1 || (run.runMap && native.topologyRevision !== run.runMap.topologyRevision))
+    throw new TypeError('native Factory attempts and RunMap topology revisions disagree');
+  if (typeof native.workflowSourceRef !== 'string' || !native.workflowSourceRef.startsWith('workflow-source:') || typeof native.workflowSourceRevision !== 'string' || !native.workflowSourceRevision || !/^[a-f0-9]{64}$/.test(native.workflowSourceDigest))
+    throw new TypeError('native Factory attempts have no exact WorkflowSource basis');
+  const units = (value, name) => {
+    if (!Array.isArray(value) || value.some(ref => typeof ref !== 'string' || !ref.startsWith('workflow-unit:')) || new Set(value).size !== value.length)
+      throw new TypeError(`native Factory ${name} must be unique WorkflowUnit references`);
+    return [...value];
+  };
+  const required = units(native.requiredUnits, 'requiredUnits');
+  const returned = units(native.currentReturnedUnits, 'currentReturnedUnits');
+  if (returned.some(ref => !required.includes(ref))) throw new TypeError('native Factory returned units are outside its required basis');
+  return {
+    ...base, owner_state: native.wholeRunState, owner_revision: native.revision,
+    native_attempts: {
+      contract: native.contract, revision: native.revision, run_revision: native.runRevision,
+      topology_revision: native.topologyRevision,
+      workflow_source_ref: portableRef(native.workflowSourceRef),
+      workflow_source_revision: native.workflowSourceRevision,
+      workflow_source_digest: native.workflowSourceDigest,
+      source_current: native.sourceCurrent, whole_run_state: native.wholeRunState,
+      completion_verified: native.completionVerified,
+      required_units: required, current_returned_units: returned,
+      required_unit_count: required.length, current_returned_unit_count: returned.length,
+    },
+  };
+}
+
 /**
  * Freeze one Factory run reading as a replayable edition.
  *
  * `factory.run-reading/v1` carries no event list and no timestamps. The
- * edition records what the reading does carry — the lifecycle, the RunMap's
- * node states and edges, and the executions' statuses — in reading order,
+ * edition records what the reading does carry — the lifecycle, native
+ * attempts' whole-work/source basis, the RunMap and executions — in reading order,
  * and says plainly that this is not a temporal event sequence. The reading's
  * `actions` are effect affordances and are never recorded.
  */
 export function activityEdition({ entry, liveness_row = null, run_reading, recorded_at } = {}) {
   record(entry, 'activity entry');
   const run = record(run_reading, 'factory run reading');
-  if (run.contract !== FACTORY_RUN_READING_CONTRACT) throw new TypeError(`Unsupported factory run contract: ${run.contract}`);
-  if (typeof run.runRef !== 'string' || !Number.isSafeInteger(run.revision) || run.revision < 1) throw new TypeError('factory run reading needs runRef and an integer revision >= 1');
+  const owner = factoryRunActivityState(run);
   const runRef = entry.meta?.run_ref;
   if (typeof runRef === 'string' && runRef !== run.runRef) throw new TypeError(`activity ${entry.ref} publishes run ${runRef}, not ${run.runRef}`);
   if (typeof recorded_at !== 'string' || Number.isNaN(Date.parse(recorded_at))) throw new TypeError('recorded_at must be an ISO timestamp');
@@ -160,14 +206,17 @@ export function activityEdition({ entry, liveness_row = null, run_reading, recor
     activity_ref: entry.ref,
     run_ref: run.runRef,
     recorded_at,
-    owner_state: typeof run.lifecycle === 'string' ? run.lifecycle : null,
-    owner_revision: run.revision,
+    owner_state: owner.owner_state,
+    owner_revision: owner.owner_revision,
+    lifecycle: owner.lifecycle,
+    run_revision: owner.run_revision,
+    ...(owner.native_attempts ? { native_attempts: owner.native_attempts } : {}),
     liveness_at_record: liveness_row ? {
       owner_state: liveness_row.owner_state,
       owner_revision: Number(liveness_row.owner_revision),
       heartbeat_at_micros: String(liveness_row.heartbeat_at_micros),
       producer_participant_ref: liveness_row.producer_participant_ref ?? null,
-      agrees_with_reading: liveness_row.owner_state === run.lifecycle && Number(liveness_row.owner_revision) === run.revision,
+      agrees_with_reading: liveness_row.owner_state === owner.owner_state && Number(liveness_row.owner_revision) === owner.owner_revision,
     } : null,
     scene: { topology_revision: map?.topologyRevision ?? null, nodes, edges },
     executions,
@@ -194,8 +243,14 @@ export function replayActivity(edition, _options = {}) {
   record(edition, 'activity edition');
   if (edition.schema !== ACTIVITY_EDITION_SCHEMA) throw new TypeError(`Unsupported activity edition: ${edition.schema}`);
   const steps = [];
-  const push = (step) => steps.push(Object.freeze({ index: steps.length, effect: 'none', ...step }));
-  push({ kind: 'lifecycle', owner_state: edition.owner_state, owner_revision: edition.owner_revision });
+  const push = (step) => {
+    const data = { ...step };
+    delete data.index;
+    delete data.effect;
+    steps.push(Object.freeze({ index: steps.length, effect: 'none', ...data }));
+  };
+  push({ kind: 'lifecycle', owner_state: edition.lifecycle ?? edition.owner_state, owner_revision: edition.run_revision ?? edition.owner_revision });
+  if (edition.native_attempts) push({ ...structuredClone(edition.native_attempts), kind: 'native-attempts' });
   for (const node of edition.scene?.nodes ?? []) push({ kind: 'scene-node', node_id: node.id, node_kind: node.kind, label: node.label, state: node.state });
   for (const edge of edition.scene?.edges ?? []) push({ kind: 'scene-edge', from: edge.from, to: edge.to, relation: edge.relation });
   for (const execution of edition.executions ?? []) push({ kind: 'execution', execution_ref: execution.execution_ref, status: execution.status, agency_ref: execution.agency_ref, agent_ref: execution.agent_ref });

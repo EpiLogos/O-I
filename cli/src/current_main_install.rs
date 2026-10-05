@@ -733,10 +733,16 @@ mod current_main_native_package_tests {
         let durable: serde_json::Value = serde_json::from_slice(
             &composition_read_bytes(&receipt).unwrap().unwrap()).unwrap();
         let durable_companions: BTreeMap<String, String> = serde_json::from_value(durable["companions"].clone()).unwrap();
+        let identity = ManagedPackageIdentity {
+            id: "workcell",
+            exe: "workcell",
+            revision: durable["revision"].as_str().unwrap(),
+            tree: durable["tree"].as_str().unwrap(),
+            sha256: durable["sha256"].as_str().unwrap(),
+            companions: &durable_companions,
+        };
         let durable_managed = managed_receipted_package_path(
-            &data, "workcell", "workcell", durable["revision"].as_str().unwrap(),
-            durable["tree"].as_str().unwrap(), durable["sha256"].as_str().unwrap(),
-            &durable_companions, Path::new(durable["managed"].as_str().unwrap())).unwrap();
+            &data, &identity, Path::new(durable["managed"].as_str().unwrap())).unwrap();
         assert_eq!(durable_managed, first.managed);
         assert_eq!(sha256_file(&durable_managed).unwrap(), durable["sha256"].as_str().unwrap());
         for (name, digest) in &durable_companions {

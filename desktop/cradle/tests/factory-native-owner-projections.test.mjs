@@ -193,6 +193,11 @@ test("actual current latest unknown or failed assessment cannot inherit an earli
     assert.equal(rows.every(row => row.state === (outcome === "unknown" ? "outstanding" : "failed")), true);
     assert.equal(D.unitSegments(changed)[0].standing, "failed");
     assert.equal(changed.nativeAttempts.wholeRunState, "failed");
+    assert.equal(changed.lifecycle, "active");
+    assert.equal(D.runState(changed), "fail", "the genuine failed owner standing survives its active lifecycle");
+    assert.equal(D.deskCard(source, changed).state, "fail");
+    assert.deepEqual(D.acceptedUnitProgress(changed), {accepted: 0, required: 1},
+      "the retained readable Return is produced material, with no current accepted unit");
     assert.equal(E.ownerRunComplete(changed.nativeAttempts, changed.runRef), false);
     assert.deepEqual(now.return, current(passed, unit)[0].return,
       "the genuine current Return remains history while its certification is rejected");

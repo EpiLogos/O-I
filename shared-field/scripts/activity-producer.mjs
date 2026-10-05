@@ -10,7 +10,7 @@
  *
  * Every interval it reads the run through its owner —
  * `factory development run <state> <run> --json` (factory.run-reading/v1) —
- * and upserts `put_activity_liveness` with the run's lifecycle and revision
+ * and upserts `put_activity_liveness` with its native whole-work state and owner revision (or lifecycle for a legacy reading)
  * over ONE persistent SpaceTimeDB connection (the hosting target comes from
  * OI_SHARED_FIELD_TARGET / the machine binding, the token from OI_STATE_HOME
  * under `--token-label`, default `owner`). The server stamps the heartbeat.
@@ -25,6 +25,7 @@
  * stdout carries one JSON line per event; no token is ever printed.
  */
 import { execFileSync } from 'node:child_process';
+import { factoryRunActivityState } from '../activity-liveness.mjs';
 import { existsSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
@@ -73,11 +74,7 @@ const state = statePath(args.state);
 
 function readRun() {
   const reading = JSON.parse(execFileSync(factoryBin, ['development', 'run', state, args.run, '--json'], { encoding: 'utf8', timeout: 30_000 }));
-  if (reading.contract !== 'factory.run-reading/v1') throw new Error(`unsupported factory run contract ${reading.contract}`);
-  if (reading.runRef !== args.run) throw new Error(`factory answered for ${reading.runRef}, not ${args.run}`);
-  if (!Number.isSafeInteger(reading.revision) || reading.revision < 1) throw new Error('factory run reading has no integer revision');
-  const lifecycle = typeof reading.lifecycle === 'string' ? reading.lifecycle.toLowerCase().replace(/[^a-z0-9_-]+/g, '-') : 'unavailable';
-  return { owner_state: lifecycle, owner_revision: reading.revision, factory_state_revision: reading.provenance?.factoryStateRevision ?? null };
+  return factoryRunActivityState(reading, args.run);
 }
 
 // field-lib is TypeScript over the generated bindings: load it through tsx's

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { activityEdition, activityReading, expressionActivity, replayActivity, ACTIVITY_EDITION_SCHEMA } from './activity-liveness.mjs';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { activityEdition, activityReading, expressionActivity, factoryRunActivityState, replayActivity, ACTIVITY_EDITION_SCHEMA } from './activity-liveness.mjs';
 import { createSharedStage, closeSharedStage } from './shared-stage.mjs';
 
 const WORLD = 'world:central:project:O-I';
@@ -130,4 +132,103 @@ test('replay yields the recorded sequence as render steps and never calls an eff
 
 test('replay refuses anything that is not an activity edition', () => {
   assert.throws(() => replayActivity({ schema: 'oi.activity/v1' }), /Unsupported activity edition/);
+});
+
+// Exact native owner captures already retained for consumer regressions.
+// Verify their durable hashes before reading them; a missing capture fails.
+const nativeFixtureRoot = new URL('../desktop/cradle/tests/fixtures/factory-native-owner-projections/', import.meta.url);
+const nativeFixtureManifest = JSON.parse(readFileSync(new URL('manifest.json', nativeFixtureRoot), 'utf8'));
+function nativeRun(name) {
+  const basis = nativeFixtureManifest.fixtures[name];
+  assert.ok(basis, `missing native capture declaration: ${name}`);
+  const bytes = readFileSync(new URL(basis.file, nativeFixtureRoot));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), basis.sha256, `changed native capture: ${name}`);
+  return JSON.parse(bytes);
+}
+function nativeEntry(run) {
+  return { ref: `${WORLD}/${run.runRef}`, kind: 'activity', world_ref: WORLD, meta: { run_ref: run.runRef } };
+}
+
+test('native owner captures retain whole-work facts independently of lifecycle and closure', () => {
+  assert.equal(nativeFixtureManifest.sourceNative, true);
+  for (const name of Object.keys(nativeFixtureManifest.fixtures)) {
+    const run = nativeRun(name), bytesBefore = JSON.stringify(run), native = run.nativeAttempts;
+    const owner = factoryRunActivityState(run, run.runRef);
+    const edition = activityEdition({ entry: nativeEntry(run), run_reading: run, recorded_at: '2026-10-05T04:03:00Z' });
+    assert.equal(owner.owner_state, native.wholeRunState, name);
+    assert.equal(owner.owner_revision, native.revision, name);
+    assert.equal(edition.owner_state, native.wholeRunState, name);
+    assert.equal(edition.owner_revision, run.provenance.factoryStateRevision, name);
+    assert.equal(edition.lifecycle, run.lifecycle, name);
+    assert.equal(edition.run_revision, run.revision, name);
+    assert.equal(edition.native_attempts.completion_verified, native.completionVerified, name);
+    assert.equal(edition.native_attempts.source_current, native.sourceCurrent, name);
+    assert.deepEqual(edition.native_attempts.required_units, native.requiredUnits, name);
+    assert.deepEqual(edition.native_attempts.current_returned_units, native.currentReturnedUnits, name);
+    assert.equal(edition.native_attempts.workflow_source_digest, native.workflowSourceDigest, name);
+    const replay = replayActivity(edition);
+    assert.equal(replay.steps[0].owner_state, run.lifecycle, name);
+    assert.equal(replay.steps[0].owner_revision, run.revision, name);
+    assert.equal(replay.steps[1].kind, 'native-attempts', name);
+    assert.equal(replay.steps[1].whole_run_state, native.wholeRunState, name);
+    assert.equal(replay.steps[1].completion_verified, native.completionVerified, name);
+    assert.ok(replay.steps.every(step => step.effect === 'none'), name);
+    assert.equal(JSON.stringify(run), bytesBefore, 'pure projection changed native input');
+  }
+  const aborted = nativeRun('native-aborted-archived');
+  assert.equal(aborted.lifecycle, 'archived');
+  assert.equal(aborted.nativeAttempts.wholeRunState, 'complete');
+  assert.equal(aborted.nativeAttempts.completionVerified, false);
+  const passed = nativeRun('native-current-retry-passed');
+  assert.equal(passed.nativeAttempts.wholeRunState, 'complete');
+  assert.equal(passed.nativeAttempts.completionVerified, false);
+});
+
+test('same Run revision retains actual owner revision advances and refuses mixed native bases', () => {
+  const earlier = nativeRun('native-current-retry-unknown'), later = nativeRun('native-current-retry-failed');
+  assert.equal(earlier.runRef, later.runRef);
+  assert.equal(earlier.revision, later.revision);
+  const first = factoryRunActivityState(earlier), second = factoryRunActivityState(later);
+  assert.ok(second.owner_revision > first.owner_revision, 'owner advance was reduced to unchanged Run revision');
+  assert.equal(first.native_attempts.run_revision, second.native_attempts.run_revision);
+  assert.throws(() => factoryRunActivityState({ ...later, nativeAttempts: earlier.nativeAttempts }), /provenance revisions disagree/);
+  assert.throws(() => factoryRunActivityState(later, earlier.runRef + '-another'), /factory answered/);
+  const edition = activityEdition({ entry: nativeEntry(later), run_reading: later, recorded_at: '2026-10-05T04:03:00Z', liveness_row: { owner_state: later.lifecycle, owner_revision: later.revision, heartbeat_at_micros: '1' } });
+  assert.equal(edition.liveness_at_record.agrees_with_reading, false, 'lifecycle row concealed stale owner revision');
+});
+
+test('native edition replay preserves counts and never certifies or re-executes a historical result', () => {
+  const run = nativeRun('native-current-retry-failed');
+  const edition = activityEdition({ entry: nativeEntry(run), run_reading: run, recorded_at: '2026-10-05T04:03:00Z' });
+  const editionBefore = JSON.stringify(edition);
+  const replay = replayActivity(edition);
+  assert.equal(replay.live, false);
+  assert.equal(replay.steps[1].current_returned_unit_count, 0);
+  assert.equal(replay.steps[1].required_unit_count, run.nativeAttempts.requiredUnits.length);
+  assert.equal(replay.steps[1].completion_verified, false);
+  replay.steps[1].required_units.push('workflow-unit:REPLAY-LOCAL');
+  assert.equal(JSON.stringify(edition), editionBefore, 'replay retained mutable native unit arrays');
+  assert.deepEqual(replayActivity(edition).steps[1].required_units, run.nativeAttempts.requiredUnits);
+});
+
+test('a native transport with another source or topology refuses instead of publishing a partial edition', () => {
+  const run = nativeRun('native-current-retry-failed');
+  for (const delta of [
+    { runRef: run.runRef + '-other' },
+    { runRevision: run.revision + 1 },
+    { lifecycle: 'finished' },
+    { topologyRevision: run.runMap.topologyRevision + 1 },
+    { workflowSourceRef: '/home/private/source' },
+    { workflowSourceDigest: '' },
+    { currentReturnedUnits: [...run.nativeAttempts.requiredUnits, 'workflow-unit:ANOTHER'] },
+  ]) {
+    assert.throws(() => activityEdition({ entry: nativeEntry(run), run_reading: { ...run, nativeAttempts: { ...run.nativeAttempts, ...delta } }, recorded_at: '2026-10-05T04:03:00Z' }), TypeError);
+  }
+  const edition = activityEdition({ entry: nativeEntry(run), run_reading: run, recorded_at: '2026-10-05T04:03:00Z' });
+  // Published replay data cannot replace the replay's effect/sequence markers.
+  const altered = { ...edition, native_attempts: { ...edition.native_attempts, effect: 'invoke', index: 999, kind: 'tool' } };
+  const replay = replayActivity(altered);
+  assert.equal(replay.steps[1].kind, 'native-attempts');
+  assert.equal(replay.steps[1].index, 1);
+  assert.ok(replay.steps.every(step => step.effect === 'none'));
 });

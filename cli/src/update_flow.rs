@@ -743,10 +743,21 @@ fn managed_package_generation_key(
 /// Accept complete existing primary-keyed generations and normalized new
 /// whole-package generations. Byte/required-role checks remain mandatory at
 /// the consuming boundary; this function qualifies only the receipted path.
+struct ManagedPackageIdentity<'a> {
+    id: &'a str,
+    exe: &'a str,
+    revision: &'a str,
+    tree: &'a str,
+    sha256: &'a str,
+    companions: &'a BTreeMap<String, String>,
+}
+
 fn managed_receipted_package_path(
-    data_root: &Path, id: &str, exe: &str, revision: &str, tree: &str,
-    sha256: &str, companions: &BTreeMap<String, String>, declared_managed: &Path,
+    data_root: &Path,
+    identity: &ManagedPackageIdentity<'_>,
+    declared_managed: &Path,
 ) -> Result<PathBuf, String> {
+    let ManagedPackageIdentity { id, exe, revision, tree, sha256, companions } = *identity;
     let generation = managed_package_generation_key(id, exe, revision, tree, sha256, companions)?;
     let current = managed_artifact_path(data_root, id, &generation, exe);
     let legacy = managed_artifact_path(data_root, id, sha256, exe);
@@ -758,8 +769,15 @@ fn managed_receipted_package_path(
 }
 
 fn managed_receipted_artifact(data_root: &Path, id: &str, product: &ManagedProduct) -> Result<PathBuf, String> {
-    managed_receipted_package_path(data_root, id, &product.exe, &product.revision,
-        &product.tree, &product.sha256, &product.companions, Path::new(&product.managed))
+    let identity = ManagedPackageIdentity {
+        id,
+        exe: &product.exe,
+        revision: &product.revision,
+        tree: &product.tree,
+        sha256: &product.sha256,
+        companions: &product.companions,
+    };
+    managed_receipted_package_path(data_root, &identity, Path::new(&product.managed))
 }
 
 fn managed_required_companion_names(
