@@ -47,10 +47,14 @@ struct Record<A> {
     act: A,
 }
 
+// Keep SHA updates bounded while preserving every serializer byte and the
+// immediate pre-allocation count/refusal. No complete JSON is buffered here.
+const HASH_BUFFER_BYTES: usize = 8192;
 struct Counter<const HASH: bool> {
     bytes: usize,
     limit: usize,
     hash: Sha256,
+    hash_buffer: Vec<u8>,
 }
 impl<const HASH: bool> Write for Counter<HASH> {
     fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
@@ -64,7 +68,22 @@ impl<const HASH: bool> Write for Counter<HASH> {
             ));
         }
         if HASH {
-            self.hash.update(bytes);
+            let mut remaining = bytes;
+            while !remaining.is_empty() {
+                if self.hash_buffer.is_empty() && remaining.len() >= HASH_BUFFER_BYTES {
+                    self.hash.update(remaining);
+                    break;
+                }
+                let take = remaining
+                    .len()
+                    .min(HASH_BUFFER_BYTES - self.hash_buffer.len());
+                self.hash_buffer.extend_from_slice(&remaining[..take]);
+                remaining = &remaining[take..];
+                if self.hash_buffer.len() == HASH_BUFFER_BYTES {
+                    self.hash.update(&self.hash_buffer);
+                    self.hash_buffer.clear();
+                }
+            }
         }
         Ok(bytes.len())
     }
@@ -77,6 +96,7 @@ pub(crate) fn measure<T: Serialize + ?Sized>(value: &T, limit: usize) -> Result<
         bytes: 0,
         limit,
         hash: Sha256::new(),
+        hash_buffer: Vec::new(),
     };
     serde_json::to_writer(&mut output, value).map_err(|e| e.to_string())?;
     Ok(output.bytes)
@@ -212,8 +232,10 @@ pub(crate) fn fingerprint<T: Serialize + ?Sized>(
         bytes: 0,
         limit,
         hash: Sha256::new(),
+        hash_buffer: Vec::with_capacity(HASH_BUFFER_BYTES),
     };
     serde_json::to_writer(&mut output, value).map_err(|e| e.to_string())?;
+    output.hash.update(&output.hash_buffer);
     Ok((output.bytes, format!("sha256:{:x}", output.hash.finalize())))
 }
 
@@ -222,7 +244,9 @@ pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
         return Err("Act storage nesting budget exceeded".into());
     }
     match value {
-        Value::Number(number) if number.as_f64().is_none() => return Err("Act storage number must be finite".into()),
+        Value::Number(number) if number.as_f64().is_none() => {
+            return Err("Act storage number must be finite".into())
+        }
         Value::String(s) if s.contains('\0') => return Err("Act storage contains NUL".into()),
         Value::Array(values) => {
             for v in values {
@@ -232,7 +256,13 @@ pub(crate) fn safe(value: &Value, depth: usize) -> Result<(), String> {
         Value::Object(values) => {
             for (key, v) in values {
                 if key.contains('\0')
-                    || ["__proto__", "prototype", "$serde_json::private::Number", "$serde_json::private::RawValue"].contains(&key.as_str())
+                    || [
+                        "__proto__",
+                        "prototype",
+                        "$serde_json::private::Number",
+                        "$serde_json::private::RawValue",
+                    ]
+                    .contains(&key.as_str())
                     || (key == "constructor"
                         && !crate::expression_performance_source_asset::native_constructor_metadata(
                             values,
@@ -783,7 +813,6 @@ mod tests {
     }
 }
 
-
 #[cfg(test)]
 mod numeric_admission_conservation_tests {
     use super::*;
@@ -791,8 +820,15 @@ mod numeric_admission_conservation_tests {
     fn programmatic_nonfinite_or_reserved_maps_do_not_enter_act_custody() {
         let infinite: Value = serde_json::from_str("1e400").unwrap();
         assert!(safe(&infinite, 0).is_err());
-        for key in ["$serde_json::private::Number", "$serde_json::private::RawValue"] {
-            let object = Value::Object([(key.into(), Value::String("3600".into()))].into_iter().collect());
+        for key in [
+            "$serde_json::private::Number",
+            "$serde_json::private::RawValue",
+        ] {
+            let object = Value::Object(
+                [(key.into(), Value::String("3600".into()))]
+                    .into_iter()
+                    .collect(),
+            );
             assert!(safe(&object, 0).is_err());
         }
     }

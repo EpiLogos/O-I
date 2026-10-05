@@ -234,6 +234,14 @@ fn encode_record<T: Serialize>(
     header: PackedHeader,
 ) -> Result<Vec<u8>, String> {
     expression_act_storage::measure(record, expression_act_storage::LIVE_BYTES)?;
+    encode_measured_record(record, header)
+}
+// The caller has already bounded the complete original Record at64MiB.
+// This is the unchanged physical encoder, also used for every actual Store write.
+fn encode_measured_record<T: Serialize>(
+    record: &Record<T>,
+    header: PackedHeader,
+) -> Result<Vec<u8>, String> {
     let raw = serde_json::to_vec(record).map_err(|e| e.to_string())?;
     if raw.len() as u64 <= crate::expression_act_store::MAX_RECORD_BYTES {
         return Ok(raw);
@@ -248,6 +256,19 @@ fn encode_record<T: Serialize>(
         return Err("complete packed indexed native Act record exceeds4MiB".into());
     }
     Ok(encoded)
+}
+// Prospective admission needs a physical count, not discarded raw bytes.
+// At or below4MiB the same complete native Serde count is the physical law.
+// Above it, execute the full original bounded packing path before materializing.
+fn preflight_record<T: Serialize>(
+    record: &Record<T>,
+    header: PackedHeader,
+) -> Result<usize, String> {
+    let raw = expression_act_storage::measure(record, expression_act_storage::LIVE_BYTES)?;
+    if raw as u64 <= crate::expression_act_store::MAX_RECORD_BYTES {
+        return Ok(raw);
+    }
+    Ok(encode_measured_record(record, header)?.len())
 }
 pub fn encode(act: &Act) -> Result<Vec<u8>, String> {
     validate(act)?;
@@ -598,7 +619,7 @@ fn materialize(mut view: RetainedAct<'_>, available: usize) -> Result<Act, Strin
     };
     // Count the exact complete prospective physical representation before
     // cloning historical metadata. The actual Store repeats its whole check.
-    encode_record(
+    preflight_record(
         &prospective,
         PackedHeader {
             act_ref: view.act.act_ref.clone(),
@@ -796,4 +817,190 @@ pub fn selected_document(act: &Act, position: usize) -> Result<Document, String>
         .get(position)
         .ok_or("retained passage absent")?;
     Ok(edition(act, passage)?.into_owned())
+}
+
+#[cfg(test)]
+mod prospective_physical_count_tests {
+    use super::*;
+    use crate::expression::Change;
+    use crate::expression_act_store::ActStore;
+    use crate::{Kernel, KernelOp, KernelOpResult};
+    use serde_json::json;
+    use std::path::PathBuf;
+
+    struct Home(PathBuf);
+    impl Home {
+        fn new() -> Self {
+            let home = std::env::temp_dir().join(format!(
+                "oi-native-prospective-physical-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            assert!(!home.exists(), "preserve prior native custody");
+            Self(home)
+        }
+    }
+    impl Drop for Home {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    fn apply(kernel: &mut Kernel, value: Value, world: bool) -> Value {
+        let operation = if world {
+            KernelOp::ExpressionWorld {
+                request: serde_json::from_value(value).unwrap(),
+            }
+        } else {
+            KernelOp::Expression {
+                request: serde_json::from_value(value).unwrap(),
+            }
+        };
+        match kernel.apply(operation).unwrap().result {
+            KernelOpResult::Expression { data } | KernelOpResult::ExpressionWorld { data } => data,
+            _ => panic!("actual native Expression/Act result absent"),
+        }
+    }
+    fn native_document(kernel: &mut Kernel, reference: &str) -> Document {
+        serde_json::from_value(
+            apply(
+                kernel,
+                json!({"operation":"inspect","expression_ref":reference}),
+                false,
+            )["document"]
+                .clone(),
+        )
+        .unwrap()
+    }
+    fn assert_physical_oracle(act: &Act, packed: bool) {
+        // The old complete native Record is the independent byte oracle. The
+        // test does not derive expected bytes from preflight or its encoder.
+        let record = Record {
+            schema: storage_schema(act).into(),
+            act,
+            retained_act_sha256: digest(&serde_json::to_vec(act).unwrap()),
+        };
+        let literal = serde_json::to_vec(&record).unwrap();
+        assert_eq!(
+            literal.len() as u64 > crate::expression_act_store::MAX_RECORD_BYTES,
+            packed,
+            "the real native Act must exercise the declared physical branch"
+        );
+        let expected = if packed {
+            serde_json::to_vec(&PackedRecord {
+                schema: PACKED_STORAGE_SCHEMA.into(),
+                act: PackedHeader::from(act),
+                packed: crate::expression_performance_record_codec::EncodedRecord::from_bytes(
+                    &literal,
+                )
+                .unwrap(),
+            })
+            .unwrap()
+        } else {
+            literal.clone()
+        };
+        assert_eq!(
+            preflight_record(&record, PackedHeader::from(act)).unwrap(),
+            expected.len()
+        );
+        assert_eq!(encode(act).unwrap(), expected);
+        assert_eq!(
+            decode_bytes(&expected, expression_act_storage::LIVE_BYTES).unwrap(),
+            *act
+        );
+        eprintln!(
+            "actual native prospective byte oracle packed={packed} raw={} physical={} editions={}",
+            literal.len(),
+            expected.len(),
+            act.sequence.len()
+        );
+    }
+
+    #[test]
+    fn actual_native_world_act_raw_and_packed_preflight_match_complete_original_record_bytes() {
+        const ACT: &str = "act:prospective-native-physical-count";
+        const ACTOR: &str = "agent:prospective-native-physical-count-test";
+        let fixture = include_str!("../tests/fixtures/epi-world-131.expression.json");
+        assert_eq!(
+            digest(fixture.as_bytes()),
+            "sha256:630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec"
+        );
+        let original = crate::expression_file::decode(fixture).unwrap();
+        assert_eq!(
+            (
+                original.revision,
+                original.entities.len(),
+                original.relations.len(),
+                original.scenes.len()
+            ),
+            (131, 38, 86, 3)
+        );
+        let reference = original.expression_ref.clone();
+        let cosmic = original.scenes[0].scene_ref.clone();
+        let home = Home::new();
+        let mut kernel = Kernel::new(crate::flow::CentralClient::discover());
+        kernel.attach_act_store(&home.0).unwrap();
+        apply(
+            &mut kernel,
+            json!({"operation":"open","document":original,"actor":ACTOR}),
+            false,
+        );
+
+        // Both editions are genuine ordinary native transactions over the full
+        // original retained world. No replacement body or numerical data is made.
+        let expected_first = original
+            .edited(vec![Change::Rename {
+                title: "Native complete physical byte oracle".into(),
+            }])
+            .unwrap();
+        let first = apply(
+            &mut kernel,
+            json!({"operation":"act_retained_perform",
+            "act_ref":ACT,"expression_ref":reference,"expected_revision":original.revision,
+            "expected_act_revision":null,"actor":ACTOR,"summary":"Retain complete native world",
+            "changes":[{"change":"rename","title":"Native complete physical byte oracle"}]}),
+            true,
+        );
+        assert_eq!(first["state"], "act_running");
+        assert_eq!(native_document(&mut kernel, &reference), expected_first);
+        let store = ActStore::at_home(&home.0);
+        let first_act = store.read_retained(ACT).unwrap().unwrap();
+        assert_eq!(selected_document(&first_act, 0).unwrap(), expected_first);
+        assert_physical_oracle(&first_act, false);
+
+        apply(
+            &mut kernel,
+            json!({"operation":"act_interrupt","act_ref":ACT,
+            "actor":ACTOR,"reason":"Retain the next actual native Scene title"}),
+            true,
+        );
+        let held = store.read_retained(ACT).unwrap().unwrap();
+        let expected_last = expected_first
+            .edited(vec![Change::SceneRename {
+                scene_ref: cosmic.clone(),
+                title: "Native cosmic Scene byte oracle".into(),
+            }])
+            .unwrap();
+        let second = apply(
+            &mut kernel,
+            json!({"operation":"act_retained_perform",
+            "act_ref":ACT,"expression_ref":reference,"expected_revision":expected_first.revision,
+            "expected_act_revision":held.revision,"actor":ACTOR,"summary":"Retain the complete second world",
+            "changes":[{"change":"scene_rename","scene_ref":cosmic,"title":"Native cosmic Scene byte oracle"}]}),
+            true,
+        );
+        assert_eq!(second["state"], "act_running");
+        assert_eq!(native_document(&mut kernel, &reference), expected_last);
+        let cold_act = ActStore::at_home(&home.0)
+            .read_retained(ACT)
+            .unwrap()
+            .unwrap();
+        assert_eq!(selected_document(&cold_act, 0).unwrap(), expected_first);
+        assert_eq!(selected_document(&cold_act, 1).unwrap(), expected_last);
+        assert_physical_oracle(&cold_act, true);
+        // This bounded byte oracle is additional to the unchanged actual
+        // recording180/CAS/restart/source/corruption workload, never its substitute.
+    }
 }
